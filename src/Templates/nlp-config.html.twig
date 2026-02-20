@@ -1,0 +1,85 @@
+{#
+Links for functions to configure NLP services.
+#}
+
+{% set folders = path('nlpservices.folders_configuration_form') %}
+{% set keys = path('nlpservices.api_configuration_form') %}
+{% set keysVerification = path('nlpservices.key_validate_form') %}
+{% set activistCode = path('nlpservices.activist_code_configuration_form') %}
+{% set responseCodes = path('nlpservices.response_code_configuration_form') %}
+{% set surveyQuestion = path('nlpservices.survey_question_configuration_form') %}
+{% set emails = path('nlpservices.email_configuration_form') %}
+{% set electionCycle = path('nlpservices.election_configuration_form') %}
+{% set importReports = path('nlpservices.import_reports_form') %}
+{% set importAwards = path('nlpservices.import_table_form', {'tableName': 'nlp_awards'}) %}
+{% set importTurfAssignments = path('nlpservices.import_table_form', {'tableName': 'nlp_turf_assignment'}) %}
+{% set importUsers = path('nlpservices.import_user_accounts_form') %}
+{% set exportUsers = path('nlpservices.export_user_accounts_file') %}
+{% set exportReports = path('nlpservices.export_voter_contact_reports_form') %}
+{% set votebuilderUpdate = path('nlpservices.votebuilder_update_date_form') %}
+{% set exportAwardsFile = path('nlpservices.export_table', {'tableName': 'nlp_awards'}) %}
+{% set exportCredentials = path('nlpservices.export_credentials_file') %}
+{% set purgeNlUsers = path('nlpservices.purge_nl_accounts') %}
+{% set importCredentials = path('nlpservices.import_credentials_form') %}
+{% set enableDebug = path('nlpservices.enable_debug_form') %}
+{% set enableCronTasks = path('nlpservices.enable_cron_tasks_form') %}
+{% set documents = path('nlpservices.documents_form') %}
+
+{% trans %}
+
+    <h1>New site or new election</h1>
+    <p>The following 7 steps are to create a new NLP Services site and set up a new election.   For just a new
+        election, steps 3, 5 and 6 can be repeated with new information.</p>
+
+    <ul>
+        <li><a href={{ folders }}>Step 1: Create and prep file folders.</a></li>
+        <li><a href={{ keys }}>Step 2: Build the database for API keys.</a></li>
+        <li><a href={{ keysVerification }}>Step 2a: Verify the API keys work.</a></li>
+        <li><a href={{ activistCode }}>Step 3: Set up the activist codes.</a></li>
+        <li><a href={{ responseCodes }}>Step 4: Set up the canvass response codes.</a></li>
+        <li><a href={{ electionCycle }}>Step 5: Set up the election date and name.</a></li>
+        <li><a href={{ surveyQuestion }}>Step 6: Select the survey question.</a></li>
+        <li><a href={{ emails }}>Step 7: Set up the email used by the site.</a></li>
+    </ul>
+
+    <h1>Rebuild a site</h1>
+    <p>The next steps are needed if you are rebuilding a site for an existing NLP.</p>
+
+    <ul>
+        <li><a href={{ importReports }}>Step 8: Import historical voter contact reports.</a></li>
+        <li><a href={{ importAwards }}>Step 9: Import NL Awards file.</a></li>
+        <li><a href={{ importUsers }}>Step 10: Import Drupal user accounts.</a></li>
+        <li><a href={{ importTurfAssignments }}>Step 11: Import turf assignments file.</a></li>
+        <li><a href={{ importCredentials }}>Step 12: Import NL credentials.</a></li>
+        <li><a href={{ documents }}>Step 13: Replace one of the default documents.</a></li>
+    </ul>
+
+    <h1>Enable Cron tasks</h1>
+    <ul>
+        <li><a href={{ enableCronTasks }}>Enable the various cron tasks for NLP.</a></li>
+    </ul>
+
+    <h1>VoterFile update.</h1>
+    <ul>
+        <li><a href={{ votebuilderUpdate }}>Set date of the latest VoterFile update.</a></li>
+    </ul>
+
+    <h1>Archive election</h1>
+    <p>The remaining steps are to retain the results of an election either to prepare to rebuild the
+        site or to archive results.</p>
+
+    <ul>
+        <li><a href={{ exportUsers }}>Export Drupal user accounts.</a></li>
+        <li><a href={{ exportCredentials }}>Export Drupal user login credentials.</a></li>
+        <li><a href={{ purgeNlUsers }}>Purge NL user accounts.</a></li>
+        <li><a href={{ exportReports }}>Export the voter contact reports table.</a></li>
+        <li><a href={{ exportAwardsFile }}>Export the NL awards table.</a></li>
+        <li><a href={{ exportTurfAssignments }}>Export the turf assignments table.</a></li>
+    </ul>
+
+    <h1>Testing</h1>
+    <ul>
+        <li><a href={{ enableDebug }}>Enable debug displays.</a></li>
+    </ul>
+
+{% endtrans %}

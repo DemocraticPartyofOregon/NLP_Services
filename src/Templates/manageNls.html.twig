@@ -1,0 +1,47 @@
+{#
+Links for functions to manage NLs.
+#}
+
+{% set syncNls = path('nlpservices.sync_nls_form') %}
+{% set displayNls = path('nlpservices.display_nls_form') %}
+{% set fixes = path('nlpservices.legislative_fixes_form') %}
+{% set remindUser = path('nlpservices.login_credentials_reminder_form') %}
+{% set mcid = path('nlpservices.vanid_form') %}
+
+
+{% trans %}
+
+    <h1>Keep track of NLs</h1>
+
+    <ul>
+        <li><a href={{ displayNls }}>Display the list of active NLs.</a></li>
+        <li><a href={{ syncNls }}>Sync a new list of active NLs.</a></li>
+        <li><a href={{ remindUser }}>Send an email to an NL with a login reminder.</a></li>
+
+    </ul>
+
+    <h1>Correct faulty legislative district information for an NL.</h1>
+
+    <p>Information about NLs is kept in the MyCampaign database of VoteBuilder.   The address is occasionally wrong as
+    is the geolocation of that address.  Either case keeps VoteBuilder from identifying the legislative districts
+    where the NL lives.   You will see this in the display above as having NLs in HD 0.   If you see this, should
+    first check the validity of the address in MyCampaign.  If it is correct, you can provide substitute legislative
+    districts for the NL using the function below. </p>
+
+    <ul>
+        <li><a href={{ fixes }}>Define substitutions for missing NL legislative districts.</a></li>
+    </ul>
+
+
+    <h1>Reassign the ID for an NL.</h1>
+
+    <p>This function provides recovery of history information about and NL when the primary MCID was
+    destroyed by a merge of a duplicate record in VoteBuilder.   You need to know the original MCID
+    that was destroyed and the new MCID that is now associated with the NL.</p>
+
+    <ul>
+        <li><a href={{ mcid }}>Reassign the ID associated with an NL.</a></li>
+    </ul>
+
+
+{% endtrans %}

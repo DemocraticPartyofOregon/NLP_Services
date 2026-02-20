@@ -1,0 +1,14 @@
+/*
+ * @file
+ * CSS for formatting tables.
+ */
+
+.no-white {margin:0; padding:0; line-height:100%;}
+.table-white {margin:4px 0 0 0; padding:0; line-height:100%;}
+.white-back { background: rgba(0, 0, 0, 0); }
+.foot-note-sortable { color:yellowgreen; }
+.foot-note-text { font-size: small; font-style: italic; }
+thead.background-header { background-color: coral; }
+tr.background-row { background-color: coral; }
+th.background-cell { background-color: #1678b4; }
+

@@ -1,0 +1,9 @@
+/*
+ * @file
+ * CSS for turf delivery message form.
+ */
+div.edit-text { width: 700px; }
+
+div.turf-delivery-message-help { width: 650px; }
+div.turf-delivery-message-tokens { padding-left: 20px; }
+div.turf-delivery-message-token-example { padding-left: 20px; }

@@ -1,0 +1,4 @@
+# State and county names for testing a site linked to the VoteBuilder sandbox.
+State: 'West Florida'
+Apalachee Bay: [6,10]
+Port St James: [6,7]

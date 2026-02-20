@@ -1,0 +1,20 @@
+uuid: de3beebb-9741-4ec8-a7b8-4a789663cdbb
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_hd
+  module:
+    - user
+id: user.user.field_hd
+field_name: field_hd
+entity_type: user
+bundle: user
+label: HD
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings: {  }
+field_type: string

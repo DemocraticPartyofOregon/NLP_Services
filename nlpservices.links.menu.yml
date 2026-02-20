@@ -1,0 +1,99 @@
+# Functions for the NLP Coordinators.
+
+nlpservices.manage_nls_links:
+  title: 'Manage NLs'
+  description: 'Functions to manage active NLs.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.manage_nls_menu
+  weight: 231
+
+nlpservices.manage_turfs_links:
+  title: 'Manage Turfs'
+  description: 'Functions to manage Turfs.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.manage_turf_menu
+  weight: 232
+
+nlpservices.manage_nlp_users_accounts_links:
+  title: 'Manage Users'
+  description: 'Functions to manage login credentials.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.manage_nlp_users_accounts_menu
+  weight: 233
+
+nlpservices.manage_county_links:
+  title: 'Manage County'
+  description: 'Setup and manage the county NLP.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.manage_county_menu
+  weight: 234
+
+nlpservices.report_links:
+  title: 'Reports'
+  description: 'Functions to create reports.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.reports_menu
+  weight: 235
+
+# Functions for the NLP Admin.
+
+nlpservices.admin_menu_section:
+  title: 'NLP Configuration'
+  description: 'NLP Configuration Menu section'
+  parent: system.admin_config
+  route_name: nlpservices.admin_menu_section
+  weight: 8
+
+nlpservices.admin_menu:
+  title: 'NLP Configuration and Administration'
+  description: 'NLP Configuration Menu section'
+  parent: nlpservices.admin_menu_section
+  route_name: nlpservices.admin_menu
+  weight: 8
+
+# Functions for the NLP Leaders.
+
+nlpservices.default_method:
+  title: 'Default Method'
+  description: 'Change the default voter contact method.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.default_method_form
+  weight: 340
+
+nlpservices.my_turf:
+  title: 'My turf'
+  description: 'Display my turf to report voter contacts.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.data_entry_form
+  weight: 341
+
+nlpservices.turf_select:
+  title: 'Change turf'
+  description: 'Change to a different turf (if you have more than one).'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.turf_select_form
+  weight: 342
+
+nlpservices.data_entry_print_tab:
+  title: 'Print Lists'
+  description: 'Print walksheet, mailing list, or call list.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.data_entry_print
+  weight: 343
+
+nlpservices.data_entry_help_tab:
+  title: 'Help'
+  description: 'Help with recording results of voter contacts.'
+  expanded: 1
+  menu_name: 'main'
+  route_name: nlpservices.data_entry_help_route
+  weight: 344

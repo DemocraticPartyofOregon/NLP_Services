@@ -1,0 +1,80 @@
+info-boxes:
+  version: "1.0.0"
+  css:
+    layout:
+      css/info-boxes.css: {}
+data-entry-table:
+  version: "1.0.0"
+  css:
+    layout:
+      css/data-entry-table.css: {}
+data-entry-help:
+  version: "1.0.0"
+  css:
+    layout:
+      css/data-entry-help.css: {}
+turf-sync:
+  version: "1.0.0"
+  css:
+    layout:
+      css/turf-sync.css: {}
+hint-note:
+  version: "1.0.0"
+  css:
+    layout:
+      css/hint-note.css: {}
+nlp-table:
+  version: "1.0.0"
+  css:
+    layout:
+      css/nlp-table.css: {}
+table-helper:
+  version: "1.0.0"
+  css:
+    layout:
+      css/table-helper.css: {}
+search-boxes:
+  version: "1.0.0"
+  css:
+    layout:
+      css/search-boxes.css: {}
+edit-user:
+  version: "1.0.0"
+  css:
+    layout:
+      css/edit-user.css: {}
+canvass-response-code:
+  version: "1.0.0"
+  css:
+    layout:
+      css/canvass-response-code.css: {}
+turf-delivery-message:
+  version: "1.0.0"
+  css:
+    layout:
+      css/turf-delivery-message.css: {}
+navigate-button:
+  version: "1.0.0"
+  css:
+    layout:
+      css/button.css: {}
+call-print:
+  version: "1.0.0"
+  css:
+    layout:
+      css/call-print.css: {}
+nl-display:
+  version: "1.0.0"
+  css:
+    layout:
+      css/nl-display.css: {}
+update-pdf-assignment:
+  version: "1.0.0"
+  css:
+    layout:
+      css/update-pdf-assignment.css: { }
+walksheet-form:
+  version: "1.0.0"
+  css:
+    layout:
+      css/walksheet-form.css: { }

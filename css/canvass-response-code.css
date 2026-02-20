@@ -1,0 +1,24 @@
+/*
+ * @file
+ * CSS for formatting forms.
+ */
+
+table.response-code-table { width: 450px; }
+
+tr.response-code-row { padding:0; background: white; }
+
+th.table-checkbox { width: 30px; padding:0; }
+th.response-code-recommended { width: 30px; text-align: left; }
+th.response-code-contact-type { width: 150px; text-align: left;}
+th.response-code-responses { width: 150px; text-align: left; }
+th.response-code-value { width: 40px; text-align: center;}
+
+td.table-checkbox { width: 30px; padding:0; margin:0; text-align: center; }
+td.response-code-recommended { width: 30px; padding:0; margin:0; text-align: left; }
+td.response-code-contact-type { width: 150px; padding:0; margin:0; text-align: left;}
+td.response-code-responses { width: 150px; padding:0; margin:0; text-align: left; }
+td.response-code-value { width: 40px; padding:0; margin:0; text-align: center; }
+
+.form-item {  margin-top:0; margin-bottom:0; }
+div.form-no-label { margin-top:0; margin-bottom:0; }
+div.form-item { margin-top:0; margin-bottom:0; }

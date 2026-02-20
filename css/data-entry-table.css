@@ -1,0 +1,116 @@
+/*
+ * @file
+ * CSS for the data entry table.
+ */
+
+.voter-table {font-size:small; padding:0; border-color:#d3e7f4; border-width:1px; table-layout: fixed; width:1207px; }
+.form-item { margin-top:0; margin-bottom:0; }
+.td-de {margin-left:2px; margin-bottom:2px; line-height:100%; font-size:small; vertical-align: text-top;}
+div.voter-name { float: left; font-size:medium; font-weight:bold; }
+div.response-title-note { font-size:x-small; font-style:italic; color:red; }
+div.chosen-method { font-size:small; font-style:italic; color:royalblue; }
+div.response-title { font-weight:bold; }
+div.line-spacer { padding-bottom:4px; }
+.voter-deceased { color:#cfb53b; font-weight: bold; }
+.voter-moved { color:#cfb53b; font-weight: bold; }
+.voter-hostile { color:red; font-weight: bold; }
+.voter-pledge { color:green; font-weight: bold; }
+.voter-county { color:green; font-weight: bold; }
+.voter-postcard { color:blue; font-weight: bold; }
+.voter-attempt { color:blue; font-weight: bold; }
+.voter-no-attempt { color:red; font-weight: bold; }
+.historical-report-title { color:blue; font-weight: bold; }
+.historical-report-list { left: -175px; top: 16px; width: 500px; font-size:x-small; }
+
+div.end-big-box { clear: both; }
+div.date-bar { width: 1230px; margin:0; padding:0;}
+div.date-box-left {float: left; font-size:x-small; width: 140px; margin:0; padding:4px 0 0 0;}
+div.counts-box-left {float: left; font-size:x-small; width: 180px; margin:0; padding:4px 0 0 0;}
+div.awards-box-left {float: left; font-size:x-small; width: 280px; margin:0; padding:4px 0 0 0;}
+div.search-box-left {float: left; font-size:x-small; width: 180px; margin:0 0 0 4px; padding:4px 0 0 0;}
+div.methods-box-left {float: left; font-size:x-small; width: 140px; margin:0; padding:4px 0 0 0;}
+
+div.inner-box-left {float: left; font-size:x-small;  margin:0; padding:4px 0 0 0;}
+
+.new-nl-box-right { float: right; width: 147px;  padding:0; margin: 0 5px 0 0; }
+section.new-nl-box {width: 147px; margin:0; font-size:small;}
+div.new_nl_div { width: 145px; padding:0; margin: 0 5px 0 0;  }
+div.arrow-img { float: left; width: 26px; height:40px; margin:0; padding:0; }
+div.arrow-text { float: left; width: 110px; margin:1px; padding:0 0 0 5px; font-size:small; font-weight: bold; color: #00007f; }
+
+div.turf-name-right {float: right; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
+section.turf-name-box {width: 361px; margin:0; padding:5px; border: 1px solid blue; border-radius: 5px; font-size:small;}
+div.turf-name { margin: 0 0 0 0}
+
+div.refresh-box-right {float: right; font-size:x-small; width: 195px; margin:0; padding:4px 0 0 0;}
+.refresh_box { width: 185px; margin:0; padding:3px; border: 1px solid red; border-radius: 5px; }
+
+div.nav-box-right {float: right; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
+.nav_box { width: 361px; margin:0; padding:5px; border: 1px solid red; border-radius: 5px; font-size:x-small; }
+.nav_div { width: 360px; background-image: none; padding:0; margin:0; border:1px; }
+.nav_number {float:left; text-align: center; padding: 2px 2px 0 2px;}
+.nav_dots {float:left; text-align: center; padding: 8px 2px 0 2px; font-size:small; }
+.nav_current_number {float:left; text-align: center; padding: 2px 2px 0 2px; border-bottom: 2px solid blue;}
+
+
+
+div.canvass_date { border: 1px solid red; border-radius: 5px;
+    padding-left:5px; padding-right:5px; box-sizing: border-box;
+    width:130px; font-size:x-small;}
+div.voter-counts { margin: 8px 0 0 0 ; padding: 1px 1px 1px 5px; border: 1px solid blue;
+    border-radius: 5px; line-height:100%;  width:155px; font-size:x-small; }
+
+table.counts-table { border-collapse:collapse; border:0; border-spacing:0;
+    font-size:x-small; margin:0; }
+
+tr.counts-row { padding:0; background: white; }
+
+td.counts-name { width: 120px; padding:0; }
+td.counts-numbers { width: 20px; padding:0; text-align: right; }
+td.counts-percent { width: 70px; padding:0 0 0 3px; text-align: left;}
+
+div.method-border { border: 1px solid red; border-radius: 5px;
+    padding-left:5px; padding-right:5px; box-sizing: border-box;
+    width:130px; font-size:x-small;}
+div.methods-box { width:125px; }
+div.method-select-container {float:left; width:115px; font-size: x-small; padding: 0 0 3px 0;}
+
+div.award-box { width:300px; }
+div.badge-container { position: relative; color: white; float:left; width:110px; }
+img.badge-img { width:90%; margin:0; padding:0; }
+div.note-container { float:left; width: 160px; font-size: small;
+    line-height: 105%; color:maroon; padding: 10px 3px 0 3px; }
+div.single-digit { left: 44px; }
+div.double-digit { left: 40px; }
+div.election-count { position: absolute; bottom: 24px; font-weight: bold; font-size:large; color:maroon; font-family: ui-monospace; }
+
+.yes { color: green; font-weight: bold;}
+.no { color: brown; font-weight: bold;}
+.not-voted { color: red; font-weight: bold; }
+div.star-box { width: 225px; margin:0; padding:0; position:relative; }
+div.star-img { float: left; width: 101px; margin:0; padding:0; }
+div.star-text { float: right; width: 118px; padding:0; margin-left: 105px; position:absolute; top:30%; }
+
+section.search-box { border: 1px solid blue; border-radius: 5px;
+    padding:5px 0 0 5px; box-sizing: border-box; width:180px; }
+table.search-table { border-collapse:collapse; border-style:hidden; }
+td.search-name { width: 180px; font-size:small; }
+td.search-submit { width: 60px; font-size:small; }
+
+div.form-no-label { margin-top:0; margin-bottom:0; }
+div.form-item { margin-top:0; margin-bottom:0; }
+
+div.secondary { color: cornflowerblue; font-style: italic; }
+
+.help-bold { font-weight: bold; }
+.help-indent { margin-left:30px; }
+.voter-sms-status { font-size: xx-small; font-style: italic; color: blue; }
+
+div.link-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:650px; }
+div.form-box-medium { border-collapse: collapse; font-size:small; padding:0; border: 0; width:400px; }
+
+.det-top { vertical-align: top; }
+.det-background { background: #cfe4f0; border-color: #cfe4f0; }
+.det-spacer { background: white; border-color: white; margin: 0; padding: 0; line-height: 50% }
+.det-text { line-height: 100%; }
+

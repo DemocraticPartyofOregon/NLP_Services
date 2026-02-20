@@ -1,0 +1,19 @@
+/*
+ * @file
+ * CSS for formatting various search options.
+ */
+
+div.end-float { clear: both; }
+
+div.search-needle-help-right { float: right; font-size:x-small; width: 30px; margin:20px 0 0 0; padding:0; line-height: 90%; }
+
+div.form-item { margin-top: 0; margin-bottom: 0; }
+
+div.search-bar { width: 750px; margin:0; padding:0;  }
+div.search-bar-small { width: 600px; margin:0; padding:0;  }
+div.search-hd-select-left { float:left; font-size:x-small; width: 65px; }
+div.search-needle-left { float: left; font-size:x-small; width: 375px; margin:0; padding:0; }
+div.search-needle-text-left { float: left; font-size:x-small; width: 250px; }
+div.search-button-left { float: left; font-size:x-small; margin:16px 0 0 0; padding:0; }
+
+

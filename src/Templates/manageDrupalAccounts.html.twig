@@ -1,0 +1,29 @@
+{#
+Links for functions to manage Drupal accounts.
+#}
+
+
+{% set manageDrupalUser = path('nlpservices.manage_drupal_accounts_form') %}
+{% set removeRole = path('nlpservices.remove_coordinator_role_form') %}
+{% set deleteDrupalUser = path('nlpservices.delete_drupal_accounts_form') %}
+
+{#
+{% set addDrupalUser = path('nlpservices.add_drupal_account_form') %}
+{% set remindUser = path('nlpservices.login_credentials_reminder_form') %}
+
+#}
+
+{% trans %}
+
+    <ul>
+        <li><a href={{ manageDrupalUser }}>Manage login accounts for the NLP Services site.</a></li>
+        <li><a href={{ removeRole }}>Remove the coordinator role from one or more accounts.</a></li>
+        <li><a href={{ deleteDrupalUser }}>Delete a login account for the NLP Services site.</a></li>
+
+        {#
+        <li><a href={{ addDrupalUser }}>Add a login account for the NLP Services site.</a></li>
+                <li><a href={{ remindUser }}>Send an email to an NL with a login reminder.</a></li>
+        #}
+    </ul>
+
+{% endtrans %}

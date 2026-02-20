@@ -1,0 +1,14 @@
+# Defines the NLP Admin role.
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - nlpservices
+id: nlp_admin
+label: 'NLP Admin'
+weight: 9
+is_admin: false
+permissions:
+  - 'nlp administer'
+  - 'nlp tools access'

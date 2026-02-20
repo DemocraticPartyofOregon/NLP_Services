@@ -1,0 +1,27 @@
+/*
+ * @file
+ * CSS for display of info boxes.
+ */
+
+/* side by side formatting. */
+div.end-big-box { clear: both; }
+div.big-box { width: 810px; margin:0; padding:0;}
+div.inner-box-left {float: left; font-size:x-small;  margin:0; padding:4px 0 0 0;}
+div.x-small-box-left {float: left; font-size:x-small; width:75px; margin:0; padding:4px 0 0 0;}
+div.small-box-left {float: left; font-size:x-small; width: 200px; margin:0; padding:4px 0 0 0;}
+
+div.medium-box-left {float: left; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
+div.button-box-left {float: left; font-size:x-small; width: 200px; margin:0; padding:5px 0 0 0;}
+div.button-select-box-left {float: left; font-size:x-small; width: 200px; margin:0; padding:5px 0 0 0;}
+div.submit-box-left {float: left; font-size:x-small; width: 50px; margin:0; padding:27px 0 0 0;}
+div.sort-box-left {float: left; font-size:x-small; width: 110px; margin:0; padding:4px 0 0 0;}
+div.coordinator-box { width: 810px; margin:0; padding:0; }
+div.coordinator-option-box { width: 840px; margin:0; padding:0; }
+div.postcard-mailed-box { width: 400px; margin:0; padding:0; }
+
+p.none-assigned { color:red; }
+
+div.form-box-medium { border-collapse: collapse; font-size:small; padding:0; border: 0; width:400px; }
+div.resync-response { font-size:medium; }
+div.summary-report { border-collapse: collapse; font-size:small; padding:0; border: 1px solid green; width:450px; }
+

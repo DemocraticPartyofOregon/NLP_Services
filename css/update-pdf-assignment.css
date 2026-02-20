@@ -1,0 +1,46 @@
+/*
+ * @file
+ * CSS for display of pdf assignment page.
+ */
+
+div.upa_nl_select_box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+
+
+div.upa_hd_select_left {float: left; font-size:x-small; width: 100px; margin:0; padding:0 0 0 0;}
+div.upa_pct_select_left {float: left; font-size:x-small; width: 100px; margin:0; padding:0 0 0 0;}
+
+div.upa_name_text_left {float: left; font-size:x-small; width: 100px; margin:0; padding:0 0 0 0;}
+div.upa_name_submit_left {float: left; font-size:x-small; width: 100px; margin:0; padding:0 0 0 0;}
+
+div.upa_end_float { clear: both; }
+
+.upa_submit_font_size { font-size: x-small;}
+
+.side-by-side-container {
+    display: flex;
+    gap: 1em;
+    align-items: center; /* Vertically center children */
+    font-size: x-small;
+    margin:0; padding:0;
+}
+.upa-name-search-row {
+    margin:0; padding:0;
+}
+.side-by-side-text, .side-by-side-button {
+    flex: 0 0 auto;
+    margin:0; padding:0;
+}
+
+.side-by-side-container,
+.side-by-side-select,
+.side-by-side-text,
+.side-by-side-button,
+.upa-name-search-row,
+.upa_hd_select_left,
+.upa_pct_select_left {
+    font-size: x-small;
+}
+
+.form-item {
+    margin: 0;
+    padding: 0;}

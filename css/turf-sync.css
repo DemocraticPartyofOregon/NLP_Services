@@ -1,0 +1,39 @@
+/*
+ * @file
+ * CSS for display of turf sync pages.
+ */
+
+.ts-select-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:400px; }
+.big-ts-select-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+.no-border-fieldset { border: none !important; box-shadow: none !important;}
+.form-submit-separate-line { display: block; margin-top: 1em; }
+.dashed-line { border: none; border-top: 2px dashed #888; margin: 1em 0; }
+div.turf-id-bar { width: 1110px; margin:0; padding:0;}
+div.turf-id-box-left {float: left; font-size:x-small; width: 550px; margin:0; padding:4px 0 0 0;}
+div.turf-id-form-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:550px; }
+div.turf-id-text { float: left;  border-collapse: collapse; font-size:small; padding:0; border: 0; width:300px; }
+div.turf-id-submit { float: left; border-collapse: collapse; font-size:small; padding:15px 0 0 0; border: 0; width:200px; }
+div.small-title { font-size:medium; font-weight: bold; padding:0 0 4px 0;}
+
+div.footnote-box-right {float: right; font-size:x-small; width: 330px; margin:0; padding:4px 0 0 0;}
+div.footnote-box-left {float: left; font-size:x-small; width: 320px; margin:0; padding:0 0 0 0;}
+
+div.district_search_left {float: left; font-size:small; width: 200px; margin:0; padding:0 0 0 0;}
+
+div.search_needle_left {float: left; font-size:x-small; width: 400px; margin:0; padding:0 0 0 0;}
+div.needle-help-right {float: right; font-size:x-small; width: 75px; margin:0; padding:4px 0 0 0;}
+
+div.turf-sync-previous-title { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+div.turf-sync-previous-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+div.turf-sync-tagged-title { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+div.turf-sync-previous-box { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+
+div.turf-sync-search-wrapper { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+div.turf-sync-district-wrapper { border-collapse: collapse; font-size:small; padding:0; border: 0; width:700px; }
+
+div.end-big-box { clear: both;  }
+
+hr.ts-blue { border: 3px solid blue;}
+
+div.form-item { margin-top: 0; margin-bottom: 0; }
+div.form-no-label { margin-top:0; margin-bottom:0; }

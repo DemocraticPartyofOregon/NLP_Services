@@ -1,0 +1,26 @@
+/*
+ * @file
+ * CSS for formatting user login edit.
+ */
+
+div.add-user-box { width: 1500px; border: 1px solid blue; }
+div.user-info-box { width: 950px; border: 1px solid blue; }
+
+div.name { width: 300px; float: left; }
+div.mcid { width: 300px; float: left; }
+
+div.phone { width: 300px; float: left; margin-right: 10px; }
+div.email { width: 300px; float: left; margin-right: 10px; }
+div.county { width: 300px; float: left; margin-right: 10px; }
+
+div.username { width: 300px; float: left; margin-right: 10px; }
+div.password { width: 300px; float: left; margin-right: 10px; }
+div.roles { width: 300px; float: left; margin-right: 10px; }
+
+div.end-float { clear: both; }
+
+table.add-user-table { width: 1450px; }
+tr.add-user-tr { width: 1400px; }
+
+td.name { width: 300px; }
+td.mcid { width: 200px; }

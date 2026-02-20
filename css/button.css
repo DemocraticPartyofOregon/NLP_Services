@@ -1,0 +1,49 @@
+/*
+ * @file
+ * CSS for styling buttons.
+ * Used in the data entry page for the page to page navigation.
+ */
+
+input[type="submit"] {
+    border: 1px solid #000000;
+    border-radius: 5px;
+    color: black;
+    padding: 3px 6px;
+    text-align: center;
+    text-decoration: none;
+}
+input[type="submit"]:hover {
+    background-color: #0000cc;
+    border: 1px solid #3090cc;
+    border-radius: 5px;
+    color: white;
+    padding: 3px 6px;
+    text-align: center;
+    text-decoration: none;
+}
+
+.button {
+    border: 1px solid #000000;
+    display: block;
+    width: 175px;
+    height: 20px;
+    padding: 0;
+    margin-left:0;
+    background-color: #0000dd;
+    text-align: center;
+    border-radius: 5px;
+    color: black;
+}
+
+.image-button {
+    margin-right: 0;
+    margin-left: 0;
+}
+
+p.narrow {margin:6px 0; padding:0; font-size:medium;}
+#hint1 { position: relative; }
+#hint1 a span { display: none; color: #0033ff; }
+#hint1 a:hover span { display: block; position: absolute; width: 300px;
+    background-color: #ffffff; left: 200px; top: -50px; color: #0033ff;
+    padding: 5px; border: 2px solid #0033ff; border-radius:5px;}
+#hint2 span {display: none; color: #0033ff;}

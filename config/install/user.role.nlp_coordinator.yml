@@ -1,0 +1,13 @@
+# Defines the NLP Coordinator role.
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - nlpservices
+id: nlp_coordinator
+label: 'NLP Coordinator'
+weight: 7
+is_admin: false
+permissions:
+  - 'nlp tools access'

@@ -1,0 +1,24 @@
+uuid: b5dd302b-c774-4236-a16c-2edc2da3b7ca
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.user.field_mcid
+  module:
+    - user
+id: user.user.field_mcid
+field_name: field_mcid
+entity_type: user
+bundle: user
+label: MCID
+description: ''
+required: false
+translatable: false
+default_value: {  }
+default_value_callback: ''
+settings:
+  min: null
+  max: null
+  prefix: ''
+  suffix: ''
+field_type: integer

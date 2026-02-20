@@ -1,0 +1,14 @@
+/*
+ * @file
+ * CSS for display of pdf assignment page.
+ */
+
+.walksheet-no-white {margin:0; padding:0; line-height:100%;}
+div.walksheet-end-box { clear: both;  }
+
+div.walksheet-box { width: 550px; margin:5px 0 5px 0; padding:0; border: 1px solid blue; border-radius: 5px; }
+div.walksheet-title-box-left {float: left; font-size:small; font-weight: bold; width: 100px; margin:0; padding:15px 0 0 8px;}
+div.walksheet-box-left {float: left; font-size:x-small; width: 330px; margin:0; padding:0;}
+div.walksheet-note-box-left {float: left; font-size:x-small; width: 50px; margin:0; padding:0;}
+
+.walksheet-help-title { color:blue; font-weight: bold; }

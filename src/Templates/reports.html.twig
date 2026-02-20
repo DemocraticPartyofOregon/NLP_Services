@@ -1,0 +1,40 @@
+{#
+Links for functions to create reports.
+#}
+
+
+{% set importCrosstabs = path('nlpservices.import_crossstabs_form') %}
+{% set importMatchbacks = path('nlpservices.import_matchbacks_form') %}
+{% set resultsSummary = path('nlpservices.display_results_summary') %}
+{% set cdResultsSummary = path('nlpservices.display_cd_results_summary') %}
+{% set minivan = path('nlpservices.import_minivan_form') %}
+{% set nlsStatus = path('nlpservices.export_report', {'statusType': 'nlp_nls_status' } ) %}
+{% set exportNlsParticipationStatus = path('nlpservices.export_nls_participation_status_form') %}
+{% set turfStatus = path('nlpservices.export_report', {'statusType': 'nlp_turf_status' } ) %}
+{% set turfList = path('nlpservices.export_table', {'tableName': 'nlp_turf' , 'option': 'county'}) %}
+{% set exportTurfAssignments = path('nlpservices.export_table', {'tableName': 'nlp_turf_assignment' , 'option': 'county'}) %}
+
+{% trans %}
+
+    <h1>NLP Reports</h1>
+
+    <h2>Reports to assess the status of the election</h2>
+    <ul>
+        <li><a href={{ nlsStatus }}>Export the status of NLs.</a></li>
+        <li><a href={{ exportNlsParticipationStatus }}>Export the status of NLs by district.</a></li>
+        <li><a href={{ turfStatus }}>Export the status of Turfs.</a></li>
+        <li><a href={{ turfList }}>Export a list of turfs.</a></li>
+        <li><a href={{ exportTurfAssignments }}>Export turf assignments.</a></li>
+        <li><a href={{ resultsSummary }}>Display the election results summary (by County).</a></li>
+        <li><a href={{ cdResultsSummary }}>Display the election results summary (by CD).</a></li>
+    </ul>
+
+    <h1>Imports of information to track the progress of the election</h1>
+
+    <ul>
+        <li><a href={{ importCrosstabs }}>Import the crosstabs file.</a></li>
+        <li><a href={{ importMatchbacks }}>Import the matchbacks file.</a></li>
+        <li><a href={{ minivan }}>Import the NLP reports from Minivan users.</a></li>
+    </ul>
+
+{% endtrans %}

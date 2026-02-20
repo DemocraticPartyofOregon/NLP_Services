@@ -1,0 +1,13 @@
+# Permission to set up a new election cycle.
+nlp administer:
+  title: 'Administer nlpservices access.'
+  description: 'Allow user to change nlpservices settings.'
+  restrict access: true
+# Permission to access the functions for a coordinator.
+nlp tools access:
+  title: 'Access nlpservices tools.'
+  description: 'Allow coordinators to access nlpservices tools.'
+# Permission for an NLP Leader to access turfs and enter voter contact reports.
+nlp data entry:
+  title: 'Neighborhood Leader access to report results.'
+  description: 'Allow NLs to access data entry page.'

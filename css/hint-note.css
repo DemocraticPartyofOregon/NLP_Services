@@ -1,0 +1,16 @@
+/*
+ * @file
+ * CSS for display of popup hints.
+ */
+
+.hint-link-text { color:blue; font-weight:bold; }
+.hint-list { left: -5px; top: 1px; width: 300px; font-size:x-small; }
+
+.hint-no-white {margin:0; padding:0; line-height:100%;}
+.hint_note { position: relative; }
+.hint_note p { margin: 0; padding: 0; }
+.hint_note p span { display: none; color: #0033ff; }
+.hint_note p:hover span { display: block; position: absolute;
+    font-weight: normal; color: #000000; text-align: left; padding: 3px;
+    border: 2px solid #0000ff; border-radius:5px;
+    background: rgba(255, 255, 255, 1.0) }

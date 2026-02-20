@@ -1,0 +1,626 @@
+# NLP Services routes
+
+# API
+
+nlpservices.activist_code_configuration_form:
+  path: '/nlpservices-activist-code-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\ActivistCodeConfigurationForm
+    _title: 'Activist code configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.api_configuration_form:
+  path: '/nlpservices-api-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\ApiConfigurationForm
+    _title: 'API folders configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.folders_configuration_form:
+  path: '/nlpservices-folders-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\FoldersConfigurationForm
+    _title: 'NLP folders configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.response_code_configuration_form:
+  path: '/nlpservices-response-code-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\ResponseCodeConfigurationForm
+    _title: 'Response code configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.survey_question_configuration_form:
+  path: '/nlpservices-survey-question-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\SurveyQuestionForm
+    _title: 'Survey question selection'
+  requirements:
+    _permission: 'access content'
+
+
+# Setup
+
+nlpservices.election_configuration_form:
+  path: '/nlpservices-election-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\ElectionConfigurationForm
+    _title: 'Election cycle configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.email_configuration_form:
+  path: '/nlpservices-email-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\EmailConfigurationForm
+    _title: 'Email configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.enable_cron_tasks_form:
+  path: '/nlpservices-cron-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\EnableCronTasksForm
+    _title: 'Cron configuration'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.export_voter_contact_reports_form:
+  path: '/nlpservices-voter-contact-reports'
+  defaults:
+    _form: Drupal\nlpservices\Form\ExportVoterContactReportsForm
+    _title: 'Export the reports of voter contacts.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.import_reports_form:
+  path: '/nlpservices-import-reports'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportReportsForm
+    _title: 'Restore the reports of voter contacts.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.reset_form:
+  path: '/nlpservices-reset'
+  defaults:
+    _form: Drupal\nlpservices\Config\NlpResetForm
+    _title: 'Reset the NLP Services database for a new election.'
+  requirements:
+    _permission: 'nlp administer'
+
+# Manage
+
+nlpservices.vanid_form:
+  path: '/nlpservices-vanid-form'
+  defaults:
+    _form: Drupal\nlpservices\Form\VanidForm
+    _title: "Repair the database for a change in an Nl's VANID."
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.coordinators_form:
+  path: '/nlpservices-coordinators'
+  defaults:
+    _form: Drupal\nlpservices\Form\CoordinatorsForm
+    _title: 'Define the coordinators for the county.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.coordinator_email_form:
+  path: '/nlpservices-coordinator-email'
+  defaults:
+    _form: Drupal\nlpservices\Form\CoordinatorEmail
+    _title: 'Send an email to the NLP Coordinator.'
+  requirements:
+    _permission: 'nlp data entry'
+
+nlpservices.remove_coordinator_role_form:
+  path: '/nlpservices-remove-coordinator-role'
+  defaults:
+    _form: Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom
+    _title: 'Remove a coordinator assignment.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.display_results_summary:
+  path: '/nlpservices-display-results-summary'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ReportsController::countyResultsSummary
+    _title: 'Display election results summary.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.display_cd_results_summary:
+  path: '/nlpservices-display-cd-results-summary'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ReportsController::cdResultsSummary
+    _title: 'Display election results summary by CD.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.import_crossstabs_form:
+  path: '/nlpservices-import-crosstabs'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportCrosstabsForm
+    _title: 'Import the crosstabs file.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.import_matchbacks_form:
+  path: '/nlpservices-import-matchbacks'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportMatchbacksForm
+    _title: 'Import the matchback file.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.import_minivan_form:
+  path: '/nlpservices-import-minivan'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportMinivanForm
+    _title: 'Import the NLP results from Minivan Users.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.import_table_form:
+  path: '/nlpservices-import-table/{tableName}'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportTableForm
+    _title: 'Import a table file.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.login_credentials_reminder_form:
+  path: '/nlpservices-login-credentials-reminder'
+  defaults:
+    _form: Drupal\nlpservices\Form\LoginCredentialsReminderForm
+    _title: 'Send an email to an NL with login credentials.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.turf_delivery_message_form:
+  path: '/nlpservices-turf-delivery-message'
+  defaults:
+    _form: Drupal\nlpservices\Form\TurfDeliveryMessageForm
+    _title: 'Edit the message body for the email to deliver a turf.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.upload_instructions_form:
+  path: '/nlpservices-upload_instructions'
+  defaults:
+    _form: Drupal\nlpservices\Form\UploadInstructionsForm
+    _title: 'Upload a PDF with instructions for NLs.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.votebuilder_update_date_form:
+  path: '/nlpservices-votebuilder_update_date'
+  defaults:
+    _form: Drupal\nlpservices\Config\VoteBuilderUpdateDate
+    _title: 'Set the date of the most recent update of voter registrations.'
+  requirements:
+    _permission: 'access content'
+
+# Operational
+
+nlpservices.active_nls_display_form:
+  path: '/nlpservices-active-nls-display'
+  defaults:
+    _form: Drupal\nlpservices\Form\ActiveNlsDisplayForm
+    _title: 'Display the list of active NLs for the county.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.cancel_moved_report:
+  path: '/nlp-cancel-moved-report'
+  defaults:
+    _form: Drupal\nlpservices\Form\CancelMovedReport
+    _title: 'Cancel the report that voter has moved.'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.county_change_form:
+  path: '/nlpservices-county-change'
+  defaults:
+    _form: Drupal\nlpservices\Form\CountyChangeForm
+    _title: 'Change the county being accessed by an admin.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.data_entry_help_route:
+  path: '/nlp-data-entry-help'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DataEntryHelperController::data_entry_helper
+    _title: 'Help for data entry'
+  requirements:
+    _permission: 'nlp data entry'
+  options:
+    no_cache: TRUE
+
+nlpservices.data_entry_print:
+  path: '/nlp-data-entry-print'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DataEntryHelperController::data_entry_print
+    _title: 'Printable documents for canvassing, mailing and calling'
+  requirements:
+    _permission: 'nlp data entry'
+
+nlpservices.data_entry_form:
+  path: '/nlpservices-data-entry'
+  defaults:
+    _form: Drupal\nlpservices\Form\DataEntryForm
+    _title: 'Report results of voter contact.'
+  requirements:
+    _permission: 'nlp data entry'
+
+nlpservices.data_entry_postcards_form:
+  path: '/nlpservices-data-entry-postcards'
+  defaults:
+    _form: Drupal\nlpservices\Form\DataEntryPostcardsForm
+    _title: 'Report postcards mailed.'
+  requirements:
+    _permission: 'nlp data entry'
+
+nlpservices.default_method_form:
+  path: '/nlpservices-default-method'
+  defaults:
+    _form: Drupal\nlpservices\Form\DataEntryDefaultMethodForm
+    _title: 'Select the default voter contact method.'
+  requirements:
+    _permission: 'nlp data entry'
+
+nlpservices.delete_turf_form:
+  path: '/nlpservices-delete-turf'
+  defaults:
+    _form: Drupal\nlpservices\Form\DeleteTurfForm
+    _title: 'Delete a turf.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.deliver_turf_form:
+  path: '/nlpservices-deliver-turf'
+  defaults:
+    _form: Drupal\nlpservices\Form\DeliverTurfForm
+    _title: 'Send an email with login credentials for a turf.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.display_nls_form:
+  path: '/nlpservices-display-nls'
+  defaults:
+    _form: Drupal\nlpservices\Form\ActiveNlsDisplayForm
+    _title: 'Display the list of Active NLs.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.documents_form:
+  path: '/nlpservices-documents'
+  defaults:
+    _form: Drupal\nlpservices\Form\DocumentsForm
+    _title: 'Documents for managing NLP.'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.export_nls_participation_status_form:
+  path: '/nlpservices-nls-participation-status'
+  defaults:
+    _form: Drupal\nlpservices\Form\ExportNlsParticipationStatusForm
+    _title: 'Report status of NL participation.'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.key_validate_form:
+  path: '/nlpservices-key-validate-form'
+  defaults:
+    _form: Drupal\nlpservices\Form\KeyValidateForm
+    _title: 'Validate the API keys.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.legislative_fixes_form:
+  path: '/nlpservices-legislative-fixes'
+  defaults:
+    _form: Drupal\nlpservices\Form\LegislativeFixesForm
+    _title: 'Manage legislative district fixes.'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.printable_calling_page:
+  path: '/nlp-printable-calling-page/{turfIndex}'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DataEntryHelperController::printable_calling_page
+    _title: 'Calling list display'
+  requirements:
+    _permission: 'nlp data entry'
+  options:
+    no_cache: TRUE
+
+nlpservices.printable_mailing_page:
+  path: '/nlp-printable-mailing-page/{turfIndex}'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DataEntryHelperController::printable_mailing_page
+    _title: 'Mailing list display'
+  requirements:
+    _permission: 'nlp data entry'
+  options:
+    no_cache: TRUE
+
+nlpservices.printable_walksheet_page:
+  path: '/nlp-printable-walksheet-page/{turfIndex}'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DataEntryHelperController::printable_walksheet_page
+    _title: 'Walksheet'
+  requirements:
+    _permission: 'nlp data entry'
+  options:
+    no_cache: TRUE
+
+nlpservices.resync_turfs_form:
+  path: '/nlpservices-resync-turfs'
+  defaults:
+    _form: Drupal\nlpservices\Form\ResyncTurfsForm
+    _title: 'Resync turfs older than latest update of the VoterFile.'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.sync_active_nls_form:
+  path: '/nlpservices-sync-active-nls'
+  defaults:
+    _form: Drupal\nlpservices\Form\SyncActiveNlsForm
+    _title: 'Sync a new list of active NLs for the county.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.sync_nls_form:
+  path: '/nlpservices-sync-nls'
+  defaults:
+    _form: Drupal\nlpservices\Form\SyncActiveNlsForm
+    _title: 'Sync a new list of Active NLs.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.sync_turf_form:
+  path: '/nlpservices-sync-turf'
+  defaults:
+    _form: Drupal\nlpservices\Form\SyncTurfForm
+    _title: 'Sync a turf.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.turf_select_form:
+  path: '/nlpservices-turf-select'
+  defaults:
+    _form: Drupal\nlpservices\Form\TurfSelectForm
+    _title: 'Select a turf for reporting results.'
+  requirements:
+    _permission: 'nlp data entry'
+
+# Drupal
+
+system.admin_config_nlpservices:
+  path: '/admin/config/nlp-config'
+  defaults:
+    _controller: Drupal\system\Controller\SystemController::systemAdminMenuBlockPage
+    _title: 'NLP Services'
+  requirements:
+    _permission: 'access administration pages'
+
+nlpservices.add_drupal_account_form:
+  path: '/nlpservices-add-drupal-accounts'
+  defaults:
+    _form: Drupal\nlpservices\Form\AddDrupalAccountForm
+    _title: 'Add an account for the Drupal site.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.delete_drupal_accounts_form:
+  path: '/nlpservices-delete-drupal-accounts'
+  defaults:
+    _form: Drupal\nlpservices\Form\DeleteDrupalAccountsForm
+    _title: 'Delete accounts from the Drupal site.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.export_credentials_file:
+  path: '/nlpservices-export-credentials'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ExportUserAccountsController::createNlCredentialsFile
+    _title: 'Export the user credentials for NLP Services logins.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.export_user_accounts_file:
+  path: '/nlpservices-export-user-accounts'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ExportUserAccountsController::createUserAccountsFile
+    _title: 'Export the user accounts for NLP Services.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.export_status:
+  path: '/nlp-export-status'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\BasicTestController::exportStatus
+    _title: 'Export Status'
+  requirements:
+    _permission: 'nlp tools access'
+  options:
+    no_cache: TRUE
+
+nlpservices.export_report:
+  path: '/nlp-export-report'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ReportsController::exportReport
+    _title: 'Export Status Summary'
+  requirements:
+    _permission: 'nlp tools access'
+  options:
+    no_cache: TRUE
+
+nlpservices.export_table:
+  path: '/nlp-export-table'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ExportTableController::exportTable
+    _title: 'Export an NLP Table'
+  requirements:
+    _permission: 'nlp tools access'
+  options:
+    no_cache: TRUE
+
+nlpservices.import_credentials_form:
+  path: '/nlpservices-import-credentials'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportCredentialsForm
+    _title: 'Restore the user credentials for NLP Services.'
+  requirements:
+    _permission: 'nlp tools access'
+
+
+nlpservices.import_user_accounts_form:
+  path: '/nlpservices-import-user-accounts'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportUserAccountsForm
+    _title: 'Restore the user accounts for NLP Services.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.manage_drupal_accounts_form:
+  path: '/nlpservices-manage-drupal-accounts'
+  defaults:
+    _form: Drupal\nlpservices\Form\ManageDrupalAccountsForm
+    _title: 'Manage accounts for the Drupal site.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.manage_nlp_users_accounts_menu:
+  path: '/nlpservices-manage-nlp-users-accounts'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::manage_nlp_users
+    _title: 'Manage Drupal accounts'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.purge_nl_accounts:
+  path: '/nlpservices-purge-nl-accounts'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ExportUserAccountsController::purgeNlCredentials
+    _title: 'Purge all Drupal logins for NLs.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.webhook_callback:
+  path: '/nlp-webhook-callback'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\WebHookController::webhook_callback
+    _title: 'Notification of Export Jobs completion.'
+  requirements:
+    _permission: 'access content'
+
+# Menus
+
+nlpservices.configuration_menu:
+  path: '/nlpservices-site-configuration'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::site_configuration
+    _title: 'Site Configuration Menu'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.manage_county_menu:
+  path: '/nlpservices-manage-county'
+  defaults:
+#    _controller: Drupal\nlpservices\Controller\CountyManagementController::manage_county
+    _form: Drupal\nlpservices\Form\ManageCountyForm
+    _title: 'Manage county'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.manage_nls_menu:
+  path: '/nlpservices-manage-nls'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::manage_nls
+    _title: 'Manage active NLs'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.manage_turf_menu:
+  path: '/nlpservices-manage-turfs'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::manage_turfs
+    _title: 'Manage turfs'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.reports_menu:
+  path: '/nlpservices-reports'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ReportsController::reports
+    _title: 'Reports Menu'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.documents_menu:
+  path: '/nlpservices-document-list'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\DocumentsController::displayDocuments
+    _title: 'Documents Menu'
+  requirements:
+    _permission: 'nlp tools access'
+
+# Test
+
+nlpservices.awake:
+  path: '/nlp-awake'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\AwakeController::awake
+    _title: 'NLP Awake'
+  requirements:
+    _permission: 'access content'
+
+nlpservices.awake_form:
+  path: '/nlp-awake-form'
+  defaults:
+    _form: Drupal\nlpservices\Form\AwakeForm
+    _title: 'Test form.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.enable_debug_form:
+  path: '/nlp-enable-debug-form'
+  defaults:
+    _form: Drupal\nlpservices\Form\EnableDebugForm
+    _title: 'Enable debug form.'
+  requirements:
+    _permission: 'nlp administer'
+
+nlpservices.basic_test:
+  path: '/nlp-basic-test'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\BasicTestController::exportStatus
+    _title: 'Export an NLP status'
+  requirements:
+    _permission: 'nlp tools access'
+  options:
+    no_cache: TRUE
+
+nlpservices.admin_menu_section:
+  path: '/admin/config/nlp_menu'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::site_configuration
+    _title: 'NLP Configuration'
+  requirements:
+    _permission: 'administer site configuration'
+
+nlpservices.admin_menu:
+  path: '/admin/config/nlp_menu/nlp_conf'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ConfigurationController::site_configuration
+    _title: 'NLP Configuration and Administration'
+  requirements:
+    _permission: 'administer site configuration'

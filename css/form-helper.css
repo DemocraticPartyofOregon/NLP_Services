@@ -1,0 +1,9 @@
+/*
+ * @file
+ * CSS for formatting forms.
+ */
+
+.file-name { color:blue;  font-size:x-small; font-weight:bold; }
+div.activist-code-box { width: 750px; }
+div.form-item { margin-top: 0; margin-bottom: 0; }
+.description { margin-left: 0; padding-left: 0; }

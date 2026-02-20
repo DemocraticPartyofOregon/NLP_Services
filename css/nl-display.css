@@ -1,0 +1,8 @@
+/*
+ * @file
+ * CSS for the data entry table.
+ */
+.historical-participation-title { color:blue; font-weight: bold; font-size:x-small; }
+.historical-participation-list { left: 100px; top: 16px; width: 175px; font-size:x-small; }
+.nls-table {font-size:small; padding:0; border-color:#d3e7f4; border-width:1px; table-layout: fixed; width:700px; }
+div.nls-field-set {font-size:small; padding:0; border-color:#d3e7f4; border-width:1px;  width:700px; }

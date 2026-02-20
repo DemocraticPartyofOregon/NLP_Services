@@ -1,0 +1,13 @@
+# Defines the NLP Leader role.
+langcode: en
+status: true
+dependencies:
+  enforced:
+    module:
+      - nlpservices
+id: nlp_leader
+label: 'NLP Leader'
+weight: 5
+is_admin: false
+permissions:
+  - 'nlp data entry'
