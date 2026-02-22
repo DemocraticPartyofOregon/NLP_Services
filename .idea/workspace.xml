@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review">
+      <change beforePath="$PROJECT_DIR$/src/Controller/ExportTableController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ExportTableController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpReports.php" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="ComposerSettings">
+    <execution />
+  </component>
+  <component name="CopilotPersistence">
+    <persistenceIdMap>
+      <entry key="_C:/Users/steve/PhpstormProjects/NLP_Services" value="39v9tqCOrZPMPcc7tFcp5ctKsn1" />
+    </persistenceIdMap>
+  </component>
+  <component name="DrupalConfiguration" enabled="true" version="9">
+    <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-9.5.11</drupalPath>
+  </component>
+  <component name="Git.Rebase.Settings">
+    <option name="NEW_BASE" value="origin/NLP_Services_V7_0_2" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="NLP_Services_V7_0_1" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;sjpacker21355&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/sjpacker21355/NLP_Services.git&quot;,
+    &quot;accountId&quot;: &quot;ee876f9f-d44c-482d-8c2a-7421c921c319&quot;
+  }
+}</component>
+  <component name="JoomlaConfiguration">
+    <joomlaConfigPath />
+    <joomlaPath />
+  </component>
+  <component name="PhpWorkspaceProjectConfiguration">
+    <include_path>
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/core" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/modules" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/vendor" />
+    </include_path>
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 3
+}</component>
+  <component name="ProjectId" id="39v9tqCOrZPMPcc7tFcp5ctKsn1" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__0__2&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.30387.85" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="" />
+      <created>1771565894670</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1771565894670</updated>
+      <workItem from="1771565895940" duration="4524000" />
+      <workItem from="1771604804133" duration="37016000" />
+      <workItem from="1771701984183" duration="1340000" />
+    </task>
+    <task id="LOCAL-00001" summary="Claude code review of API services">
+      <option name="closed" value="true" />
+      <created>1771624130745</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1771624130745</updated>
+    </task>
+    <task id="LOCAL-00002" summary="Claude review of setup">
+      <option name="closed" value="true" />
+      <created>1771655034998</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1771655034998</updated>
+    </task>
+    <task id="LOCAL-00003" summary="Claude review of controllers">
+      <option name="closed" value="true" />
+      <created>1771700340655</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1771700340655</updated>
+    </task>
+    <option name="localTasksCounter" value="4" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/NLP_Services_V7_0_2" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="Claude code review of API services" />
+    <MESSAGE value="Claude review of setup" />
+    <MESSAGE value="Claude review of controllers" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude review of controllers" />
+  </component>
+  <component name="WordPressConfiguration">
+    <wordpressPath />
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>
