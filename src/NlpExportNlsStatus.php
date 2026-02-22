@@ -110,7 +110,7 @@ class NlpExportNlsStatus
         nlp_debug_msg('$county',$county);
         continue;
       }
-      $counts = $this->reports->getCountyReportCounts($county);
+      $counts = $this->reports->getCommitteeReportCounts($county);
       foreach ($nlList as $mcid => $nl) {
         // Count the number of voters assigned to this NL.
         $voterCount = $this->voters->getVoterCountByNl($mcid);

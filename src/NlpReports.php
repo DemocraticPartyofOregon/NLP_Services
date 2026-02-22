@@ -718,12 +718,12 @@ class NlpReports {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
       $query->fields('r');
-      $query->condition('committee',$committee);
+      $query->condition('county',$committee);
       $query->condition('cycle',$this->cycle);
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getCountyReportCounts', $e->getMessage() );
+      nlp_debug_msg('getCommitteeReportCounts', $e->getMessage() );
       return [];
     }
     $voterStatus = [];

@@ -42,11 +42,12 @@ class ExportTableController extends ControllerBase
   {
     $tableName = $_GET['tableName'];
     
-    $county = NULL;
+    $county = '';
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
     if(!$admin) {
       $county = $currentUser['county'];
+      $county = (empty($county)) ? '' : (string) $county;
     }
     
     $tempDir = 'public://temp';
