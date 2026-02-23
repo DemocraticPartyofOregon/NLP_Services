@@ -5,9 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review">
-      <change beforePath="$PROJECT_DIR$/src/Controller/ExportTableController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ExportTableController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpReports.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpAwards.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpAwards.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +90,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.30387.85" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PS-253.31033.138" />
+        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.31033.138" />
       </set>
     </attachedChunks>
   </component>
@@ -104,6 +105,7 @@
       <workItem from="1771565895940" duration="4524000" />
       <workItem from="1771604804133" duration="37016000" />
       <workItem from="1771701984183" duration="1340000" />
+      <workItem from="1771817077459" duration="1094000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />

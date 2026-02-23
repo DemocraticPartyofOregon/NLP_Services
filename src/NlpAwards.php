@@ -92,7 +92,9 @@ class NlpAwards
   public function getAward(int $mcid): array
   {
     $award = $this->fetchAwardRecord($mcid);
-    if(empty($award)) {return [];}
+    if(empty($award)) {
+      return $this->newAwardRecord($mcid);
+    }
     $participation = (!empty($award['participation']))?
       (array) json_decode($award['participation']):[];
     $award['participation'] = $participation;
@@ -266,6 +268,7 @@ class NlpAwards
       'nickname' => '',
       'lastName' => '',
       'preferredContactMethod' => '',
+      'notes' => '',
     ];
     $nl = $this->nlsObj->getNlById($mcid);
     if(!empty($nls)) { // Should never be empty.
