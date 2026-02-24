@@ -1,11 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="PublishConfigData" serverName="OregoNLP">
+  <component name="PublishConfigData">
     <serverData>
-      <paths name="OregoNLP">
+      <paths name="OregonNLP">
         <serverdata>
           <mappings>
             <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="SandboxNLP">
+        <serverdata>
+          <mappings>
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

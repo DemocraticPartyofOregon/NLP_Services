@@ -143,19 +143,26 @@ recent information from VoteBuilder.)</p>';
       $pdfPath = $this->pathsObj->getPath('PDF',$county);
       $pdfUri = $pdfPath . $turf['turfPDF'];
       $url = Drupal::service('file_url_generator')->generateAbsoluteString($pdfUri);
-      $page .=  '<br><span style="font-weight:bold; color: blue;"><b>Get your walk sheet:</b> </span><a href="'.$url.
-        '" target="_blank"> Click Here</a>';
+      $page .=  '<p>The link below takes you to a printable document with a map and a list of voters for you to 
+contact.  The document was prepared for you by your coordinator and represents the list of voters in your turf at 
+the time the list was created.  If you have had this list for more than 30 days, the actual list of voters may 
+differ.</p>';
+      $page .=  '<p></p><span style="font-weight:bold; color: blue;"><b>Get your walk sheet:</b> </span><a href="'.$url.
+        '" target="_blank"> Click Here</a></p>';
     } else {
       $page .=  '<p>Your coordinator did not provide a walksheet for you to print, possibly because
 you intend to send postcards or are using the MiniVAN.  If you need a printable walksheet, please contact
 your county coordinator.</p>';
     }
     
-    $page .=  'This link will create a new walksheet for turf in PDF format.   It will match the current
-    lst of voters displayed in your data entry page.  The walksheet will not have a map and may be of
-    some help to you if there has been an update of registered voters. <br>';
+    $page .=  '<p>Approximately every thirty days, the database of registered voters is updated by the state 
+party.   If your turf was created before the latest update of voters, it may have experienced some change.   Some 
+voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf 
+in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from 
+the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if 
+still attempting to contact voters. </p>';
     
-    $page .= '<b>Create a new walksheet:</b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
+    $page .= '<p><b>Create a new walksheet: </b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
     
     $page .= "<h2>GOTV calling list</h2>";
   
