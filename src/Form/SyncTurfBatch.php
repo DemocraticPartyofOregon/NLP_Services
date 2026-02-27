@@ -387,7 +387,7 @@ const MAX_QUEUE_LIMIT = '4';
         .'_TI'.$turfIndex.'.'.$walksheetInfo['fileType'];
 
       $uri = $pathsObj->getPath('PDF', $county) . $uniqueWalksheetName;
-      $fileSystem->moveUploadedFile($walksheetInfo['tempName'], $uri);
+      copy($walksheetInfo['tempName'], $uri);
       $turfsObj->updateTurf($turfIndex, 'turfPDF', $uniqueWalksheetName);
     }
 

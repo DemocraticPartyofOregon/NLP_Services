@@ -53,7 +53,7 @@ class ActiveNlsDisplayForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): ActiveNlsDisplayForm
+  public static function create(ContainerInterface $container): static
   {
     return new static(
       $container->get('nlpservices.voters'),
@@ -69,7 +69,6 @@ class ActiveNlsDisplayForm extends FormBase
       $container->get('nlpservices.activist_codes'),
     );
   }
-  
   /**
    * {@inheritdoc}
    */
@@ -102,8 +101,7 @@ class ActiveNlsDisplayForm extends FormBase
   
     $county = $form_state->get('county');
     if(empty($county)) {
-      $messenger = Drupal::messenger();
-      $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
+      $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
     }
     $page = $form_state->get('page');
@@ -165,9 +163,9 @@ class ActiveNlsDisplayForm extends FormBase
         }
       }
       $nlsTable = $this->nlsListDisplayObj->createTableArray($nlRecords);
-      $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
+      $sort = Drupal::request()->query->get('sort', '');
       if(!empty($sort)) {
-        $order = $_GET['order'];
+        $order = Drupal::request()->query->get('order', '');
         $this->nlsListDisplayObj->sortNlsTable($nlsTable,$sort,$order);
       }
       
@@ -176,9 +174,7 @@ class ActiveNlsDisplayForm extends FormBase
         '#prefix' => '<div id="nlsFormDiv">',
         '#suffix' => '</div>',
         '#type' => 'fieldset',
-        '#attributes' => [
-          'style' => ['background-image:none;border:0px;padding:0px;margin:0px;background-color:rgb(255,255,255);'],
-        ],
+        '#attributes' => ['class' => ['nlp-nls-form-wrapper']],
       ];
       
       // Build the table of NLs names and status.
@@ -212,7 +208,7 @@ class ActiveNlsDisplayForm extends FormBase
         $mcid = 0;
         $column = '';
         $parents = $triggeringElement['#parents'];
-        if(!empty($parents) AND $parents[0]=='contacts') {
+        if(!empty($parents) && $parents[0]=='contacts') {
           $mcid = $parents[1];
           $column  = $parents[2];
           $status = $this->nlsObj->getNlsStatus($mcid,$county);
@@ -284,13 +280,12 @@ class ActiveNlsDisplayForm extends FormBase
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * processAsk
    *
-   * @param $mcid
-   * @param $askStatus
+   * @param int $mcid
+   * @param string $askStatus
    * @return void
    */
-  function processAsk($mcid,$askStatus): void
+  function processAsk(int $mcid, string $askStatus): void
   {
-    //nlp_debug_msg('processAsk',"$mcid,$askStatus");
     $currentStatus = $this->nlsObj->getNlsStatus($mcid);
     $status = $currentStatus;
     $status['asked'] = $askStatus;
@@ -310,28 +305,8 @@ class ActiveNlsDisplayForm extends FormBase
     } elseif($currentStatus['asked'] == 'Dropout') {
       $request['action'] = 'Remove';
       $this->apiActivistCodesObj->setApiActivistCode($request);
-      //$this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC','Remove');
     }
-    
-    //$this->apiActivistCodesObj->setApiActivistCode($request);
-    
-    /*
-    if ($askStatus == 'Dropout') {
-      $this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC');
-    } elseif($currentStatus['asked'] == 'Dropout') {
-      $this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC','Remove');
-    }
-    */
-    
-    /*
-    $canvassDate = date(DATE_ATOM, time());
-    $surveyQuestion = [
-      'type' => 'nlParticipation',
-      'dateCanvassed' => $canvassDate,
-      'responseName' => $askStatus,
-    ];
-    */
-    //$this->apiSurveyQuestionObj->setSurveyResponse($mcid,$surveyQuestion);
+
     $surveyResponse = [
       'type' => 'nlParticipation',
       'vanid' => $mcid,
@@ -348,10 +323,10 @@ class ActiveNlsDisplayForm extends FormBase
    * the voters on the turf, the progress on making face-to-face contact and
    * a judgment that they are done.
    *
-   * @param $mcid
+   * @param int $mcid
    * @return array
    */
-  function getProgress($mcid): array
+  function getProgress(int $mcid): array
   {
     $progress['attempts'] = $progress['contacts'] = $progress['voterCount'] = 0;
     // Get the voters assigned to this NL for all the turfs.

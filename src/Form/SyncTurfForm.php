@@ -421,6 +421,8 @@ class SyncTurfForm extends FormBase {
           return;
         }
         $showLists = $form_state->get('showLists');
+
+
         
         $args = [
           'county' => $county,
@@ -492,7 +494,6 @@ class SyncTurfForm extends FormBase {
         ],
       ];
     }
-    
     // Now check that we have an allowed file type for the turf.
     $fileName = $_FILES['files']['name'][$name];
     $tempName = $_FILES['files']['tmp_name'][$name];
@@ -506,6 +507,16 @@ class SyncTurfForm extends FormBase {
         return ['result'=>'error', 'message'=>'The walksheet must be a PDF, XLS, or XLSX type.'];
       }
       $fileNameBase = $lcFileNameParts[0];
+
+      // Move the temporary file to a persistent location that survives the batch processing.
+      // The default PHP temp directory gets cleaned up, so we need to move it to Drupal's temp directory.
+      if (!empty($tempName) && is_file($tempName)) {
+        $persistentTempDir = \Drupal::service('file_system')->getTempDirectory();
+        $persistentTempFile = $persistentTempDir . '/' . uniqid('walksheet_') . '.' . $fileType;
+        if (copy($tempName, $persistentTempFile)) {
+          $tempName = $persistentTempFile;
+        }
+      }
     }
     return [
       'result'=>'ok',
