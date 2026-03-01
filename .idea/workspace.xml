@@ -4,14 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add diagnostic error messages when a faulty API key is suspected.">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Correct error message for reporting status of the ASK for an active NL.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNls.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -110,7 +105,7 @@
       <workItem from="1771701984183" duration="1340000" />
       <workItem from="1771817077459" duration="1094000" />
       <workItem from="1772250902953" duration="12873000" />
-      <workItem from="1772297056722" duration="14850000" />
+      <workItem from="1772297056722" duration="16122000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -160,7 +155,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772379153772</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Display of All fails after adding the type test for HD as int.">
+      <option name="closed" value="true" />
+      <created>1772379742185</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1772379742185</updated>
+    </task>
+    <task id="LOCAL-00008" summary="Correct error message for reporting status of the ASK for an active NL.">
+      <option name="closed" value="true" />
+      <created>1772379824521</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1772379824521</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -196,7 +207,9 @@
     <MESSAGE value="REcover from the change in VAN from Preferred to Best for phone numbers." />
     <MESSAGE value="Remove requirement that the old vanid not exist for changing the vanid for an NL to a new one." />
     <MESSAGE value="Add diagnostic error messages when a faulty API key is suspected." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add diagnostic error messages when a faulty API key is suspected." />
+    <MESSAGE value="Display of All fails after adding the type test for HD as int." />
+    <MESSAGE value="Correct error message for reporting status of the ASK for an active NL." />
+    <option name="LAST_COMMIT_MESSAGE" value="Correct error message for reporting status of the ASK for an active NL." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
