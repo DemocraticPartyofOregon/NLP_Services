@@ -311,6 +311,7 @@ class SyncTurfForm extends FormBase {
         $selections = $this->nlsListDisplayObj->
                         validateNlSelection($form_state->getValue('search'));
         $nlSelection = reset($selections);
+
         $form_state->set('nlSelection',$nlSelection);
         if(count($selections)!=1) {
           $form_state->setErrorByName('turf_submit',"You must select only one NL.");

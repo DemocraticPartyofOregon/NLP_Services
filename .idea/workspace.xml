@@ -4,12 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add diagnostic error messages when a faulty API key is suspected.">
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNls.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -33,7 +35,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="NLP_Services_V7_0_1" />
+        <entry key="$PROJECT_DIR$" value="NLP_Services_V7_1_0" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -69,26 +71,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__0__2&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "NLP__Services__V7__0__2",
+    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -108,6 +109,8 @@
       <workItem from="1771604804133" duration="37016000" />
       <workItem from="1771701984183" duration="1340000" />
       <workItem from="1771817077459" duration="1094000" />
+      <workItem from="1772250902953" duration="12873000" />
+      <workItem from="1772297056722" duration="14850000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -133,7 +136,31 @@
       <option name="project" value="LOCAL" />
       <updated>1771700340655</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="REcover from the change in VAN from Preferred to Best for phone numbers.">
+      <option name="closed" value="true" />
+      <created>1772305607647</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1772305607647</updated>
+    </task>
+    <task id="LOCAL-00005" summary="Remove requirement that the old vanid not exist for changing the vanid for an NL to a new one.">
+      <option name="closed" value="true" />
+      <created>1772379077342</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1772379077342</updated>
+    </task>
+    <task id="LOCAL-00006" summary="Add diagnostic error messages when a faulty API key is suspected.">
+      <option name="closed" value="true" />
+      <created>1772379153772</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1772379153772</updated>
+    </task>
+    <option name="localTasksCounter" value="7" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -166,7 +193,10 @@
     <MESSAGE value="Claude code review of API services" />
     <MESSAGE value="Claude review of setup" />
     <MESSAGE value="Claude review of controllers" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude review of controllers" />
+    <MESSAGE value="REcover from the change in VAN from Preferred to Best for phone numbers." />
+    <MESSAGE value="Remove requirement that the old vanid not exist for changing the vanid for an NL to a new one." />
+    <MESSAGE value="Add diagnostic error messages when a faulty API key is suspected." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add diagnostic error messages when a faulty API key is suspected." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

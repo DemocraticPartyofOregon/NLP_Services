@@ -105,7 +105,6 @@ class ActiveNlsDisplayForm extends FormBase
       return [];
     }
     $page = $form_state->get('page');
-    //nlp_debug_msg('buildForm',"Page: $page, County: $county");
     $form = [];
     // Select the HD to display.
     if ($page == 'data_entry') {
@@ -192,7 +191,7 @@ class ActiveNlsDisplayForm extends FormBase
     $county = $form_state->get('county');
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('validateForm',"Element clicked: $elementClicked");
+    //nlp_debug_msg('$elementClicked',$elementClicked);
     switch ($elementClicked) {
       
       case 'hd-select':
@@ -206,14 +205,19 @@ class ActiveNlsDisplayForm extends FormBase
         
       default:
         $mcid = 0;
-        $column = '';
+        $columnId = '';
         $parents = $triggeringElement['#parents'];
         if(!empty($parents) && $parents[0]=='contacts') {
-          $mcid = $parents[1];
-          $column  = $parents[2];
-          $status = $this->nlsObj->getNlsStatus($mcid,$county);
+          //$mcid = $parents[1];
+          $columnId  = $parents[2];
         }
-     
+
+        $columnParts = explode('-',$columnId);
+        if (count($columnParts) != 2) { break; }
+        $mcid = $columnParts[1];
+        $column = $columnParts[0];
+        $status = $this->nlsObj->getNlsStatus($mcid,$county);
+
         $value = $triggeringElement['#value'];
         // Process the checkbox, select or text box for this NL.
         switch ($column) {
@@ -252,7 +256,7 @@ class ActiveNlsDisplayForm extends FormBase
             $this->awardsObj->mergeAward($awardRecord);
             
             break;
-          case 'nl':  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
+          default:  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
             $askList = $this->nlsObj->askList;
             $nlProgress = $askList[$value];
             $this->processAsk($mcid,$nlProgress);

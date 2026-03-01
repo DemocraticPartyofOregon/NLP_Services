@@ -102,7 +102,7 @@ class NlpNlsListDisplay
         $askOptions = $this->nlsObj->askOptions;
         $currentAsk = $nlRecord['status']['asked'];
         $defaultAsk = array_search($currentAsk,$askOptions);
-        $row['nl'] = ['type'=>'se','options'=>$askOptions, 'default'=>$defaultAsk];
+        $row['nl'] = ['type'=>'se','options'=>$askOptions, 'default'=>$defaultAsk, 'mcid'=>$mcid ];
         
         $default = ($nlRecord['status']['turfCut']=='Y')?1:0;
         $row['tc'] = ['type'=>'tc','default'=>$default, 'mcid'=>$mcid];
@@ -163,6 +163,8 @@ class NlpNlsListDisplay
     
     foreach ($rows as $rowNumber => $row) {
       foreach($row as $columnName => $columnValue) {
+        $mcid = empty($columnValue['mcid'])?0:$columnValue['mcid'];
+        $columnName = "$columnName-$mcid";
         if(is_array($columnValue)) {
           switch ($columnValue['type']) {
             case 'cb':
@@ -181,7 +183,6 @@ class NlpNlsListDisplay
                 '#ajax' => [
                   'callback' => '::checkboxCallback',
                   'wrapper' => $callback."Div",
-                  //'disable-refocus' => FALSE,
                 ],
                 '#default_value' => $default,
               ];
@@ -227,10 +228,11 @@ class NlpNlsListDisplay
                 '#ajax' => [
                   'callback' => '::selectboxCallback',
                   'wrapper' => $callback."Div",
-                  //'disable-refocus' => FALSE,
                 ],
-                '#default_value' => $columnValue['default'],               ];
-              break;}
+                '#default_value' => $columnValue['default'],
+              ];
+              break;
+          }
         } else {
           $form_element[$type][$rowNumber][$columnName] = [
             '#markup' => $columnValue,
@@ -238,7 +240,6 @@ class NlpNlsListDisplay
         }
       }
     }
-    
     return $form_element;
   }
   
@@ -294,9 +295,12 @@ class NlpNlsListDisplay
   {
     $selections = [];
     foreach($contacts as $contact) {
-      if(!empty($contact['cb'])) {
-        $contactParts = explode('_',$contact['cb']);
+      foreach ($contact as $key => $value) {
+        $keyParts = explode('-',$key);
+        if($keyParts[0] != 'cb') {continue;}
+        $contactParts = explode('_',$value);
         $selections[$contactParts[1]] = ['rowCount'=>$contactParts[1], 'mcid'=>$contactParts[2]];
+        break;
       }
     }
     return $selections;
