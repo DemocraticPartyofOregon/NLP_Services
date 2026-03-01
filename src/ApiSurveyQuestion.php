@@ -216,8 +216,11 @@ class      ApiSurveyQuestion
       $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (Exception $e) {
       nlp_debug_msg('setApiSurveyResponse', $e->getMessage());
+      nlp_debug_msg('setApiActivistCode', "postUrl: $postUrl");
+      nlp_debug_msg('setApiActivistCode', "dataJson: $dataJson");
+      nlp_debug_msg('$surveyResponse', $surveyResponse);
     }
-    
+
   }
   
 }
