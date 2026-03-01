@@ -253,7 +253,8 @@ class NlpConfiguration
   public function getStateName(): string
   {
     $countyNames = $this->nlpConfig->get('nlpservices-county-names');
-    return $countyNames['State'];
+    $stateName = (!empty($countyNames['State']))?$countyNames['State']:'';
+    return $stateName;
   }
   
   /**
