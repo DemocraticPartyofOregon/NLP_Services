@@ -250,13 +250,13 @@ class NlpNls {
    * @param string $precinct
    * @return array
    */
-  public function getNls(string $county, int|string $hd, string $precinct=''): array
+  public function getNls(string $county, mixed $hd, string $precinct=''): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->fields('n');
       $query->condition('n.county',$county);
-      if ($hd != 'All') {
+      if ($hd != 'All' && !empty($hd)) {
         $query->condition('n.hd',$hd);
       }
       if (!empty($precinct)) {
