@@ -134,12 +134,6 @@ then be sure to identify the VANID in use by NLP Services as the primary.  If yo
     if( $previousIdLen != 9 ) {
       $form_state->setErrorByName('previousId', "A VANID is 9 digits but the previous ID entered only has $previousIdLen.");
       return;
-    } else {
-      $previousNl = $this->apiNlsObj->getApiNls('',$previousId);
-      if(!empty($previousNl)) {
-        $form_state->setErrorByName('previousId', "This function is permitted only if the previous VANID has been destroyed.");
-        return;
-      }
     }
     
     $newIdLen = strlen($newVanid);
