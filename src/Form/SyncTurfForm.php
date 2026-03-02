@@ -340,11 +340,16 @@ class SyncTurfForm extends FormBase {
       
       // An NL was selected from the list of NLs in a district.
       case 'add_selected':
-        $selections = $this->nlsListDisplayObj->validateNlSelection($form_state->getValue('contacts'));
+        $selections = $this->nlsListDisplayObj->validateNlSelection($form_state->getValue('nlsForm'));
+        if (empty($selections)) {
+          $form_state->setErrorByName('turf_submit',"You must select an NL.");
+          return;
+        }
         $nlSelection = reset($selections);
         $form_state->set('nlSelection',$nlSelection);
         if(count($selections)!=1) {
           $form_state->setErrorByName('turf_submit',"You must select only one NL.");
+          return;
         }
         $result = $this->validateWalksheet('turf_walksheet_districtSelect');
         if($result['result'] != 'ok') {

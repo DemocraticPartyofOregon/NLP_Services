@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Correct error message for reporting status of the ASK for an active NL.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure state name is a string and not NULL.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,7 +106,7 @@
       <workItem from="1771701984183" duration="1340000" />
       <workItem from="1771817077459" duration="1094000" />
       <workItem from="1772250902953" duration="12873000" />
-      <workItem from="1772297056722" duration="16122000" />
+      <workItem from="1772297056722" duration="24011000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -171,7 +172,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772379824521</updated>
     </task>
-    <option name="localTasksCounter" value="9" />
+    <task id="LOCAL-00009" summary="Ensure state name is a string and not NULL.">
+      <option name="closed" value="true" />
+      <created>1772381358411</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1772381358411</updated>
+    </task>
+    <task id="LOCAL-00010" summary="Ensure state name is a string and not NULL.">
+      <option name="closed" value="true" />
+      <created>1772381375887</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1772381375887</updated>
+    </task>
+    <option name="localTasksCounter" value="11" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -209,7 +226,8 @@
     <MESSAGE value="Add diagnostic error messages when a faulty API key is suspected." />
     <MESSAGE value="Display of All fails after adding the type test for HD as int." />
     <MESSAGE value="Correct error message for reporting status of the ASK for an active NL." />
-    <option name="LAST_COMMIT_MESSAGE" value="Correct error message for reporting status of the ASK for an active NL." />
+    <MESSAGE value="Ensure state name is a string and not NULL." />
+    <option name="LAST_COMMIT_MESSAGE" value="Ensure state name is a string and not NULL." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

@@ -170,7 +170,7 @@ class NlpNlsListDisplay
             case 'cb':
               $form_element[$type][$rowNumber][$columnName] = [
                 '#type' => 'checkbox',
-                '#return_value' => 'CB_'.'select'.'_'.$columnValue['mcid'],
+                '#return_value' => 'CB_'.$rowNumber.'_'.$columnValue['mcid'],
               ];
               break;
             case 'tc':
@@ -297,11 +297,12 @@ class NlpNlsListDisplay
     foreach($contacts as $contact) {
       foreach ($contact as $key => $value) {
         $keyParts = explode('-',$key);
-        if($keyParts[0] != 'cb') {continue;}
+        if($keyParts[0] != 'cb' || empty($value)) {break;}
         $contactParts = explode('_',$value);
         $selections[$contactParts[1]] = ['rowCount'=>$contactParts[1], 'mcid'=>$contactParts[2]];
         break;
       }
+
     }
     return $selections;
   }
