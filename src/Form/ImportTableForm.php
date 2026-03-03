@@ -201,7 +201,7 @@ class ImportTableForm extends FormBase
             }
           }
           $tableRecord['electionCount'] = (empty($tableRecord['electionCount']))? 0 : $tableRecord['electionCount'];
-          //nlp_debug_msg('$tableRecord',$tableRecord);
+          $tableRecord['vfid'] = (empty($tableRecord['vfid']))? 0 : $tableRecord['vfid'];
           break;
           
         case 'nlp_turf_assignment':
@@ -210,6 +210,7 @@ class ImportTableForm extends FormBase
           if(empty($tableRecord['dateAssigned'])) {
             unset($tableRecord['dateAssigned']);
           }
+          $tableRecord['vfid'] = (empty($tableRecord['vfid']))? 0 : $tableRecord['vfid'];
           break;
       }
       
