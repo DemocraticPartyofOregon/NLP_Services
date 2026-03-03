@@ -388,15 +388,6 @@ function nlpservices_schema(): array
     'primary key' => [ 'mapRegionId', ],
   ];
   
-  $schema['nlp_user_ip_history'] = [
-    'description' => 'History of IP addresses used by NLP users.',
-    'fields' => [
-      'ip' => [ 'type' => 'char', 'length' => 3, 'not null' => TRUE, ],
-      'userName' => [ 'type' => 'varchar', 'length' => 64,  'not null' => TRUE, ],
-      'orgName' => [ 'type' => 'varchar', 'length' => 256,  ],
-    ],
-  ];
-  
     $schema['nlp_voter'] = [
     'description' => 'Contact information about a voter.',
     'fields' => [
