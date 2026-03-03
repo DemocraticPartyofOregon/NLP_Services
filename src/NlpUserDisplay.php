@@ -112,7 +112,7 @@ class NlpUserDisplay
       $this->header[] = ['data' => t('Email'), 'field' => 'd.email', 'class' => ['nlp-th-color'] ];
     }
     $this->header[] = ['data' => t('County'), 'field' => 'd.county', 'class' => ['nlp-th-color'] ];
-    $this->header[] = ['data' => t('Roles'), 'field' => 't.roles', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Roles'), 'class' => ['nlp-th-color'] ];
   }
   
   /**
