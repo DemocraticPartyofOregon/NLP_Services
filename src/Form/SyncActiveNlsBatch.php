@@ -231,6 +231,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
         'hd' => $nlRecord['hd'],
         'nickname' => $nlRecord['nickname'],
         'roles' => [NLP_LEADER_ROLE_ID=>NLP_LEADER_ROLE_LABEL],
+        'vfid' => empty($nlRecord['vfid'])?0:$nlRecord['vfid'],
       ];
       $credentials = createCredentials($credentials);
       createDrupalAccount($nlRecord,$credentials);
