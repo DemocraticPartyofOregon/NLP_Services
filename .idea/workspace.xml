@@ -4,9 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Role is not searchable for the display of Drupal accounts.">
-      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportTableForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTableForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure vfid is an int when syncing NLs records.">
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2_22_2026_9_04_PM__Changes_1.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -195,7 +197,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772515781987</updated>
     </task>
-    <option name="localTasksCounter" value="12" />
+    <task id="LOCAL-00012" summary="Ensure vfid is an int when syncing NLs records.">
+      <option name="closed" value="true" />
+      <created>1772585060332</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1772585060332</updated>
+    </task>
+    <option name="localTasksCounter" value="13" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -235,7 +245,8 @@
     <MESSAGE value="Correct error message for reporting status of the ASK for an active NL." />
     <MESSAGE value="Ensure state name is a string and not NULL." />
     <MESSAGE value="Role is not searchable for the display of Drupal accounts." />
-    <option name="LAST_COMMIT_MESSAGE" value="Role is not searchable for the display of Drupal accounts." />
+    <MESSAGE value="Ensure vfid is an int when syncing NLs records." />
+    <option name="LAST_COMMIT_MESSAGE" value="Ensure vfid is an int when syncing NLs records." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

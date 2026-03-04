@@ -89,6 +89,8 @@ The use of the site's email and the setup will help ensure delivery of emails. T
 
 Configure the autologout module to inhibit auto logout for the administrator and the NLP Admin.
 
+Configure the editor so the NLP Admin and the NLP Coordinator have the "Full HTML" option available.  This is needed to permit the use of the "nlpservices" text format for the content that is used in the emails sent to the NLs.  Also, add additional buttons to the toolbar for the "Full HTML" format.  The buttons to add are: "Insert image", "Insert link", and "Remove link".  This will allow the use of images and links in the emails sent to the NLs.
+
 The redirect module should not be installed at this time.  There is a fix needed to support the request for a new password.
 ## Configure NLP Services
 

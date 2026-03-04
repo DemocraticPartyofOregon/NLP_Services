@@ -16,6 +16,13 @@
           </mappings>
         </serverdata>
       </paths>
+      <paths name="SpecialNLP">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+          </mappings>
+        </serverdata>
+      </paths>
     </serverData>
   </component>
 </project>
