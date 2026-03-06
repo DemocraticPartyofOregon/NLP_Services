@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add instructions to include NLP roles for the text editor.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove the injection of request_stack and use a dynamic reference for request().">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/ExportTableController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ExportTableController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -212,7 +213,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772604090197</updated>
     </task>
-    <option name="localTasksCounter" value="14" />
+    <task id="LOCAL-00014" summary="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign.">
+      <option name="closed" value="true" />
+      <created>1772769887657</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1772769887657</updated>
+    </task>
+    <task id="LOCAL-00015" summary="Remove the injection of request_stack and use a dynamic reference for request().">
+      <option name="closed" value="true" />
+      <created>1772769986854</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1772769986854</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -254,7 +271,9 @@
     <MESSAGE value="Role is not searchable for the display of Drupal accounts." />
     <MESSAGE value="Ensure vfid is an int when syncing NLs records." />
     <MESSAGE value="Add instructions to include NLP roles for the text editor." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add instructions to include NLP roles for the text editor." />
+    <MESSAGE value="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign." />
+    <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
+    <option name="LAST_COMMIT_MESSAGE" value="Remove the injection of request_stack and use a dynamic reference for request()." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

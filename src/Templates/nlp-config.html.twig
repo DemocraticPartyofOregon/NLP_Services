@@ -17,7 +17,8 @@ Links for functions to configure NLP services.
 {% set exportUsers = path('nlpservices.export_user_accounts_file') %}
 {% set exportReports = path('nlpservices.export_voter_contact_reports_form') %}
 {% set votebuilderUpdate = path('nlpservices.votebuilder_update_date_form') %}
-{% set exportAwardsFile = path('nlpservices.export_table', {'tableName': 'nlp_awards'}) %}
+{% set exportAwardsFile = path('nlpservices.export_table', {'tableName': 'nlp_awards','source': 'config'}) %}
+{% set exportTurfAssignments = path('nlpservices.export_table', {'tableName': 'nlp_turf_assignment','source': 'config'}) %}
 {% set exportCredentials = path('nlpservices.export_credentials_file') %}
 {% set purgeNlUsers = path('nlpservices.purge_nl_accounts') %}
 {% set importCredentials = path('nlpservices.import_credentials_form') %}

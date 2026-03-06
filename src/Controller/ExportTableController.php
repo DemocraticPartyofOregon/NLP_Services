@@ -41,6 +41,7 @@ class ExportTableController extends ControllerBase
   public function exportTable(): array
   {
     $tableName = $_GET['tableName'];
+    $source = empty($_GET['source'])? '': $_GET['source'];
     
     $county = '';
     $currentUser = $this->drupalUser->getCurrentUser();
@@ -89,11 +90,13 @@ class ExportTableController extends ControllerBase
           'max-age' => 0,
         ],
       ];
-    
-    $display['button_link'] = [
-      '#markup' => '<p></p><a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a></p>',
-    ];
-    
+
+    if($source == 'config') {
+      $display['button_link'] = [
+          '#markup' => '<p></p><a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a></p>',
+      ];
+    }
+
     return $display;
   }
   

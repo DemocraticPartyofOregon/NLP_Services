@@ -69,7 +69,7 @@ class ExportNlsParticipationStatusForm extends FormBase
       $tempFileName = $form_state->get('fileName');
       $county = $form_state->get('county');
       $hd = $form_state->get('hd');
-      
+      $hd = empty($hd)?'All':$hd;
       $url = Drupal::service('file_url_generator')->generateAbsoluteString($tempFileName);
       $page = "<h2>Export of NLs participation for $county County, HD $hd </h2>";
       $page .= '<a href="'.$url.'">Right-click to download.  </a>';
