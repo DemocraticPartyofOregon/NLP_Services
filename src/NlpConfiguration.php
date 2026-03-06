@@ -490,12 +490,13 @@ class NlpConfiguration
    * Get the time the crosstab information uploaded to NLP was created. This is the time
    * when the crosstab was last created.
    *
-   * @return string
+   * @return int
    *   Returns the crosstab create time in ISO format.
    */
-  public function getCrosstabCreateTime(): string
+  public function getCrosstabCreateTime(): int
   {
-    return $this->nlpConfig->get('nlpservices-crosstab-create-time');
+    return empty($this->nlpConfig->get('nlpservices-crosstab-create-time'))?0
+        :$this->nlpConfig->get('nlpservices-crosstab-create-time');
   }
   
   /**

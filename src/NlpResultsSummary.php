@@ -149,10 +149,18 @@ class NlpResultsSummary
   function displayCdResultsSummary(): array
   {
     $cds = $this->crosstabsObj->getCds();
+    $output = [];
+
+    if(empty($cds)) {
+      $output['no_cds'] = [
+        '#markup' => "<h2>The crosstab file needs to be loaded prior to this report.</h2>",
+      ];
+      return $output;
+    }
+
     $tempUri = $this->createTempFile('nlp_cd_summary_report');
     $fh = fopen($tempUri, "w");
-    $output = [];
-    
+
     $nlpCounts = [
       'allVoters' => 0,
       'allVotersVoted' => 0,
@@ -258,12 +266,13 @@ class NlpResultsSummary
   private function buildLegend(bool $html=TRUE): string|array
   {
     $crosstabCreateTime = $this->configurationObj->getCrosstabCreateTime();
-    $crosstabDate = date("F d Y H:i.", $crosstabCreateTime);
-    $matchbackDate = $this->matchbacksObj->getLatestMatchbackDate();
+    $crosstabDate = empty($crosstabCreateTime)?'Not yet':date("F d Y H:i.", $crosstabCreateTime);
+    $matchbackDate = empty($this->matchbacksObj->getLatestMatchbackDate())?'Voting has not started'
+        :date("F d Y H:i.", $this->matchbacksObj->getLatestMatchbackDate());
     
     $legendText = [
-      "<p>The last update of the counts from VoteBuilder was <b>$crosstabDate</b><br>",
-      "The latest matchback date is <b>$matchbackDate</b></p>",
+      "<p>The last update of the counts from VoteBuilder: <b>$crosstabDate</b><br>",
+      "The latest matchback date: <b>$matchbackDate</b></p>",
       '<h2>Legend</h2>',
       '<p>All Voters * - all registered voters in the participating district.<br>',
       'Republicans * - the registered Republicans.<br>',

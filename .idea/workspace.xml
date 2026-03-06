@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove the injection of request_stack and use a dynamic reference for request().">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the export of tables, both for coordinators and for end of election configuration.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/ExportTableController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ExportTableController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpResultsSummary.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResultsSummary.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -229,7 +228,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772769986854</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="Fix the export of tables, both for coordinators and for end of election configuration.">
+      <option name="closed" value="true" />
+      <created>1772811409444</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1772811409444</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -273,7 +280,8 @@
     <MESSAGE value="Add instructions to include NLP roles for the text editor." />
     <MESSAGE value="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign." />
     <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove the injection of request_stack and use a dynamic reference for request()." />
+    <MESSAGE value="Fix the export of tables, both for coordinators and for end of election configuration." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the export of tables, both for coordinators and for end of election configuration." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
