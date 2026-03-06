@@ -6,7 +6,6 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Component\Utility\Html;
 
@@ -24,9 +23,7 @@ use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\ApiFolders;
 
-/**
- * @noinspection PhpUnused
- */
+
 class DeliverTurfForm extends FormBase
 {
   protected NlpTurfs $turfsObj;
@@ -44,25 +41,23 @@ class DeliverTurfForm extends FormBase
   protected NlpSendEmail $sendMailObj;
   protected NlpNls $nlsObj;
   protected ApiFolders $foldersObj;
-  protected RequestStack $requestStack;
 
   public function __construct(
-    NlpTurfs $turfsObj,
-    DrupalUser $drupalUserObj,
-    NlpPaths $pathsObj,
-    FileSystemInterface $fileSystemObj,
-    NlpInstructions $instructionsObj,
-    NlpCoordinators $coordinatorsObj,
-    MagicWord $magicWordObj,
-    NlpTurfDeliveryMessage $turfMsgObj,
-    NlpTurfDisplay $turfDisplayObj,
-    NlpSearchBar $searchBarObj,
-    NlpConfiguration $nlpConfigurationObj,
-    NlpSessionData $nlpSessionDataObj,
-    NlpSendEmail $sendMailObj,
-    NlpNls $nlsObj,
-    ApiFolders $foldersObj,
-    RequestStack $requestStack,
+    $turfsObj,
+    $drupalUserObj,
+    $pathsObj,
+    $fileSystemObj,
+    $instructionsObj,
+    $coordinatorsObj,
+    $magicWordObj,
+    $turfMsgObj,
+    $turfDisplayObj,
+    $searchBarObj,
+    $nlpConfigurationObj,
+    $nlpSessionDataObj,
+    $sendMailObj,
+    $nlsObj,
+    $foldersObj,
   ) {
     $this->turfsObj = $turfsObj;
     $this->drupalUserObj = $drupalUserObj;
@@ -79,7 +74,6 @@ class DeliverTurfForm extends FormBase
     $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
     $this->foldersObj = $foldersObj;
-    $this->requestStack = $requestStack;
   }
 
   /**
@@ -103,7 +97,6 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.folders'),
-      $container->get('request_stack'),
     );
   }
 
@@ -155,7 +148,7 @@ class DeliverTurfForm extends FormBase
       return $form;
     }
 
-    $query = $this->requestStack->getCurrentRequest()->query;
+    $query = \Drupal::request()->query;
     $sort = $query->get('sort', '');
     if (!empty($sort)) {
       $order = $query->get('order', '');
@@ -209,6 +202,7 @@ class DeliverTurfForm extends FormBase
       '#prefix' => '<p> </p>',
       '#suffix' => '<p> </p>',
     ];
+
     // Add a button to send the email.
     $form['submit'] = [
       '#type' => 'submit',
@@ -250,7 +244,7 @@ class DeliverTurfForm extends FormBase
       return;
     }
 
-    $uploadedFiles = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $uploadedFiles = \Drupal::request()->files->get('files', []);
     $uploadedFile = $uploadedFiles['turf_pdf'] ?? NULL;
     if ($uploadedFile !== NULL && $uploadedFile->isValid()) {
       $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
@@ -293,7 +287,7 @@ class DeliverTurfForm extends FormBase
 
         foreach ($selections as $turfIndex => $selection) {
 
-          $uploadedFiles = $this->requestStack->getCurrentRequest()->files->get('files', []);
+          $uploadedFiles = \Drupal::request()->files->get('files', []);
           $uploadedFile = $uploadedFiles['turf_pdf'] ?? NULL;
           if ($uploadedFile !== NULL && $uploadedFile->isValid()) {
             $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
@@ -361,7 +355,7 @@ class DeliverTurfForm extends FormBase
       return FALSE;
     }
 
-    $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+    $serverUrl = \Drupal::request()->getSchemeAndHttpHost();
     $turfMsg = $this->turfMsgObj->getTurfMsg($county);
 
     $coordinatorContactTemplate = '<p>@firstName @lastName<br>Phone: @phone<br>Email:
