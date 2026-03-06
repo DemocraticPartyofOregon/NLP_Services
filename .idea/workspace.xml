@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure vfid is an int when syncing NLs records.">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/shelf/Uncommitted_changes_before_Checkout_at_2_22_2026_9_04_PM__Changes_1.xml" beforeDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add instructions to include NLP roles for the text editor.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -205,7 +204,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772585060332</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="Add instructions to include NLP roles for the text editor.">
+      <option name="closed" value="true" />
+      <created>1772604090197</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1772604090197</updated>
+    </task>
+    <option name="localTasksCounter" value="14" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -246,10 +253,26 @@
     <MESSAGE value="Ensure state name is a string and not NULL." />
     <MESSAGE value="Role is not searchable for the display of Drupal accounts." />
     <MESSAGE value="Ensure vfid is an int when syncing NLs records." />
-    <option name="LAST_COMMIT_MESSAGE" value="Ensure vfid is an int when syncing NLs records." />
+    <MESSAGE value="Add instructions to include NLP roles for the text editor." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add instructions to include NLP roles for the text editor." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="php-line-method">
+          <url>file://$PROJECT_DIR$/src/Form/DeliverTurfForm.php</url>
+          <line>217</line>
+          <properties>
+            <option name="className" value="\Drupal\nlpservices\Form\DeliverTurfForm" />
+            <option name="methodName" value="validateForm" />
+          </properties>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -347,10 +347,15 @@ coordinator and not to the NLP Site admin.</p>"),
           'hd' => $assignmentRole['hd'],
           'precinctList' => $assignmentRole['precinctList'],
         ];
-        $this->coordinatorsObj->createCoordinator($req);
         $req['hd'] = $nlsRecord['hd'];  // The hd is that of the Coordinator and not necessarily the assigned hd.
         $req['email'] = $nlsRecord['email'];
-        $this->createCoordinatorAccount($req);
+        $result = $this->createCoordinatorAccount($req);
+        if(!$result) { return; }
+
+        $req['hd'] = $assignmentRole['hd'];
+        $req['email'] = $nlsRecord['email'];
+        $this->coordinatorsObj->createCoordinator($req);
+
         break;
       
     }
@@ -421,7 +426,7 @@ coordinator to groups of NLs.</p>',
    *
    * @param $coordinator
    */
-  function createCoordinatorAccount($coordinator): void
+  function createCoordinatorAccount($coordinator): bool
   {
     $messenger = Drupal::messenger();
     $mcid = $coordinator['mcid'];
@@ -429,7 +434,7 @@ coordinator to groups of NLs.</p>',
     if(empty($email)) {
       $messenger->addWarning(t('This selection does not have an email.
       An email is required to be a coordinator.'));
-      return;
+      return FALSE;
     }
     
     $userAccount = $this->drupalUserObj->getUserByMcid($mcid);
@@ -445,7 +450,7 @@ coordinator to groups of NLs.</p>',
       if($mcid != $userAccount['mcid'] AND !empty($userAccount['mcid'])) {
         $messenger->addWarning(t('The MCID of the Drupal account does not
         match the MyCampaign record, please contact the NLP Administrator.'));
-        return;
+        return FALSE;
       }
       $roles = $userAccount['roles'];
       
@@ -457,7 +462,7 @@ coordinator to groups of NLs.</p>',
         $update['mcid'] = $mcid;
         $this->drupalUserObj->updateUser($update);
       }
-      return;
+      return TRUE;
     }
     
     $magicWord = $this->magicWordObj->createMagicWord();
@@ -480,11 +485,11 @@ coordinator to groups of NLs.</p>',
       case 'error':
         $messenger->addError(t('Something went wrong with creating an
         account.  Please contact NLP tech support'));
-        break;
+        return FALSE;
       case 'exists':
         $messenger->addError(t("The NL's name is already in use.
         Please contact NLP tech support"));
-        break;
+        return FALSE;
       case 'complete':
         $messenger->addStatus(t('An account was created for this Coordinator.'
           . '<br>Username: '.$newUser['userName']
@@ -492,7 +497,7 @@ coordinator to groups of NLs.</p>',
         $this->magicWordObj->setMagicWord($mcid,$magicWord);
         break;
     }
-    
+    return TRUE;
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
