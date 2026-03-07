@@ -50,7 +50,7 @@ class ReportsController extends ControllerBase
    * Displays the reports template with the links to the various reports.
    * This is the main entry point for the reports.
    *
-   * @return array - a render array containing the reports template.
+   * @return array - a render array containing the report template.
    */
   public function reports(): array
   {

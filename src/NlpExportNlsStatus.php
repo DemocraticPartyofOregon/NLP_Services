@@ -63,6 +63,7 @@ class NlpExportNlsStatus
    */
   public function createNlsStatusFile(string $tempFileName, string $county, int $hd=0): bool
   {
+   // nlp_debug_msg('createNlsStatusFile: $tempFileName, $county, $hd', [$tempFileName, $county, $hd]);
     $hdr = [  // Column names for the CSV file.
       'mcid',
       'county',
@@ -90,8 +91,7 @@ class NlpExportNlsStatus
     $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileSystemInterface::EXISTS_REPLACE);
     if ($file) {
       $fileUri = $file->getFileUri();
-    }
-    else {
+    } else {
       nlp_debug_msg('ExportNlsParticipationForm','Failed to create temporary file: ');
       return FALSE;
     }
@@ -103,6 +103,7 @@ class NlpExportNlsStatus
     } else {
       $counties = [$county];
     }
+    nlp_debug_msg_safe('$counties',$counties);
     foreach ($counties as $county) {
       // Get the list of all the NLs in a county.
       $nlList = $this->nls->getCountyNls($county,$hd);
