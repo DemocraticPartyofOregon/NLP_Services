@@ -515,7 +515,7 @@ function createCredentials(array $credentials): array
     'hd' => $credentials['hd'],
     'roles' => $credentials['roles'],
     'magicWord' => $magicWord,
-    'vfid' => $credentials['vfid'],
+    'vfid' => empty($credentials['vfid'])?0:$credentials['vfid'],
   ];
   $magicWordObj->updateCredentials($newCredentials);
   return $magicWordObj->getCredentials($mcid);
