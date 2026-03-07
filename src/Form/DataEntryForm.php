@@ -706,7 +706,7 @@ not checked have already received a postcard for this election.</p></div>',
     if(!empty($turf['minivanNumber'])) {
       $minivanNumber = $turf['minivanNumber'];
       $minivanCreateDate = $turf['minivanCreateDate'];
-      $createDate = date('Y-m-d',strtotime($minivanCreateDate));
+      $createDate = empty($minivanCreateDate)?'':date('Y-m-d',strtotime($minivanCreateDate));
       $fields = [
         'minivanNumber' => $minivanNumber,
         'minivanCreateDate' => $createDate,
