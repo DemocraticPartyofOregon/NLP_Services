@@ -415,7 +415,8 @@ function nlpservices_cron (): void
   $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
   
   // Check for emails with MiniVAN reports.
-  if($cronConfiguration['enableMinivan']) {
+  $enableMinivan = empty($cronConfiguration['enableMinivan']) ? FALSE : $cronConfiguration['enableMinivan'];
+  if($enableMinivan) {
     $queue = Drupal::queue('nlpservices_minivan_canvass');
     $startTime = time();
     $queueEmpty = TRUE;
@@ -449,7 +450,8 @@ function nlpservices_cron (): void
   }
   
   // Check for emails with matchback reports.
-  if($cronConfiguration['enableMatchback']) {
+  $enableMatchback = empty($cronConfiguration['enableMatchback']) ? FALSE : $cronConfiguration['enableMatchback'];
+  if($enableMatchback) {
     $queue = Drupal::queue('nlpservices_matchback_queue');
     $matchbackObj = Drupal::getContainer()->get('nlpservices.matchbacks');
     $startTime = time();
@@ -484,14 +486,16 @@ function nlpservices_cron (): void
   }
   
   // Check for emails sent to notifications that should have been sent to the coordinator.
-  if($cronConfiguration['enableEmailRedirect']) {
+  $enableEmailRedirect = empty($cronConfiguration['enableEmailRedirect']) ? FALSE : $cronConfiguration['enableEmailRedirect'];
+  if($enableEmailRedirect) {
     //nlp_debug_msg('email redirect check');
     $notificationRepliesObj = Drupal::getContainer()->get('nlpservices.email_replies');
     $notificationRepliesObj->emailForward();
   }
   
   // Check if turf resync is enabled but run the check only at night, assumes standard 3-hour cron frequency.
-  if($cronConfiguration['enableTurfResync']) {
+  $enableTurfResync = empty($cronConfiguration['enableTurfResync']) ? FALSE : $cronConfiguration['enableTurfResync'];
+  if($enableTurfResync) {
     $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
     
     $debug = $nlpConfigurationObj->getDebug();

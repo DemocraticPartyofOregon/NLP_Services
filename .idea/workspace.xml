@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the export of tables, both for coordinators and for end of election configuration.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the results summary for startup.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResultsSummary.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResultsSummary.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/ReportsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ReportsController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -236,7 +237,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772811409444</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Fix the results summary for startup.">
+      <option name="closed" value="true" />
+      <created>1772824508158</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1772824508158</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -281,7 +290,8 @@
     <MESSAGE value="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign." />
     <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
     <MESSAGE value="Fix the export of tables, both for coordinators and for end of election configuration." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the export of tables, both for coordinators and for end of election configuration." />
+    <MESSAGE value="Fix the results summary for startup." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the results summary for startup." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
