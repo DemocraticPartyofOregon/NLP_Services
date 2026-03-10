@@ -339,7 +339,7 @@ function nlpservices_schema(): array
       'voterCount' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE,  ],
       'doorCount' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE,  ],
       'minivanNumber' => [ 'type' => 'varchar', 'length' => 16, ],
-      'minivanCreateDate' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE,  ],
+      'minivanCreateDate' => [ 'type' => 'varchar', 'length' => 32,  ],
       'syncDate' => [ 'mysql_type' => 'date', ],
       'unreportedChanges' => [ 'type' => 'int', 'size' => 'tiny', ],
       'changeHistory' => [ 'type' => 'varchar', 'length' => 2048, ],
