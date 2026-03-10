@@ -167,7 +167,9 @@ class ApiNls {
             $nl['cellPhoneId'] = $phone['phoneId'];
             break;
         }
-        if($phone['isPreferred'] || $phone['isBest']) {
+        if($phone['isPreferred']) {
+          $nl['phone'] = $phone['phoneNumber'];
+        } elseif($phone['isBest']) {
           $nl['phone'] = $phone['phoneNumber'];
         }
       }
