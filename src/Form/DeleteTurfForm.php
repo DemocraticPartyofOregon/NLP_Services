@@ -101,11 +101,12 @@ class DeleteTurfForm extends FormBase
       $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd):[];
     }
     //nlp_debug_msg('$turfArray',$turfArray);
-    //$this->foldersObj->updateMinivanInfo($county, $turfArray);
+    // Update the latest minivan information.
+    $this->foldersObj->updateMinivanInfo($county, $turfArray);
     
     
     $form_state->set('turfArray',$turfArray);
-    //nlp_debug_msg('$turfArray',$turfArray);
+    //nlp_debug_msg_safe('$turfArray',$turfArray);
     
     $turfCount = count($turfArray);
     //nlp_debug_msg('$turfCount',$turfCount);

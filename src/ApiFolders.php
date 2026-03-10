@@ -369,7 +369,7 @@ class ApiFolders {
       
       $mapRegionId = $turf['mapRegionId'];
       if(empty($mapRegionId)) {continue;}
-      if (!empty($mapRegionOptions[$mapRegionId])) {
+      if (!empty($mapRegionOptionsSaved[$mapRegionId])) {
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];
       } else {
         $folderId = $turf['folderId'];

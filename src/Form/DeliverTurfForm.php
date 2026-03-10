@@ -165,6 +165,9 @@ class DeliverTurfForm extends FormBase
         $turfArray = $this->turfsObj->getTurfs($county, $currentHd);
       }
     }
+    // Update the minivan information for the turfs to be displayed.
+    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+
     $form_state->set('turfArray', $turfArray);
 
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);

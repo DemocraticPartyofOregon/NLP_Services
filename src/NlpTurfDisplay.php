@@ -44,7 +44,8 @@ class NlpTurfDisplay
       $columns['folderName'] = $turf['folderName'];
       if($displayType!='replacement') {
         $columns['minivanNumber'] = '';
-        if ($displayType == 'walksheet' AND !empty($turf['minivanNumber'])) {
+        if (!empty($turf['minivanNumber'])) {
+        //if ($displayType == 'walksheet' AND !empty($turf['minivanNumber'])) {
           $createDate = date('Y-m-d', strtotime($turf['minivanCreateDate']));
           $columns['minivanNumber'] = $turf['minivanNumber'] . '<br>' . $createDate;
         }

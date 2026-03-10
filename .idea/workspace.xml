@@ -4,8 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix missing vfid for nl sync">
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="fix minivan create date with it has never been set.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -266,7 +271,23 @@
       <option name="project" value="LOCAL" />
       <updated>1772862660851</updated>
     </task>
-    <option name="localTasksCounter" value="21" />
+    <task id="LOCAL-00021" summary="x minivan create date with it has never been set.">
+      <option name="closed" value="true" />
+      <created>1772863012981</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1772863012981</updated>
+    </task>
+    <task id="LOCAL-00022" summary="fix minivan create date with it has never been set.">
+      <option name="closed" value="true" />
+      <created>1773118960337</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1773118960337</updated>
+    </task>
+    <option name="localTasksCounter" value="23" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -315,25 +336,12 @@
     <MESSAGE value="Fix mossing cron variables" />
     <MESSAGE value="Fix the activity reports" />
     <MESSAGE value="Fix missing vfid for nl sync" />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix missing vfid for nl sync" />
+    <MESSAGE value="x minivan create date with it has never been set." />
+    <MESSAGE value="fix minivan create date with it has never been set." />
+    <option name="LAST_COMMIT_MESSAGE" value="fix minivan create date with it has never been set." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="php-line-method">
-          <url>file://$PROJECT_DIR$/src/Form/DeliverTurfForm.php</url>
-          <line>217</line>
-          <properties>
-            <option name="className" value="\Drupal\nlpservices\Form\DeliverTurfForm" />
-            <option name="methodName" value="validateForm" />
-          </properties>
-          <option name="timeStamp" value="2" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

@@ -165,6 +165,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
           $message .= (!empty($nlMessage))?$nlMessage:'';
           $message .= (!empty($drupalMessage))?$drupalMessage:'';
           $messenger->addError($message);
+          nlp_debug_msg_safe('$nlRecord', $nlRecord);
           continue;
         }
       }
@@ -191,6 +192,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
            .&nbsp; MCID:$mcid $firstName $lastName email:$nlEmail<br>
            .&nbsp; The existing NL. MCID:$otherMcid userName:$otherUserName";
         $messenger->addError($message);
+        nlp_debug_msg_safe('$nlRecord', $nlRecord);
         continue;
       }
       // Email is not yet associated with any NL.
