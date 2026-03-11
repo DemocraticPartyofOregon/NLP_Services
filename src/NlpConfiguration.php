@@ -270,7 +270,8 @@ class NlpConfiguration
    */
   public function getVoterBuilderUpdateDate(): string
   {
-    return $this->nlpConfig->get('nlpservices-votebuilder-update-date');
+    return empty($this->nlpConfig->get('nlpservices-votebuilder-update-date'))?'':
+        $this->nlpConfig->get('nlpservices-votebuilder-update-date');
   }
   
   /**
