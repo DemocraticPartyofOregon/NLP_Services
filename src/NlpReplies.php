@@ -128,8 +128,7 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
         $messenger->addMessage('Email sent to: ' . $email . ', Bounced email was: '.$recipientEmail.', Subject: '.$message['subject'],TRUE);
       }
       $to = $email;
-      //$to = "steve.j.packer@gmail.com";
-      
+
       $subject = 'NLP Notification: '.$message['subject'];
   
       $forwardMsg = "<p>".$forwardText."<br />NLP Admin<br /><hr></p>";

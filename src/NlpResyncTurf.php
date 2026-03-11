@@ -457,12 +457,6 @@ class NlpResyncTurf
     
     $firstName = $coordinator['firstName'];
     $to = $coordinator['email'];
-    
-    $debug = $this->nlpConfigurationObj->getDebug();
-    if($debug) {
-      $to = 'steve.j.packer@gmail.com';
-    }
-    
     $subject = "Notification of turf deletion";
     $message = "<p>$firstName,</p>";
     $message .= '<p>The turf named "'.$turf['turfName'].'" that was assigned to '.$turf['nlFirstName']." ".
