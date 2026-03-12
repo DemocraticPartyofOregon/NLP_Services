@@ -1136,6 +1136,7 @@ class NlpTurfs
         if(!empty($previousTurfAssignment)) {
           $nls = $this->nlsObj->getNlById($previousTurfAssignment['mcid']);
           $footnote = (!empty($nls))?'*':'**';
+          $footnote = '<span class="nlp-footnote-warning">'.$footnote.'</span>';
           $turfInUse = [
             'nl' => $previousTurfAssignment['firstName'].' '.$previousTurfAssignment['lastName'],
             'mcid' => $previousTurfAssignment['mcid'].$footnote,

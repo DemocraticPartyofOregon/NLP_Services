@@ -66,6 +66,13 @@ class NlpTurfListDisplayVoteBuilder
         }
       }
     }
+    $form_element['footnote'] = [
+      '#markup' => '<p><b>Note:</b><br> 
+<span class="nlp-footnote-warning">*</span> This NL was previously assigned to this turf.<br> 
+<span class="nlp-footnote-warning">**</span> This NL was previously assigned to this turf but is not an active NL 
+and cannot be assigned to this turf.<br> 
+ </p>',
+    ];
     return $form_element;
   }
   
@@ -80,18 +87,18 @@ class NlpTurfListDisplayVoteBuilder
     $idTitle = 'Turf ID';
     $nameTitle = 'Turf Name';
     $this->header = [
-      ['data' => t('cb'), 'field' => 't.cb', 'class' => ['nlp-th-color'] ],
-      ['data' => t($idTitle), 'field' => 'n.id', 'class' => ['nlp-th-color'] ],
-      ['data' => t('A'), 'field' => 'n.hd', 'class' => ['nlp-th-color'] ],
-      ['data' => t('Name'), 'field' => 'n.nlLastName', 'class' => ['nlp-th-color'] ],
-      ['data' => t('MCID'), 'field' => 'n.mcid', 'class' => ['nlp-th-color'] ],
-      ['data' => t($nameTitle), 'field' => 't.turfName', 'class' => ['nlp-th-color'] ],
+      ['data' => t('cb'), 'class' => ['nlp-th-color'] ],
+      ['data' => t($idTitle), 'field' => 'id', 'class' => ['nlp-th-color'] ],
+      ['data' => t('A'), 'field' => 'hd', 'class' => ['nlp-th-color'] ],
+      ['data' => t('Name'), 'field' => 'nlLastName', 'class' => ['nlp-th-color'] ],
+      ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color'] ],
+      ['data' => t($nameTitle), 'field' => 'turfName', 'class' => ['nlp-th-color'] ],
     ];
-    $this->header[] = ['data' => t('Map Region Name'), 'field' => 't.mapRegionName', 'class' => ['nlp-th-color']];
-    $this->header[] = ['data' => t('Doors'), 'field' => 't.turfCount', 'class' => ['nlp-th-color'] ];
-    $this->header[] = ['data' => t('Voters'), 'field' => 't.voterCount', 'class' => ['nlp-th-color'] ];
-    $this->header[] = ['data' => t('Minivan Number'), 'field' => 't.minivanNumber', 'class' => ['nlp-th-color']];
-    $this->header[] = ['data' => t('Created'), 'field' => 't.minivanCreateDate', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Map Region Name'), 'field' => 'mapRegionName', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Doors'), 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Voters'), 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Minivan Number'), 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Created'), 'class' => ['nlp-th-color']];
   }
   
   /**

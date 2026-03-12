@@ -37,3 +37,8 @@ hr.ts-blue { border: 3px solid blue;}
 
 div.form-item { margin-top: 0; margin-bottom: 0; }
 div.form-no-label { margin-top:0; margin-bottom:0; }
+
+.nlp-footnote-warning {
+  color: #c62828;
+  font-weight: 600;
+}
