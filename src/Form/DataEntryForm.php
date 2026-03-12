@@ -540,10 +540,14 @@ Please acknowledge that you have reviewed these changes.</p>',
     $form['postcardNote'] = [
       '#markup' => '<div class="form-box-medium">
 <h2>Report the mailing of postcards</h2>
-<p>The list of the voters below can be selected to indicate that a postcard
-was sent to them.  Check the box for those that you mailed the postcard.  If
-the voter has not already received a postcard, the box will be checked.   Those
-not checked have already received a postcard for this election.</p></div>',
+<p>All checkboxes below are pre-checked at the beginning of an election season. Uncheck the names 
+of those to whom you are not sending postcards, or those not being sent immediately. Then click 
+the “Submit” button at the bottom to report to VAN that you have sent the postcards.</p>
+
+<p>After you leave this page and come back later, you will see that the initially checked and 
+unchecked boxes are reversed. This time if you click “Submit”, it will report that you have sent 
+the remaining postcards. </p>
+</div>',
     ];
     $form['postcardsSentList'] = [
       '#type' => 'checkboxes',
