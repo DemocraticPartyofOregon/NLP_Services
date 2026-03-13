@@ -97,7 +97,7 @@ class NlpNlsListDisplay
         if(!empty($noteText)) {
           $wrap = wordwrap($noteText,$notesWrap,"\n",true);
         }
-        $row['notes'] = ['type'=>'ta','text'=>$wrap];
+        $row['notes'] = ['type'=>'ta','text'=>$wrap, 'mcid'=>$mcid];
         
         $askOptions = $this->nlsObj->askOptions;
         $currentAsk = $nlRecord['status']['asked'];
@@ -113,7 +113,7 @@ class NlpNlsListDisplay
         $contact = $this->nlsObj->contactList;
         $currentContact = $nlRecord['status']['contact'];
         $defaultContact = array_search($currentContact,$contact);
-        $row['co'] = ['type'=>'se','options'=>$contact,'default'=>$defaultContact];
+        $row['co'] = ['type'=>'se','options'=>$contact,'default'=>$defaultContact, 'mcid'=>$mcid];
         
         $user = $this->drupalUserObj->getUserByMcid($mcid);
         $access = (empty($user['access']))?'':$user['access'];
