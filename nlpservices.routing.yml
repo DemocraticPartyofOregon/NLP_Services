@@ -45,6 +45,14 @@ nlpservices.survey_question_configuration_form:
 
 # Setup
 
+nlpservices.document_configuration_form:
+  path: '/nlpservices-document-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\DocumentConfigurationForm
+    _title: 'NLP documents configuration'
+  requirements:
+    _permission: 'access content'
+
 nlpservices.election_configuration_form:
   path: '/nlpservices-election-configuration'
   defaults:

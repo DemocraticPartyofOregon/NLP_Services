@@ -4,15 +4,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure VAN update date is a string even when not yet initialized.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Clarify the text for reporting a postcard was sent.">
+      <change afterPath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/turf-sync.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/turf-sync.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/DocumentsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/DocumentsController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpDocuments.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDocuments.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,25 +73,25 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__0__2&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "NLP__Services__V7__0__2",
+    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -112,7 +113,7 @@
       <workItem from="1771817077459" duration="1094000" />
       <workItem from="1772250902953" duration="12873000" />
       <workItem from="1772297056722" duration="24011000" />
-      <workItem from="1773238492591" duration="14939000" />
+      <workItem from="1773238492591" duration="30631000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -322,7 +323,23 @@
       <option name="project" value="LOCAL" />
       <updated>1773239468652</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="Add back the missing footnote for sync turf selection.">
+      <option name="closed" value="true" />
+      <created>1773294267223</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1773294267223</updated>
+    </task>
+    <task id="LOCAL-00028" summary="Clarify the text for reporting a postcard was sent.">
+      <option name="closed" value="true" />
+      <created>1773356820731</created>
+      <option name="number" value="00028" />
+      <option name="presentableId" value="LOCAL-00028" />
+      <option name="project" value="LOCAL" />
+      <updated>1773356820731</updated>
+    </task>
+    <option name="localTasksCounter" value="29" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -352,7 +369,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude code review of API services" />
     <MESSAGE value="Claude review of setup" />
     <MESSAGE value="Claude review of controllers" />
     <MESSAGE value="REcover from the change in VAN from Preferred to Best for phone numbers." />
@@ -376,7 +392,9 @@
     <MESSAGE value="Check for isBest for NL phone number." />
     <MESSAGE value="Remove debug code." />
     <MESSAGE value="Ensure VAN update date is a string even when not yet initialized." />
-    <option name="LAST_COMMIT_MESSAGE" value="Ensure VAN update date is a string even when not yet initialized." />
+    <MESSAGE value="Add back the missing footnote for sync turf selection." />
+    <MESSAGE value="Clarify the text for reporting a postcard was sent." />
+    <option name="LAST_COMMIT_MESSAGE" value="Clarify the text for reporting a postcard was sent." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
