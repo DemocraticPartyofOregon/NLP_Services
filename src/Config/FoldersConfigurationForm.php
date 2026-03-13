@@ -124,9 +124,6 @@ class FoldersConfigurationForm extends ConfigFormBase {
       }
     }
     
-    // Populate the documents folders with the default documents.
-    $this->prepareDocuments();
-    
     // Populate the magic words to be used to create simple passwords for the NLs.
     $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $magicWordsFile = $modulePath.'/src/Config/magic_words.yml';
@@ -137,70 +134,7 @@ class FoldersConfigurationForm extends ConfigFormBase {
     
     parent::submitForm($form, $form_state);
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * prepareDocuments
-   *
-   * Moves the default documents from the nlpservices module to a location in the 
-   * public files and adds the new location in the database.  This makes
-   * the documents easier to access by coordinators.
-   */
-  function prepareDocuments(): void
-  {
-    $messenger = Drupal::messenger();
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-    // The default documents are the ones that are expected to be delivered with the 
-    // module and can be found in a folder with the module.
-    $defaultDocuments = $this->documentsObj->nameList;
-    // The current are the ones that have already been moved from the module to the public files.
-    $currentDocuments = $this->documentsObj->getDocuments();
-    
-    // Remove from the list of default documents those that are not already in the database.
-    // What remains is anything that is missing.  Note that the actual filenames may have
-    // changed if the admin made updates after installation.  These updates should
-    // not be overwritten.
-    foreach ($currentDocuments as $currentDocument) {
-      if(isset($defaultDocuments[$currentDocument['name']])) {
-        unset($defaultDocuments[$currentDocument['name']]);
-      }
-    }
-    // Check if the docs folder in the module is empty.  This should never happen.
-    $documentFiles = scandir($modulePath.'/docs/');
-    if(empty($documentFiles)) {
-      $messenger->addWarning( $this->t('Default documents are missing'));
-      return;
-    }
-    
-    // Find the docx files in the modules docs folder and remember the root names.
-    // The PDF files have the same root name as the docx files.
-    $defaultFiles = [];
-    foreach ($documentFiles as $documentFile) {
-      if(!is_dir($modulePath.'/docs/'.$documentFile)) {
-        $pathParts = pathinfo($documentFile);
-        if($pathParts['extension'] == 'docx') {
-          $filename = $pathParts['filename'];
-          $defaultFiles[$filename] = $filename;
-        }
-      }
-    }
-    
-    foreach ($defaultDocuments as $name => $defaultDocument) {
-      $defaultFilename = $defaultDocument['defaultFilename'];
-      if(isset($defaultFiles[$defaultFilename])) {
-        $doc = $defaultFiles[$defaultFilename].'.docx';
-        $pdf = $defaultFiles[$defaultFilename].'.pdf';
-        $document = [
-          'name' => $name,
-          'weight' => $defaultDocument['weight'],
-          'docFileName' => $doc,
-          'pdfFileName' => $pdf,
-          'description' => $defaultDocument['description'],
-        ];
-        $this->documentsObj->createDocument($document);
-      }
-    }
-  }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * prepareLogo
    *

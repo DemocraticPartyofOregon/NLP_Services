@@ -63,6 +63,7 @@ class NlpDocuments
    */
   public function createDocument(array $req): void
   {
+    nlp_debug_msg('$req',$req);
     try {
       $this->connection->merge(self::DOCUMENTS_TBL)
         ->keys([
@@ -137,7 +138,10 @@ class NlpDocuments
   {
     $documents = $this->getDocuments();
     if(empty($documents)) {
-      $page['documents'] = ['Error.'];
+      $page['documents'] = [
+          '#markup' => 'The documents are missing.'
+      ];
+      return $page;
     }
     
     $docPath = $this->pathsObj->getPath('DOCS');
