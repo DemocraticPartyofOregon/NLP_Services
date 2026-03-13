@@ -24,7 +24,7 @@ Links for functions to configure NLP services.
 {% set importCredentials = path('nlpservices.import_credentials_form') %}
 {% set enableDebug = path('nlpservices.enable_debug_form') %}
 {% set enableCronTasks = path('nlpservices.enable_cron_tasks_form') %}
-{% set documents = path('nlpservices.documents_form') %}
+{% set documents = path('nlpservices.document_configuration_form') %}
 
 {% trans %}
 
@@ -41,6 +41,8 @@ Links for functions to configure NLP services.
         <li><a href={{ electionCycle }}>Step 5: Set up the election date and name.</a></li>
         <li><a href={{ surveyQuestion }}>Step 6: Select the survey question.</a></li>
         <li><a href={{ emails }}>Step 7: Set up the email used by the site.</a></li>
+        <li><a href={{ documents }}>Step 7: Set up the training documents.</a></li>
+
     </ul>
 
     <h1>Rebuild a site</h1>
