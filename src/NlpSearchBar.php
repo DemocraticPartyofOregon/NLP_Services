@@ -15,8 +15,8 @@ class NlpSearchBar
    * @param string|null $multi
    * @return array
    */
-  public function searchBar(array $hdOptions=NULL, int $hdIndex=NULL, string $callback='selectbox',
-                            string $multi=NULL): array
+  public function searchBar(array $hdOptions=[], int $hdIndex=0, string $callback='selectbox',
+                            string $multi=''): array
   {
     $multi = (empty($multi))?'':'-'.$multi;
     
@@ -62,20 +62,68 @@ class NlpSearchBar
     
     return $form_element;
   }
+
+
+  public function searchAndSortBar(array $hdOptions, int $hdIndex=0): array
+  {
+
+    $divClass = (!empty($hdOptions))?'<div class="search-bar">':'<div class="search-bar-small">';
+
+    $formElement['bar-box']['start'] = [
+        '#markup' => $divClass.'<section class="search-bar">',
+    ];
+
+    if(!empty($hdOptions)) {
+      $formElement['bar-box']['hd-select-box'] = [
+          '#markup' => '<div class="search-hd-left" >',
+      ];
+      $formElement['bar-box']['hd-select'] = [
+          '#type' => 'select',
+          '#title' => 'HD select.',
+          '#options' => $hdOptions,
+          '#default_value' => $hdIndex,
+          '#prefix' => '<div class="search-hd-select-left" >',
+          '#suffix' => '</div>',
+      ];
+      $formElement['bar-box']['hd-submit'] = [
+          '#type' => 'submit',
+          '#name' => 'hd_submit',
+          '#value' => 'Change the HD. ',
+          '#prefix' => '<div class="hd-button-left">',
+          '#suffix' => '</div>',
+      ];
+
+      $formElement['bar-box']['hd-select-end'] = [
+          '#markup' => '</div>',
+      ];
+    }
+
+    $formElement['bar-box']['search-nl-'] = $this->nlSearch('');
+
+    $formElement['bar-box']['hd-select-box-end'] = [
+        '#markup' => '</section>',
+    ];
+
+    $formElement['bar-box']['bar-float-end'] = [
+        '#markup' => '<div class="end-float"></div></div>',
+    ];
+
+    return $formElement;
+  }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * nlSearch
    *
-   * @param $multi
+   * @param string $multi
    * @return array
    */
   private function nlSearch($multi): array
   {
-    $form['nl-search-box'] = [
+    $form['search-box'] = [
       '#markup' => " \n".'<div class="search-needle-left">'." \n",
     ];
     
-    $form['nl-search-needle'.$multi] = [
+    $form['search-needle'.$multi] = [
       '#type' => 'textfield',
       '#title' => "Enter a first name, last name, ID, or other value.",
       //'#title' => 'Search value',
@@ -86,7 +134,7 @@ class NlpSearchBar
       '#suffix' => '</div>',
     ];
     
-    $form['nl-search-submit'.$multi] = [
+    $form['search-submit'.$multi] = [
       '#type' => 'submit',
       '#name' => 'search_submit'.$multi,
       '#value' => 'Search the table. ',
@@ -94,7 +142,7 @@ class NlpSearchBar
       '#suffix' => '</div>',
     ];
     
-    $form['nl-search-box-end'] = [
+    $form['search-box-end'] = [
       '#markup' => " \n".'<div class="end-float"></div></div>'." \n",
     ];
     
@@ -104,7 +152,7 @@ class NlpSearchBar
     
     $help = '<span class="hint-list">'.$helpText.'</span>';
     
-    $form['nl_search']['help'] = [
+    $form['search']['help'] = [
       '#markup' => '<div class="hint_note hint-link-text">'
         . '<p>Help' . $help . '</p></div>',
       '#prefix' => '<div class="search-needle-help-right">',

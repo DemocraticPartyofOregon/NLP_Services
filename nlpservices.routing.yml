@@ -299,6 +299,14 @@ nlpservices.deliver_turf_form:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.display_turfs_form:
+  path: '/nlpservices-display-turfs'
+  defaults:
+    _form: Drupal\nlpservices\Form\DisplayTurfsForm
+    _title: 'Display the synced turfs.'
+  requirements:
+    _permission: 'nlp tools access'
+
 nlpservices.display_nls_form:
   path: '/nlpservices-display-nls'
   defaults:

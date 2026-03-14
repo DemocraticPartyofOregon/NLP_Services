@@ -5,6 +5,7 @@ Links for functions to manage Turfs.
 {% set syncTurf = path('nlpservices.sync_turf_form') %}
 {% set deleteTurf = path('nlpservices.delete_turf_form') %}
 {% set deliverTurf = path('nlpservices.deliver_turf_form') %}
+{% set displayTurfs = path('nlpservices.display_turfs_form') %}
 
 {% trans %}
 
@@ -14,6 +15,7 @@ Links for functions to manage Turfs.
         <li><a href={{ syncTurf }}>Sync a turf.</a></li>
         <li><a href={{ deleteTurf }}>Delete a turf.</a></li>
         <li><a href={{ deliverTurf }}>Send an email with login credentials for a turf.</a></li>
+        <li><a href={{ displayTurfs }}>Display the turfs that have been synced (with MiniVAN info).</a></li>
     </ul>
 
 {% endtrans %}

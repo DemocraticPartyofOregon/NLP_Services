@@ -10,7 +10,6 @@ use Drupal\nlpservices\NlpTurfDisplay;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\ApiFolders;
 
@@ -20,24 +19,22 @@ use Drupal\nlpservices\ApiFolders;
 class DeleteTurfForm extends FormBase
 {
  
-  protected NlpTurfs $turfs;
+  protected NlpTurfs $turfsObj;
   
   protected NlpAwards $awardsObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpTurfDisplay $turfDisplayObj;
-  protected NlpSessionData $nlpSessionDataObj;
-  protected NlpConfiguration $nlpConfigurationObj;
+  protected NlpSessionData $sessionDataObj;
   protected ApiFolders $foldersObj;
   
   
-  public function __construct(   $turfs, $awardsObj, $searchBarObj, $turfDisplayObj,
-                                 $nlpSessionDataObj, $nlpConfigurationObj, $foldersObj) {
-    $this->turfs = $turfs;
+  public function __construct(   $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
+                                 $sessionDataObj, $foldersObj) {
+    $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
     $this->turfDisplayObj = $turfDisplayObj;
-    $this->nlpSessionDataObj = $nlpSessionDataObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
+    $this->sessionDataObj = $sessionDataObj;
     $this->foldersObj = $foldersObj;
   }
   
@@ -52,7 +49,6 @@ class DeleteTurfForm extends FormBase
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.turf_display'),
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.configuration'),
       $container->get('nlpservices.folders'),
     );
   }
@@ -72,44 +68,50 @@ class DeleteTurfForm extends FormBase
   {
     
     if (empty($form_state->get('reenter'))) {
-      $county = $this->nlpSessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCounty();
       if(empty($county)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
       $form_state->set('county',$county);
-      $hdOptions = $this->turfs->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfs->getCountyTurfCount($county);
-      if($turfCount<$this->turfs::TURF_ALL_MAX ) {
+      $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
+      $turfCount = $this->turfsObj->getCountyTurfCount($county);
+      if($turfCount<$this->turfsObj::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
-      //nlp_debug_msg('$hdOptions',$hdOptions);
-      $this->nlpSessionDataObj->setNewDistricts($hdOptions);
+      $this->sessionDataObj->setNewDistricts($hdOptions);
     }
     
     $county = $form_state->get('county');
+
+    $hdOptions = $this->sessionDataObj->getHdOptions();
+    $currentHd = $this->sessionDataObj->getSavedHd();
     
-    $currentHd = $this->nlpSessionDataObj->getSavedHd();
-    //nlp_debug_msg('$currentHd',$currentHd);
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $turfArray = $this->turfs->getTurfs($county,'All');
-      $form_state->set('search-needle', NULL);
+      $turfArray = $this->turfsObj->getTurfs($county,'All');
+      $form_state->set('search-needle', '');
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
-      $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd):[];
+      $turfArray = (!empty($currentHd))?$this->turfsObj->getTurfs($county,$currentHd):[];
     }
-    //nlp_debug_msg('$turfArray',$turfArray);
+
     // Update the latest minivan information.
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
-    
-    
+    // $this->foldersObj->updateMinivanInfo($county, $turfArray);
+
+    // Create the table data for building the list of turfs.
+    $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray);
+
+    // If there is a sort request, sort the turf array.
+    $sort = Drupal::request()->query->get('sort', '');
+    if(!empty($sort)) {
+      $order = Drupal::request()->query->get('order', '');
+      $this->turfDisplayObj->sortTurfTable($turfTableArray,$sort,$order);
+    }
     $form_state->set('turfArray',$turfArray);
-    //nlp_debug_msg_safe('$turfArray',$turfArray);
-    
-    $turfCount = count($turfArray);
-    //nlp_debug_msg('$turfCount',$turfCount);
+
+    $turfCount = count($turfTableArray);
     if(empty($turfCount)) {
       $form['turf-table']['turf-form'] = [
         '#markup' => '<p>There is no turf to display.</p>',
@@ -123,11 +125,10 @@ class DeleteTurfForm extends FormBase
       '#type' => 'fieldset',
     ];
     
-    $hdOptions = $this->nlpSessionDataObj->getHdOptions();
-    $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
-    $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
-    
-    $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfArray);
+    $hdOptions = $this->sessionDataObj->getHdOptions();
+    $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
+    $form['hd-change']['options_display'] = $this->searchBarObj->searchAndSortBar($hdOptions, $currentHdIndex);
+    $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfTableArray);
     
     // add a button to delete the selected turf or turfs.
     $form['submit'] = [
@@ -143,27 +144,20 @@ class DeleteTurfForm extends FormBase
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
-    {
+  {
     $form_state->set('reenter',TRUE);
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('$elementClicked',$elementClicked);
-    if ($elementClicked=='hd-select') {
-      $newHdIndex = $form_state->getValue('hd-select');
-      //nlp_debug_msg('$newHdIndex',$newHdIndex);
-      // The user changed the HD to display.
-      $this->nlpSessionDataObj->saveHdIndex($newHdIndex);
-      return;
+
+    if ($elementClicked=='delete_submit') {
+      $values = $form_state->getValues();
+      $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
+      $form_state->set('selections', $selections);
+
+      if (count($selections) == 0) {
+        $form_state->setErrorByName('submit', 'You must select at least one turf to delete.');
+      }
     }
-    $values = $form_state->getValues();
-    //nlp_debug_msg('$values',$values);
-    $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
-    $form_state->set('selections', $selections);
-    
-    if (count($selections) == 0) {
-      $form_state->setErrorByName('submit', 'You must select at least one turf to delete.');
-    }
-    
   }
   
   /**
@@ -177,21 +171,27 @@ class DeleteTurfForm extends FormBase
     
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
+    //nlp_debug_msg('$elementClicked',$elementClicked);
     switch ($elementClicked) {
-      
+
+      // The user changed the HD to display.
+      case 'hd_submit':
+        $newHdIndex = $form_state->getValue('hd-select');
+        $this->sessionDataObj->saveHdIndex($newHdIndex);
+        break;
+
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
+        $needle = $form_state->getValue('search-needle');
+        //nlp_debug_msg('$needle',$needle);
         $form_state->set('search-needle', $needle);
         return;
       
-      default:
+      case 'delete_submit':
         $county = $form_state->get('county');
         // From the list of turfs in the list, find the ones to be deleted.
         $turfArray = $form_state->get('turfArray');
-        //nlp_debug_msg('$turfArray',$turfArray);
         $selections = $form_state->get('selections');
-        //nlp_debug_msg('$selections',$selections);
-        
+
         
         foreach ($selections as $turfIndex => $selection) {
           
@@ -205,9 +205,7 @@ class DeleteTurfForm extends FormBase
             $turf['mcid'] = $mcid;
             $turf['county'] = $county;
             $turf['turfIndex'] = $turfIndex;
-            //nlp_debug_msg('$turf',$turf);
-            
-            $status = $this->turfs->deleteTurf($turf);
+            $status = $this->turfsObj->deleteTurf($turf);
             if(!$status) {
               $messenger->addError(t('Turf remove failed'));
               return;
@@ -224,20 +222,6 @@ class DeleteTurfForm extends FormBase
         break;
     }
     
-  }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * selectboxCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnusedParameterInspection
-   * @noinspection PhpUnused
-   */
-  function selectboxCallback($form, $unused): array
-  {
-    return $form['hd-change'];
   }
   
 }

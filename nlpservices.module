@@ -240,6 +240,7 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
     
     case 'nlpservices_delete_turf_form':
     case 'nlpservices_deliver_turf_form':
+    case 'nlpservices_display_turfs_form':
       $form['#attached']['library'][] = 'nlpservices/nlp-table';
       $form['#attached']['library'][] = 'nlpservices/search-boxes';
       $form['#attached']['library'][] = 'nlpservices/hint-note';
