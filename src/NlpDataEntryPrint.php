@@ -162,7 +162,7 @@ party.   If your turf was created before the latest update of voters, it may hav
 voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf 
 in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from 
 the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if 
-still attempting to contact voters.  If you are unable to print your walklist, contact your coordinator for 
+still attempting to contact voters.  If you are unable to print your walksheet, contact your coordinator for 
 assistance.</p>';
     
     $page .= '<p><b>Create a new walksheet: </b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
