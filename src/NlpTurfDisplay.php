@@ -2,6 +2,9 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
+use Drupal\Core\Url;
+
 class NlpTurfDisplay
 {
   private array $header = [];
@@ -56,16 +59,6 @@ class NlpTurfDisplay
           $columns['minivanNumber'] = $turf['minivanNumber'] . '<br>' . $createDate;
         }
       }
-
-        /*
-        if($displayType!='replacement') {
-          $columns['minivanNumber'] = '';
-          if (!empty($turf['minivanNumber'])) {
-            $createDate = date('Y-m-d', strtotime($turf['minivanCreateDate']));
-            $columns['minivanNumber'] = $turf['minivanNumber'] . '<br>' . $createDate;
-          }
-        }
-  */
       if($displayType=='walksheet') {
         $columns['email'] = $turf['email'];
       }
@@ -136,6 +129,9 @@ class NlpTurfDisplay
    */
   private function headerBuild(string $displayType='other'):void
   {
+    // Reset header every call to prevent accumulation across multiple calls.
+    $this->header = [];
+
     if($displayType!='display') {
       $this->header[] = ['data' => t('cb'), 'class' => ['nlp-th-color'] ];
     }
@@ -155,7 +151,7 @@ class NlpTurfDisplay
     }
 
     if($displayType=='walksheet') {
-      $this->header[] = ['data' => t('Email'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Email'), 'class' => ['nlp-th-color'] ];
     }
   }
   
@@ -190,12 +186,14 @@ class NlpTurfDisplay
    * Get the column the user wanted to use to sort the table.
    *
    * @param $data
+   * @param string $displayType
    * @return string
    */
-  public function getSortField($data):string
+  public function getSortField($data, string $displayType='other'):string
   {
-    $this->headerBuild(TRUE);
+    $this->headerBuild($displayType);
     foreach ($this->header as $headerInfo) {
+      if(empty($headerInfo['field'])) { continue; }
       if($headerInfo['data'] == $data) {
         return $headerInfo['field'];
       }
@@ -211,16 +209,24 @@ class NlpTurfDisplay
    * @param $turfTable - The turf table to sort.
    * @param $sort - The sort order, either 'asc' or 'desc'.
    * @param $order - The field to sort by.
-   * @param bool $brief - If TRUE, the sort is for a brief display of NLs.
    */
-  public function sortTurfTable(&$turfTable,$sort,$order,bool $brief=FALSE):void
+  public function sortTurfTable(&$turfTable, $sort, $order): void
   {
-    $sortColumn = $this->getSortField($order);
-    $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;
-    $column = array_column($turfTable, $sortColumn);
-    array_multisort($column, $sortOrder, $turfTable);
+    if (empty($turfTable) || !is_array($turfTable)) {
+      return;
+    }
+
+    $sortColumn = $this->getSortField($order, 'other');
+    if ($sortColumn === '') {
+      return;
+    }
+
+    $sortDirection = ($sort === 'desc') ? -1 : 1;
+    uasort($turfTable, function ($left, $right) use ($sortColumn, $sortDirection) {
+      $leftValue  = trim(strip_tags((string) ($left[$sortColumn]  ?? '')));
+      $rightValue = trim(strip_tags((string) ($right[$sortColumn] ?? '')));
+      return $sortDirection * strnatcasecmp($leftValue, $rightValue);
+    });
   }
-
-
 
 }

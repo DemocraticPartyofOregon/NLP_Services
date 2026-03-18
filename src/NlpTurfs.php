@@ -546,7 +546,7 @@ class NlpTurfs
       if ($hd != 'All') {
         $query->condition('t.turfHd', $hd);
       }
-      if(!empty($orderBy)) {
+      if(!empty($orderBy) && !empty($orderBy['field'])) {
         $sortOrder = ($orderBy['sort']=='desc')?'DESC':'ASC';
         $query->orderBy($orderBy['field'],$sortOrder);
       }
@@ -1355,3 +1355,5 @@ class NlpTurfs
   }
   
 }
+
+

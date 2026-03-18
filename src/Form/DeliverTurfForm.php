@@ -113,29 +113,46 @@ class DeliverTurfForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    // Detect a tablesort GET request (sort/order are query params, no form POST).
+    $query = \Drupal::request()->query;
+    $sort = $query->get('sort', '');
+    $isSortRequest = !empty($sort);
+
     if (empty($form_state->get('reenter'))) {
+      if ($isSortRequest) {
+        // Sort GET: restore county from session so the form can rebuild in-place.
+        $county = $this->nlpSessionDataObj->getCounty();
+        if (!empty($county)) {
+          $form_state->set('county', $county);
+        }
+      }
+      else {
+        $county = $this->nlpSessionDataObj->getCounty();
+        if (empty($county)) {
+          $this->messenger()->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
+          return [];
+        }
+        $instructions = $this->instructionsObj->getInstructions($county);
+        if (empty($instructions['canvass']['fileName']) && empty($instructions['postcard']['fileName'])) {
+          $this->messenger()->addError('You need to upload the canvass or postcard instructions first.');
+          return [];
+        }
+        $form_state->set('county', $county);
 
-      $county = $this->nlpSessionDataObj->getCounty();
-      if (empty($county)) {
-        $this->messenger()->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
-        return [];
+        $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
+        $turfCount = $this->turfsObj->getCountyTurfCount($county);
+        if ($turfCount < $this->turfsObj::TURF_ALL_MAX) {
+          array_unshift($hdOptions, 'All');
+        }
+        $this->nlpSessionDataObj->setNewDistricts($hdOptions);
       }
-      $instructions = $this->instructionsObj->getInstructions($county);
-      if (empty($instructions['canvass']['fileName']) && empty($instructions['postcard']['fileName'])) {
-        $this->messenger()->addError('You need to upload the canvass or postcard instructions first.');
-        return [];
-      }
-      $form_state->set('county', $county);
-
-      $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfsObj->getCountyTurfCount($county);
-      if ($turfCount < $this->turfsObj::TURF_ALL_MAX) {
-        array_unshift($hdOptions, 'All');
-      }
-      $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
 
     $county = $form_state->get('county');
+    if (empty($county)) {
+      $county = $this->nlpSessionDataObj->getCounty();
+      $form_state->set('county', $county);
+    }
 
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
@@ -148,8 +165,6 @@ class DeliverTurfForm extends FormBase
       return $form;
     }
 
-    $query = \Drupal::request()->query;
-    $sort = $query->get('sort', '');
     if (!empty($sort)) {
       $order = $query->get('order', '');
       $sortField = $this->turfDisplayObj->getSortField($order);
@@ -166,9 +181,13 @@ class DeliverTurfForm extends FormBase
       }
     }
     // Update the minivan information for the turfs to be displayed.
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    //$this->foldersObj->updateMinivanInfo($county, $turfArray);
 
     $form_state->set('turfArray', $turfArray);
+
+    // Create the table data for building the list of turfs.
+    $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray, 'walksheet');
+    //nlp_debug_msg('$turfTableArray', $turfTableArray);
 
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
 
@@ -181,7 +200,7 @@ class DeliverTurfForm extends FormBase
         'style' => ['background-image:none;border:0px;padding:0px;margin:0px;background-color:rgb(255,255,255);'],
       ],
     ];
-    $form['turf-form']['turf_table'] = $this->turfDisplayObj->displayTurfs($turfArray, 'walksheet');
+    $form['turf-form']['turf_table'] = $this->turfDisplayObj->displayTurfs($turfTableArray, 'walksheet');
 
     $form['footnote'] = [
       '#markup' => '<p>&#134;&#134;  This turf does not have a printable walksheet associated.  If the NL is
@@ -505,3 +524,4 @@ class DeliverTurfForm extends FormBase
   }
 
 }
+
