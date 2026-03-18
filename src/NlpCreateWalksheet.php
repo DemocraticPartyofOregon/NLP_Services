@@ -305,6 +305,7 @@ class NlpCreateWalksheet
     $name = $alsoAddress = $votingHistory1 = $votingHistory2 = '';
     $voterCount = 0;
     $exist = false;
+    /*
     foreach ($allInHousehold['items'] as $voter) {
       if(!in_array($voter['vanId'],$householdVanids)) {
         $alsoAddress = 'Also in household';
@@ -326,7 +327,7 @@ class NlpCreateWalksheet
         $exist = true;
       }
     }
-    
+    */
     return [
       'exist' => $exist,
       'address' => $alsoAddress,
