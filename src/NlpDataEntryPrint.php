@@ -137,8 +137,8 @@ recent information from VoteBuilder.)</p>';
     
     $turf = $this->turfsObj->getTurf($turfIndex);
     
-    $page .= "<h2>Printable walksheet for your turf</h2>";
-    
+    $page .= "<h2>Printable walksheet (Original with map)</h2>";
+
     if(!empty($turf['turfPDF'])) {
       $pdfPath = $this->pathsObj->getPath('PDF',$county);
       $pdfUri = $pdfPath . $turf['turfPDF'];
@@ -154,13 +154,16 @@ differ.</p>';
 you intend to send postcards or are using the MiniVAN.  If you need a printable walksheet, please contact
 your county coordinator.</p>';
     }
-    
+
+    $page .= "<h2>Printable walksheet (Latest list of voters but without a map)</h2>";
+
     $page .=  '<p>Approximately every thirty days, the database of registered voters is updated by the state 
 party.   If your turf was created before the latest update of voters, it may have experienced some change.   Some 
 voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf 
 in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from 
 the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if 
-still attempting to contact voters. </p>';
+still attempting to contact voters.  If you are unable to print your walklist, contact your coordinator for 
+assistance.</p>';
     
     $page .= '<p><b>Create a new walksheet: </b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
     
