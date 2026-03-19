@@ -368,7 +368,11 @@ class ApiFolders {
     foreach ($turfArray as $turfIndex => $turf) {
       
       $mapRegionId = $turf['mapRegionId'];
-      if(empty($mapRegionId)) {continue;}
+      if(empty($mapRegionId)) {
+        $turfArray[$turfIndex]['minivanNumber'] = 0;
+        $turfArray[$turfIndex]['minivanCreateDate'] = '';
+        continue;
+      }
       if (!empty($mapRegionOptionsSaved[$mapRegionId])) {
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];
       } else {
@@ -378,6 +382,11 @@ class ApiFolders {
         $mapRegionOptionsSaved[$mapRegionId] = $mapRegionOptions;
       }
       $listId = $turf['listId'];
+      if( empty($listId) || empty($mapRegionOptions[$listId]['printedList'])) {
+        $turfArray[$turfIndex]['minivanNumber'] = 0;
+        $turfArray[$turfIndex]['minivanCreateDate'] = '';
+        continue;
+      }
       if(!empty($mapRegionOptions[$listId]['printedList'])) {
         $turfArray[$turfIndex]['minivanNumber'] = $mapRegionOptions[$listId]['printedList']['number'];
         $turfArray[$turfIndex]['minivanCreateDate'] = $mapRegionOptions[$listId]['printedList']['dateCreated'];
