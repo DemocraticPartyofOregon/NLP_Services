@@ -4,19 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the recording of changes to CO and Notes in the active NLs display.">
-      <change afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure correct initial value for cron task enable option.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/search-boxes.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/search-boxes.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSearchBar.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSearchBar.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Templates/manageTurfs.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/manageTurfs.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,6 +36,7 @@
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RESET_MODE" value="MIXED" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {
@@ -68,6 +61,9 @@
       <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/vendor" />
     </include_path>
   </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 3
 }</component>
@@ -84,6 +80,11 @@
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
+    "WebServerToolWindowPanel.toolwindow.show.date": "false",
+    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
+    "WebServerToolWindowPanel.toolwindow.show.size": "false",
     "git-widget-placeholder": "NLP__Services__V7__0__2",
     "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
     "node.js.detected.package.eslint": "true",
@@ -116,7 +117,8 @@
       <workItem from="1771817077459" duration="1094000" />
       <workItem from="1772250902953" duration="12873000" />
       <workItem from="1772297056722" duration="24011000" />
-      <workItem from="1773238492591" duration="63101000" />
+      <workItem from="1773238492591" duration="112487000" />
+      <workItem from="1773779727610" duration="21667000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -382,15 +384,125 @@
       <option name="project" value="LOCAL" />
       <updated>1773422507425</updated>
     </task>
-    <option name="localTasksCounter" value="34" />
+    <task id="LOCAL-00034" summary="Fix delete turf to allow sorting after a change in HD, and remove the slow display of MiniVAN info.">
+      <option name="closed" value="true" />
+      <created>1773519752265</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1773519752265</updated>
+    </task>
+    <task id="LOCAL-00035" summary="Raise max turf size temporarily.">
+      <option name="closed" value="true" />
+      <created>1773865381431</created>
+      <option name="number" value="00035" />
+      <option name="presentableId" value="LOCAL-00035" />
+      <option name="project" value="LOCAL" />
+      <updated>1773865381431</updated>
+    </task>
+    <task id="LOCAL-00036" summary="Claify the text for the printable walksheets">
+      <option name="closed" value="true" />
+      <created>1773871609030</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1773871609030</updated>
+    </task>
+    <task id="LOCAL-00037" summary="Claify the text for the printable walksheets">
+      <option name="closed" value="true" />
+      <created>1773871683994</created>
+      <option name="number" value="00037" />
+      <option name="presentableId" value="LOCAL-00037" />
+      <option name="project" value="LOCAL" />
+      <updated>1773871683994</updated>
+    </task>
+    <task id="LOCAL-00038" summary="Temporarily work around the failure of the API to return voters in housthold.">
+      <option name="closed" value="true" />
+      <created>1773872029756</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1773872029756</updated>
+    </task>
+    <task id="LOCAL-00039" summary="Temporarily work around the failure of the API to return voters in housthold.">
+      <option name="closed" value="true" />
+      <created>1773874222257</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1773874222257</updated>
+    </task>
+    <task id="LOCAL-00040" summary="Fix the error to deliver turf that resulted from the fix to delete turf for sorting.">
+      <option name="closed" value="true" />
+      <created>1773875895176</created>
+      <option name="number" value="00040" />
+      <option name="presentableId" value="LOCAL-00040" />
+      <option name="project" value="LOCAL" />
+      <updated>1773875895176</updated>
+    </task>
+    <task id="LOCAL-00041" summary="Identify the NL associated with the checkbox">
+      <option name="closed" value="true" />
+      <created>1773878631366</created>
+      <option name="number" value="00041" />
+      <option name="presentableId" value="LOCAL-00041" />
+      <option name="project" value="LOCAL" />
+      <updated>1773878631366</updated>
+    </task>
+    <task id="LOCAL-00042" summary="Defend against empty minivan data from votebuilder">
+      <option name="closed" value="true" />
+      <created>1773878954289</created>
+      <option name="number" value="00042" />
+      <option name="presentableId" value="LOCAL-00042" />
+      <option name="project" value="LOCAL" />
+      <updated>1773878954289</updated>
+    </task>
+    <task id="LOCAL-00043" summary="Allow the use of special characters in the display of the password when editing Drupal logins.">
+      <option name="closed" value="true" />
+      <created>1773879958152</created>
+      <option name="number" value="00043" />
+      <option name="presentableId" value="LOCAL-00043" />
+      <option name="project" value="LOCAL" />
+      <updated>1773879958152</updated>
+    </task>
+    <task id="LOCAL-00044" summary="Ensure correct initial value for cron task enable option.">
+      <option name="closed" value="true" />
+      <created>1773880132191</created>
+      <option name="number" value="00044" />
+      <option name="presentableId" value="LOCAL-00044" />
+      <option name="project" value="LOCAL" />
+      <updated>1773880132191</updated>
+    </task>
+    <option name="localTasksCounter" value="45" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="8da61a28-d596-421e-afa6-169a9f973092" value="TOOL_WINDOW" />
+      </map>
+    </option>
     <option name="TAB_STATES">
       <map>
+        <entry key="8da61a28-d596-421e-afa6-169a9f973092">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="origin/NLP_Services_V7_0_2" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
         <entry key="MAIN">
           <value>
             <State>
@@ -412,15 +524,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="REcover from the change in VAN from Preferred to Best for phone numbers." />
-    <MESSAGE value="Remove requirement that the old vanid not exist for changing the vanid for an NL to a new one." />
-    <MESSAGE value="Add diagnostic error messages when a faulty API key is suspected." />
-    <MESSAGE value="Display of All fails after adding the type test for HD as int." />
-    <MESSAGE value="Correct error message for reporting status of the ASK for an active NL." />
-    <MESSAGE value="Ensure state name is a string and not NULL." />
-    <MESSAGE value="Role is not searchable for the display of Drupal accounts." />
-    <MESSAGE value="Ensure vfid is an int when syncing NLs records." />
-    <MESSAGE value="Add instructions to include NLP roles for the text editor." />
     <MESSAGE value="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign." />
     <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
     <MESSAGE value="Fix the export of tables, both for coordinators and for end of election configuration." />
@@ -437,7 +540,16 @@
     <MESSAGE value="Clarify the text for reporting a postcard was sent." />
     <MESSAGE value="Create separate form to initialize the training documents." />
     <MESSAGE value="Fix the recording of changes to CO and Notes in the active NLs display." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the recording of changes to CO and Notes in the active NLs display." />
+    <MESSAGE value="Fix delete turf to allow sorting after a change in HD, and remove the slow display of MiniVAN info." />
+    <MESSAGE value="Raise max turf size temporarily." />
+    <MESSAGE value="Claify the text for the printable walksheets" />
+    <MESSAGE value="Temporarily work around the failure of the API to return voters in housthold." />
+    <MESSAGE value="Fix the error to deliver turf that resulted from the fix to delete turf for sorting." />
+    <MESSAGE value="Identify the NL associated with the checkbox" />
+    <MESSAGE value="Defend against empty minivan data from votebuilder" />
+    <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
+    <MESSAGE value="Ensure correct initial value for cron task enable option." />
+    <option name="LAST_COMMIT_MESSAGE" value="Ensure correct initial value for cron task enable option." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

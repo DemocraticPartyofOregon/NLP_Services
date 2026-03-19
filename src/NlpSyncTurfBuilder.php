@@ -211,7 +211,7 @@ case-insensitive.
       
       $form['nl_name_search']['select_nl_from_list'] =
         $this->nlsListDisplayObj->buildNlsTable($nlsTable,TRUE,'search');
-      
+
       $form['nl_name_search']['walksheet'] = $this->walksheet('ns');
     }
     
@@ -239,7 +239,7 @@ case-insensitive.
       '#markup' => '<b>Check the box for the NL to be assigned to the turf.</b>',
     ];
     $form['select_nl_from_list'] = $this->nlsListDisplayObj->buildNlsTable($nlList,TRUE,'nlsForm');
-    
+
     $form['walksheet'] = $this->walksheet('ds');
     
     $form['add_selected'] = [
@@ -502,5 +502,5 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
     $form['turf_select']['legend'] = $this->legendBar();
     return $form;
   }
-  
+
 }

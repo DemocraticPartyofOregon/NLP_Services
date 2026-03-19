@@ -9,6 +9,8 @@ class NlpTurfListDisplayVoteBuilder
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * displayTurfs
    *
+   * Build a table of turfs visible in VoteBuilder.
+   *
    * @param array $turfs - Typically this is an array of turfs from a map region.   Atypically,
    * this is an array of saved lists in a folder. Use of saved lists should be rare.
    * @param bool $showLists - True if the display is for saved lists in a folder.
