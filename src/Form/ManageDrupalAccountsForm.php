@@ -169,7 +169,7 @@ class ManageDrupalAccountsForm extends FormBase
           $mcid = $user['mcid'];
           $msg = $this->drupalUserObj->displayCredentials($mcid,$user);
           $form['user_login'.$uid] = [
-            '#markup' => t($msg),
+            '#markup' => $msg,
           ];
         }
         
