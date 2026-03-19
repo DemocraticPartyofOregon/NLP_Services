@@ -53,13 +53,21 @@ class EnableCronTasksForm extends ConfigFormBase {
   {
     $nlpConfigObj = $this->config('nlpservices.configuration');
     $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
-    
+    if (!is_array($cronConfiguration)) {
+      $cronConfiguration = [];
+    }
+
+    $enableMinivan = $cronConfiguration['enableMinivan'] ?? 0;
+    $enableMatchback = $cronConfiguration['enableMatchback'] ?? 0;
+    $enableEmailRedirect = $cronConfiguration['enableEmailRedirect'] ?? 0;
+    $enableTurfResync = $cronConfiguration['enableTurfResync'] ?? 0;
+
     if($this->emailConfigurationObj->emailCredentialsValidated('minivan')) {
       $form['enableMinivan'] = [
         '#type' => 'checkbox',
         '#id' => 'enableMinivan',
         '#title' => t('Enable processing of minivan emails for this election.'),
-        '#default_value' => $cronConfiguration['enableMinivan'],
+        '#default_value' => $enableMinivan,
         '#description' => t("When enabled, NLP Services will process the minivan emails."),
       ];
     } else {
@@ -74,7 +82,7 @@ class EnableCronTasksForm extends ConfigFormBase {
       '#type' => 'checkbox',
       '#id' => 'enableMatchback',
       '#title' => t('Enable processing of matchback emails for this election.'),
-      '#default_value' => $cronConfiguration['enableMatchback'],
+      '#default_value' => $enableMatchback,
       '#description' => t("When enabled, NLP Services will process the matchback emails."),
     ];
     } else {
@@ -88,7 +96,7 @@ class EnableCronTasksForm extends ConfigFormBase {
         '#type' => 'checkbox',
         '#id' => 'enableEmailRedirect',
         '#title' => t('Enable forwarding of emails to coordinators for this election.'),
-        '#default_value' => $cronConfiguration['enableEmailRedirect'],
+        '#default_value' => $enableEmailRedirect,
         '#description' => t("When enabled, NLP Services will redirect emails to the coordinators."),
       ];
     } else {
@@ -96,12 +104,12 @@ class EnableCronTasksForm extends ConfigFormBase {
         '#markup' => '<p>The email credentials for redirection of emails to notifications have not yet been configured.</p>'
       ];
     }
-    
+
     $form['enableTurfResync'] = [
       '#type' => 'checkbox',
       '#id' => 'enableTurfResync',
       '#title' => t('Enable turf resync for this election.'),
-      '#default_value' => $cronConfiguration['enableTurfResync'],
+      '#default_value' => $enableTurfResync,
       '#description' => t("When enabled, NLP Services with resync turf nightly."),
     ];
     
@@ -121,7 +129,10 @@ class EnableCronTasksForm extends ConfigFormBase {
     
     $nlpConfigObj = $this->config('nlpservices.configuration');
     $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
-    
+    if (!is_array($cronConfiguration)) {
+      $cronConfiguration = [];
+    }
+
     $cronConfiguration['enableMinivan'] = empty($values['enableMinivan'])?0:$values['enableMinivan'];
     $cronConfiguration['enableMatchback'] = empty($values['enableMatchback'])?0:$values['enableMatchback'];
     $cronConfiguration['enableEmailRedirect'] = empty($values['enableEmailRedirect'])?0:$values['enableEmailRedirect'];
