@@ -159,6 +159,7 @@ class NlpNlsListDisplay
       '#type' => 'table',
       '#header' => $this->header,
       '#tablesort' => TRUE,
+      '#attributes' => ['class' => ['nlp-nls-table']],
     ];
     
     foreach ($rows as $rowNumber => $row) {
@@ -204,7 +205,7 @@ class NlpNlsListDisplay
             case 'ta':
               $form_element[$type][$rowNumber][$columnName] = [
                 '#type' => 'textarea',
-                '#attributes' => ['class' => ['textarea-width no-white']],
+                '#attributes' => ['class' => ['textarea-width', 'no-white', 'nl-notes-textarea']],
                 '#cols' => 10,
                 '#rows' => 2,
                 '#resizable' => FALSE,
@@ -267,7 +268,7 @@ class NlpNlsListDisplay
     $this->header[] = ['data' => t('Address'), 'field' => 'address', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Email<br>Phone'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     if(!$brief) {
-      $this->header[] = ['data' => t('Notes'), 'field' => 'notes', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Notes'), 'field' => 'notes', 'class' => ['nlp-th-color', 'nl-notes-col'] ];
       $this->header[] = ['data' => t('NL'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('TC'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('TD'),  'class' => ['nlp-th-color'] ];

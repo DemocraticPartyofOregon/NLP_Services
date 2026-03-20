@@ -4,11 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ensure correct initial value for cron task enable option.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Eliminate the minivan penalty for deleting a turf.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/nlp-table.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/nlp-table.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,7 +117,7 @@
       <workItem from="1772250902953" duration="12873000" />
       <workItem from="1772297056722" duration="24011000" />
       <workItem from="1773238492591" duration="112487000" />
-      <workItem from="1773779727610" duration="21667000" />
+      <workItem from="1773779727610" duration="26902000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -472,7 +471,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773880132191</updated>
     </task>
-    <option name="localTasksCounter" value="45" />
+    <task id="LOCAL-00045" summary="Eliminate the minivan penalty for deleting a turf.">
+      <option name="closed" value="true" />
+      <created>1773881942677</created>
+      <option name="number" value="00045" />
+      <option name="presentableId" value="LOCAL-00045" />
+      <option name="project" value="LOCAL" />
+      <updated>1773881942677</updated>
+    </task>
+    <option name="localTasksCounter" value="46" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -524,7 +531,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign." />
     <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
     <MESSAGE value="Fix the export of tables, both for coordinators and for end of election configuration." />
     <MESSAGE value="Fix the results summary for startup." />
@@ -549,7 +555,8 @@
     <MESSAGE value="Defend against empty minivan data from votebuilder" />
     <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
     <MESSAGE value="Ensure correct initial value for cron task enable option." />
-    <option name="LAST_COMMIT_MESSAGE" value="Ensure correct initial value for cron task enable option." />
+    <MESSAGE value="Eliminate the minivan penalty for deleting a turf." />
+    <option name="LAST_COMMIT_MESSAGE" value="Eliminate the minivan penalty for deleting a turf." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

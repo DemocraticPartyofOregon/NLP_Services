@@ -93,3 +93,14 @@ table.system-status-report tr.error {
 tr td:last-child {
     border-right: 1px solid #BEBFB9;
 }
+
+/* Keep the NL notes column readable while other columns remain automatic. */
+table.nlp-nls-table th.nl-notes-col {
+    min-width: 12rem;
+}
+
+table.nlp-nls-table textarea.nl-notes-textarea {
+    min-width: 12rem;
+    width: 100%;
+    box-sizing: border-box;
+}
