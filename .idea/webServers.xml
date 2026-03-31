@@ -9,6 +9,27 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="e81d87fc-37f6-4245-9c16-ca43f6f8c578" name="MtdemsNLP" url="http://ftp.mtdemsnlp.org">
+        <fileTransfer host="ftp.mtdemsnlp.org" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="9fd6e325-b8cd-4133-99c7-2ce9e2a502ed" name="SandboxNLP" url="http://ftp.sandboxnlp.org">
+        <fileTransfer host="ftp.sandboxnlp.org" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="9f6cff0d-0b05-4d10-80b5-6a95e4051e4d" name="OregonNLP" url="http://ftp.oregonnlp.org">
+        <fileTransfer host="ftp.oregonnlp.org" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

@@ -6,6 +6,7 @@ const NLP_MODULE = 'nlpservices';
 const NLP_ADMIN_ROLE_ID = 'nlp_admin';
 const NLP_COORDINATOR_ROLE_ID = 'nlp_coordinator';
 const NLP_LEADER_ROLE_ID = 'nlp_leader';
+const NLP_ADMIN_ROLE_LABEL = 'NLP Admin';
 const NLP_COORDINATOR_ROLE_LABEL = 'NLP Coordinator';
 const NLP_LEADER_ROLE_LABEL = 'NLP Leader';
 
@@ -38,9 +39,10 @@ function nlpservices_mail_alter(&$message): void
         $currentUser = $userObj->getCurrentUser();
         $firstName = $currentUser['firstName'];
         $lastName = $currentUser['lastName'];
+        $fullName = $firstName . " " . $lastName;
         $email = $currentUser['email'];
-        $messageAddition = "This email was sent to you by: " . $firstName . " " . $lastName . ".  If you do not know your
-password, contact your county NLP coordinator.  <br>Email:$email";
+        $messageAddition = "This email was sent to you by: " . $fullName .
+          ".  If you do not know your password, contact your county NLP coordinator.  <br>Email:$email";
         
         $message['body'][] = $messageAddition;
         $message['reply-to'] = $email;
@@ -280,8 +282,8 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
       $form['#attached']['library'][] = 'nlpservices/table-helper';
       $form['#attached']['library'][] = 'nlpservices/update-pdf-assignment';
       $form['#attached']['library'][] = 'nlpservices/hint-note';
-
       break;
+
     case 'nlpservices_active_nls_display_form':
       //nlp_debug_msg('$form',$form['nls-form']['nls_table']['contacts'][101871830]);
       $form['#attached']['library'][] = 'nlpservices/nlp-table';
@@ -406,7 +408,7 @@ function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
  *
  * If enabled, this function will check if any turfs are suspected to be out of sync with
  * VoteBuilder.   If so, the turfs are resynced.  This is done at night so that the
- * resync process does not interfere with the normal operation of the system.
+ * resyncing process does not interfere with the normal operation of the system.
  *
  * @return void
  */
@@ -502,7 +504,7 @@ function nlpservices_cron (): void
     $debug = $nlpConfigurationObj->getDebug();
     $hour = (int)date('G'); // 0-23, midnight is 0
     if (!($hour >= 0 && $hour < 3) AND !$debug) {
-      // The time is not between midnight and 3am, so skip the resync.
+      // The time is not between midnight and 3am, so skip the resyncing.
       Drupal::logger('nlpservices')->notice("Turf resync skipped, current hour: $hour");
       return;
     }
@@ -519,7 +521,7 @@ function nlpservices_cron (): void
       // We have a county with at least one turf to check.
       $turfCount = 0;
       if($queueStart) {
-        // Mark the first turf to time the resync process.
+        // Mark the first turf to start the timing the resyncing process.
         $queueItems[0]['queueStart'] = 'start';
         $queueStart = false;
       }

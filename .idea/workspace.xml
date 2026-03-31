@@ -4,10 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Eliminate the minivan penalty for deleting a turf.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Set a minimum size to the Notes column for the list of active NLs.">
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/nlp-table.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/nlp-table.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -24,6 +27,9 @@
   </component>
   <component name="DrupalConfiguration" enabled="true" version="9">
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-9.5.11</drupalPath>
+  </component>
+  <component name="EmbeddingIndexingInfo">
+    <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
     <option name="NEW_BASE" value="origin/NLP_Services_V7_0_2" />
@@ -46,12 +52,16 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/sjpacker21355/NLP_Services.git&quot;,
-    &quot;accountId&quot;: &quot;ee876f9f-d44c-482d-8c2a-7421c921c319&quot;
+    &quot;accountId&quot;: &quot;7585ed9b-be94-49d4-9342-664d159998b3&quot;
   }
 }</component>
   <component name="JoomlaConfiguration">
     <joomlaConfigPath />
     <joomlaPath />
+  </component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
     <include_path>
@@ -75,6 +85,7 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
@@ -84,22 +95,26 @@
     "WebServerToolWindowPanel.toolwindow.show.date": "false",
     "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
     "WebServerToolWindowPanel.toolwindow.show.size": "false",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "NLP__Services__V7__0__2",
+    "junie.onboarding.icon.badge.shown": "true",
     "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.preferences.fonts.default",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
+    "to.speed.mode.migration.done": "true",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-PS-253.31033.138" />
-        <option value="bundled-php-predefined-a98d8de5180a-0e0d91225499-com.jetbrains.php.sharedIndexes-PS-253.31033.138" />
+        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.22158.283" />
+        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.22158.283" />
       </set>
     </attachedChunks>
   </component>
@@ -118,6 +133,14 @@
       <workItem from="1772297056722" duration="24011000" />
       <workItem from="1773238492591" duration="112487000" />
       <workItem from="1773779727610" duration="26902000" />
+      <workItem from="1773967789446" duration="18224000" />
+      <workItem from="1774130106345" duration="4595000" />
+      <workItem from="1774149015274" duration="1683000" />
+      <workItem from="1774150947222" duration="79014000" />
+      <workItem from="1774642925006" duration="67510000" />
+      <workItem from="1774928103464" duration="756000" />
+      <workItem from="1774929286275" duration="977000" />
+      <workItem from="1774930381979" duration="6979000" />
     </task>
     <task id="LOCAL-00001" summary="Claude code review of API services">
       <option name="closed" value="true" />
@@ -479,7 +502,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773881942677</updated>
     </task>
-    <option name="localTasksCounter" value="46" />
+    <task id="LOCAL-00046" summary="Set a minimum size to the Notes column for the list of active NLs.">
+      <option name="closed" value="true" />
+      <created>1773967884521</created>
+      <option name="number" value="00046" />
+      <option name="presentableId" value="LOCAL-00046" />
+      <option name="project" value="LOCAL" />
+      <updated>1773967884521</updated>
+    </task>
+    <option name="localTasksCounter" value="47" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -531,7 +562,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Remove the injection of request_stack and use a dynamic reference for request()." />
     <MESSAGE value="Fix the export of tables, both for coordinators and for end of election configuration." />
     <MESSAGE value="Fix the results summary for startup." />
     <MESSAGE value="Fix mossing cron variables" />
@@ -556,7 +586,8 @@
     <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
     <MESSAGE value="Ensure correct initial value for cron task enable option." />
     <MESSAGE value="Eliminate the minivan penalty for deleting a turf." />
-    <option name="LAST_COMMIT_MESSAGE" value="Eliminate the minivan penalty for deleting a turf." />
+    <MESSAGE value="Set a minimum size to the Notes column for the list of active NLs." />
+    <option name="LAST_COMMIT_MESSAGE" value="Set a minimum size to the Notes column for the list of active NLs." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

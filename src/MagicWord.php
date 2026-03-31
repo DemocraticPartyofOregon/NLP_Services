@@ -13,7 +13,10 @@ class MagicWord {
 
   const string KEY = 'In order to create a more perfect union';
   const string IV = 'Kamala Harris';
-  
+
+  // These fields are used to detect and update credentials when a change is made.
+  const array CREDENTIAL_FIELDS = ['userName','email','magicWord','roles','access','created','vfid'];
+
   protected ConfigFactoryInterface $config;
   protected Connection $connection;
   
@@ -53,7 +56,6 @@ class MagicWord {
    */
   public function setMagicWord($mcid,$magicWord): bool
   {
-    //nlp_debug_msg('>>> setMagicWord',$magicWord);
     $key = hash('sha256', self::KEY);
     $iv = substr(hash('sha256', self::IV), 0, 16);
     $output = openssl_encrypt($magicWord, "AES-256-CBC", $key, 0, $iv);
@@ -140,6 +142,32 @@ class MagicWord {
     } while (TRUE);
     return $mcids;
   }
+
+  /**
+   * createNewCredentials
+   *
+   * Create a new NL's credentials array.'
+   *
+   * @param int $mcid
+   * @param string $userName
+   * @param string $email
+   * @return array
+   */
+  function createNewCredentials(int $mcid, string $userName, string $email): array
+  {
+    return [
+      'mcid' => $mcid,
+      'userName' => $userName,
+      'email' => $email,
+      'county' => '',
+      'hd' => 0,
+      'roles' => '',
+      'access' => 0,
+      'created' => 0,
+      'vfid' => 0,
+    ];
+
+  }
   
   /**
    * @param $mcid
@@ -160,9 +188,7 @@ class MagicWord {
       return [];
     }
     $credentials = $result->fetchAssoc();
-    //nlp_debug_msg('$credentials', $credentials );
     if(empty($credentials)) {return [];}
-    //nlp_debug_msg('$decrypted', $decrypted );
     if($decrypted) {
       if(!empty($credentials['magicWordEncrypted'])) {
         $key = hash('sha256', self::KEY);
@@ -175,10 +201,17 @@ class MagicWord {
     }
     
     $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):'';
-    //nlp_debug_msg('$credentials', $credentials );
     return $credentials;
   }
-  
+
+  /**
+   * getCredentialsByEmail
+   *
+   * Retrieves user credentials by their email address.
+   *
+   * @param string $email The email address to search for in the database.
+   * @return array An associative array of user credentials. Returns an empty array if no credentials are found or an error occurs.
+   */
   public function getCredentialsByEmail(string $email): array
   {
     try {
@@ -198,8 +231,17 @@ class MagicWord {
     $credentials['roles'] = json_decode($credentials['roles'], true);
     return $credentials;
   }
-  
-  public function getCredentialsByUsername($username): array
+
+  /**
+   * getCredentialsByUsername
+   *
+   * Retrieves user credentials by their MCID.
+   *
+   * @param string $username
+   * @return array An associative array of user credentials. Returns an empty array if no credentials
+   * are found or an error occurs.
+   */
+  public function getCredentialsByUsername(string $username): array
   {
     if(empty($username)) {return [];}
     try {
@@ -219,38 +261,36 @@ class MagicWord {
     $credentials['roles'] = json_decode($credentials['roles'], true);
     return $credentials;
   }
-  
+
+
+  /**
+   * updateCredentials
+   *
+   * Update NL credentials in the database.
+   * 1. If the NL has a nickname, use that. Otherwise, use the first name.
+   * 2. Add the last name, separated by a period.
+   * 3. If that username is already in use, use the first initial, middle initial, and last name.
+   * 4. If that username is already in use, add a number suffix, starting with 2 and incrementing
+   *      until a unique username is found or we reach 10 attempts.
+   * 5. If the email is already in use, add a number suffix, starting with 2 and incrementing
+   *      until a unique email is found or we reach 10 attempts.
+   *
+   * @param $credentials
+   * @return bool
+   */
   public function updateCredentials($credentials): bool
   {
-    /*
-    //nlp_debug_msg('>>> updateCredentials', $credentials );
-    if(!empty($credentials['roles'])) {
-      $credentials['roles'] = json_encode($credentials['roles']);
-    }
-    */
-    if(!empty($credentials['magicWord'])) {
-      $key = hash('sha256', self::KEY);
-      $iv = substr(hash('sha256', self::IV), 0, 16);
-      $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
-      $credentials['magicWordEncrypted'] = base64_encode($output);
+    if(isset($credentials['magicWord'])) {
+      if(!empty($credentials['magicWord'])) {
+        $key = hash('sha256', self::KEY);
+        $iv = substr(hash('sha256', self::IV), 0, 16);
+        $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
+        $credentials['magicWordEncrypted'] = base64_encode($output);
+      }
       unset($credentials['magicWord']);
     }
     $mcid = $credentials['mcid'];
-    //unset($credentials['mcid']);
-    
-    //if(empty($credentials['access'])) {$credentials['access']=0;}
-    //if(empty($credentials['created'])) {$credentials['created']=0;}
-    //nlp_debug_msg('>>> updateCredentials, mcid:'.$mcid, $credentials );
-    
     $current = $this->getCredentials($mcid,FALSE);
-    /*
-    $key = hash('sha256', self::KEY);
-    $iv = substr(hash('sha256', self::IV), 0, 16);
-    $output = openssl_encrypt($current['magicWord'], "AES-256-CBC", $key, 0, $iv);
-    $current['magicWordEncrypted'] = base64_encode($output);
-    unset($current['magicWord']);
-    */
-    //nlp_debug_msg('current',$current);
     foreach($credentials as $key => $value) {
       $current[$key] = $value;
     }
@@ -258,13 +298,18 @@ class MagicWord {
     if(!empty($current['roles'])) {
       $current['roles'] = json_encode($current['roles']);
     }
-    //nlp_debug_msg('current',$current);
-    
     $this->deleteCredentials($mcid);
-    
     return $this->createCredentials($current);
   }
-  
+
+  /**
+   * deleteCredentials
+   *
+   * Delete NL credentials from the database.
+   *
+   * @param $mcid
+   * @return void
+   */
   public function deleteCredentials($mcid): void
   {
     try{
@@ -277,9 +322,29 @@ class MagicWord {
       nlp_debug_msg('deleteCredentials', $error );
     }
   }
-  
+
+  /**
+   * createCredentials
+   *
+   * Create NL credentials in the database.
+   *
+   * @param $credentials
+   * @return bool
+   */
   public function createCredentials($credentials): bool
   {
+    if(isset($credentials['magicWord'])) {
+      if(!empty($credentials['magicWord'])) {
+        $key = hash('sha256', self::KEY);
+        $iv = substr(hash('sha256', self::IV), 0, 16);
+        $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
+        $credentials['magicWordEncrypted'] = base64_encode($output);
+      }
+      unset($credentials['magicWord']);
+    }
+    if(!empty($credentials['roles'])) {
+      $credentials['roles'] = json_encode($credentials['roles']);
+    }
     $mcid = $credentials['mcid'];
     //unset($credentials['mcid']);
     try {
@@ -294,12 +359,22 @@ class MagicWord {
     }
     return TRUE;
   }
-  
-  public function isUnique($userName): bool
+
+  /**
+   * isUnique
+   *
+   * Check if a username is unique.
+   *
+   * @param string $userName
+   * @param int $mcid
+   * @return bool
+   */
+  private function isUnique( string $userName, int $mcid): bool
   {
     try {
       $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
       $query->addField('m', 'userName');
+      $query->addField('m', 'mcid');
       $query->condition('userName',$userName);
       $result = $query->execute();
     }
@@ -309,56 +384,73 @@ class MagicWord {
     }
     $inUse = $result->fetchAssoc();
     if(empty($inUse)) {return TRUE;}
+    if($inUse['mcid'] == $mcid) {return TRUE;}
     return FALSE;
   }
-  
+
   /**
-   * @param $firstName
-   * @param $middleName
-   * @param $lastName
-   * @param $nickName
-   * Is used in SyncActiveNlsBatch.php
+   * uniqueUserName
+   *
+   * Create a unique username for the NL.
+   * 1. If the NL has a nickname, use that. Otherwise, use the first name.
+   * 2. Add the last name, separated by a period.
+   * 3. If that username is already in use, use the first initial, middle initial, and last name.
+   * 4. If that username is already in use, add a number suffix, starting with 2 and incrementing
+   *      until a unique username is found or we reach 10 attempts.
+   *
+   * @param $nlRecord
+   * @param $namesTried
    * @return string
    */
-  public function defaultUserName($firstName,$middleName,$lastName,$nickName): string
+  public function uniqueUserName($nlRecord,&$namesTried): string
   {
-    //nlp_debug_msg('$middleName', $middleName );
-    $loginName = (!empty($nickName)) ? $nickName: $firstName;
-    $lcUsrName = strtolower("$loginName.$lastName");
-    $userName = preg_replace('/-|\s+|&#0*39;|\'/', '', $lcUsrName);
-    if($this->isUnique($userName)) {return $userName;}
-    //nlp_debug_msg('$userName',$userName);
-    $middleInitial = (!empty($middleName)) ? substr($middleName,0,1): '';
-    //nlp_debug_msg('$middleInitial',$middleInitial);
-    $altLoginName = substr($firstName, 0, 1).$middleInitial.$lastName;
-    //nlp_debug_msg('$altLoginName',$altLoginName);
-    $altLoginName = strtolower($altLoginName);
-    $userName = preg_replace('/-|\s+|&#0*39;|\'/', '', $altLoginName);
-    if($this->isUnique($userName)) {return $userName;}
-    for ($i=1;$i<100;$i++) {
-      $userNameI = $userName.$i;
-      if($this->isUnique($userNameI)) {return $userNameI;}
-    }
-    return '';
+    $userName = '';
+    do {
+      $tryCount = count($namesTried);
+      switch ($tryCount) {
+        case 0:
+          $firstName = (!empty($nlRecord['nickName'])) ? $nlRecord['nickName'] : $nlRecord['firstName'];
+          $loginName = $firstName . '.' . $nlRecord['lastName'];
+          break;
+        case 1:
+          $middleInitial = (!empty($nlRecord['middleName'])) ? substr($nlRecord['middleName'], 0, 1) : '';
+          $firstInitial = (!empty($nlRecord['firstName'])) ? substr($nlRecord['firstName'], 0, 1) : '';
+          $loginName = $firstInitial . $middleInitial . $nlRecord['lastName'];
+          break;
+        default:
+          if ($tryCount > 9) {
+            $loginName = '';
+            break;
+          }
+          $middleInitial = (!empty($nlRecord['middleName'])) ? substr($nlRecord['middleName'], 0, 1) : '';
+          $firstInitial = (!empty($nlRecord['firstName'])) ? substr($nlRecord['firstName'], 0, 1) : '';
+          $loginName = $firstInitial . $middleInitial . $nlRecord['lastName'] . $tryCount;
+          break;
+      }
+      if (empty($loginName)) {
+        break;
+      }
+      $lcUsrName = strtolower($loginName);
+      $userName = preg_replace('/-|\s+|&#0*39;|\'/', '', $lcUsrName);
+      $namesTried[] = $userName;
+      if ($this->isUnique($userName, $nlRecord['mcid'])) {
+        break;
+      }
+
+    } while (TRUE);
+
+    return $userName;
   }
-  
-  public function uniqueUserName($nlRecord,$namesTried): string
-  {
-    //nlp_debug_msg('$nlRecord',$nlRecord);
-    $middleInitial = (!empty($nlRecord['middleName'])) ? substr($nlRecord['middleName'],1): '';
-    $altLoginName = substr($nlRecord['firstName'], 0, 1).$middleInitial.$nlRecord['lastName'];
-    $altLoginName = strtolower($altLoginName);
-    $userName = preg_replace('/-|\s+|&#0*39;|\'/', '', $altLoginName);
-    //if($this->isUnique($userName)) {return $userName;}
-    for ($i=1;$i<100;$i++) {
-      $userNameI = $userName.$i;
-      if(in_array($userName,$namesTried) ) {continue;}
-      if($this->isUnique($userNameI)) {return $userNameI;}
-    }
-    return '';
-  }
-  
-  public function emailIsUnique($email): bool
+
+  /**
+   * emailIsUnique
+   *
+   * Checks if the given email is unique in the database.
+   *
+   * @param string $email The email address to check for uniqueness.
+   * @return bool Returns TRUE if the email is unique, FALSE otherwise.
+   */
+  public function emailIsUnique(string $email): bool
   {
     try {
       $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
@@ -397,7 +489,6 @@ class MagicWord {
   public function removeCoordinatorRole($mcid): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);
-    //nlp_debug_msg('$credentials',$credentials);
     unset($credentials['roles'][NLP_COORDINATOR_ROLE_ID]);
     $this->createCredentials($credentials);
   }
