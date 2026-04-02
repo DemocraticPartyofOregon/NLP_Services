@@ -460,6 +460,7 @@ class NlpDataEntryReports
       'rid' => $rid,
       'dateCanvassed' => $canvassDate,
       'ContactTypeCode' => $cid,
+      'responseName' => $responseName,
     ];
     
     if (!empty($altPhone['phoneNo'])) {
