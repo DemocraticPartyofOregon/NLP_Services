@@ -200,7 +200,7 @@ class MagicWord {
       unset($credentials['magicWordEncrypted']);
     }
     
-    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):'';
+    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
     return $credentials;
   }
 
@@ -489,8 +489,12 @@ class MagicWord {
   public function removeCoordinatorRole($mcid): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);
-    unset($credentials['roles'][NLP_COORDINATOR_ROLE_ID]);
-    $this->createCredentials($credentials);
+    if(is_array($credentials['roles'])) {
+      if(isset($credentials['roles'][NLP_COORDINATOR_ROLE_ID])) {
+        unset($credentials['roles'][NLP_COORDINATOR_ROLE_ID]);
+        $this->createCredentials($credentials);
+      }
+    }
   }
 
 }
