@@ -294,8 +294,7 @@ class NlpDataEntryReports
     } else {
       $altPhoneRc = $altPhone[$contactMethod][$responseName];
     }
-    
-    return $altPhoneRc;
+    return empty($altPhoneRc)?[]:$altPhoneRc;
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
