@@ -250,7 +250,7 @@ class SyncTurfForm extends FormBase {
         }
 
         $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
-        $turfId = $turfSelection['turfId'];
+        $turfId = empty($turfSelection['turfId'])?0:$turfSelection['turfId'];
         if(!empty($turfOptions[$turfId]['turfAssigned'])) {
           $form_state->setErrorByName('turf_submit',"The selected turf is
              already assigned. You must delete it before you can reassign it.");
