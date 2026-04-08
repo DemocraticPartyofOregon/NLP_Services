@@ -289,6 +289,7 @@ class NlpDataEntryReports
       return $altPhoneRc;
     }
     // The requirement to have a phone number is not met.  Use the substitute contact method.
+    $contactMethod = ($contactMethod == 'Postcard')?'Phone':$contactMethod;
     if (empty($altPhone[$contactMethod][$responseName])) {
       $altPhoneRc = $altPhone[$contactMethod]['Other'];
     } else {
