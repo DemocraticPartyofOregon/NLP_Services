@@ -110,10 +110,10 @@ class NlpSessionData
    *     'pctList' => $pctList, // Associative array of precinct names for each hd.
    *
    * @param $hdList - An array of house district names.
-   * @param $pctList - An array of precinct names for each house district.
+   * @param array $pctList - An array of precinct names for each house district.
    * @return void
    */
-  public function setNewDistricts($hdList,$pctList=NULL):void
+  public function setNewDistricts($hdList,array $pctList=[]):void
   {
     $savedDistricts = $this->get('selectedDistricts');
     if(!empty($savedDistricts['hdList'])) {
@@ -201,11 +201,12 @@ class NlpSessionData
    * Returns the index of the selected precinct saved in the session.
    * This is used to restore the focus of the precinct when the user.
    *
-   * @return string
+   * @return int
    */
-  public function getSavedPrecinctIndex(): string {
+  public function getSavedPrecinctIndex(): int
+  {
     $districts = $this->sessionDataObj->get('selectedDistricts');
-    return empty($districts['selectedPrecinctIndex'])?'':$districts['selectedPrecinctIndex'];
+    return empty($districts['selectedPrecinctIndex'])?0:$districts['selectedPrecinctIndex'];
   }
   
   /**
@@ -239,6 +240,26 @@ class NlpSessionData
         $savedDistricts['hdList'][$savedDistricts['selectedHdIndex']]:'';
     }
     return '';
+  }
+
+  /**
+   * getCurrentDistricts
+   *
+   * Returns an array of the focus for the HD and precinct for the current session.
+   * It is used to restore the focus of the HD and precinct when the coordinator works with turfs.
+   *
+   * The county changes for an admin who can change counties for support purposes.
+   *
+   * @return array
+   */
+  public function getCurrentDistricts(): array
+  {
+    $districts = $this->get('currentDistricts');
+    $county = $this->getCounty();
+    if(empty($districts) || (!empty($districts['county']) && $districts['county'] != $county)) {
+      $districts = ['county' => $county, 'hdNew' => TRUE, ];
+    }
+    return $districts;
   }
   
   /**
