@@ -274,14 +274,22 @@ class NlpTurfs
    *
    * Returns the number of turfs in a specific county.
    *
-   * @param $county
+   * @param string $county
+   * @param int $hd - The house district.  If not specified, then all turfs in the county are counted.
+   * @param string $pct - The precinct.  If not specified, then all turfs in the county or house district are counted.
    * @return int
    */
-  public function getCountyTurfCount($county): int
+  public function getCountyTurfCount(string $county, int $hd=0, string $pct='' ): int
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
       $query->condition('county', $county);
+      if ($hd != 0) {
+        $query->condition('turfHd', $hd);
+        if(!empty($pct)) {
+          $query->condition('turfPrecinct', $pct);
+        }
+      }
       $query->addField('i', 'turfIndex');
       $turfCount = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
@@ -499,6 +507,21 @@ class NlpTurfs
    */
   public function getTurfHD(string $county): array
   {
+    $hdList = $this->getTurfHdNames($county);
+    return array_values($hdList);
+  }
+
+  /**
+   * getTurfHdNames
+   *
+   * Returns an array of unique house districts with assigned turf
+   * for a specific county.
+   *
+   * @param string $county
+   * @return array - An associative array of unique house districts.
+   */
+  public function getTurfHdNames(string $county): array
+  {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
       $query->addField('t', 'turfHd');
@@ -508,16 +531,52 @@ class NlpTurfs
       nlp_debug_msg('getTurfHD', $e->getMessage());
       return [];
     }
-    $uhd = [];
+    $hdNameList = [];
     do {
-      $hdRec = $result->fetchAssoc();
-      if (empty($hdRec)) {break;}
-      $hd = $hdRec['turfHd'];
-      $uhd[$hd] = $hd;
+      $hdRecord = $result->fetchAssoc();
+      if (empty($hdRecord)) {break;}
+      $hd = $hdRecord['turfHd'];
+      $hdNameList[$hd] = $hd;
     } while (TRUE);
-    if (empty($uhd)) {return [];}
-    ksort($uhd);
-    return array_values($uhd);
+    if (empty($hdNameList)) {return [];}
+    ksort($hdNameList);
+    return $hdNameList;
+  }
+
+  /**
+   * getTurfPrecinctNames
+   *
+   * Returns an array of unique house districts with assigned turf
+   * for a specific county.
+   *
+   * @param string $county
+   * @param int $hd - The house district.
+   * @return array - An associative array of unique precinct names.
+   */
+  public function getTurfPrecinctNames(string $county, int $hd=0 ): array
+  {
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 't');
+      $query->addField('t', 'turfPrecinct');
+      $query->condition('t.county', $county);
+      if(!empty($hd)) {
+        $query->condition('t.turfHd', $hd);
+      }
+      $result = $query->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getTurfHD', $e->getMessage());
+      return [];
+    }
+    $precinctList = [];
+    do {
+      $precinctRecord = $result->fetchAssoc();
+      if (empty($precinctRecord)) {break;}
+      $precinctName = $precinctRecord['turfPrecinct'];
+      $precinctList[$precinctName] = $precinctName;
+    } while (TRUE);
+    if (empty($precinctList)) {return [];}
+    ksort($precinctList);
+    return $precinctList;
   }
   
   /**
