@@ -191,9 +191,15 @@ class DeleteTurfForm extends FormBase
         // From the list of turfs in the list, find the ones to be deleted.
         $turfArray = $form_state->get('turfArray');
         $selections = $form_state->get('selections');
-
+        if(empty($selections)) {return;}
         
         foreach ($selections as $turfIndex => $selection) {
+
+          if(empty($turfArray[$turfIndex])) {
+            $msg = var_export($selections, true);
+            Drupal::logger('nlpservices')->notice('Delete turf error: '.$msg);
+            continue;
+          }
           
             $turfChoice = $turfArray[$turfIndex];
             $nickname = $turfChoice['nickname'];

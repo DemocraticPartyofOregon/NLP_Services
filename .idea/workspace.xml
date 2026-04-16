@@ -4,9 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Strngthen the detection of possible duplicate records from MyCampaign.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add precinct names list">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -25,7 +25,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-9.5.11</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="223" />
+    <option name="cachedIndexableFilesCount" value="224" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -516,7 +516,15 @@
       <option name="project" value="LOCAL" />
       <updated>1774999723416</updated>
     </task>
-    <option name="localTasksCounter" value="48" />
+    <task id="LOCAL-00048" summary="Add precinct names list">
+      <option name="closed" value="true" />
+      <created>1776315338246</created>
+      <option name="number" value="00048" />
+      <option name="presentableId" value="LOCAL-00048" />
+      <option name="project" value="LOCAL" />
+      <updated>1776315338246</updated>
+    </task>
+    <option name="localTasksCounter" value="49" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -568,7 +576,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the results summary for startup." />
     <MESSAGE value="Fix mossing cron variables" />
     <MESSAGE value="Fix the activity reports" />
     <MESSAGE value="Fix missing vfid for nl sync" />
@@ -593,7 +600,8 @@
     <MESSAGE value="Eliminate the minivan penalty for deleting a turf." />
     <MESSAGE value="Set a minimum size to the Notes column for the list of active NLs." />
     <MESSAGE value="Strngthen the detection of possible duplicate records from MyCampaign." />
-    <option name="LAST_COMMIT_MESSAGE" value="Strngthen the detection of possible duplicate records from MyCampaign." />
+    <MESSAGE value="Add precinct names list" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add precinct names list" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
