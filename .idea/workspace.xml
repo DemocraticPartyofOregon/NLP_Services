@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add precinct names list">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add code to trap missing contact id for reporting pedge-to-vote response.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiSavedLists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSavedLists.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,22 +140,8 @@
       <workItem from="1774929286275" duration="977000" />
       <workItem from="1774930381979" duration="10890000" />
       <workItem from="1775058791599" duration="1981000" />
-    </task>
-    <task id="LOCAL-00001" summary="Claude code review of API services">
-      <option name="closed" value="true" />
-      <created>1771624130745</created>
-      <option name="number" value="00001" />
-      <option name="presentableId" value="LOCAL-00001" />
-      <option name="project" value="LOCAL" />
-      <updated>1771624130745</updated>
-    </task>
-    <task id="LOCAL-00002" summary="Claude review of setup">
-      <option name="closed" value="true" />
-      <created>1771655034998</created>
-      <option name="number" value="00002" />
-      <option name="presentableId" value="LOCAL-00002" />
-      <option name="project" value="LOCAL" />
-      <updated>1771655034998</updated>
+      <workItem from="1776433840541" duration="8451000" />
+      <workItem from="1776746015252" duration="2524000" />
     </task>
     <task id="LOCAL-00003" summary="Claude review of controllers">
       <option name="closed" value="true" />
@@ -524,7 +511,31 @@
       <option name="project" value="LOCAL" />
       <updated>1776315338246</updated>
     </task>
-    <option name="localTasksCounter" value="49" />
+    <task id="LOCAL-00049" summary="Correct calls with null values in DeleteTurfForm">
+      <option name="closed" value="true" />
+      <created>1776347451586</created>
+      <option name="number" value="00049" />
+      <option name="presentableId" value="LOCAL-00049" />
+      <option name="project" value="LOCAL" />
+      <updated>1776347451586</updated>
+    </task>
+    <task id="LOCAL-00050" summary="Correct the version number.">
+      <option name="closed" value="true" />
+      <created>1776727719595</created>
+      <option name="number" value="00050" />
+      <option name="presentableId" value="LOCAL-00050" />
+      <option name="project" value="LOCAL" />
+      <updated>1776727719596</updated>
+    </task>
+    <task id="LOCAL-00051" summary="Add code to trap missing contact id for reporting pedge-to-vote response.">
+      <option name="closed" value="true" />
+      <created>1776798865843</created>
+      <option name="number" value="00051" />
+      <option name="presentableId" value="LOCAL-00051" />
+      <option name="project" value="LOCAL" />
+      <updated>1776798865844</updated>
+    </task>
+    <option name="localTasksCounter" value="52" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -576,9 +587,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix mossing cron variables" />
-    <MESSAGE value="Fix the activity reports" />
-    <MESSAGE value="Fix missing vfid for nl sync" />
     <MESSAGE value="x minivan create date with it has never been set." />
     <MESSAGE value="fix minivan create date with it has never been set." />
     <MESSAGE value="Check for isBest for NL phone number." />
@@ -601,7 +609,10 @@
     <MESSAGE value="Set a minimum size to the Notes column for the list of active NLs." />
     <MESSAGE value="Strngthen the detection of possible duplicate records from MyCampaign." />
     <MESSAGE value="Add precinct names list" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add precinct names list" />
+    <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
+    <MESSAGE value="Correct the version number." />
+    <MESSAGE value="Add code to trap missing contact id for reporting pedge-to-vote response." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add code to trap missing contact id for reporting pedge-to-vote response." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

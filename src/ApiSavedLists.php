@@ -44,15 +44,18 @@ class ApiSavedLists {
    * returned.  If there are more than 1000 saved lists, VoteBuilder will chunk
    * the response.  The $skip parameter is used to skip the items already returned.
    *
+   * @param string $county
    * @param int $folderId
    * @param array $excludedTurfIds
    * @return array
    */
-  public function getTurfLists(int $folderId, array $excludedTurfIds=[]): array
+  public function getTurfLists( string $county, int $folderId, array $excludedTurfIds=[]): array
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $committeeKey = (empty($county))?$this->stateCommitteeKey:
+      $this->nlpConfigurationObj->getCountyKey($county);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     
     $listsURL = "https://$user:$apiKey|0@$apiURL/savedLists?folderId=$folderId";
     $count = 0;
@@ -70,6 +73,7 @@ class ApiSavedLists {
         nlp_debug_msg('getTurfList',$e->getMessage());
         return [];
       }
+      nlp_debug_msg_safe('apiSavedLists $results',$results);
       if(empty($results['items'])) {return [];}
       $fragmentCount = count($results['items']);
       $count += $fragmentCount;

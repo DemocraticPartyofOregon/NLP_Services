@@ -241,12 +241,18 @@ class SyncTurfForm extends FormBase {
         return;
       // A turf was selected from the list of turfs.
       case 'turf_submit':
+        if(!is_array($form_state->getValue('contacts'))) {
+          $form_state->setErrorByName('turf_submit',"You must select a turf.");
+          return;
+        }
+
         $selections = $this->turfListDisplayObj->
         validateTurfSelection($form_state->getValue('contacts'));
         $turfSelection = reset($selections);
         $form_state->set('turfSelection',$turfSelection);
         if(empty($selections) OR count($selections) > 1) {
           $form_state->setErrorByName('turf_submit',"You must select one turf");
+          return;
         }
 
         $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
@@ -254,11 +260,15 @@ class SyncTurfForm extends FormBase {
         if(!empty($turfOptions[$turfId]['turfAssigned'])) {
           $form_state->setErrorByName('turf_submit',"The selected turf is
              already assigned. You must delete it before you can reassign it.");
+          return;
         }
         if(empty($turfOptions[$turfId]['turfName'])) {
           $form_state->setErrorByName('turf_submit',"The turf name is missing.");
-          $msg = var_export($turfOptions, true);
-          Drupal::logger('nlpservices')->notice('Turf ID is wrong: '.$msg);
+          //$msg = var_export($turfOptions, true);
+          //Drupal::logger('nlpservices')->notice('The turf name is missing: '.$turfId.': '.$msg);
+          $msg = var_export($selections, true);
+          Drupal::logger('nlpservices')->notice('The turf name is missing, selections: '.$turfId.': '.$msg);
+          //nlp_debug_msg("The turf name is missing.", ['turfId'=>$turfId,'turfOptions'=>$turfOptions]);
           return;
         }
         $voterCount = $turfOptions[$turfId]['voterCount'];
@@ -591,12 +601,14 @@ class SyncTurfForm extends FormBase {
         }
       }
       $this->nlpSessionDataObj->set('turfOptions',$turfOptions);
+      $this->nlpSessionDataObj->set('mapRegionOptions',$mapRegionOptions);
 
     } else {
       // Reveal only lists.
       $this->foldersObj->getMapRegionInfo($county, $currentFolderId);
       $excludedTurfIds = $this->foldersObj->getTurfIds();
-      $savedLists = $this->savedListsObj->getTurfLists($currentFolderId, $excludedTurfIds);
+      $savedLists = $this->savedListsObj->getTurfLists($county, $currentFolderId, $excludedTurfIds);
+
       $savedListOptions = $this->savedListsObj->savedListOptions($savedLists);
 
       foreach ($savedListOptions as $turfId => $savedListOption) {
