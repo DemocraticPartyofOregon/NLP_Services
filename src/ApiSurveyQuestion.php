@@ -166,7 +166,13 @@ class      ApiSurveyQuestion
         $rid = $surveyResponse['rid'];
         break;
     }
-    
+
+    // Something is wrong!
+    if(empty($cid)) {
+      $cid = $canvassResponseCodes['Walk']['code'];
+    }
+
+
     // If the type is set, then we have a response to a survey question to record.
     if(!empty($type)) {
       $responseObj->type = $type;
@@ -216,8 +222,8 @@ class      ApiSurveyQuestion
       $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (Exception $e) {
       nlp_debug_msg('setApiSurveyResponse', $e->getMessage());
-      nlp_debug_msg('setApiActivistCode', "postUrl: $postUrl");
-      nlp_debug_msg('setApiActivistCode', "dataJson: $dataJson");
+      nlp_debug_msg('setApiSurveyResponse', "postUrl: $postUrl");
+      nlp_debug_msg('setApiSurveyResponse', "dataJson: $dataJson");
       nlp_debug_msg('$surveyResponse', $surveyResponse);
     }
 
