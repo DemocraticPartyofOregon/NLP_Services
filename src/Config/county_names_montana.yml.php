@@ -1,4 +1,0 @@
-# State abd county names for testing a site linked to the VoteBuilder sandbox.
-State: 'Montana'
-Missoula: [76,89,90,91,92,93,94,95,96,97,98,99,100]
-Yellowstone: [35,38,39,40,42,43,44,45,46,47,48,49,50,51,52,53,54]
