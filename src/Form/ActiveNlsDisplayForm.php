@@ -95,6 +95,7 @@ class ActiveNlsDisplayForm extends FormBase
       if($nlCount<$this->nlsObj::NLS_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
+      /** @noinspection SpellCheckingInspection */
       $form_state->set('hdOptions',$hdOptions);
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
@@ -204,7 +205,7 @@ class ActiveNlsDisplayForm extends FormBase
         break;
         
       default:
-        $mcid = 0;
+        //$mcid = 0;
         $columnId = '';
         $parents = $triggeringElement['#parents'];
         if(!empty($parents) && $parents[0]=='contacts') {
@@ -317,14 +318,19 @@ class ActiveNlsDisplayForm extends FormBase
       'responseName' => $askStatus,
       'dateCanvassed' => date(DATE_ATOM, time()),
     ];
-    $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
+
+    // States other than Oregon use the committee of the NL rather than the committee where the survey is owned.
+    $stateName = $this->nlpConfigurationObj->getStateName();
+    $committeeName = ($stateName != 'Montana')?'':$this->sessionDataObj->getCounty();
+
+    $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$committeeName);
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * getProgress
    *
    * Create an associate array with the progress of the NL to make contact with
-   * the voters on the turf, the progress on making face-to-face contact and
+   * the voters on the turf, the progress on making face-to-face contact, and
    * a judgment that they are done.
    *
    * @param int $mcid

@@ -36,10 +36,10 @@ class      ApiSurveyQuestion
    * Get the survey questions from the API that are associated with the specified cycle
    * and the specified database.
    *
-   * Returns an array of survey questions indexed by the survey question ID.  Each question
+   * Returns an array of survey questions indexed by the survey question ID. Each question
    * is an array with the following keys:
    * - cycle - the cycle year
-   * - responses - an array of responses indexed by the response ID.  Each response is an array
+   * - responses - an array of responses indexed by the response ID. Each response is an array
    *   with the following keys:
    *   - surveyResponseId - the response ID
    *   - name - the response name
@@ -56,6 +56,7 @@ class      ApiSurveyQuestion
    * @param string $cycleYear - Four digit year, eg 2024
    * @param int $database - 0 for VoterFile, 1 for MyCampaign.
    * @return array
+   * @noinspection GrazieStyle
    */
   public function  getApiSurveyQuestions( string $cycleYear, int $database=0): array
   {
@@ -103,14 +104,23 @@ class      ApiSurveyQuestion
    * '
    *
    * @param array $surveyResponse
+   * @param string $committeeName - The name of the county or if empty the state committee is used.
    *
    * @return void
+   * @noinspection GrazieStyle
    */
-  public function reportSurveyResponse(array $surveyResponse): void
+  public function reportSurveyResponse(array $surveyResponse, string $committeeName=''): void
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    if(empty($committeeName)) {
+      $apiKey = $this->stateCommitteeKey['API Key'];
+      $apiURL = $this->stateCommitteeKey['Url'];
+      $user = $this->stateCommitteeKey['App Name'];
+    } else {
+      $committeeKey = $this->nlpConfigurationObj->getCountyKey($committeeName);
+      $apiKey = $committeeKey['API Key'];
+      $apiURL = $committeeKey['Url'];
+      $user = $committeeKey['App Name'];
+    }
     
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
