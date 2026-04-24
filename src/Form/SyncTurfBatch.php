@@ -1,6 +1,6 @@
 <?php /** @noinspection PhpUnused */
 
-const MAX_QUEUE_LIMIT = '4';
+const MAX_QUEUE_LIMIT = '17';
 
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -176,7 +176,7 @@ const MAX_QUEUE_LIMIT = '4';
       $context['results']['nickname'] = $nl['nickname'];
       $context['results']['result'] = 'success';
       $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
-      $context['sandbox']['#finished'] = 1;
+      $context['sandbox']['finished'] = 1;
       return;
     }
 

@@ -451,10 +451,10 @@ class SyncTurfForm extends FormBase {
           'voterCount' => $turfOptions[$turfId]['voterCount'],
           'doorCount' => $turfOptions[$turfId]['doorCount'],
           'showLists' => $showLists,
-          'mapRegionId' => $turfOptions[$turfId]['mapRegionId'],
-          'mapRegionName' => $turfOptions[$turfId]['mapRegionName'],
-          'minivanNumber' => $turfOptions[$turfId]['minivanNumber'],
-          'minivanCreateDate' => $turfOptions[$turfId]['minivanCreateDate'],
+          'mapRegionId' => empty($turfOptions[$turfId]['mapRegionId'])?0:$turfOptions[$turfId]['mapRegionId'],
+          'mapRegionName' => empty($turfOptions[$turfId]['mapRegionName'])?'':$turfOptions[$turfId]['mapRegionName'],
+          'minivanNumber' => empty($turfOptions[$turfId]['minivanNumber'])?0:$turfOptions[$turfId]['minivanNumber'],
+          'minivanCreateDate' => empty($turfOptions[$turfId]['minivanCreateDate'])?'':$turfOptions[$turfId]['minivanCreateDate'],
           'walksheetInfo' => $form_state->get('walksheetInfo'),
 
       ];
