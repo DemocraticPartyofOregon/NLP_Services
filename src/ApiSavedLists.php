@@ -73,7 +73,7 @@ class ApiSavedLists {
         nlp_debug_msg('getTurfList',$e->getMessage());
         return [];
       }
-      nlp_debug_msg_safe('apiSavedLists $results',$results);
+      //nlp_debug_msg_safe('apiSavedLists $results',$results);
       if(empty($results['items'])) {return [];}
       $fragmentCount = count($results['items']);
       $count += $fragmentCount;
