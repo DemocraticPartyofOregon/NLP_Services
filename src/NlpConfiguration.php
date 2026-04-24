@@ -164,7 +164,7 @@ class NlpConfiguration
   public function getCycle(): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
-    return $electionDates['nlp_election_cycle'];
+    return empty($electionDates['nlp_election_cycle'])?'':$electionDates['nlp_election_cycle'];
   }
   
   /**
