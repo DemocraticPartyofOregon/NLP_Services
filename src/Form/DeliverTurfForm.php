@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -114,20 +115,19 @@ class DeliverTurfForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     // Detect a tablesort GET request (sort/order are query params, no form POST).
-    $query = \Drupal::request()->query;
+    $query = Drupal::request()->query;
     $sort = $query->get('sort', '');
     $isSortRequest = !empty($sort);
 
     if (empty($form_state->get('reenter'))) {
+      $county = $this->nlpSessionDataObj->getCounty();
       if ($isSortRequest) {
         // Sort GET: restore county from session so the form can rebuild in-place.
-        $county = $this->nlpSessionDataObj->getCounty();
         if (!empty($county)) {
           $form_state->set('county', $county);
         }
       }
       else {
-        $county = $this->nlpSessionDataObj->getCounty();
         if (empty($county)) {
           $this->messenger()->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
           return [];
@@ -266,7 +266,7 @@ class DeliverTurfForm extends FormBase
       return;
     }
 
-    $uploadedFiles = \Drupal::request()->files->get('files', []);
+    $uploadedFiles = Drupal::request()->files->get('files', []);
     $uploadedFile = $uploadedFiles['turf_pdf'] ?? NULL;
     if ($uploadedFile !== NULL && $uploadedFile->isValid()) {
       $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
@@ -309,7 +309,7 @@ class DeliverTurfForm extends FormBase
 
         foreach ($selections as $turfIndex => $selection) {
 
-          $uploadedFiles = \Drupal::request()->files->get('files', []);
+          $uploadedFiles = Drupal::request()->files->get('files', []);
           $uploadedFile = $uploadedFiles['turf_pdf'] ?? NULL;
           if ($uploadedFile !== NULL && $uploadedFile->isValid()) {
             $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
@@ -377,7 +377,7 @@ class DeliverTurfForm extends FormBase
       return FALSE;
     }
 
-    $serverUrl = \Drupal::request()->getSchemeAndHttpHost();
+    $serverUrl = Drupal::request()->getSchemeAndHttpHost();
     $turfMsg = $this->turfMsgObj->getTurfMsg($county);
 
     $coordinatorContactTemplate = '<p>@firstName @lastName<br>Phone: @phone<br>Email:
