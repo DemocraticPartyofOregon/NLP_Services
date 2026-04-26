@@ -116,10 +116,18 @@ const MAX_QUEUE_LIMIT = '17';
     // Check if any of the voters in this new list to be synced are already assigned to another turf.
     $duplicates = getDuplicates($voters);
     if(!empty($duplicates)) {
-      $context['sandbox']['duplicates'] = $context['sandbox']['duplicates'] + $duplicates;
+      $message = 'The following voters are already assigned to another turf: ';
       foreach ($duplicates as $duplicate) {
-        unset($voters[$duplicate['vanid']]);
+        $message .= 'Voter '.$duplicate['vanid'].' is already assigned to turf '.$duplicate['turfIndex'].', ';
       }
+      $context['finished'] = 1;
+      $context['results']['message'] = [0=>$message,];
+      $context['results']['result'] = 'error';
+      $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
+      $context['results']['mcid'] = $context['sandbox']['mcid'];
+      $context['results']['county'] = $context['sandbox']['county'];
+      return;
+
     }
     
     foreach ($voters as $voter) {
@@ -309,7 +317,6 @@ const MAX_QUEUE_LIMIT = '17';
     $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
     $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
     $pathsObj = Drupal::getContainer()->get('nlpservices.paths');
-    $fileSystem = Drupal::service('file_system');
 
     $county = $arg['county'];
     $folderId = $arg['folderId'];
@@ -479,7 +486,7 @@ const MAX_QUEUE_LIMIT = '17';
   {
     $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
     $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
-    $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+    $mcidRecoveryObj = Drupal::getContainer()->get('nlpservices.mcid_recovery');
     $messenger = Drupal::messenger();
     if($success) {
       if($results['result'] == 'error') {
@@ -515,8 +522,11 @@ const MAX_QUEUE_LIMIT = '17';
       $drupalUser = $drupalUserObj->getUserByMcid($mcid);
       if(!empty($drupalUser)) {
         $userName = $drupalUser['userName'];
-        $magicWord = $magicWordObj->getMagicWord($mcid);
-        $messages[] = "User credentials:Username: $userName Password: $magicWord";
+        $key = $mcidRecoveryObj->saveRecoveryKey($mcid);
+        $serverUrl = \Drupal::request()->getSchemeAndHttpHost();
+        $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
+        $messages[] = 'User credentials: Username: ' . $userName
+          . ' <a href="' . $revealUrl . '">Click here to retrieve password</a> (one-time link)';
         
         $messageDisplay = implode('<br>',$messages);
         $messenger->addStatus($messageDisplay);
