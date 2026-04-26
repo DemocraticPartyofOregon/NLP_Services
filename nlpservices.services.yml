@@ -140,6 +140,10 @@ services:
     class: Drupal\nlpservices\MagicWord
     arguments: [ '@config.factory' , '@database' ]
 
+  nlpservices.mcid_recovery:
+    class: Drupal\nlpservices\NlpMcidRecovery
+    arguments: [ '@database' ]
+
   nlpservices.reports:
     class: Drupal\nlpservices\NlpReports
     arguments: [ '@nlpservices.configuration' , '@database' ]

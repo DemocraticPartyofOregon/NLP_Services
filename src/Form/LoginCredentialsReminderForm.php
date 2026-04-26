@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpNls;
-use Drupal\nlpservices\MagicWord;
+use Drupal\nlpservices\NlpMcidRecovery;
 use Drupal\nlpservices\NlpUserDisplay;
 use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpSessionData;
@@ -22,19 +22,19 @@ class LoginCredentialsReminderForm extends FormBase
 {
   protected DrupalUser $drupalUser;
   protected NlpNls $nlsObj;
-  protected MagicWord $magicWord;
+  protected NlpMcidRecovery $mcidRecovery;
   protected NlpSearchBar $searchBarObj;
   protected NlpUserDisplay $userDisplayObj;
   protected NlpSendEmail $sendEmailObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
   
-  public function __construct($drupalUser, $nlsObj, $magicWord, $searchBarObj,
+  public function __construct($drupalUser, $nlsObj, $mcidRecovery, $searchBarObj,
                               $userDisplayObj, $sendEmailObj, $nlpConfigurationObj, $nlpSessionDataObj )
   {
     $this->drupalUser = $drupalUser;
     $this->nlsObj = $nlsObj;
-    $this->magicWord = $magicWord;
+    $this->mcidRecovery = $mcidRecovery;
     $this->searchBarObj = $searchBarObj;
     
     $this->userDisplayObj = $userDisplayObj;
@@ -51,7 +51,7 @@ class LoginCredentialsReminderForm extends FormBase
     return new static(
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.nls'),
-      $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.mcid_recovery'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.user_display'),
       $container->get('nlpservices.send_email'),
@@ -280,22 +280,22 @@ class LoginCredentialsReminderForm extends FormBase
   {
     $messenger = Drupal::messenger();
     $mcid = $user['mcid'];
-    $password = 'unknown';
-    if(!empty($mcid)) {
-      $magicWord = $this->magicWord->getMagicWord($mcid);
-      $password = (!empty($magicWord))?$magicWord:'unknown';
-    }
-    
+
+    $key = $this->mcidRecovery->saveRecoveryKey($mcid);
+
     $today = date("F j, Y, g:i a");
     $subject = 'Neighborhood Leader account login reminder'.' - '.$today;
-    
+
     $message = "<p>".$user['firstName'].",</p>";
     $message .= "<p>".'The following information provides the credentials you need to access NLP Services for '.
       $user['county'].' County'."</p>";
-    
+
     global $base_url;
+    $revealUrl = $base_url . '/nlp-mcid-recovery?key=' . $key;
     $message .= '<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>';
-    $message .=  '<p>Username: '.$user['userName'].' <br>Password: '.$password.' </p>';
+    $message .= '<p>Username: ' . $user['userName'] . '</p>';
+    $message .= '<p><a href="' . $revealUrl . '">Click here to retrieve your password</a> '
+      . '(this link can only be used once)</p>';
 
     $currentUser = $this->drupalUser->getCurrentUser();
     $currentUserEmail =  $currentUser['email'];

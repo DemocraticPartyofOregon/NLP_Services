@@ -10,7 +10,7 @@ class NlpCredentialsEmail
   protected DrupalUser $drupalUserObj;
   protected NlpPaths $pathsObj;
   protected NlpCoordinators $coordinatorsObj;
-  protected MagicWord $magicWordObj;
+  protected NlpMcidRecovery $mcidRecoveryObj;
   
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
@@ -18,13 +18,13 @@ class NlpCredentialsEmail
   protected  NlpNls $nlsObj;
   
   public function __construct( $drupalUserObj, $pathsObj,
-                               $coordinatorsObj, $magicWordObj,
+                               $coordinatorsObj, $mcidRecoveryObj,
                                $nlpConfigurationObj, $nlpSessionDataObj, $sendMailObj, $nlsObj )
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->pathsObj = $pathsObj;
     $this->coordinatorsObj = $coordinatorsObj;
-    $this->magicWordObj = $magicWordObj;
+    $this->mcidRecoveryObj = $mcidRecoveryObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->sendMailObj = $sendMailObj;
@@ -38,7 +38,7 @@ class NlpCredentialsEmail
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.paths'),
       $container->get('nlpservices.coordinators'),
-      $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.mcid_recovery'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.send_email'),
@@ -82,11 +82,6 @@ class NlpCredentialsEmail
     $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
     $serverUrl = 'https://'.$serverName;
     
-    $magicWord = $this->magicWordObj->getMagicWord($mcid);
-    if(empty($magicWord)) {
-      $magicWord = 'Your Password';
-    }
-    
     $user = $this->drupalUserObj->getUserByMcid($mcid);
     if(empty($user)) {
       Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
@@ -94,10 +89,14 @@ class NlpCredentialsEmail
     } else {
       $userName = $user['userName'];
     }
-    
+
+    $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
+    $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
+
     $nlpLoginInfo = "<p><b>Neighborhood Leader Login: </b>".
       '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>'.
-      "<br><b>Username:</b> $userName<br><b>Password:</b> $magicWord</p>";
+      "<br><b>Username:</b> $userName".
+      '<br><a href="' . $revealUrl . '">Click here to retrieve your password</a> (this link can only be used once)</p>';
     
     $miniVanInfo = '';
     if(!empty($miniVanArray)) {

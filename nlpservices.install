@@ -212,6 +212,19 @@ function nlpservices_schema(): array
     'primary key' => [ 'mcid', ],
   ];
 
+  $schema['nlp_mcid_recovery'] = [
+    'description' => 'Short-lived keyed records used to recover an MCID (15-minute lifetime).',
+    'fields' => [
+      'recovery_key' => [ 'type' => 'char', 'length' => 64, 'not null' => TRUE, 'description' => 'Hex-encoded 32-byte random key.' ],
+      'mcid'         => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ],
+      'created'      => [ 'type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => 'Unix timestamp when record was created.' ],
+    ],
+    'primary key' => [ 'recovery_key', ],
+    'indexes' => [
+      'created' => [ 'created', ],
+    ],
+  ];
+
   $schema['nlp_magic_word'] = [
     'description' => 'Magic word chosen by NL.',
     'fields' => [

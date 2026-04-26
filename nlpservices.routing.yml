@@ -530,6 +530,16 @@ nlpservices.purge_nl_accounts:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.mcid_recovery:
+  path: '/nlp-mcid-recovery'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\McidRecoveryController::getMagicWord
+    _title: 'Recover magic word via one-time key'
+  requirements:
+    _permission: 'access content'
+  options:
+    no_cache: TRUE
+
 nlpservices.webhook_callback:
   path: '/nlp-webhook-callback'
   defaults:

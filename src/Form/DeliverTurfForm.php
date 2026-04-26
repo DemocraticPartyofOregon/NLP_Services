@@ -11,7 +11,7 @@ use Drupal\Component\Utility\Html;
 
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpPaths;
-use Drupal\nlpservices\MagicWord;
+use Drupal\nlpservices\NlpMcidRecovery;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpCoordinators;
@@ -32,7 +32,7 @@ class DeliverTurfForm extends FormBase
   protected FileSystemInterface $fileSystemObj;
   protected NlpInstructions $instructionsObj;
   protected NlpCoordinators $coordinatorsObj;
-  protected MagicWord $magicWordObj;
+  protected NlpMcidRecovery $mcidRecoveryObj;
   protected NlpTurfDeliveryMessage $turfMsgObj;
   protected NlpTurfDisplay $turfDisplayObj;
   protected NlpSearchBar $searchBarObj;
@@ -49,7 +49,7 @@ class DeliverTurfForm extends FormBase
     $fileSystemObj,
     $instructionsObj,
     $coordinatorsObj,
-    $magicWordObj,
+    $mcidRecoveryObj,
     $turfMsgObj,
     $turfDisplayObj,
     $searchBarObj,
@@ -65,7 +65,7 @@ class DeliverTurfForm extends FormBase
     $this->fileSystemObj = $fileSystemObj;
     $this->instructionsObj = $instructionsObj;
     $this->coordinatorsObj = $coordinatorsObj;
-    $this->magicWordObj = $magicWordObj;
+    $this->mcidRecoveryObj = $mcidRecoveryObj;
     $this->turfMsgObj = $turfMsgObj;
     $this->turfDisplayObj = $turfDisplayObj;
     $this->searchBarObj = $searchBarObj;
@@ -88,7 +88,7 @@ class DeliverTurfForm extends FormBase
       $container->get('file_system'),
       $container->get('nlpservices.instructions'),
       $container->get('nlpservices.coordinators'),
-      $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.mcid_recovery'),
       $container->get('nlpservices.turf_delivery_message'),
       $container->get('nlpservices.turf_display'),
       $container->get('nlpservices.search_bar'),
@@ -385,7 +385,7 @@ class DeliverTurfForm extends FormBase
 
     /** @noinspection HtmlUnknownTarget */
     $nlpLoginTemplate = '<p><b>Neighborhood Leader Login: </b><a href="@server_url" target="_blank">@server_url</a>
-<br><b>Username:</b> @name<br><b>Password:</b> @pass</p>';
+<br><b>Username:</b> @name<br><a href="@reveal_url">Click here to retrieve your password</a> (this link can only be used once)</p>';
 
     $turfArray[$turfChoice['turfIndex']] = $turfChoice;
     $this->foldersObj->updateMinivanInfo($county, $turfArray);
@@ -424,10 +424,8 @@ class DeliverTurfForm extends FormBase
     $ballotDropTimeStamp = strtotime($ballotDropDate);
 
     $mcid = $turfChoice['mcid'];
-    $magicWord = $this->magicWordObj->getMagicWord($mcid);
-    if (empty($magicWord)) {
-      $magicWord = 'Your Password';
-    }
+    $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
+    $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
 
     $user = $this->drupalUserObj->getUserByMcid($mcid);
     if (empty($user)) {
@@ -447,7 +445,7 @@ class DeliverTurfForm extends FormBase
       '@ballotDropDay'    => date("F j, Y", $ballotDropTimeStamp),
       '@server_url'       => $serverUrl,
       '@name'             => $userName,
-      '@pass'             => $magicWord,
+      '@reveal_url'       => $revealUrl,
       '@firstName'        => $nlCoordinator['firstName'],
       '@lastName'         => $nlCoordinator['lastName'],
       '@phone'            => $nlCoordinator['phone'],
