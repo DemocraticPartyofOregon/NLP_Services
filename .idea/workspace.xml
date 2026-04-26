@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add code to trap missing contact id for reporting pedge-to-vote response.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Change notification emails to provide password as a one time link.">
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiSavedLists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSavedLists.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -26,7 +28,6 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-9.5.11</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="224" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -103,7 +104,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.externalResources&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -111,8 +112,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.22158.283" />
-        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.22158.283" />
+        <option value="bundled-php-predefined-a98d8de5180a-022fa7b8ab75-com.jetbrains.php.sharedIndexes-PS-261.23567.149" />
       </set>
     </attachedChunks>
   </component>
@@ -141,87 +141,13 @@
       <workItem from="1774930381979" duration="10890000" />
       <workItem from="1775058791599" duration="1981000" />
       <workItem from="1776433840541" duration="8451000" />
-      <workItem from="1776746015252" duration="2524000" />
-    </task>
-    <task id="LOCAL-00003" summary="Claude review of controllers">
-      <option name="closed" value="true" />
-      <created>1771700340655</created>
-      <option name="number" value="00003" />
-      <option name="presentableId" value="LOCAL-00003" />
-      <option name="project" value="LOCAL" />
-      <updated>1771700340655</updated>
-    </task>
-    <task id="LOCAL-00004" summary="REcover from the change in VAN from Preferred to Best for phone numbers.">
-      <option name="closed" value="true" />
-      <created>1772305607647</created>
-      <option name="number" value="00004" />
-      <option name="presentableId" value="LOCAL-00004" />
-      <option name="project" value="LOCAL" />
-      <updated>1772305607647</updated>
-    </task>
-    <task id="LOCAL-00005" summary="Remove requirement that the old vanid not exist for changing the vanid for an NL to a new one.">
-      <option name="closed" value="true" />
-      <created>1772379077342</created>
-      <option name="number" value="00005" />
-      <option name="presentableId" value="LOCAL-00005" />
-      <option name="project" value="LOCAL" />
-      <updated>1772379077342</updated>
-    </task>
-    <task id="LOCAL-00006" summary="Add diagnostic error messages when a faulty API key is suspected.">
-      <option name="closed" value="true" />
-      <created>1772379153772</created>
-      <option name="number" value="00006" />
-      <option name="presentableId" value="LOCAL-00006" />
-      <option name="project" value="LOCAL" />
-      <updated>1772379153772</updated>
-    </task>
-    <task id="LOCAL-00007" summary="Display of All fails after adding the type test for HD as int.">
-      <option name="closed" value="true" />
-      <created>1772379742185</created>
-      <option name="number" value="00007" />
-      <option name="presentableId" value="LOCAL-00007" />
-      <option name="project" value="LOCAL" />
-      <updated>1772379742185</updated>
-    </task>
-    <task id="LOCAL-00008" summary="Correct error message for reporting status of the ASK for an active NL.">
-      <option name="closed" value="true" />
-      <created>1772379824521</created>
-      <option name="number" value="00008" />
-      <option name="presentableId" value="LOCAL-00008" />
-      <option name="project" value="LOCAL" />
-      <updated>1772379824521</updated>
-    </task>
-    <task id="LOCAL-00009" summary="Ensure state name is a string and not NULL.">
-      <option name="closed" value="true" />
-      <created>1772381358411</created>
-      <option name="number" value="00009" />
-      <option name="presentableId" value="LOCAL-00009" />
-      <option name="project" value="LOCAL" />
-      <updated>1772381358411</updated>
-    </task>
-    <task id="LOCAL-00010" summary="Ensure state name is a string and not NULL.">
-      <option name="closed" value="true" />
-      <created>1772381375887</created>
-      <option name="number" value="00010" />
-      <option name="presentableId" value="LOCAL-00010" />
-      <option name="project" value="LOCAL" />
-      <updated>1772381375887</updated>
-    </task>
-    <task id="LOCAL-00011" summary="Role is not searchable for the display of Drupal accounts.">
-      <option name="closed" value="true" />
-      <created>1772515781987</created>
-      <option name="number" value="00011" />
-      <option name="presentableId" value="LOCAL-00011" />
-      <option name="project" value="LOCAL" />
-      <updated>1772515781987</updated>
-    </task>
-    <task id="LOCAL-00012" summary="Ensure vfid is an int when syncing NLs records.">
-      <option name="closed" value="true" />
-      <created>1772585060332</created>
-      <option name="number" value="00012" />
-      <option name="presentableId" value="LOCAL-00012" />
-      <option name="project" value="LOCAL" />
-      <updated>1772585060332</updated>
+      <workItem from="1776746015252" duration="13507000" />
+      <workItem from="1776834109593" duration="19615000" />
+      <workItem from="1777075232643" duration="2807000" />
+      <workItem from="1777126361588" duration="11077000" />
+      <workItem from="1777174689784" duration="8072000" />
+      <workItem from="1777222866344" duration="2514000" />
+      <workItem from="1777226058798" duration="2834000" />
     </task>
     <task id="LOCAL-00013" summary="Add instructions to include NLP roles for the text editor.">
       <option name="closed" value="true" />
@@ -535,7 +461,87 @@
       <option name="project" value="LOCAL" />
       <updated>1776798865844</updated>
     </task>
-    <option name="localTasksCounter" value="52" />
+    <task id="LOCAL-00052" summary="Use county key when syncing saved lists.">
+      <option name="closed" value="true" />
+      <created>1776799318264</created>
+      <option name="number" value="00052" />
+      <option name="presentableId" value="LOCAL-00052" />
+      <option name="project" value="LOCAL" />
+      <updated>1776799318264</updated>
+    </task>
+    <task id="LOCAL-00053" summary="Fix the version number.">
+      <option name="closed" value="true" />
+      <created>1776799459243</created>
+      <option name="number" value="00053" />
+      <option name="presentableId" value="LOCAL-00053" />
+      <option name="project" value="LOCAL" />
+      <updated>1776799459243</updated>
+    </task>
+    <task id="LOCAL-00054" summary="Use the county committee key when reporting participation survey question for Montana.">
+      <option name="closed" value="true" />
+      <created>1776998187173</created>
+      <option name="number" value="00054" />
+      <option name="presentableId" value="LOCAL-00054" />
+      <option name="project" value="LOCAL" />
+      <updated>1776998187173</updated>
+    </task>
+    <task id="LOCAL-00055" summary="Code review">
+      <option name="closed" value="true" />
+      <created>1776998604732</created>
+      <option name="number" value="00055" />
+      <option name="presentableId" value="LOCAL-00055" />
+      <option name="project" value="LOCAL" />
+      <updated>1776998604732</updated>
+    </task>
+    <task id="LOCAL-00056" summary="Protect initialization of cycle name.">
+      <option name="closed" value="true" />
+      <created>1776998733193</created>
+      <option name="number" value="00056" />
+      <option name="presentableId" value="LOCAL-00056" />
+      <option name="project" value="LOCAL" />
+      <updated>1776998733193</updated>
+    </task>
+    <task id="LOCAL-00057" summary="Montana county names">
+      <option name="closed" value="true" />
+      <created>1776998838019</created>
+      <option name="number" value="00057" />
+      <option name="presentableId" value="LOCAL-00057" />
+      <option name="project" value="LOCAL" />
+      <updated>1776998838019</updated>
+    </task>
+    <task id="LOCAL-00058" summary="Protect initial values of map region and minivan details, finish batch sync correctly.">
+      <option name="closed" value="true" />
+      <created>1776999086401</created>
+      <option name="number" value="00058" />
+      <option name="presentableId" value="LOCAL-00058" />
+      <option name="project" value="LOCAL" />
+      <updated>1776999086402</updated>
+    </task>
+    <task id="LOCAL-00059" summary="Change notification emails to provide password as a one time link.">
+      <option name="closed" value="true" />
+      <created>1777180835196</created>
+      <option name="number" value="00059" />
+      <option name="presentableId" value="LOCAL-00059" />
+      <option name="project" value="LOCAL" />
+      <updated>1777180835196</updated>
+    </task>
+    <task id="LOCAL-00060" summary="Change notification emails to provide password as a one time link.">
+      <option name="closed" value="true" />
+      <created>1777227757089</created>
+      <option name="number" value="00060" />
+      <option name="presentableId" value="LOCAL-00060" />
+      <option name="project" value="LOCAL" />
+      <updated>1777227757090</updated>
+    </task>
+    <task id="LOCAL-00061" summary="Change notification emails to provide password as a one time link.">
+      <option name="closed" value="true" />
+      <created>1777229449705</created>
+      <option name="number" value="00061" />
+      <option name="presentableId" value="LOCAL-00061" />
+      <option name="project" value="LOCAL" />
+      <updated>1777229449705</updated>
+    </task>
+    <option name="localTasksCounter" value="62" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -587,14 +593,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="x minivan create date with it has never been set." />
-    <MESSAGE value="fix minivan create date with it has never been set." />
-    <MESSAGE value="Check for isBest for NL phone number." />
-    <MESSAGE value="Remove debug code." />
-    <MESSAGE value="Ensure VAN update date is a string even when not yet initialized." />
-    <MESSAGE value="Add back the missing footnote for sync turf selection." />
-    <MESSAGE value="Clarify the text for reporting a postcard was sent." />
-    <MESSAGE value="Create separate form to initialize the training documents." />
     <MESSAGE value="Fix the recording of changes to CO and Notes in the active NLs display." />
     <MESSAGE value="Fix delete turf to allow sorting after a change in HD, and remove the slow display of MiniVAN info." />
     <MESSAGE value="Raise max turf size temporarily." />
@@ -612,7 +610,15 @@
     <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
     <MESSAGE value="Correct the version number." />
     <MESSAGE value="Add code to trap missing contact id for reporting pedge-to-vote response." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add code to trap missing contact id for reporting pedge-to-vote response." />
+    <MESSAGE value="Use county key when syncing saved lists." />
+    <MESSAGE value="Fix the version number." />
+    <MESSAGE value="Use the county committee key when reporting participation survey question for Montana." />
+    <MESSAGE value="Code review" />
+    <MESSAGE value="Protect initialization of cycle name." />
+    <MESSAGE value="Montana county names" />
+    <MESSAGE value="Protect initial values of map region and minivan details, finish batch sync correctly." />
+    <MESSAGE value="Change notification emails to provide password as a one time link." />
+    <option name="LAST_COMMIT_MESSAGE" value="Change notification emails to provide password as a one time link." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

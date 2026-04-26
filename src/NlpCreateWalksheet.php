@@ -178,7 +178,6 @@ class NlpCreateWalksheet
       }
       $row++;
     }
-    
     // Combine the voters into households.
     $households = $household = $householdVanids = [];
     $voterInHousehold = $householdInTurf = $householdLineCount = 0;
