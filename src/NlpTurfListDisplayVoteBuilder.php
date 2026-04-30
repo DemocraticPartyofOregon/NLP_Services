@@ -117,7 +117,14 @@ and cannot be assigned to this turf.<br>
     foreach($contacts as $contact) {
       if(!empty($contact['cb'])) {
         $contactParts = explode('_',$contact['cb']);
-        $selections[$contactParts[1]] = ['turfId'=>$contactParts[1], 'mcid'=>$contactParts[2]];
+        $turfId = (int) $contactParts[1];
+
+        $mcidRaw = $contactParts[2] ?? '';
+        $lessThanPos = strpos($mcidRaw, '<');
+        $mcidPart = ($lessThanPos === false) ? $mcidRaw : substr($mcidRaw, 0, $lessThanPos);
+        $mcid = (int) trim($mcidPart);
+
+        $selections[$contactParts[1]] = ['turfId'=>$turfId, 'mcid'=>$mcid];
       }
     }
     return $selections;

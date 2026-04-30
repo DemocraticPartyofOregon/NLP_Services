@@ -118,7 +118,21 @@ const MAX_QUEUE_LIMIT = '17';
     if(!empty($duplicates)) {
       $message = 'The following voters are already assigned to another turf: ';
       foreach ($duplicates as $duplicate) {
-        $message .= 'Voter '.$duplicate['vanid'].' is already assigned to turf '.$duplicate['turfIndex'].', ';
+        nlp_debug_msg_safe('Duplicate:', $duplicate);
+        $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
+        $turfWithDuplicate = $turfsObj->getTurf($duplicate['turfIndex']);
+
+        $otherTurfName = $turfWithDuplicate['turfName'];
+        $otherCounty = $turfWithDuplicate['county'];
+        $otherNL = $turfWithDuplicate['nlFirstName'].' '.$turfWithDuplicate['nlLastName'];
+        $otherNlMessage = ' is already assigned to turf '.$otherTurfName.', '.$otherCounty.' County, NL:'.$otherNL;
+        //$otherNlMessage = ' is already assigned to turf ';
+        $votersObj = Drupal::getContainer()->get('nlpservices.voters');
+        $otherVoter = $votersObj->getVoterById($duplicate['vanid']);
+        $voterName  = $otherVoter['firstName'].' '.$otherVoter['lastName'];
+        $otherVoterMessage = 'Voter VANID: '.$duplicate['vanid'].' '.$voterName;
+
+        $message .= $otherVoterMessage.$otherNlMessage.'<br>';
       }
       $context['finished'] = 1;
       $context['results']['message'] = [0=>$message,];

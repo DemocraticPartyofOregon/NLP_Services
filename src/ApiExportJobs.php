@@ -100,6 +100,8 @@ class ApiExportJobs {
           ];
       }
       nlp_debug_msg('getExportJobs', $e->getMessage());
+      nlp_debug_msg('$dataJson', $dataJson);
+      nlp_debug_msg('$post_url', $post_url);
       return [];
     }
     $body = (string) $response->getBody();

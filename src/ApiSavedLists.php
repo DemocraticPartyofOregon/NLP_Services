@@ -203,7 +203,7 @@ class ApiSavedLists {
       
       $turfOptions[$listId] = $listInfo;
     }
-    array_multisort($turfOptions);
+    //array_multisort($turfOptions);
     
     return $turfOptions;
   }
