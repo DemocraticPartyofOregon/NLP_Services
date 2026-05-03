@@ -101,6 +101,14 @@ nlpservices.reset_form:
   requirements:
     _permission: 'nlp administer'
 
+nlpservices.database_schema_form:
+  path: '/nlpservices-database-schema'
+  defaults:
+    _form: Drupal\nlpservices\Form\DatabaseSchemaForm
+    _title: 'Verify or repair the database schema.'
+  requirements:
+    _permission: 'nlp administer'
+
 # Manage
 
 nlpservices.vanid_form:
@@ -151,11 +159,27 @@ nlpservices.display_cd_results_summary:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.target_voting_summary:
+  path: '/nlpservices-target-voting-summary'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\TargetVoterReportController::targetVoterSummary
+    _title: 'Display voter ballot status summary by county.'
+  requirements:
+    _permission: 'nlp tools access'
+
 nlpservices.import_crossstabs_form:
   path: '/nlpservices-import-crosstabs'
   defaults:
     _form: Drupal\nlpservices\Form\ImportCrosstabsForm
     _title: 'Import the crosstabs file.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.import_target_voter_crosstabs_form:
+  path: '/nlpservices-import-target-voter-crosstabs'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportTargetVoterCrosstabsForm
+    _title: 'Import the target voter crosstab file.'
   requirements:
     _permission: 'nlp tools access'
 

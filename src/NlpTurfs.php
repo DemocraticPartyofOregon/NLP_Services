@@ -210,7 +210,7 @@ class NlpTurfs
       $mapRegionRefreshTimes[$mapRegionId] = $mapRegionRefreshTime;
     }
     //nlp_debug_msg('$mapRegionRefreshTimes', $mapRegionRefreshTimes);
-    // Now identify the turfs that may be stale and need to be checked for resync.
+    // Now identify the turfs that may be stale and need to be checked for by resyncing.
     $resyncTurfIndexes = [];
     foreach ($turfIndexArray as $turfIndex => $turfRecord) {
       $mapRegionId = $turfRecord['mapRegionId'];
@@ -684,6 +684,36 @@ class NlpTurfs
   }
   
   /**
+   * getSyncedCountyNames
+   *
+   * Returns an indexed array of unique county names that have at least one
+   * synced turf (syncDate is not NULL).
+   *
+   * @return array - An indexed array of county names.
+   */
+  public function getSyncedCountyNames(): array
+  {
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 't');
+      $query->addField('t', 'county');
+      $query->distinct();
+      $query->isNotNull('t.syncDate');
+      $result = $query->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getSyncedCountyNames', $e->getMessage());
+      return [];
+    }
+
+    $countyNames = [];
+    do {
+      $countyName = $result->fetchAssoc();
+      if (empty($countyName)) {break;}
+      $countyNames[] = $countyName['county'];
+    } while (TRUE);
+    return $countyNames;
+  }
+
+  /**
    * unlinkFile
    *
    * Delete a file from the file system if it exists.
@@ -788,7 +818,7 @@ class NlpTurfs
    *
    * Checks if a turf exists for a specific MCID.
    *
-   * Returns and associative array containing turf information if it exists,
+   * Returns an associative array containing turf information if it exists,
    * otherwise returns an empty array.  The keys to the associative array are:
    * - 'turfs': An array of turfs indexed by turfIndex assigned to this NL.
    * - 'turfCnt': The count of turfs found.
@@ -1290,7 +1320,7 @@ class NlpTurfs
   /**
    * getVoterCounts
    *
-   * Get a count of voters with the filters for type, scope and having voted.
+   * Get a count of voters with the filters for type, scope, and having voted.
    *
    * @param string $type - Possible keys: CD, County, NL, Turf.
    * @param mixed $value - the value of the type.
@@ -1364,6 +1394,107 @@ class NlpTurfs
     return $voterCount;
   }
   
+  /**
+   * getCountyTurfVoterStats
+   *
+   * For a given county, counts voters assigned to NLP turfs and breaks them
+   * down by voted status, contact attempts, and survey responses.
+   *
+   * Returns an array with keys:
+   *   total          - all voters in county turfs
+   *   totalVoted     - of those, how many have turned in a ballot
+   *   contacted      - voters who had at least one contact attempt (contact or survey)
+   *   contactedVoted - of those, how many voted
+   *   surveyed       - voters who answered the survey question
+   *   surveyedVoted  - of those, how many voted
+   *
+   * @param string $county - The county name.
+   * @return array<string,int>
+   */
+  public function getCountyTurfVoterStats(string $county): array
+  {
+    $cycle = $this->nlpConfigurationObj->getCycle();
+    $stats = [
+      'total'          => 0,
+      'totalVoted'     => 0,
+      'contacted'      => 0,
+      'contactedVoted' => 0,
+      'surveyed'       => 0,
+      'surveyedVoted'  => 0,
+    ];
+    try {
+      // Total voters assigned to turfs in the county.
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->distinct();
+      $stats['total'] = (int) $query->countQuery()->execute()->fetchField();
+
+      // Total who have turned in a ballot.
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->leftJoin($this->nlpMatchbacksObj::MATCHBACK_TBL, 'm', 'm.vanid = g.vanid');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->isNotNull('m.date');
+      $query->distinct();
+      $stats['totalVoted'] = (int) $query->countQuery()->execute()->fetchField();
+
+      // Voters who had at least one contact attempt (contact or survey record).
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->join($this->nlpReportsObj::NLP_RESULTS_TBL, 'r', 'r.vanid = g.vanid');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->condition('r.cycle', $cycle);
+      $contactGroup = $query->orConditionGroup()
+        ->condition('r.type', $this->nlpReportsObj::SURVEY)
+        ->condition('r.type', $this->nlpReportsObj::CONTACT);
+      $query->condition($contactGroup);
+      $query->distinct();
+      $stats['contacted'] = (int) $query->countQuery()->execute()->fetchField();
+
+      // Of those with a contact attempt, how many voted.
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->join($this->nlpReportsObj::NLP_RESULTS_TBL, 'r', 'r.vanid = g.vanid');
+      $query->leftJoin($this->nlpMatchbacksObj::MATCHBACK_TBL, 'm', 'm.vanid = g.vanid');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->condition('r.cycle', $cycle);
+      $contactGroup = $query->orConditionGroup()
+        ->condition('r.type', $this->nlpReportsObj::SURVEY)
+        ->condition('r.type', $this->nlpReportsObj::CONTACT);
+      $query->condition($contactGroup);
+      $query->isNotNull('m.date');
+      $query->distinct();
+      $stats['contactedVoted'] = (int) $query->countQuery()->execute()->fetchField();
+
+      // Voters who responded to the survey question.
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->join($this->nlpReportsObj::NLP_RESULTS_TBL, 'r', 'r.vanid = g.vanid');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->condition('r.cycle', $cycle);
+      $query->condition('r.type', $this->nlpReportsObj::SURVEY);
+      $query->distinct();
+      $stats['surveyed'] = (int) $query->countQuery()->execute()->fetchField();
+
+      // Of those who answered the survey, how many voted.
+      $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
+      $query->join($this->nlpReportsObj::NLP_RESULTS_TBL, 'r', 'r.vanid = g.vanid');
+      $query->leftJoin($this->nlpMatchbacksObj::MATCHBACK_TBL, 'm', 'm.vanid = g.vanid');
+      $query->addField('g', 'vanid');
+      $query->condition('g.county', $county);
+      $query->condition('r.cycle', $cycle);
+      $query->condition('r.type', $this->nlpReportsObj::SURVEY);
+      $query->isNotNull('m.date');
+      $query->distinct();
+      $stats['surveyedVoted'] = (int) $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('getCountyTurfVoterStats', $e->getMessage());
+    }
+    return $stats;
+  }
+
   /**
    * countOfNlsWithTurfsInCd
    *

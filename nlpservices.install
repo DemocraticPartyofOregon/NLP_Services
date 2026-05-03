@@ -144,6 +144,46 @@ function nlpservices_schema(): array
     ],
   ];
  
+  $schema['nlp_target_voter_count'] = [
+    'description' => 'Target voter ballot status counts from VoteBuilder crosstab export.',
+    'fields' => [
+      'cd'             => [ 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, ],
+      'county'         => [ 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ],
+      'party'          => [ 'type' => 'varchar', 'length' => 64, 'not null' => TRUE, ],
+      'totalPeople'    => [ 'type' => 'int', ],
+      'accepted'       => [ 'type' => 'int', ],
+      'rejected'       => [ 'type' => 'int', ],
+      'sent'           => [ 'type' => 'int', ],
+      'undeliverable'  => [ 'type' => 'int', ],
+      'void'           => [ 'type' => 'int', ],
+      'unknown'        => [ 'type' => 'int', ],
+    ],
+    'primary key' => [ 'cd', 'county', 'party', ],
+    'indexes' => [
+      'county' => [ 'cd', 'county', ],
+    ],
+  ];
+
+  $schema['nlp_all_voter_count'] = [
+    'description' => 'All voter ballot status counts from VoteBuilder crosstab export.',
+    'fields' => [
+      'cd'             => [ 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, ],
+      'county'         => [ 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ],
+      'party'          => [ 'type' => 'varchar', 'length' => 64, 'not null' => TRUE, ],
+      'totalPeople'    => [ 'type' => 'int', ],
+      'accepted'       => [ 'type' => 'int', ],
+      'rejected'       => [ 'type' => 'int', ],
+      'sent'           => [ 'type' => 'int', ],
+      'undeliverable'  => [ 'type' => 'int', ],
+      'void'           => [ 'type' => 'int', ],
+      'unknown'        => [ 'type' => 'int', ],
+    ],
+    'primary key' => [ 'cd', 'county', 'party', ],
+    'indexes' => [
+      'county' => [ 'cd', 'county', ],
+    ],
+  ];
+
   $schema['nlp_coordinator'] = [
     'description' => 'The table to keep track of coordinators.',
     'fields' => [
@@ -215,7 +255,7 @@ function nlpservices_schema(): array
   $schema['nlp_mcid_recovery'] = [
     'description' => 'Short-lived keyed records used to recover an MCID (15-minute lifetime).',
     'fields' => [
-      'recovery_key' => [ 'type' => 'char', 'length' => 64, 'not null' => TRUE, 'description' => 'Hex-encoded 32-byte random key.' ],
+      'recovery_key' => [ 'type' => 'varchar', 'length' => 64, 'not null' => TRUE, 'description' => 'Hex-encoded 32-byte random key.' ],
       'mcid'         => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ],
       'created'      => [ 'type' => 'int', 'size' => 'big', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => 'Unix timestamp when record was created.' ],
     ],

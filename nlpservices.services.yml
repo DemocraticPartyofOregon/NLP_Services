@@ -71,6 +71,14 @@ services:
     class: Drupal\nlpservices\NlpCrosstabCounts
     arguments: [ '@database' ]
 
+  nlpservices.target_voter_crosstab_counts:
+    class: Drupal\nlpservices\NlpTargetVoterCrosstabCounts
+    arguments: [ '@database' ]
+
+  nlpservices.voter_crosstab_summary:
+    class: Drupal\nlpservices\NlpVoterCrosstabSummary
+    arguments: [ '@database', '@nlpservices.turfs' ]
+
   nlpservices.html_text:
     class: Drupal\nlpservices\HtmlText
 

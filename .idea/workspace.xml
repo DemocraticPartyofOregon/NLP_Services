@@ -4,12 +4,19 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Change notification emails to provide password as a one time link.">
-      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere.">
+      <change afterPath="$PROJECT_DIR$/src/Controller/TargetVoterReportController.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NlpVoterCrosstabSummary.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/ReportsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ReportsController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,7 +111,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.externalResources&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -147,31 +154,21 @@
       <workItem from="1777126361588" duration="11077000" />
       <workItem from="1777174689784" duration="8072000" />
       <workItem from="1777222866344" duration="2514000" />
-      <workItem from="1777226058798" duration="2834000" />
-    </task>
-    <task id="LOCAL-00013" summary="Add instructions to include NLP roles for the text editor.">
-      <option name="closed" value="true" />
-      <created>1772604090197</created>
-      <option name="number" value="00013" />
-      <option name="presentableId" value="LOCAL-00013" />
-      <option name="project" value="LOCAL" />
-      <updated>1772604090197</updated>
-    </task>
-    <task id="LOCAL-00014" summary="A coordinator will not be assigned if the MCID is missing.  Probably means an error associated with a duplicate recornd in MyCampaign.">
-      <option name="closed" value="true" />
-      <created>1772769887657</created>
-      <option name="number" value="00014" />
-      <option name="presentableId" value="LOCAL-00014" />
-      <option name="project" value="LOCAL" />
-      <updated>1772769887657</updated>
-    </task>
-    <task id="LOCAL-00015" summary="Remove the injection of request_stack and use a dynamic reference for request().">
-      <option name="closed" value="true" />
-      <created>1772769986854</created>
-      <option name="number" value="00015" />
-      <option name="presentableId" value="LOCAL-00015" />
-      <option name="project" value="LOCAL" />
-      <updated>1772769986854</updated>
+      <workItem from="1777226058798" duration="16145000" />
+      <workItem from="1777425569904" duration="53000" />
+      <workItem from="1777425643242" duration="3552000" />
+      <workItem from="1777432697117" duration="13917000" />
+      <workItem from="1777524612732" duration="646000" />
+      <workItem from="1777525280396" duration="11838000" />
+      <workItem from="1777591081843" duration="3591000" />
+      <workItem from="1777603549099" duration="9366000" />
+      <workItem from="1777651561210" duration="202000" />
+      <workItem from="1777651790464" duration="12195000" />
+      <workItem from="1777735377387" duration="10247000" />
+      <workItem from="1777781256495" duration="47000" />
+      <workItem from="1777781316303" duration="1003000" />
+      <workItem from="1777782336510" duration="689000" />
+      <workItem from="1777783039529" duration="4900000" />
     </task>
     <task id="LOCAL-00016" summary="Fix the export of tables, both for coordinators and for end of election configuration.">
       <option name="closed" value="true" />
@@ -541,7 +538,31 @@
       <option name="project" value="LOCAL" />
       <updated>1777229449705</updated>
     </task>
-    <option name="localTasksCounter" value="62" />
+    <task id="LOCAL-00062" summary="Change notification emails to provide password as a one time link.">
+      <option name="closed" value="true" />
+      <created>1777240904141</created>
+      <option name="number" value="00062" />
+      <option name="presentableId" value="LOCAL-00062" />
+      <option name="project" value="LOCAL" />
+      <updated>1777240904141</updated>
+    </task>
+    <task id="LOCAL-00063" summary="Debug code">
+      <option name="closed" value="true" />
+      <created>1777240940842</created>
+      <option name="number" value="00063" />
+      <option name="presentableId" value="LOCAL-00063" />
+      <option name="project" value="LOCAL" />
+      <updated>1777240940842</updated>
+    </task>
+    <task id="LOCAL-00064" summary="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere.">
+      <option name="closed" value="true" />
+      <created>1777580171891</created>
+      <option name="number" value="00064" />
+      <option name="presentableId" value="LOCAL-00064" />
+      <option name="project" value="LOCAL" />
+      <updated>1777580171892</updated>
+    </task>
+    <option name="localTasksCounter" value="65" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -593,8 +614,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the recording of changes to CO and Notes in the active NLs display." />
-    <MESSAGE value="Fix delete turf to allow sorting after a change in HD, and remove the slow display of MiniVAN info." />
     <MESSAGE value="Raise max turf size temporarily." />
     <MESSAGE value="Claify the text for the printable walksheets" />
     <MESSAGE value="Temporarily work around the failure of the API to return voters in housthold." />
@@ -618,7 +637,9 @@
     <MESSAGE value="Montana county names" />
     <MESSAGE value="Protect initial values of map region and minivan details, finish batch sync correctly." />
     <MESSAGE value="Change notification emails to provide password as a one time link." />
-    <option name="LAST_COMMIT_MESSAGE" value="Change notification emails to provide password as a one time link." />
+    <MESSAGE value="Debug code" />
+    <MESSAGE value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

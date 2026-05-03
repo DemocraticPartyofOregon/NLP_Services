@@ -23,7 +23,7 @@ class ReportsController extends ControllerBase
   protected NlpExportTurfStatus $exportTurfStatusObj;
   protected  NlpExportNlsStatus $exportNlsStatusObj;
   protected DrupalUser $drupalUser;
-  
+
   public function __construct( $resultsSummaryObj, $exportTurfStatusObj, $exportNlsStatusObj, $drupalUser ) {
     $this->resultsSummaryObj = $resultsSummaryObj;
     $this->exportTurfStatusObj = $exportTurfStatusObj;
@@ -42,15 +42,15 @@ class ReportsController extends ControllerBase
       $container->get('nlpservices.drupal_user'),
     );
   }
-  
-  
+
+
   /**
    * reports
    *
-   * Displays the reports template with the links to the various reports.
+   * Displays the report template with the links to the various reports.
    * This is the main entry point for the reports.
    *
-   * @return array - a render array containing the report template.
+   * @return array - a render array containing the reports template.
    */
   public function reports(): array
   {
@@ -68,7 +68,7 @@ class ReportsController extends ControllerBase
         ],
       ];
   }
-  
+
   /**
    * countyResultsSummary
    *
@@ -85,11 +85,11 @@ class ReportsController extends ControllerBase
     $output['table-start']['#attached']['library'][] = 'nlpservices/info-boxes';
     return $output;
   }
-  
+
   /**
    * cdResultsSummary
    *
-   * Displays the results summary for the participating CDs.
+   * Displays the result summary for the participating CDs.
    *
    * @noinspection PhpUnused
    * used in route.
@@ -102,17 +102,17 @@ class ReportsController extends ControllerBase
     $output['table-start']['#attached']['library'][] = 'nlpservices/info-boxes';
     return $output;
   }
-  
+
   /**
    * exportReport
    *
    * Exports the report data to a CSV file.  There are two possible reports created
    * here, one for the turf status and one for the NLs status.  The columns for each
-   * are intend to help coordinators with identifying NLs that are completing their
+   * are intended to help coordinators with identifying NLs that are completing their
    * assigned tasks.
    *
    * The file is created in the public://temp directory and is set as temporary.
-   * The file will be deleted by Drupal after 6 hours.
+   * Drupal will delete the file after 6 hours.
    *
    * @noinspection PhpUnused
    * used in route.
@@ -123,7 +123,7 @@ class ReportsController extends ControllerBase
     $statusType = $_GET['statusType'];
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
-    // For an NLP admin, the report will be for all the counties.  Otherwise, only the users
+    // For an NLP admin, the report will be for all the counties.  Otherwise, only the user's
     // county will be included in the report.
     if($admin) {
       $county = 'all';
@@ -139,7 +139,7 @@ class ReportsController extends ControllerBase
       }
       $countyMessage = $county.' County';
     }
-    
+
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
     $tempDir = 'public://temp';
     $contactDate = date('Y-m-d-H-i-s',time());
@@ -175,7 +175,7 @@ class ReportsController extends ControllerBase
     } else {
       $page .= "</h2><p>There are no records in the table.</p>";
     }
-    
+
     Drupal::service("page_cache_kill_switch")->trigger();
     return [
       '#markup' => $page,
@@ -184,7 +184,7 @@ class ReportsController extends ControllerBase
         'max-age' => 0,
       ],
     ];
-    
+
   }
 
 }

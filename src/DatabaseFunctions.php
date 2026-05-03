@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use Drupal\Core\Database\Connection;
 use Exception;
 
@@ -110,6 +111,163 @@ class DatabaseFunctions
     return TRUE;
   }
   
+  /**
+   * verifySchema
+   *
+   * Compares the live database against the schema defined in hook_schema().
+   * Returns an array of error strings for any missing tables, fields, or
+   * field parameter mismatches; an empty array means the database matches.
+   *
+   * @return array
+   */
+  public function verifySchema(): array
+  {
+    Drupal::moduleHandler()->loadInclude('nlpservices', 'install');
+    $schema = nlpservices_schema();
+    $dbSchema = $this->connection->schema();
+    $errors = [];
+    foreach ($schema as $tableName => $tableSpec) {
+      if (!$dbSchema->tableExists($tableName)) {
+        $errors[] = "Missing table: $tableName";
+        continue;
+      }
+      foreach ($tableSpec['fields'] as $fieldName => $fieldSpec) {
+        if (!$dbSchema->fieldExists($tableName, $fieldName)) {
+          $errors[] = "Missing field: $tableName.$fieldName";
+          continue;
+        }
+        array_push($errors, ...$this->verifyFieldParameters($tableName, $fieldName, $fieldSpec));
+      }
+    }
+    return $errors;
+  }
+
+  /**
+   * Maps a Drupal schema field spec to the expected MySQL DATA_TYPE string.
+   */
+  private function drupalTypeToMysql(array $spec): string
+  {
+    if (isset($spec['mysql_type'])) {
+      return strtolower($spec['mysql_type']);
+    }
+    $type = $spec['type'] ?? 'varchar';
+    $size = $spec['size'] ?? 'normal';
+    if ($type === 'serial') {
+      return 'int';
+    }
+    if ($type === 'int') {
+      return match ($size) {
+        'tiny'   => 'tinyint',
+        'small'  => 'smallint',
+        'medium' => 'mediumint',
+        'big'    => 'bigint',
+        default  => 'int',
+      };
+    }
+    if ($type === 'float' && $size === 'big') {
+      return 'double';
+    }
+    if ($type === 'numeric') {
+      return 'decimal';
+    }
+    return $type;
+  }
+
+  /**
+   * Checks a single live field against its schema spec.
+   * Returns error strings for any parameter mismatches.
+   */
+  private function verifyFieldParameters(string $tableName, string $fieldName, array $spec): array
+  {
+    try {
+      $options  = $this->connection->getConnectionOptions();
+      $database = $options['database'];
+      $result   = $this->connection->select('information_schema.COLUMNS', 'c')
+        ->fields('c', ['DATA_TYPE', 'CHARACTER_MAXIMUM_LENGTH', 'IS_NULLABLE', 'COLUMN_TYPE'])
+        ->condition('c.TABLE_SCHEMA', $database)
+        ->condition('c.TABLE_NAME', $tableName)
+        ->condition('c.COLUMN_NAME', $fieldName)
+        ->execute()
+        ->fetchAssoc();
+    } catch (Exception $e) {
+      nlp_debug_msg('verifyFieldParameters', $e->getMessage());
+      return ["Error checking $tableName.$fieldName: " . $e->getMessage()];
+    }
+
+    if (!$result) {
+      return ["Could not retrieve column info for: $tableName.$fieldName"];
+    }
+
+    $errors     = [];
+    $prefix     = "$tableName.$fieldName";
+    $actualType = strtolower($result['DATA_TYPE']);
+    $columnType = strtolower($result['COLUMN_TYPE']);
+
+    $expectedType = $this->drupalTypeToMysql($spec);
+    if ($actualType !== $expectedType) {
+      $errors[] = "Type mismatch for $prefix: from database $expectedType, from schema $actualType";
+    }
+
+    $specType = $spec['type'] ?? '';
+    if (in_array($specType, ['varchar', 'char']) && isset($spec['length'])) {
+      $actualLength = (int) $result['CHARACTER_MAXIMUM_LENGTH'];
+      if ($actualLength !== (int) $spec['length']) {
+        $errors[] = "Length mismatch for $prefix: expected {$spec['length']}, got $actualLength";
+      }
+    }
+
+    if (!empty($spec['unsigned']) && !str_contains($columnType, 'unsigned')) {
+      $errors[] = "Expected unsigned for $prefix but field is signed";
+    }
+
+    if (!empty($spec['not null']) && $result['IS_NULLABLE'] !== 'NO') {
+      $errors[] = "Expected NOT NULL for $prefix but field allows NULL";
+    }
+
+    return $errors;
+  }
+
+  /**
+   * repairSchema
+   *
+   * Creates any missing tables and adds any missing fields found by verifySchema().
+   * Returns an array of strings describing each action taken or any errors
+   * encountered; an empty array means nothing needed repair.
+   *
+   * @return array
+   */
+  public function repairSchema(): array
+  {
+    Drupal::moduleHandler()->loadInclude('nlpservices', 'install');
+    $schema = nlpservices_schema();
+    $dbSchema = $this->connection->schema();
+    $log = [];
+    foreach ($schema as $tableName => $tableSpec) {
+      if (!$dbSchema->tableExists($tableName)) {
+        try {
+          $dbSchema->createTable($tableName, $tableSpec);
+          $log[] = "Created table: $tableName";
+        } catch (Exception $e) {
+          nlp_debug_msg('repairSchema', $e->getMessage());
+          $log[] = "Error creating table $tableName: " . $e->getMessage();
+        }
+        continue;
+      }
+      foreach ($tableSpec['fields'] as $fieldName => $fieldSpec) {
+        if (!$dbSchema->fieldExists($tableName, $fieldName)) {
+          try {
+            $dbSchema->addField($tableName, $fieldName, $fieldSpec);
+            $log[] = "Added field: $tableName.$fieldName";
+          } catch (Exception $e) {
+            nlp_debug_msg('repairSchema', $e->getMessage());
+            $log[] = "Error adding field $tableName.$fieldName: " . $e->getMessage();
+          }
+        }
+      }
+    }
+    return $log;
+  }
+
   /**
    * getColumnSize
    *
