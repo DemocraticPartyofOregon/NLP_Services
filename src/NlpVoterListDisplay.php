@@ -109,7 +109,7 @@ class NlpVoterListDisplay
     foreach($contacts as $contact) {
       if(!empty($contact['cb'])) {
         $contactParts = explode('_',$contact['cb']);
-        $selections[$contactParts[1]] = ['rowCount'=>$contactParts[1], 'mcid'=>$contactParts[2]];
+        $selections[$contactParts[2]] = ['rowCount'=>$contactParts[1], 'vanid'=>$contactParts[2]];
       }
     }
     return $selections;

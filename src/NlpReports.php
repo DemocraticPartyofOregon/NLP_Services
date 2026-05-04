@@ -534,9 +534,10 @@ class NlpReports {
    * cycle can be specified so only the current election is referenced.
    *
    * @param array $request
+   * @param bool $newest - If TRUE, return the most recent report.  If FALSE, return the oldest report.
    * @return array - The most recent report for this voter.
    */
-  public function getReport(array $request): array
+  public function getReport(array $request,$newest=TRUE): array
   {
     // Get the request reports for this voter.
     try {
@@ -559,7 +560,7 @@ class NlpReports {
       nlp_debug_msg('getReport', $e->getMessage() );
       return [];
     }
-    // Now find the newest report.
+    // Now find the newest report (or all reports if asked).
     $report = [];
     $reportIndex = 0;
     do {
@@ -567,7 +568,11 @@ class NlpReports {
       if(!$dbReport) {break;}
       if($dbReport['reportIndex'] > $reportIndex) {
         $reportIndex = $dbReport['reportIndex'];
-        $report = $dbReport;
+        if($newest) {
+           $report = $dbReport;
+        } else {
+          $report[] = $dbReport;  // Add to the array of reports.
+        }
       }
     } while (TRUE);
     return $report;
