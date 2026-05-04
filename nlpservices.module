@@ -120,15 +120,15 @@ function nlpservices_user_login(Drupal\user\Entity\User $account): void
  */
 function nlp_debug_msg($msg, mixed $values='EMPTY'): void
 {
-  $backTrace = debug_backtrace();
-  $file = $backTrace[0]['file'];
-  $file_path = explode("/", $file);
-  $file_name = end($file_path);
+  $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
+  $frame = $backTrace[0] ?? [];
+  $file = $frame['file'] ?? __FILE__;
+  $file_name = basename($file);
   $messenger = Drupal::messenger();
   
   $fnp = str_replace('.php','', $file_name);
   $caller =  str_replace('nlp_','', $fnp);
-  $line = $backTrace[0]['line'];
+  $line = (int) ($frame['line'] ?? 0);
   $location = '@mod @line ';
   
   $location .= $msg.' = ';
@@ -170,11 +170,12 @@ function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
   if($admin AND $debug) {
     nlp_debug_msg($msg,  $values);
     
-    $backTrace = debug_backtrace();
-    $file = $backTrace[1]['file'];
-    $line = $backTrace[1]['line'];
-    
-    nlp_debug_msg('backTrace',$file.' '.$line);
+    $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
+    if(empty($backTrace)) {return;}
+    $messenger = Drupal::messenger();
+    $file = $backTrace[1]['function'] ?? 'unknown';
+    $line = $backTrace[1]['line'] ?? 'unknown';
+    $messenger->addMessage('backtrace: '.$file.' '.$line);
   }
 }
 
