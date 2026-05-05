@@ -25,3 +25,5 @@ div.form-box-medium { border-collapse: collapse; font-size:small; padding:0; bor
 div.resync-response { font-size:medium; }
 div.summary-report { border-collapse: collapse; font-size:small; padding:0; border: 1px solid green; width:450px; }
 
+span.nlp-legend-label { display:inline-block; min-width:140px; }
+

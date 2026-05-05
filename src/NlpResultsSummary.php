@@ -254,9 +254,9 @@ class NlpResultsSummary
   /**
    * buildLegend
    *
-   * Build the legend for the results summary.  When returned as HTML, the array of
-   * lines are concatenated into a single string with HTML tags.  When returned as plain text,
-   * the array of lines are converted to plain text by removing HTML tags and returning an array
+   * Build the legend for the result summary.  When returned as HTML, the array of
+   * lines is concatenated into a single string with HTML tags.  When returned as plain text,
+   * the array of lines is converted to plain text by removing HTML tags and returning an array
    * of lines.  These lines are added to the CSV file.
    *
    *
@@ -267,21 +267,19 @@ class NlpResultsSummary
   {
     $crosstabCreateTime = $this->configurationObj->getCrosstabCreateTime();
     $crosstabDate = empty($crosstabCreateTime)?'Not yet':date("F d Y H:i.", $crosstabCreateTime);
-    $matchbackDate = empty($this->matchbacksObj->getLatestMatchbackDate())?'Voting has not started'
-        :date("F d Y H:i.", $this->matchbacksObj->getLatestMatchbackDate());
-    
+    $matchbackDate = $this->matchbacksObj->getLatestMatchbackDate();
     $legendText = [
       "<p>The last update of the counts from VoteBuilder: <b>$crosstabDate</b><br>",
       "The latest matchback date: <b>$matchbackDate</b></p>",
       '<h2>Legend</h2>',
-      '<p>All Voters * - all registered voters in the participating district.<br>',
-      'Republicans * - the registered Republicans.<br>',
-      'Non-Affiliated * - the registered Non-Affiliated voters.<br>',
-      'Democrats * - the registered Democrats.<br>',
-      'NLP Voters - the voters in the assigned turfs.<br>',
-      'Attempted - the voters who were attempted to be contacted, but did not have a personal contact.<br>',
-      'Contacted - the voters who had a personal contact.<br>',
-      'Postcard - the voters who were sent postcards.</p>',
+      '<p><span class="nlp-legend-label">All Voters *</span> all registered voters in the participating district.<br>',
+      '<span class="nlp-legend-label">Republicans *</span> the registered Republicans.<br>',
+      '<span class="nlp-legend-label">Non-Affiliated *</span> the registered Non-Affiliated voters.<br>',
+      '<span class="nlp-legend-label">Democrats *</span> the registered Democrats.<br>',
+      '<span class="nlp-legend-label">NLP Voters</span> the voters in the assigned turfs.<br>',
+      '<span class="nlp-legend-label">Attempted</span> the voters who were attempted to be contacted, but did not have a personal contact.<br>',
+      '<span class="nlp-legend-label">Contacted</span> the voters who had a personal contact.<br>',
+      '<span class="nlp-legend-label">Postcard</span> the voters who were sent postcards.</p>',
       "<p><i>* These fields are created by VoteBuilder.   The nightly counting by VoteBuilder<br>",
       "  Can be a day behind the counts for the NLP rows.   Check the dates of each update.</i></p>",
     ];
@@ -428,7 +426,7 @@ class NlpResultsSummary
   /**
    * buildSummaryTableArray
    *
-   * Build the data for a summary table array for either a county or a cd..
+   * Build the data for a summary table array for either a county or a cd.
    *
    * @param array $nlpCounts - the counts to be displayed for the progress of NLP,
    * either for CD or County.  The display includes information from VoteBuilder and from
