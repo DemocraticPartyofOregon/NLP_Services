@@ -185,7 +185,7 @@ class NlpCrosstabCounts
       $count = $result->fetchAssoc();
       if(empty($count)) {break;}
       if($count['county'] != $county ) {continue;}
-      if(empty($counts['party'])) {
+      if(empty($counts[$count['party']])) {
         $counts[$count['party']]['regVoted'] = $count['registeredVoted'];
         $counts[$count['party']]['regVoters'] = $count['registeredVoters'];
       } else {
@@ -226,7 +226,5 @@ class NlpCrosstabCounts
     
     return $cds;
   }
-  
-  
 
 }
