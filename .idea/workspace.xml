@@ -4,9 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere.">
-      <change beforePath="$PROJECT_DIR$/src/NlpMcidRecovery.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMcidRecovery.php" afterDir="false" />
-    </list>
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="increase lifetime of password recovery" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -158,14 +156,6 @@
       <workItem from="1777781316303" duration="1003000" />
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
-    </task>
-    <task id="LOCAL-00016" summary="Fix the export of tables, both for coordinators and for end of election configuration.">
-      <option name="closed" value="true" />
-      <created>1772811409444</created>
-      <option name="number" value="00016" />
-      <option name="presentableId" value="LOCAL-00016" />
-      <option name="project" value="LOCAL" />
-      <updated>1772811409444</updated>
     </task>
     <task id="LOCAL-00017" summary="Fix the results summary for startup.">
       <option name="closed" value="true" />
@@ -551,7 +541,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777580171892</updated>
     </task>
-    <option name="localTasksCounter" value="65" />
+    <task id="LOCAL-00065" summary="increase lifetime of password recovery">
+      <option name="closed" value="true" />
+      <created>1778217310546</created>
+      <option name="number" value="00065" />
+      <option name="presentableId" value="LOCAL-00065" />
+      <option name="project" value="LOCAL" />
+      <updated>1778217310548</updated>
+    </task>
+    <option name="localTasksCounter" value="66" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -603,7 +601,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Raise max turf size temporarily." />
     <MESSAGE value="Claify the text for the printable walksheets" />
     <MESSAGE value="Temporarily work around the failure of the API to return voters in housthold." />
     <MESSAGE value="Fix the error to deliver turf that resulted from the fix to delete turf for sorting." />
@@ -628,7 +625,8 @@
     <MESSAGE value="Change notification emails to provide password as a one time link." />
     <MESSAGE value="Debug code" />
     <MESSAGE value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
+    <MESSAGE value="increase lifetime of password recovery" />
+    <option name="LAST_COMMIT_MESSAGE" value="increase lifetime of password recovery" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
