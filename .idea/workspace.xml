@@ -5,18 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere.">
-      <change afterPath="$PROJECT_DIR$/src/Controller/TargetVoterReportController.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/NlpVoterCrosstabSummary.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/ReportsController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/ReportsController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMcidRecovery.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMcidRecovery.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -87,35 +76,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__0__2&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
+    "WebServerToolWindowPanel.toolwindow.show.date": "false",
+    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
+    "WebServerToolWindowPanel.toolwindow.show.size": "false",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "#1 on NLP__Services__V7__0__2",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.general",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>

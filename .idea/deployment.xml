@@ -5,7 +5,7 @@
       <paths name="MtdemsNLP">
         <serverdata>
           <mappings>
-            <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
@@ -19,14 +19,14 @@
       <paths name="SandboxNLP">
         <serverdata>
           <mappings>
-            <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>
       <paths name="SpecialNLP">
         <serverdata>
           <mappings>
-            <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

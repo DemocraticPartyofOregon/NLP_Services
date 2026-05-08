@@ -11,7 +11,7 @@ use Exception;
 class NlpMcidRecovery {
 
   const string RECOVERY_TBL = 'nlp_mcid_recovery';
-  const int LIFETIME_SECONDS = 900; // 15 minutes
+  const int LIFETIME_SECONDS = 1209600; // 14 days
 
   protected Connection $connection;
 
@@ -62,14 +62,14 @@ class NlpMcidRecovery {
   /**
    * getMcid
    *
-   * Returns the MCID for a key if the record exists and is within the 15-minute window.
+   * Returns the MCID for a key if the record exists and is within the 14-day window.
    *
    * Returns NULL when the key is unknown or the record has expired.
    *
    * @param string $key
    * @return int
    */
-  public function getMcid(string $key): ?int
+  public function getMcid(string $key): int
   {
     try {
       $query = $this->connection->select(self::RECOVERY_TBL, 'r');
@@ -82,12 +82,12 @@ class NlpMcidRecovery {
     }
 
     if (empty($record)) {
-      return NULL;
+      return 0;
     }
 
     $age = Drupal::time()->getRequestTime() - (int) $record['created'];
     if ($age > self::LIFETIME_SECONDS) {
-      return NULL;
+      return 0;
     }
 
     return (int) $record['mcid'];
