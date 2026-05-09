@@ -4,12 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="increase lifetime of password recovery">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" afterDir="false" />
-    </list>
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix summary report for counties that have more than one CD." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -162,14 +157,6 @@
       <workItem from="1777781316303" duration="1003000" />
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
-    </task>
-    <task id="LOCAL-00017" summary="Fix the results summary for startup.">
-      <option name="closed" value="true" />
-      <created>1772824508158</created>
-      <option name="number" value="00017" />
-      <option name="presentableId" value="LOCAL-00017" />
-      <option name="project" value="LOCAL" />
-      <updated>1772824508158</updated>
     </task>
     <task id="LOCAL-00018" summary="Fix mossing cron variables">
       <option name="closed" value="true" />
@@ -555,7 +542,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778217310548</updated>
     </task>
-    <option name="localTasksCounter" value="66" />
+    <task id="LOCAL-00066" summary="Fix summary report for counties that have more than one CD.">
+      <option name="closed" value="true" />
+      <created>1778273986182</created>
+      <option name="number" value="00066" />
+      <option name="presentableId" value="LOCAL-00066" />
+      <option name="project" value="LOCAL" />
+      <updated>1778273986182</updated>
+    </task>
+    <option name="localTasksCounter" value="67" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -607,7 +602,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claify the text for the printable walksheets" />
     <MESSAGE value="Temporarily work around the failure of the API to return voters in housthold." />
     <MESSAGE value="Fix the error to deliver turf that resulted from the fix to delete turf for sorting." />
     <MESSAGE value="Identify the NL associated with the checkbox" />
@@ -632,7 +626,8 @@
     <MESSAGE value="Debug code" />
     <MESSAGE value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
     <MESSAGE value="increase lifetime of password recovery" />
-    <option name="LAST_COMMIT_MESSAGE" value="increase lifetime of password recovery" />
+    <MESSAGE value="Fix summary report for counties that have more than one CD." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix summary report for counties that have more than one CD." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
