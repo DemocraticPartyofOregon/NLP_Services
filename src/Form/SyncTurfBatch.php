@@ -501,6 +501,7 @@ const MAX_QUEUE_LIMIT = '17';
     $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
     $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
     $mcidRecoveryObj = Drupal::getContainer()->get('nlpservices.mcid_recovery');
+    $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
     $messenger = Drupal::messenger();
     if($success) {
       if($results['result'] == 'error') {
@@ -536,12 +537,9 @@ const MAX_QUEUE_LIMIT = '17';
       $drupalUser = $drupalUserObj->getUserByMcid($mcid);
       if(!empty($drupalUser)) {
         $userName = $drupalUser['userName'];
-        $key = $mcidRecoveryObj->saveRecoveryKey($mcid);
-        $serverUrl = \Drupal::request()->getSchemeAndHttpHost();
-        $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
-        $messages[] = 'User credentials: Username: ' . $userName
-          . ' <a href="' . $revealUrl . '">Click here to retrieve password</a> (one-time link)';
-        
+        $mcid = $drupalUser['mcid'];
+        $magicWord = $magicWordObj->getMagicWord($mcid);
+        $messages[] = 'User credentials: Username: ' . $userName . ' Password: ' . $magicWord;
         $messageDisplay = implode('<br>',$messages);
         $messenger->addStatus($messageDisplay);
       }
