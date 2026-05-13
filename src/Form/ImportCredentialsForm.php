@@ -58,7 +58,17 @@ class ImportCredentialsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    $form['#title'] = t('Import NL credentials');
+    $form['#description'] = t('Upload a CSV file containing NL credentials.');
 
+    $form['importType'] = [
+      '#markup' => '<p>Use the "Import credentials" operation to import all credential fields from the file, 
+which should be a full export from the magicWord table. Use the "Restore missing passwords" operation to write 
+back only missing passwords from the file, which should be an export of just the MCID, userName, and magicWord 
+fields. The restore operation is intended to be used with an export file created at the same time as a 
+user account export file. You can verify that the MCIDs in the credentials’ file still have matching Drupal 
+accounts before restoring any passwords.</p>',
+    ];
     $form['operation'] = [
       '#type' => 'radios',
       '#title' => t('Operation'),
@@ -67,16 +77,15 @@ class ImportCredentialsForm extends FormBase
         'restore' => t('Restore missing passwords'),
       ],
       '#default_value' => 'import',
-      '#description' => t('Import replaces all credential fields. Restore only writes back a
-        password when the saved password is empty, the Drupal account exists, and the
-        password in the file still matches the Drupal account.'),
     ];
 
+    $form['verifyNote'] = [
+      '#markup' => '<p>Check the "Verify NL record exists" box only if you want to remove credentials for NL records.
+(it takes a few seconds to verify each NL record).</p>'
+    ];
     $form['verify'] = [
       '#type' => 'checkbox',
       '#title' => t('Verify NL record exists'),
-      '#description' => t('Check this box only if you want to remove credentials for NL records
-      that no longer exist in VoteBuilder.'),
     ];
 
     $form['table_file'] = [
@@ -86,7 +95,7 @@ class ImportCredentialsForm extends FormBase
 
     $form['upload_file'] = [
       '#type' => 'submit',
-      '#value' => "Credentials File",
+      '#value' => "Process Credentials File",
     ];
 
     $form['button_link'] = [
@@ -206,8 +215,8 @@ class ImportCredentialsForm extends FormBase
    * Skips the record when:
    * - the file password is empty,
    * - no credentials row exists in the magicWord table for this MCID,
-   * - the magicWord table already has a password for this MCID, or
-   * - a Drupal account exists but the file password no longer matches it.
+   * - the magicWord table already has a password for this MCID,
+   * - or a Drupal account exists, but the file password no longer matches it.
    * Restores the password when no Drupal account exists (account not yet created).
    *
    * @param array $credentials  One row from the credentials file.
@@ -218,20 +227,13 @@ class ImportCredentialsForm extends FormBase
     $mcid     = $credentials['mcid'];
     $userName = $credentials['userName'];
     $password = $credentials['magicWord'] ?? '';
-
-    if (empty($password)) {
-      return;
-    }
+    if (empty($password)) { return; }
 
     $existing = $this->magicWordObj->getCredentials($mcid);
-    if (empty($existing)) {
-      return;
-    }
+    if (empty($existing)) { return; }
 
     $saved = $this->magicWordObj->getMagicWord($mcid);
-    if (!empty($saved)) {
-      return;
-    }
+    if (!empty($saved)) { return; }
 
     $drupalUser = $this->drupalUserObj->getUserByName($userName);
     if (!empty($drupalUser) && !$this->drupalUserObj->verifyPassword($userName, $password)) {

@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix summary report for counties that have more than one CD.">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the loss of passwords with a sync of active NLs.">
       <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -164,14 +159,6 @@
       <workItem from="1777781316303" duration="1003000" />
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
-    </task>
-    <task id="LOCAL-00018" summary="Fix mossing cron variables">
-      <option name="closed" value="true" />
-      <created>1772862513194</created>
-      <option name="number" value="00018" />
-      <option name="presentableId" value="LOCAL-00018" />
-      <option name="project" value="LOCAL" />
-      <updated>1772862513194</updated>
     </task>
     <task id="LOCAL-00019" summary="Fix the activity reports">
       <option name="closed" value="true" />
@@ -557,7 +544,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778273986182</updated>
     </task>
-    <option name="localTasksCounter" value="67" />
+    <task id="LOCAL-00067" summary="Fix the loss of passwords with a sync of active NLs.">
+      <option name="closed" value="true" />
+      <created>1778633708931</created>
+      <option name="number" value="00067" />
+      <option name="presentableId" value="LOCAL-00067" />
+      <option name="project" value="LOCAL" />
+      <updated>1778633708932</updated>
+    </task>
+    <option name="localTasksCounter" value="68" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -609,7 +604,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Temporarily work around the failure of the API to return voters in housthold." />
     <MESSAGE value="Fix the error to deliver turf that resulted from the fix to delete turf for sorting." />
     <MESSAGE value="Identify the NL associated with the checkbox" />
     <MESSAGE value="Defend against empty minivan data from votebuilder" />
@@ -634,7 +628,8 @@
     <MESSAGE value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
     <MESSAGE value="increase lifetime of password recovery" />
     <MESSAGE value="Fix summary report for counties that have more than one CD." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix summary report for counties that have more than one CD." />
+    <MESSAGE value="Fix the loss of passwords with a sync of active NLs." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the loss of passwords with a sync of active NLs." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
