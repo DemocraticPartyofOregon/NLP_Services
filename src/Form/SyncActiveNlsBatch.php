@@ -121,7 +121,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     }
     $seek = ftell($fh);
 
-    //nlp_debug_msg('$nlRecord:',$nlRecord);
+    nlp_debug_msg('$nlRecord:',$nlRecord);
     // Verify that the email for this NL is unique.
     $emailVerification  = verifyUniqueEmail($nlRecord);
     //nlp_debug_msg('$emailVerification:',$emailVerification);
@@ -131,7 +131,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     }
     $credentials = $emailVerification['credentials'];
 
-    //nlp_debug_msg('$credentials:',$credentials);
+    nlp_debug_msg('$credentials:',$credentials);
     // Verify the Drupal account for this NL is correct and create or update the account as needed.
     $drupalAccountVerify = verifyDrupalAccount($nlRecord, $credentials);
     //nlp_debug_msg('$drupalAccountVerify:',$drupalAccountVerify);
@@ -158,7 +158,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
 
     // Verify the saved login credentials.
     $credentials = verifyCredentials( $nlRecord, $drupalUser, $credentials, $magicWord);
-    //nlp_debug_msg('$credentials:',$credentials);
+    nlp_debug_msg('$credentials:',$credentials);
 
     // Check if the NL record is linked to the VoterFile, but only if the AC is not set.
     if(!$notRegistered) {
@@ -280,8 +280,8 @@ function updateDrupalAccount(array $nlRecord, array $drupalUser): array
       $userUpdate[$field] = $nlRecord[$field];
     }
   }
-  //nlp_debug_msg('$nlRecord:',$nlRecord);
-  //nlp_debug_msg('$drupalUser:',$drupalUser);
+  nlp_debug_msg('$nlRecord:',$nlRecord);
+  nlp_debug_msg('$drupalUser:',$drupalUser);
   if(!empty($nlRecord['email']) && !empty($drupalUser['email'])) {
     if($nlRecord['email'] != $drupalUser['email']) {
       $userUpdate['mail'] = $nlRecord['email'];
@@ -486,7 +486,7 @@ function verifyCredentials(array $nlRecord, array $drupalUser, array $credential
   if(empty($credentials)) {
     $credentials = createNewCredentials( $nlRecord, $drupalUser, $magicWord);
   } else {
-    $credentials = updateCredentials( $nlRecord, $drupalUser, $credentials);
+    $credentials = updateCredentials( $nlRecord, $drupalUser, $credentials, $magicWord);
   }
   //nlp_debug_msg('$credentials:',$credentials);
   /*
@@ -556,7 +556,7 @@ function createNewCredentials(array $nlRecord, array $drupalUser, string $magicW
 }
 
 
-function updateCredentials(array $nlRecord, array $drupalUser, array $credentials): array
+function updateCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord = ''): array
 {
   $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
   $vfid = empty($nlRecord['vfid'])?0:$nlRecord['vfid'];
@@ -573,6 +573,14 @@ function updateCredentials(array $nlRecord, array $drupalUser, array $credential
   $credentials['roles'] = $roles;
 
   $magicWordObj->updateCredentials($credentials);
+
+  // If a new Drupal account was just created for a returning NL whose stored
+  // password was empty, write the new password into the magicWord table now.
+  if(!empty($magicWord) && empty($magicWordObj->getMagicWord($nlRecord['mcid']))) {
+    $magicWordObj->setMagicWord($nlRecord['mcid'], $magicWord);
+    $credentials['magicWord'] = $magicWord;
+  }
+
   return $credentials;
 }
 

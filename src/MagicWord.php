@@ -280,7 +280,7 @@ class MagicWord {
    */
   public function updateCredentials($credentials): bool
   {
-    if(isset($credentials['magicWord'])) {
+    if(isset($credentials['magicWord']) && !empty($credentials['magicWord'])) {
       if(!empty($credentials['magicWord'])) {
         $key = hash('sha256', self::KEY);
         $iv = substr(hash('sha256', self::IV), 0, 16);

@@ -58,28 +58,41 @@ class ImportCredentialsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    
+
+    $form['operation'] = [
+      '#type' => 'radios',
+      '#title' => t('Operation'),
+      '#options' => [
+        'import'  => t('Import credentials'),
+        'restore' => t('Restore missing passwords'),
+      ],
+      '#default_value' => 'import',
+      '#description' => t('Import replaces all credential fields. Restore only writes back a
+        password when the saved password is empty, the Drupal account exists, and the
+        password in the file still matches the Drupal account.'),
+    ];
+
     $form['verify'] = [
       '#type' => 'checkbox',
       '#title' => t('Verify NL record exists'),
       '#description' => t('Check this box only if you want to remove credentials for NL records
       that no longer exist in VoteBuilder.'),
     ];
-    
+
     $form['table_file'] = [
       '#type' => 'file',
       '#title' => "Credentials File",
     ];
-    
+
     $form['upload_file'] = [
       '#type' => 'submit',
       '#value' => "Credentials File",
     ];
-    
+
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
-    
+
     return $form;
   }
   
@@ -116,61 +129,116 @@ class ImportCredentialsForm extends FormBase
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $messenger = Drupal::messenger();
-    
-    $verify = $form_state->getValue('verify');
-    $tempName = $form_state->get('tempName');
-    $fieldPos = $form_state->get('fieldPos');
+
+    $operation = $form_state->getValue('operation');
+    $verify    = $form_state->getValue('verify');
+    $tempName  = $form_state->get('tempName');
+    $fieldPos  = $form_state->get('fieldPos');
     nlp_debug_msg($fieldPos);
-    
+
     $fh = fopen($tempName, "r");
     if (empty($fh)) {
       $messenger->addError('Failed to open table file.');
       return;
     }
     fgetcsv($fh);
-    
+
+    $restored = 0;
+
     do {
       $rawRecord = fgetcsv($fh);
       if (!$rawRecord) {
         break;
       }
-      
+
       $credentials = array_map(function ($pos) use ($rawRecord) {
         return $rawRecord[$pos];
       }, $fieldPos);
-      //nlp_debug_msg('$credentials', $credentials);
-      
-      if($verify) {  // Check if the MCID still exists.
-        $mcid = $credentials['mcid'];
+
+      if ($verify) {
+        $mcid   = $credentials['mcid'];
         $county = $credentials['county'];
-        $nlExists = $this->apiNlsObj->nlExists($county,$mcid);
-        if(!$nlExists) {continue;}
+        $nlExists = $this->apiNlsObj->nlExists($county, $mcid);
+        if (!$nlExists) {continue;}
       }
-      if(empty($credentials['magicWord'])) {
-        $credentials['magicWord'] = 'Unknown';
-      }
-      if(empty($credentials['userName'])) {
+
+      if (empty($credentials['userName'])) {
         continue;
       }
-      
-      if(empty($credentials['hd']) OR !is_numeric($credentials['hd'])) {
+
+      if ($operation === 'restore') {
+        $this->restorePassword($credentials, $restored);
+        continue;
+      }
+
+      // --- import (original behaviour) ---
+      if (empty($credentials['magicWord'])) {
+        $credentials['magicWord'] = 'Unknown';
+      }
+      if (empty($credentials['hd']) || !is_numeric($credentials['hd'])) {
         $credentials['hd'] = NULL;
       }
-      if(empty($credentials['created'])) {
+      if (empty($credentials['created'])) {
         $credentials['created'] = NULL;
       }
-      if(empty($credentials['access'])) {
+      if (empty($credentials['access'])) {
         $credentials['access'] = NULL;
       }
-      if(empty($credentials['roles'])) {
+      if (empty($credentials['roles'])) {
         $credentials['roles'] = NULL;
       } else {
         $credentials['roles'] = json_decode($credentials['roles']);
       }
       $this->magicWordObj->updateCredentials($credentials);
-      //break;
+
     } while (TRUE);
-    
-    $messenger->addStatus('The table has been successfully uploaded.');
+
+    if ($operation === 'restore') {
+      $messenger->addStatus(t('@count password(s) restored.', ['@count' => $restored]));
+    } else {
+      $messenger->addStatus('The table has been successfully uploaded.');
+    }
+  }
+
+  /**
+   * Restores the saved password for one credential record when the password is missing.
+   *
+   * Skips the record when:
+   * - the file password is empty,
+   * - no credentials row exists in the magicWord table for this MCID,
+   * - the magicWord table already has a password for this MCID, or
+   * - a Drupal account exists but the file password no longer matches it.
+   * Restores the password when no Drupal account exists (account not yet created).
+   *
+   * @param array $credentials  One row from the credentials file.
+   * @param int   $restored     Running count incremented on each successful restore.
+   */
+  private function restorePassword(array $credentials, int &$restored): void
+  {
+    $mcid     = $credentials['mcid'];
+    $userName = $credentials['userName'];
+    $password = $credentials['magicWord'] ?? '';
+
+    if (empty($password)) {
+      return;
+    }
+
+    $existing = $this->magicWordObj->getCredentials($mcid);
+    if (empty($existing)) {
+      return;
+    }
+
+    $saved = $this->magicWordObj->getMagicWord($mcid);
+    if (!empty($saved)) {
+      return;
+    }
+
+    $drupalUser = $this->drupalUserObj->getUserByName($userName);
+    if (!empty($drupalUser) && !$this->drupalUserObj->verifyPassword($userName, $password)) {
+      return;
+    }
+
+    $this->magicWordObj->setMagicWord($mcid, $password);
+    $restored++;
   }
 }

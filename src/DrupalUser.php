@@ -593,6 +593,20 @@ class DrupalUser {
   }
   
   /**
+   * Returns TRUE if the given plain-text password matches the stored password for the named user.
+   *
+   * @param $userName
+   * @param $password
+   * @return bool
+   */
+  public function verifyPassword($userName, $password): bool
+  {
+    if(empty($userName) || empty($password)) {return FALSE;}
+    $uid = Drupal::service('user.auth')->authenticate($userName, $password);
+    return !empty($uid);
+  }
+
+  /**
    * Returns an array of NLP roles that are defined in Drupal.
    *
    * @return array

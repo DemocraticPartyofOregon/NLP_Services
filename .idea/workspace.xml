@@ -7,7 +7,10 @@
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix summary report for counties that have more than one CD.">
       <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
