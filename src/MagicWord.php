@@ -281,13 +281,13 @@ class MagicWord {
    */
   public function updateCredentials($credentials): bool
   {
-    if(isset($credentials['magicWord']) && !empty($credentials['magicWord'])) {
-      if(!empty($credentials['magicWord'])) {
+    if(!empty($credentials['magicWord'])) {
+      //if(!empty($credentials['magicWord'])) {
         $key = hash('sha256', self::KEY);
         $iv = substr(hash('sha256', self::IV), 0, 16);
         $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
         $credentials['magicWordEncrypted'] = base64_encode($output);
-      }
+      //}
       unset($credentials['magicWord']);
     }
     $mcid = $credentials['mcid'];

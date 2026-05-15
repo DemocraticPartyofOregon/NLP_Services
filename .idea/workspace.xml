@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add warning to data entry pagw for unsaved changes.">
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Code review loss of password hints.">
       <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -183,15 +178,7 @@
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
-      <workItem from="1778860226265" duration="714000" />
-    </task>
-    <task id="LOCAL-00022" summary="fix minivan create date with it has never been set.">
-      <option name="closed" value="true" />
-      <created>1773118960337</created>
-      <option name="number" value="00022" />
-      <option name="presentableId" value="LOCAL-00022" />
-      <option name="project" value="LOCAL" />
-      <updated>1773118960337</updated>
+      <workItem from="1778860226265" duration="1802000" />
     </task>
     <task id="LOCAL-00023" summary="fix minivan create date with it has never been set.">
       <option name="closed" value="true" />
@@ -577,7 +564,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778819855279</updated>
     </task>
-    <option name="localTasksCounter" value="71" />
+    <task id="LOCAL-00071" summary="Code review loss of password hints.">
+      <option name="closed" value="true" />
+      <created>1778861190559</created>
+      <option name="number" value="00071" />
+      <option name="presentableId" value="LOCAL-00071" />
+      <option name="project" value="LOCAL" />
+      <updated>1778861190560</updated>
+    </task>
+    <option name="localTasksCounter" value="72" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -629,7 +624,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Defend against empty minivan data from votebuilder" />
     <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
     <MESSAGE value="Ensure correct initial value for cron task enable option." />
     <MESSAGE value="Eliminate the minivan penalty for deleting a turf." />
@@ -654,7 +648,8 @@
     <MESSAGE value="Fix the loss of passwords with a sync of active NLs." />
     <MESSAGE value="Code review of ImprtCredentialsForm" />
     <MESSAGE value="Add warning to data entry pagw for unsaved changes." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add warning to data entry pagw for unsaved changes." />
+    <MESSAGE value="Code review loss of password hints." />
+    <option name="LAST_COMMIT_MESSAGE" value="Code review loss of password hints." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
