@@ -35,6 +35,12 @@ class NlpExportCredentials
   }
   
   /**
+   * createNlCredentialsFile
+   *
+   * Create a file with the credentials for NL users.
+   * 1. Create a file in the public://temp directory.
+   * 2. Write the CSV file with the NL user credentials.
+   * 3. Return a link to the file.
    * @return string - HTML with a link to a file with information to recreate user accounts.
    */
   public function createNlCredentialsFile(): string
@@ -66,7 +72,7 @@ class NlpExportCredentials
       $columns[$key] = 'magicWord';
     }
     fputcsv($fh, $columns);
-    
+
     $mcids = $this->magicWord->getKeys();
     foreach ($mcids as $mcid) {
       $credentials = $this->magicWord->getCredentials($mcid);

@@ -194,8 +194,9 @@ class MagicWord {
         $key = hash('sha256', self::KEY);
         $iv = substr(hash('sha256', self::IV), 0, 16);
         $pw = openssl_decrypt(base64_decode($credentials['magicWordEncrypted']), "AES-256-CBC", $key, 0, $iv);
-        
         $credentials['magicWord'] = $pw;
+      } else {
+        $credentials['magicWord'] = '';  // The password has been forgotten, probably a symptom of a past bug.
       }
       unset($credentials['magicWordEncrypted']);
     }

@@ -118,7 +118,7 @@ const MAX_QUEUE_LIMIT = '17';
     if(!empty($duplicates)) {
       $message = 'The following voters are already assigned to another turf: ';
       foreach ($duplicates as $duplicate) {
-        nlp_debug_msg_safe('Duplicate:', $duplicate);
+        //nlp_debug_msg_safe('Duplicate:', $duplicate);
         $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
         $turfWithDuplicate = $turfsObj->getTurf($duplicate['turfIndex']);
 

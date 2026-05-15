@@ -12,9 +12,9 @@
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/core" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/modules" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/vendor" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
     </include_path>
   </component>
   <component name="PhpProjectSharedConfiguration" php_language_level="8.3">

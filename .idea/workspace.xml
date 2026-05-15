@@ -4,8 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the loss of passwords with a sync of active NLs.">
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add warning to data entry pagw for unsaved changes.">
+      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -15,16 +20,34 @@
   <component name="ComposerSettings">
     <execution />
   </component>
+  <component name="CopilotChats">
+    <option name="panelChat">
+      <chat>
+        <option name="activeSessionId" value="8cf38ac9-5e6e-407a-93fd-aae690c97ed3" />
+        <option name="sessions">
+          <session>
+            <option name="chatType" value="PANEL" />
+            <option name="id" value="8cf38ac9-5e6e-407a-93fd-aae690c97ed3" />
+            <option name="modeId" value="Ask" />
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+            <option name="targetType" value="LOCAL" />
+          </session>
+        </option>
+        <option name="type" value="PANEL" />
+      </chat>
+    </option>
+  </component>
   <component name="CopilotPersistence">
     <persistenceIdMap>
       <entry key="_C:/Users/steve/PhpstormProjects/NLP_Services" value="39v9tqCOrZPMPcc7tFcp5ctKsn1" />
     </persistenceIdMap>
   </component>
   <component name="DrupalConfiguration" enabled="true" version="9">
-    <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-9.5.11</drupalPath>
+    <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="228" />
+    <option name="cachedIndexableFilesCount" value="229" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -61,9 +84,9 @@
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
     <include_path>
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/core" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/modules" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-9.5.11/vendor" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
     </include_path>
   </component>
   <component name="ProblemsViewState">
@@ -101,7 +124,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.general&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.php.frameworks&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -159,30 +182,8 @@
       <workItem from="1777781316303" duration="1003000" />
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
-    </task>
-    <task id="LOCAL-00019" summary="Fix the activity reports">
-      <option name="closed" value="true" />
-      <created>1772862539669</created>
-      <option name="number" value="00019" />
-      <option name="presentableId" value="LOCAL-00019" />
-      <option name="project" value="LOCAL" />
-      <updated>1772862539669</updated>
-    </task>
-    <task id="LOCAL-00020" summary="Fix missing vfid for nl sync">
-      <option name="closed" value="true" />
-      <created>1772862660851</created>
-      <option name="number" value="00020" />
-      <option name="presentableId" value="LOCAL-00020" />
-      <option name="project" value="LOCAL" />
-      <updated>1772862660851</updated>
-    </task>
-    <task id="LOCAL-00021" summary="x minivan create date with it has never been set.">
-      <option name="closed" value="true" />
-      <created>1772863012981</created>
-      <option name="number" value="00021" />
-      <option name="presentableId" value="LOCAL-00021" />
-      <option name="project" value="LOCAL" />
-      <updated>1772863012981</updated>
+      <workItem from="1778727172734" duration="14606000" />
+      <workItem from="1778860226265" duration="714000" />
     </task>
     <task id="LOCAL-00022" summary="fix minivan create date with it has never been set.">
       <option name="closed" value="true" />
@@ -552,7 +553,31 @@
       <option name="project" value="LOCAL" />
       <updated>1778633708932</updated>
     </task>
-    <option name="localTasksCounter" value="68" />
+    <task id="LOCAL-00068" summary="Code review of ImprtCredentialsForm">
+      <option name="closed" value="true" />
+      <created>1778645079447</created>
+      <option name="number" value="00068" />
+      <option name="presentableId" value="LOCAL-00068" />
+      <option name="project" value="LOCAL" />
+      <updated>1778645079447</updated>
+    </task>
+    <task id="LOCAL-00069" summary="Add warning to data entry pagw for unsaved changes.">
+      <option name="closed" value="true" />
+      <created>1778818715161</created>
+      <option name="number" value="00069" />
+      <option name="presentableId" value="LOCAL-00069" />
+      <option name="project" value="LOCAL" />
+      <updated>1778818715161</updated>
+    </task>
+    <task id="LOCAL-00070" summary="Add warning to data entry pagw for unsaved changes.">
+      <option name="closed" value="true" />
+      <created>1778819855279</created>
+      <option name="number" value="00070" />
+      <option name="presentableId" value="LOCAL-00070" />
+      <option name="project" value="LOCAL" />
+      <updated>1778819855279</updated>
+    </task>
+    <option name="localTasksCounter" value="71" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -604,8 +629,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the error to deliver turf that resulted from the fix to delete turf for sorting." />
-    <MESSAGE value="Identify the NL associated with the checkbox" />
     <MESSAGE value="Defend against empty minivan data from votebuilder" />
     <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
     <MESSAGE value="Ensure correct initial value for cron task enable option." />
@@ -629,7 +652,9 @@
     <MESSAGE value="increase lifetime of password recovery" />
     <MESSAGE value="Fix summary report for counties that have more than one CD." />
     <MESSAGE value="Fix the loss of passwords with a sync of active NLs." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the loss of passwords with a sync of active NLs." />
+    <MESSAGE value="Code review of ImprtCredentialsForm" />
+    <MESSAGE value="Add warning to data entry pagw for unsaved changes." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add warning to data entry pagw for unsaved changes." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
