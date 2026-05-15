@@ -166,7 +166,9 @@ class DataEntryForm extends FormBase
       '#prefix' => '<div id="data-entry-div">',
       '#suffix' => '</div>',
     ];
-    
+    $form['#attached']['library'][] = 'nlpservices/unsaved-changes';
+    $form['#attributes']['class'][] = 'js-form-changed';
+
     $form_state->set('voterArrays', $voterArrays);
     $form_state->setValue('dataEntry', NULL);
     $user_input = $form_state->getUserInput();
@@ -291,7 +293,9 @@ class DataEntryForm extends FormBase
     $nlsInfo = $this->nlsObj->getNlById($mcid);
     
     $county = $this->sessionDataObj->getCounty();
-    $canvassDate = date('Y-m-d');
+    //$canvassDate = date('Y-m-d');
+    $canvassDate = $this->sessionDataObj->get('canvassDate');
+
     $voterArrays = $form_state->get('voterArrays');
     
     foreach ($actions as $vanid => $actionSet) {
