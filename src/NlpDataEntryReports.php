@@ -275,7 +275,7 @@ class NlpDataEntryReports
   private function phoneContact($vanid,$contactMethod,$responseName): array
   {
     $altPhone = $this->nlpConfigurationObj->getAlternatePhoneReportCodes();
-    if(empty($altphone[$contactMethod])) { return []; }  // Phone numberis not required for this contact method.
+    if(empty($altphone[$contactMethod])) { return []; }  // Phone number is not required for this contact method.
     $altPhoneRc = [];
     $voter = $this->votersObj->getVoterById($vanid);
     
