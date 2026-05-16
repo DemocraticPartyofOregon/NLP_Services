@@ -85,7 +85,7 @@ class TurfSelectForm extends FormBase
     //nlp_debug_msg('$turfNames',$turfNames);
     reset($turfNames);
     $firstTurfIndex = key($turfNames);
-    $defaultTurfIndex = (empty($turfIndex))?$firstTurfIndex:$turfIndex;
+    $defaultTurfIndex = (empty($turfIndex) || empty($turfNames[$turfIndex]))?$firstTurfIndex:$turfIndex;
     $turfName = $turfNames[$defaultTurfIndex];
     $form['current-turf-name'] = [
       '#markup' => "You are currently using turf named: <b>$turfName</b>",
