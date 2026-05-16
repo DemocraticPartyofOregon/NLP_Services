@@ -220,6 +220,7 @@ class NlpImap
       foreach($emails as $emailNumber) {
         $overview = imap_fetch_overview($this->connection,$emailNumber);
         if($overview[0]->seen) {continue;}
+        if(empty($overview[0]->subject)) {continue;}
         $subject = $overview[0]->subject;
         $date = $overview[0]->date;
         $dateParts = explode(' ',$date);
