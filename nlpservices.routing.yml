@@ -674,3 +674,19 @@ nlpservices.admin_menu:
     _title: 'NLP Configuration and Administration'
   requirements:
     _permission: 'administer site configuration'
+
+nlpservices.set_voter_ac_form:
+  path: '/nlpservices-set-voter-ac'
+  defaults:
+    _form: Drupal\nlpservices\Form\SetVoterAcForm
+    _title: 'Set NLP Voter Activist Code for all turf voters.'
+  requirements:
+    _permission: 'nlp tools access'
+
+nlpservices.compare_vanids_form:
+  path: '/nlpservices-compare-vanids'
+  defaults:
+    _form: Drupal\nlpservices\Form\CompareVanidsForm
+    _title: 'Find VANIDs in one CSV file missing from another.'
+  requirements:
+    _permission: 'nlp tools access'

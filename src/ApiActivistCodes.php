@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 use stdClass;
@@ -61,6 +62,60 @@ class ApiActivistCodes
     return $results['items'];
   }
   
+  /**
+   * getApiVoterActivistCodes
+   *
+   * Returns an array of activist code IDs (integers) currently applied to the
+   * given voter in the VoterFile database.
+   *
+   * @param int $vanid
+   * @return array
+   */
+  public function getApiVoterActivistCodes(int $vanid): array
+  {
+    $database = $this->supportedActivistCodes['NLPVoterAC'];
+    $apiKey = $this->stateCommitteeKey['API Key'];
+    $apiURL = $this->stateCommitteeKey['Url'];
+    $user = $this->stateCommitteeKey['App Name'];
+    $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
+    try {
+      $request = $this->client->get($url);
+      $results = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
+      }
+      $codes = [];
+      foreach ($results['items'] ?? [] as $item) {
+        $codes[] = (int) $item['activistCodeId'];
+      }
+      return $codes;
+    } catch (Exception $e) {
+      nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      return [];
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      return [];
+    }
+  }
+
+  /**
+   * hasApiActivistCode
+   *
+   * Returns TRUE if the given voter already has the named activist code applied.
+   *
+   * @param $vanid
+   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @return bool
+   */
+  public function hasApiActivistCode($vanid, string $codeName): bool
+  {
+    $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
+    if (empty($rid)) {
+      return FALSE;
+    }
+    return in_array($rid, $this->getApiVoterActivistCodes($vanid));
+  }
+
   /**
    * setApiActivistCode
    *
