@@ -4,9 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ignore turf change request if current turf is deleted.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Phone number nnot needed for social media message.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -179,23 +180,7 @@
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
-      <workItem from="1778860226265" duration="17521000" />
-    </task>
-    <task id="LOCAL-00027" summary="Add back the missing footnote for sync turf selection.">
-      <option name="closed" value="true" />
-      <created>1773294267223</created>
-      <option name="number" value="00027" />
-      <option name="presentableId" value="LOCAL-00027" />
-      <option name="project" value="LOCAL" />
-      <updated>1773294267223</updated>
-    </task>
-    <task id="LOCAL-00028" summary="Clarify the text for reporting a postcard was sent.">
-      <option name="closed" value="true" />
-      <created>1773356820731</created>
-      <option name="number" value="00028" />
-      <option name="presentableId" value="LOCAL-00028" />
-      <option name="project" value="LOCAL" />
-      <updated>1773356820731</updated>
+      <workItem from="1778860226265" duration="21442000" />
     </task>
     <task id="LOCAL-00029" summary="Create separate form to initialize the training documents.">
       <option name="closed" value="true" />
@@ -573,7 +558,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778940173551</updated>
     </task>
-    <option name="localTasksCounter" value="76" />
+    <task id="LOCAL-00076" summary="Phone number nnot needed for social media message.">
+      <option name="closed" value="true" />
+      <created>1778942103531</created>
+      <option name="number" value="00076" />
+      <option name="presentableId" value="LOCAL-00076" />
+      <option name="project" value="LOCAL" />
+      <updated>1778942103531</updated>
+    </task>
+    <task id="LOCAL-00077" summary="Phone number nnot needed for social media message.">
+      <option name="closed" value="true" />
+      <created>1778942148278</created>
+      <option name="number" value="00077" />
+      <option name="presentableId" value="LOCAL-00077" />
+      <option name="project" value="LOCAL" />
+      <updated>1778942148279</updated>
+    </task>
+    <option name="localTasksCounter" value="78" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -625,7 +626,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Set a minimum size to the Notes column for the list of active NLs." />
     <MESSAGE value="Strngthen the detection of possible duplicate records from MyCampaign." />
     <MESSAGE value="Add precinct names list" />
     <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
@@ -650,7 +650,8 @@
     <MESSAGE value="Add method to repair loss of NLP Voter AC and to compare list of VANIDs in CSV files from NLP and VoteBuilder." />
     <MESSAGE value="Ignore emails with missing subject." />
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
-    <option name="LAST_COMMIT_MESSAGE" value="Ignore turf change request if current turf is deleted." />
+    <MESSAGE value="Phone number nnot needed for social media message." />
+    <option name="LAST_COMMIT_MESSAGE" value="Phone number nnot needed for social media message." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

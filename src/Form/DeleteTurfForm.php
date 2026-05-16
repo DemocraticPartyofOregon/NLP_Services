@@ -147,7 +147,7 @@ class DeleteTurfForm extends FormBase
   {
     $form_state->set('reenter',TRUE);
     $triggeringElement = $form_state->getTriggeringElement();
-    $elementClicked = $triggeringElement['#name'];
+    $elementClicked = empty($triggeringElement['#name'])?'':$triggeringElement['#name'];
 
     if ($elementClicked=='delete_submit') {
       $values = $form_state->getValues();

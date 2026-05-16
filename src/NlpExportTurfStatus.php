@@ -108,15 +108,15 @@ class NlpExportTurfStatus
         }
       }
       // Create the display of counts for this turf.
-      $nickname =  html_entity_decode($turfRecord['nlFirstName']);
-      $lastName =  html_entity_decode($turfRecord['nlLastName']);
       $percentVoted = ($voterCount > 0)?round($votedCount/$voterCount*100,1).'%':'0%';
       $surveyResponsesPercent = ($surveyResponsesCnt > 0)?round($surveyResponsesVoted/$surveyResponsesCnt*100,1).'%':'0%';
       $mcid = $turfRecord['mcid'];
       $nl = $this->nlsObj->getNlById($mcid);
+      $firstName = empty($nl['firstName'])?'':$nl['firstName'];
+      $lastName = empty($nl['lastName'])?'':$nl['lastName'];
       $nlStatus = $this->nlsObj->getNlsStatus($mcid,$county);
       
-      $contact = $nlStatus['contact'];
+      $contact = empty($nlStatus['contact'])?'':$nlStatus['contact'];
       $stampCount = ($contact=='mail')?$turfRecord['doorCount']:0;
       
       $turfOutput = [
@@ -128,8 +128,8 @@ class NlpExportTurfStatus
         $turfRecord['turfHd'],
         $turfRecord['turfPrecinct'],
         $mcid,
-        $nl['firstName'],
-        $nl['lastName'],
+        $firstName,
+        $lastName,
         $contact,
         $turfRecord['doorCount'],
         $stampCount,
