@@ -4,16 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Code review loss of password hints.">
-      <change afterPath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Form/SetVoterAcBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Form/SetVoterAcForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Ignore turf change request if current turf is deleted.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfSelectForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfSelectForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpImap.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpImap.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -186,31 +179,7 @@
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
-      <workItem from="1778860226265" duration="15668000" />
-    </task>
-    <task id="LOCAL-00024" summary="Check for isBest for NL phone number.">
-      <option name="closed" value="true" />
-      <created>1773164746559</created>
-      <option name="number" value="00024" />
-      <option name="presentableId" value="LOCAL-00024" />
-      <option name="project" value="LOCAL" />
-      <updated>1773164746559</updated>
-    </task>
-    <task id="LOCAL-00025" summary="Remove debug code.">
-      <option name="closed" value="true" />
-      <created>1773189418557</created>
-      <option name="number" value="00025" />
-      <option name="presentableId" value="LOCAL-00025" />
-      <option name="project" value="LOCAL" />
-      <updated>1773189418557</updated>
-    </task>
-    <task id="LOCAL-00026" summary="Ensure VAN update date is a string even when not yet initialized.">
-      <option name="closed" value="true" />
-      <created>1773239468652</created>
-      <option name="number" value="00026" />
-      <option name="presentableId" value="LOCAL-00026" />
-      <option name="project" value="LOCAL" />
-      <updated>1773239468652</updated>
+      <workItem from="1778860226265" duration="17521000" />
     </task>
     <task id="LOCAL-00027" summary="Add back the missing footnote for sync turf selection.">
       <option name="closed" value="true" />
@@ -580,7 +549,31 @@
       <option name="project" value="LOCAL" />
       <updated>1778862840894</updated>
     </task>
-    <option name="localTasksCounter" value="73" />
+    <task id="LOCAL-00073" summary="Add method to repair loss of NLP Voter AC and to compare list of VANIDs in CSV files from NLP and VoteBuilder.">
+      <option name="closed" value="true" />
+      <created>1778940013005</created>
+      <option name="number" value="00073" />
+      <option name="presentableId" value="LOCAL-00073" />
+      <option name="project" value="LOCAL" />
+      <updated>1778940013005</updated>
+    </task>
+    <task id="LOCAL-00074" summary="Ignore emails with missing subject.">
+      <option name="closed" value="true" />
+      <created>1778940070112</created>
+      <option name="number" value="00074" />
+      <option name="presentableId" value="LOCAL-00074" />
+      <option name="project" value="LOCAL" />
+      <updated>1778940070112</updated>
+    </task>
+    <task id="LOCAL-00075" summary="Ignore turf change request if current turf is deleted.">
+      <option name="closed" value="true" />
+      <created>1778940173551</created>
+      <option name="number" value="00075" />
+      <option name="presentableId" value="LOCAL-00075" />
+      <option name="project" value="LOCAL" />
+      <updated>1778940173551</updated>
+    </task>
+    <option name="localTasksCounter" value="76" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -632,9 +625,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Allow the use of special characters in the display of the password when editing Drupal logins." />
-    <MESSAGE value="Ensure correct initial value for cron task enable option." />
-    <MESSAGE value="Eliminate the minivan penalty for deleting a turf." />
     <MESSAGE value="Set a minimum size to the Notes column for the list of active NLs." />
     <MESSAGE value="Strngthen the detection of possible duplicate records from MyCampaign." />
     <MESSAGE value="Add precinct names list" />
@@ -657,7 +647,10 @@
     <MESSAGE value="Code review of ImprtCredentialsForm" />
     <MESSAGE value="Add warning to data entry pagw for unsaved changes." />
     <MESSAGE value="Code review loss of password hints." />
-    <option name="LAST_COMMIT_MESSAGE" value="Code review loss of password hints." />
+    <MESSAGE value="Add method to repair loss of NLP Voter AC and to compare list of VANIDs in CSV files from NLP and VoteBuilder." />
+    <MESSAGE value="Ignore emails with missing subject." />
+    <MESSAGE value="Ignore turf change request if current turf is deleted." />
+    <option name="LAST_COMMIT_MESSAGE" value="Ignore turf change request if current turf is deleted." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
