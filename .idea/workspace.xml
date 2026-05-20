@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="PHP errors from auto logout.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
-    </list>
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Enable the browser warning of unsaved changes when exiting the dataentry page" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -182,31 +176,7 @@
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
-      <workItem from="1778860226265" duration="39588000" />
-    </task>
-    <task id="LOCAL-00030" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375273807</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375273807</updated>
-    </task>
-    <task id="LOCAL-00031" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375283884</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375283884</updated>
-    </task>
-    <task id="LOCAL-00032" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375308954</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375308954</updated>
+      <workItem from="1778860226265" duration="40704000" />
     </task>
     <task id="LOCAL-00033" summary="Fix the recording of changes to CO and Notes in the active NLs display.">
       <option name="closed" value="true" />
@@ -576,7 +546,31 @@
       <option name="project" value="LOCAL" />
       <updated>1778956699745</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="Handle case where MCID is deleted but present in MiniVAN report.">
+      <option name="closed" value="true" />
+      <created>1779287964522</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1779287964522</updated>
+    </task>
+    <task id="LOCAL-00080" summary="Add some help text for understanding the voter contact status.">
+      <option name="closed" value="true" />
+      <created>1779288041886</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1779288041886</updated>
+    </task>
+    <task id="LOCAL-00081" summary="Enable the browser warning of unsaved changes when exiting the dataentry page">
+      <option name="closed" value="true" />
+      <created>1779288190877</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1779288190877</updated>
+    </task>
+    <option name="localTasksCounter" value="82" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -628,9 +622,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add precinct names list" />
-    <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
-    <MESSAGE value="Correct the version number." />
     <MESSAGE value="Add code to trap missing contact id for reporting pedge-to-vote response." />
     <MESSAGE value="Use county key when syncing saved lists." />
     <MESSAGE value="Fix the version number." />
@@ -653,7 +644,10 @@
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
     <MESSAGE value="Phone number nnot needed for social media message." />
     <MESSAGE value="PHP errors from auto logout." />
-    <option name="LAST_COMMIT_MESSAGE" value="PHP errors from auto logout." />
+    <MESSAGE value="Handle case where MCID is deleted but present in MiniVAN report." />
+    <MESSAGE value="Add some help text for understanding the voter contact status." />
+    <MESSAGE value="Enable the browser warning of unsaved changes when exiting the dataentry page" />
+    <option name="LAST_COMMIT_MESSAGE" value="Enable the browser warning of unsaved changes when exiting the dataentry page" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
@@ -665,11 +659,6 @@
           <url>file://$PROJECT_DIR$/src/Form/CompareVanidsForm.php</url>
           <line>7</line>
           <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="php">
-          <url>file://$PROJECT_DIR$/src/Form/DataEntryForm.php</url>
-          <line>333</line>
-          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
