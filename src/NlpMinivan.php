@@ -882,13 +882,14 @@ class NlpMinivan {
           $turfVoter[$action['type']] = $rIndex;
         }
         $nl = $nlsObj->getNlById($mcid);
-        $turfVoter['county'] = $nl['county'];
+        $nlCounty = $nl['county'] ?? '';
+        $turfVoter['county'] = $nlCounty;
         $turfIndex = $votersObj->getTurfIndexByVanid($vanid);
         
         $turfVoter['turfIndex'] = $turfIndex;
         $votersObj->updateTurfVoter($turfVoter);
         // This NL has reported results.
-        $nlsObj->resultsReported($mcid, $nl['county']);
+        $nlsObj->resultsReported($mcid, $nlCounty);
       }
       
     }
