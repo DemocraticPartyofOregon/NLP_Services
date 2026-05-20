@@ -274,9 +274,12 @@ class NlpDataEntryReports
    */
   private function phoneContact($vanid,$contactMethod,$responseName): array
   {
+    if (!($contactMethod == 'Phone' OR $contactMethod == 'SMS Text')) {
+      return [];  // Alternate contact method is only for Phone and SMS Text.
+    }
     $altPhone = $this->nlpConfigurationObj->getAlternatePhoneReportCodes();
-    if(empty($altphone[$contactMethod])) { return []; }  // Phone number is not required for this contact method.
-    $altPhoneRc = [];
+
+    //$altPhoneRc = [];
     $voter = $this->votersObj->getVoterById($vanid);
     
     // If a cell phone is available, use it.  Use a home phone only if no cell phone and not SMS Text.
@@ -284,19 +287,19 @@ class NlpDataEntryReports
       $altPhoneRc['phoneNo'] = $voter['cellPhone'];
       $altPhoneRc['phoneNoId'] = $voter['cellPhoneId'];
       return $altPhoneRc;
-    } elseif (!empty($voter['homePhone'] AND $contactMethod != 'SMS Text')) {
+    } elseif (!empty($voter['homePhone']) && $contactMethod != 'SMS Text') {
       $altPhoneRc['phoneNo'] = $voter['homePhone'];
       $altPhoneRc['phoneNoId'] = $voter['homePhoneId'];
       return $altPhoneRc;
     }
     // The requirement to have a phone number is not met.  Use the substitute contact method.
-    $contactMethod = ($contactMethod == 'Postcard' || $contactMethod == 'Walk')?'Phone':$contactMethod;
-    if (empty($altPhone[$contactMethod][$responseName])) {
-      $altPhoneRc = $altPhone[$contactMethod]['Other'];
+    $altPhoneContactMethod = $altPhone[$contactMethod];
+    if (empty($altPhoneContactMethod[$responseName])) {
+      $altPhoneRc = $altPhoneContactMethod['Other'];
     } else {
-      $altPhoneRc = $altPhone[$contactMethod][$responseName];
+      $altPhoneRc = $altPhoneContactMethod[$responseName];
     }
-    return empty($altPhoneRc)?[]:$altPhoneRc;
+    return $altPhoneRc;
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

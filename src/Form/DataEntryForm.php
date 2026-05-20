@@ -189,6 +189,7 @@ class DataEntryForm extends FormBase
   {
     
     $triggeringElement = $form_state->getTriggeringElement();
+    if (empty($triggeringElement)) { return; }
     $elementClicked = $triggeringElement['#name'];
     
     if(str_contains($elementClicked, 'line_2_2_2')) {

@@ -4,10 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Phone number nnot needed for social media message.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="PHP errors from auto logout.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -44,7 +46,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="229" />
+    <option name="cachedIndexableFilesCount" value="232" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -180,15 +182,7 @@
       <workItem from="1777782336510" duration="689000" />
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
-      <workItem from="1778860226265" duration="21442000" />
-    </task>
-    <task id="LOCAL-00029" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375259697</created>
-      <option name="number" value="00029" />
-      <option name="presentableId" value="LOCAL-00029" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375259697</updated>
+      <workItem from="1778860226265" duration="39588000" />
     </task>
     <task id="LOCAL-00030" summary="Create separate form to initialize the training documents.">
       <option name="closed" value="true" />
@@ -574,7 +568,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778942148279</updated>
     </task>
-    <option name="localTasksCounter" value="78" />
+    <task id="LOCAL-00078" summary="PHP errors from auto logout.">
+      <option name="closed" value="true" />
+      <created>1778956699745</created>
+      <option name="number" value="00078" />
+      <option name="presentableId" value="LOCAL-00078" />
+      <option name="project" value="LOCAL" />
+      <updated>1778956699745</updated>
+    </task>
+    <option name="localTasksCounter" value="79" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -626,7 +628,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Strngthen the detection of possible duplicate records from MyCampaign." />
     <MESSAGE value="Add precinct names list" />
     <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
     <MESSAGE value="Correct the version number." />
@@ -651,7 +652,8 @@
     <MESSAGE value="Ignore emails with missing subject." />
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
     <MESSAGE value="Phone number nnot needed for social media message." />
-    <option name="LAST_COMMIT_MESSAGE" value="Phone number nnot needed for social media message." />
+    <MESSAGE value="PHP errors from auto logout." />
+    <option name="LAST_COMMIT_MESSAGE" value="PHP errors from auto logout." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
@@ -663,6 +665,11 @@
           <url>file://$PROJECT_DIR$/src/Form/CompareVanidsForm.php</url>
           <line>7</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="php">
+          <url>file://$PROJECT_DIR$/src/Form/DataEntryForm.php</url>
+          <line>333</line>
+          <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
