@@ -121,7 +121,14 @@ Next and Previous buttons.  Use these to reveal the first or last block of pages
     $output .= '<H5>Last name search</H5>The search looks for the first match of the text you provide in the last
 name field.  The search is case-insensitive and can be a partial name.  The response will be the page containing
 the voter that matches the search.  If you make any voter contact reports, they will be processed first.';
-  
+
+    $output .= '<H3><u>Voter Contact Status</u></H3>Th last line of the data entry box for a voter is a reminder 
+of the status of the contact for the current election.  This message has three states: not yet contacted, attempted, 
+and responded.  The purpose is to encourage an attempt to contact each voter once.  And if you get an answer to the 
+pledge-to-vote question, to record that answer.   The display does not go backwards so if you get an answer to 
+the P2V question, further contacts do not revert to the attempt messages.  A full history of voter contacts is 
+available by hovering the mouse icon over the "View contact history".  ';
+
     $output .= '<H1>Turf Refresh</H1>';
     $output .= 'You may occasionally see a button to refresh your turf.  This function only appears when the state\'s
     database of registered voters has been updated.   It\'s possible the some of your voters have changed their
