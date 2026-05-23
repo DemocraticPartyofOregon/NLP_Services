@@ -17,6 +17,10 @@ services:
     arguments: [ '@nlpservices.encryption' , '@nlpservices.configuration', '@nlpservices.api_nls',
                  '@nlpservices.folders' ]
 
+  nlpservices.api_key_management:
+    class: Drupal\nlpservices\ApiKeyManagement
+    arguments: [ '@nlpservices.encryption' ]
+
   nlpservices.api_nls:
     class: Drupal\nlpservices\ApiNls
     arguments: [ '@http_client' , '@nlpservices.configuration' ]
