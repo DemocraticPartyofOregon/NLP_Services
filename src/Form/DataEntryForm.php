@@ -77,7 +77,7 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
     );
   }
   

@@ -150,11 +150,12 @@ class ApiKeyManagement
    * This is useful for keys that store multiple values as a structured array (using 'json' key input type).
    * Usage: $values = $magicWord->getKeyValues('my_key_id');
    *
-   * @param string $id - the ID of the key to be retrieved.
+   * @param string|null $id - the ID of the key to be retrieved.
    * @return array - the key values as an associative array, or an empty array if the key is not found.
    */
   public function getKeyValues(string $id): array
   {
+    $id = (empty($id))? 'State Committee' : $id;
     try {
       /** @var Drupal\key\Entity\Key $key */
       $key = Drupal::entityTypeManager()->getStorage('key')->load($id);

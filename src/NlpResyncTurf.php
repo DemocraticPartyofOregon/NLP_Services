@@ -59,7 +59,7 @@ class NlpResyncTurf
       $container->get('nlpservices.sync_turf_add_voter'),
       $container->get('nlpservices.api_voter'),
       $container->get('nlpservices.nlpservices.configuration'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
       $container->get('nlpservices.activist_codes'),
       $container->get('nlpservices.coordinators'),
       $container->get('nlpservices.database_functions'),

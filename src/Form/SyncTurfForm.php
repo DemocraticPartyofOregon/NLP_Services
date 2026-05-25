@@ -51,7 +51,7 @@ class SyncTurfForm extends FormBase {
   {
     return new static(
         $container->get('nlpservices.saved_lists'),
-        $container->get('nlpservices.folders'),
+        $container->get('nlpservices.api_folders'),
         $container->get('nlpservices.nls'),
         $container->get('nlpservices.turfs'),
         $container->get('nlpservices.sync_turf_builder'),

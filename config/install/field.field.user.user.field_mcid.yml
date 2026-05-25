@@ -1,9 +1,11 @@
-uuid: b5dd302b-c774-4236-a16c-2edc2da3b7ca
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.user.field_mcid
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.user.field_mcid

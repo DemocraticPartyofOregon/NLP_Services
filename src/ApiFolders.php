@@ -5,29 +5,20 @@ namespace Drupal\nlpservices;
 use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\RequestException;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 class ApiFolders {
   
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  private array $mapRegions;
-  public function __construct($client, $nlpConfigurationObj ) {
+  protected ApiKeyManagement $apiKeyManagementObj;
+  private array $mapRegions = [];
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
-  public static function create(ContainerInterface $container): ApiFolders
-  {
-    return new static(
-      $container->get('http_client'),
-      $container->get('nlpservices.configuration'),
-    );
-  }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * getApiFolders
    *
@@ -38,23 +29,18 @@ class ApiFolders {
    * the folderID and the value is the folder name.
    * If a folderId is provided, only that folder is returned.
    *
-   * @param $county
-   * @param $database 0=VoterFile, 1=MyCampaign
-   * @param null $folderId - if provided, get a specific folder by ID
+   * @param string $committee
+   * @param int $database 0=VoterFile, 1=MyCampaign
+   * @param int $folderId - if provided, get a specific folder by ID
    * @return array
    */
-  public function getApiFolders($county,$database,$folderId=NULL): array
+  public function getApiFolders(string $committee, int $database, int $folderId=0): array
   {
-    if(empty($county)) {
-      $apiKey = $this->stateCommitteeKey['API Key'];
-      $apiURL = $this->stateCommitteeKey['Url'];
-      $user = $this->stateCommitteeKey['App Name'];
-    } else {
-      $committeeKey = $this->nlpConfigurationObj->getCountyKey($county);
-      $apiKey = $committeeKey['API Key'];
-      $apiURL = $committeeKey['Url'];
-      $user = $committeeKey['App Name'];
-    }
+
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     
     $foldersURL = 'https://'.$user.':'.$apiKey.'|'.$database.'@'.$apiURL.'/folders';
     if(!empty($folderId)) {
@@ -66,12 +52,12 @@ class ApiFolders {
     } catch (RequestException $e) {
       $code = $e->getCode();
       if ($code == 401) {
-        nlp_debug_msg("getFolders","Invalid API Key for $county");
+        nlp_debug_msg("getFolders","Invalid API Key for $committee");
         return [];
       }
       if ($code == 404) {
         // Handle was not found error
-        $msg = "Folder not found, County=$county, FolderId=$folderId";
+        $msg = "Folder not found, County=$committee, FolderId=$folderId";
         if (!str_contains(Drupal::routeMatch()->getRouteName(), 'system.cron')) {
           nlp_debug_msg('getApiFolders', $msg);
         }
@@ -114,14 +100,14 @@ class ApiFolders {
    * committee credentials.   It seems odd that the API does not filter for the
    * committee credentials.
    *
-   * @param $database 0=VoterFile, 1=MyCampaign
-   * @param $county
+   * @param int $database 0=VoterFile, 1=MyCampaign
+   * @param string $committee
    * @return array
    */
-  public function getFolderOptions($database,$county): array
+  public function getFolderOptions(int $database, string $committee): array
   {
     $messenger = Drupal::messenger();
-    $allFolderInfo = $this->getApiFolders($county,$database);
+    $allFolderInfo = $this->getApiFolders($committee,$database);
     if(empty($allFolderInfo)) {
       $messenger->addWarning(t('There are no shared folders'));
       return [];
@@ -129,7 +115,7 @@ class ApiFolders {
     // Check for the county name in the folder name.
     $folderOptions = [];
     foreach ($allFolderInfo as $aFolderId => $aFolderName) {
-      $pos = stripos($aFolderName, $county);
+      $pos = stripos($aFolderName, $committee);
       if ($pos !== false) {
         $folderOptions[$aFolderId] = $aFolderName;
       }
@@ -145,14 +131,14 @@ class ApiFolders {
    * map region options where the key is the map region ID and the value is the
    * map region name.  The first element in the array is 'all' => 'All'.
    *
-   * @param $county
-   * @param $folderId
+   * @param string $committee
+   * @param int $folderId
    * @return array
    */
-  public function mapRegionOptions($county,$folderId): array
+  public function mapRegionOptions(string $committee, int $folderId): array
   {
-    if(empty($county)) {return [];}
-    $mapRegionInfo = $this->getMapRegionInfo($county,$folderId);
+    if(empty($committee)) {return [];}
+    $mapRegionInfo = $this->getMapRegionInfo($committee,$folderId);
     $mapOptions = array_map(function ($mapRegion) {
       return $mapRegion['mapRegionName'];
     }, $mapRegionInfo);
@@ -183,10 +169,10 @@ class ApiFolders {
    *     minivanNumber - The minivan number for the turf.
    *     minivanCreateDate - The date the minivan was created.
    *
-   * @param $mapRegionId
+   * @param int $mapRegionId
    * @return array
    */
-  public function mapRegionTurfOptions($mapRegionId): array
+  public function mapRegionTurfOptions(int $mapRegionId): array
   {
     if(empty($mapRegionId)) {return [];}
     if($mapRegionId == 'all') {
@@ -224,26 +210,23 @@ class ApiFolders {
    * If a mapRegionId is provided, it retrieves information for that specific map region.
    * If no mapRegionId is provided, it retrieves all map regions for the specified folder.
    *
-   * @param $county
-   * @param $folderId
+   * @param string $committee
+   * @param int $folderId
    * @param int $mapRegionId
    * @return array
    */
-  public function getMapRegionInfo($county, $folderId, int $mapRegionId=0): array
+  public function getMapRegionInfo(string $committee, int $folderId, int $mapRegionId=0): array
   {
     if(empty($folderId)) {return [];}
-    if(empty($county)) {
-      $apiKey = $this->stateCommitteeKey['API Key'];
-      $apiURL = $this->stateCommitteeKey['Url'];
-      $user = $this->stateCommitteeKey['App Name'];
-    } else {
-      $committeeKey = $this->nlpConfigurationObj->getCountyKey($county);
-      $apiKey = $committeeKey['API Key'];
-      $apiURL = $committeeKey['Url'];
-      $user = $committeeKey['App Name'];
-    }
+    $committeeKey = empty($committee)
+      ? $this->nlpConfigurationObj->getStateKey()
+      : $this->nlpConfigurationObj->getCommitteeKey($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+
     $foldersURL = "https://$user:$apiKey|0@$apiURL/folders/$folderId/mapRegions";
-    if(!empty($mapRegionId)) {
+    if($mapRegionId !== null) {
       $foldersURL .= '/'.$mapRegionId;
     }
    
@@ -254,7 +237,7 @@ class ApiFolders {
       $code = $e->getCode();
       if ($code == 404) {
         // Not found error
-        $msg = "Map Region not found, County=$county, FolderId=$folderId, MapRegionId=$mapRegionId";
+        $msg = "Map Region not found, Committee=$committee, FolderId=$folderId, MapRegionId=$mapRegionId";
         if (!str_contains(Drupal::routeMatch()->getRouteName(), 'system.cron')) {
           nlp_debug_msg('getMapRegionInfo', $msg);
         }
@@ -270,12 +253,12 @@ class ApiFolders {
     }
     
     $regions = json_decode($request->getBody(), true);
-    if(!empty($mapRegionId)) {
+    if($mapRegionId !== null) {
       return $this->extractRegion($regions);
     }
-    
+
     $this->mapRegions = [];
-    foreach ($regions['items'] as $region) {
+    foreach ($regions['items'] ?? [] as $region) {
       $this->mapRegions[$region['mapRegionId']] = $this->extractRegion($region);
     }
     return $this->mapRegions;
@@ -288,27 +271,27 @@ class ApiFolders {
    * This function is used to format the map region data into a more usable structure.
    *
    * The map region array contains the following keys:
-   * - name: The name of the map region.
-   * - mapRegionId: The unique identifier for the map region.
-   * - dateRefreshed: The date the map region was last refreshed.
-   * - mapRoutes: An array of turf information for the map region.
+   * - `name`: The name of the map region.
+   * - `mapRegionId`: The unique identifier for the map region.
+   * - `dateRefreshed`: The date the map region was last refreshed.
+   * - `mapRoutes`: An array of turf information for the map region.
    *
    * The turf information contains:
-   * - name: The name of the turf.
-   * - mapRouteId: The unique identifier for the turf.
-   * - savedListId: The saved list ID for the turf.
-   * - routeSize: The size of the route (number of voters).
-   * - doorCount: The number of doors in the turf.
-   * - printedList: An array containing the minivan number and date created for the turf.
+   * - `name`: The name of the turf.
+   * - `mapRouteId`: The unique identifier for the turf.
+   * - `savedListId`: The saved list ID for the turf.
+   * - `routeSize`: The size of the route (number of voters).
+   * - `doorCount`: The number of doors in the turf.
+   * - `printedList`: An array containing the minivan number and date created for the turf.
    *
    * The printedList array contains:
-   * - number: The minivan number for the turf.
-   * - dateCreated: The date the minivan was created.
+   * - `number`: The minivan number for the turf.
+   * - `dateCreated`: The date the minivan was created.
    *
-   * @param $region
+   * @param array $region
    * @return array
    */
-  private function extractRegion($region): array
+  private function extractRegion(array $region): array
   {
     $mapRegion = [
       'mapRegionName' => $region['name'],
@@ -358,11 +341,11 @@ class ApiFolders {
    * Use the API call to get the latest minivan number and date created.  These are
    * stored in the provided turfArray and returned to the caller.
    *
-   * @param $county
-   * @param $turfArray
+   * @param string $committee
+   * @param array $turfArray
    * @return void
    */
-  public function updateMinivanInfo($county, &$turfArray): void
+  public function updateMinivanInfo(string $committee, array &$turfArray): void
   {
     $mapRegionOptionsSaved = [];
     foreach ($turfArray as $turfIndex => $turf) {
@@ -377,7 +360,7 @@ class ApiFolders {
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];
       } else {
         $folderId = $turf['folderId'];
-        $this->getMapRegionInfo($county,$folderId);
+        $this->getMapRegionInfo($committee,$folderId);
         $mapRegionOptions = $this->mapRegionTurfOptions($mapRegionId);
         $mapRegionOptionsSaved[$mapRegionId] = $mapRegionOptions;
       }

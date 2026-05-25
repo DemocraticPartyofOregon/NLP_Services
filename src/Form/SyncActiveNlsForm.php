@@ -51,7 +51,7 @@ class SyncActiveNlsForm extends FormBase
     return new static(
       $container->get('nlpservices.export_jobs'),
       $container->get('nlpservices.saved_lists'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.encryption'),
       $container->get('nlpservices.session_data'),

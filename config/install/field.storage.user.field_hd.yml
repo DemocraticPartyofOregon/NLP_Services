@@ -1,7 +1,9 @@
-uuid: 07238557-ffed-429c-8bec-1bdd4d5bd968
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.field_hd

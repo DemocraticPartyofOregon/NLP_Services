@@ -49,7 +49,7 @@ class DeleteTurfForm extends FormBase
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.turf_display'),
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
     );
   }
   

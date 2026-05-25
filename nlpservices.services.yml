@@ -1,21 +1,22 @@
-%YAML 1.2
----
+#file: noinspection ComposeUnknownKeys
 services:
 
   # API Services
 
   nlpservices.activist_codes:
+    # noinspection ComposeUnknownKeys
     class: Drupal\nlpservices\ApiActivistCodes
+    # noinspection ComposeUnknownKeys
     arguments: [ '@http_client' , '@nlpservices.configuration' ]
 
   nlpservices.api_folders:
     class: Drupal\nlpservices\ApiFolders
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.api_key_verification:
     class: Drupal\nlpservices\ApiKeyVerification
-    arguments: [ '@nlpservices.encryption' , '@nlpservices.configuration', '@nlpservices.api_nls',
-                 '@nlpservices.folders' ]
+    arguments: [ '@nlpservices.api_key_management' , '@nlpservices.configuration', '@nlpservices.api_nls',
+                 '@nlpservices.api_folders' ]
 
   nlpservices.api_key_management:
     class: Drupal\nlpservices\ApiKeyManagement
@@ -39,7 +40,7 @@ services:
 
   nlpservices.folders:
     class: Drupal\nlpservices\ApiFolders
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.response_codes:
     class: Drupal\nlpservices\ApiResponseCodes
@@ -172,7 +173,7 @@ services:
 
   nlpservices.configuration:
     class: Drupal\nlpservices\NlpConfiguration
-    arguments: [ '@nlpservices.encryption', '@config.factory' ]
+    arguments: [ '@nlpservices.api_key_management', '@nlpservices.encryption', '@config.factory' ]
 
   nlpservices.create_walksheet:
     class: Drupal\nlpservices\NlpCreateWalksheet
@@ -235,7 +236,7 @@ services:
     class: Drupal\nlpservices\NlpResyncTurf
     arguments: [ '@nlpservices.voters', '@nlpservices.turfs', '@nlpservices.export_jobs', '@nlpservices.saved_lists',
                  '@nlpservices.sync_turf_add_voter', '@nlpservices.api_voter', '@nlpservices.configuration',
-                 '@nlpservices.folders', '@nlpservices.activist_codes', '@nlpservices.coordinators',
+                 '@nlpservices.api_folders', '@nlpservices.activist_codes', '@nlpservices.coordinators',
                  '@nlpservices.database_functions', '@nlpservices.nls', '@nlpservices.send_email',
                  '@nlpservices.turf_map_regions', '@nlpservices.session_data' ]
 
@@ -272,7 +273,7 @@ services:
     arguments: [ '@database' , '@file_system', '@nlpservices.nls',
                  '@nlpservices.paths', '@nlpservices.voters',
                  '@nlpservices.activist_codes', '@nlpservices.configuration',
-                 '@nlpservices.reports', '@nlpservices.matchbacks', '@nlpservices.folders' ]
+                 '@nlpservices.reports', '@nlpservices.matchbacks', '@nlpservices.api_folders' ]
 
   nlpservices.turf_map_regions:
     class: Drupal\nlpservices\NlpTurfMapRegions

@@ -2,18 +2,20 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
+use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ApiKeyVerification
 {
-  protected NlpEncryption $nlpEncryptObj;
+  use StringTranslationTrait;
+
+  protected ApiKeyManagement $apiKeyManagementObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiNls $apiNlsObj;
   protected ApiFolders $apiFoldersObj;
-  public function __construct($nlpEncryptObj, $nlpConfigurationObj, $apiNlsObj, $apiFoldersObj )
+  public function __construct($apiKeyManagementObj, $nlpConfigurationObj, $apiNlsObj, $apiFoldersObj )
   {
-    $this->nlpEncryptObj = $nlpEncryptObj;
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiNlsObj = $apiNlsObj;
     $this->apiFoldersObj = $apiFoldersObj;
@@ -22,10 +24,10 @@ class ApiKeyVerification
   public static function create(ContainerInterface $container): ApiKeyVerification
   {
     return new static(
-      $container->get('nlpservices.encryption'),
+      $container->get('nlpservices.api_key_management'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.api_nls'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
     );
   }
   
@@ -40,13 +42,28 @@ class ApiKeyVerification
    */
   public function apiKeyVerification(int $mcid=0): array
   {
-    $apiKeys = $this->nlpConfigurationObj->getKeys();
+
+    $apiKeys = [];
+    $apiCredentials = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    if (!empty($apiCredentials)) {
+      $apiKeys['State Committee'] = $apiCredentials;
+    }
+
+    $committees = $this->nlpConfigurationObj->getCountyNames();
+    foreach ($committees as $committee) {
+      $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee);
+      if (!empty($apiCredentials)) {
+        $apiKeys[$committee] = $apiCredentials;
+      }
+    }
+
+    //$apiKeys = $this->nlpConfigurationObj->getKeys();
     $results = [];
     foreach ($apiKeys as $committee=>$committeeKey) {
       $county = ($committee=='State Committee')?'':$committee;
-      $committeeKey['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('decrypt', $committeeKey['API Key']);
+      //$committeeKey['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('decrypt', $committeeKey['API Key']);
       $result = $this->testApiKey($county,$committeeKey, $mcid);
-      $result = array_merge( ['county' => t("<b>$committee</b>")], $result);
+      $result = array_merge(['county' => $this->t('<b>@committee</b>', ['@committee' => $committee])], $result);
       $results[] = $result;
     }
     return $results;
@@ -73,7 +90,7 @@ class ApiKeyVerification
     ];
     // Verify we can access the NL folder for a committee.  The folder contains the list of active NLs.
     $myCampaignFolders = $this->apiFoldersObj->getApiFolders($committee,1);
-    if(!empty($myCampaignFolders) AND !isset($myCampaignFolders[0])) {
+    if(!empty($myCampaignFolders) && !isset($myCampaignFolders[0])) {
       foreach ($myCampaignFolders as $folderName) {
         if(str_contains($folderName, '_NLs')) {
           $result['myCampaign'] = 'ok';
@@ -81,12 +98,11 @@ class ApiKeyVerification
       }
     }
     // Verify we can access the VoterFile for a committee.
+    // A well-formed response is a named (associative) array; an indexed [0] entry
+    // indicates an error payload from the API rather than a real folder list.
     $voterFileFolders = $this->apiFoldersObj->getApiFolders($committee,0);
     if(!empty($voterFileFolders)) {
-      $result['voterFile'] = 'ok';
-      if(!empty($voterFileFolders[0])) {
-        $result['voterFile'] = 'Unsure, no folders found';
-      }
+      $result['voterFile'] = empty($voterFileFolders[0]) ? 'ok' : 'Unsure, no folders found';
     }
     // Verify we can access a NL record for a committee.
     $keyValidity = $this->apiNlsObj->apiKeyVerify($committeeKey,$mcid);

@@ -1,9 +1,11 @@
-uuid: a52f8e6d-e368-419e-ab61-e376a0388dc1
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.user.field_phone
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.user.field_phone

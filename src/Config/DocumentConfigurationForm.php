@@ -3,50 +3,30 @@
 namespace Drupal\nlpservices\Config;
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Form\ConfigFormBase;
+use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\nlpservices\NlpPaths;
 use Drupal\nlpservices\NlpDocuments;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * @noinspection PhpUnused
  */
-class DocumentConfigurationForm extends ConfigFormBase {
+class DocumentConfigurationForm extends FormBase {
 
-  protected NlpPaths $pathsObj;
   protected NlpDocuments $documentsObj;
 
-  protected FileSystemInterface $fileSystem;
-
-
-  public function __construct( $config_factory, $pathsObj, $documentsObj, $fileSystem) {
-    parent::__construct($config_factory);
-    $this->pathsObj = $pathsObj;
+  public function __construct($documentsObj) {
     $this->documentsObj = $documentsObj;
-    $this->fileSystem = $fileSystem;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): ConfigFormBase|FoldersConfigurationForm|static
+  public static function create(ContainerInterface $container): static
   {
     return new static(
-        $container->get('config.factory'),
-        $container->get('nlpservices.paths'),
-        $container->get('nlpservices.documents'),
-        $container->get('file_system'),
+      $container->get('nlpservices.documents'),
     );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  protected function getEditableConfigNames(): array
-  {
-    return ['nlpservices.configuration'];
   }
 
   /**
@@ -63,24 +43,21 @@ class DocumentConfigurationForm extends ConfigFormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $form['counties_names'] = [
-        '#markup' => '<p>Click the Save Configuration button to initialized the 
+      '#markup' => '<p>Click the Save Configuration button to initialize the
  training documents for the coordinators.</p>',
     ];
 
     $form['button_link'] = [
-        '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
+      '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
 
+    $form['actions']['submit'] = [
+      '#type' => 'submit',
+      '#value' => $this->t('Save configuration'),
+      '#button_type' => 'primary',
+    ];
 
-    return parent::buildForm($form, $form_state);
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function validateForm(array &$form, FormStateInterface $form_state): void
-  {
-    parent::validateForm($form, $form_state);
+    return $form;
   }
 
   /**
@@ -88,59 +65,42 @@ class DocumentConfigurationForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-
-    // Populate the documents folders with the default documents.
     $this->prepareDocuments();
-
-    parent::submitForm($form, $form_state);
+    $this->messenger()->addStatus($this->t('The configuration options have been saved.'));
   }
 
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * prepareDocuments
-   *
-   * Moves the default documents from the nlpservices module to a location in the
-   * public files and adds the new location in the database.  This makes
-   * the documents easier to access by coordinators.
-   */
-  function prepareDocuments(): void
+  private function prepareDocuments(): void
   {
-    $messenger = Drupal::messenger();
     $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-    // The default documents are the ones that are expected to be delivered with the
-    // module and can be found in a folder with the module.
     $defaultDocuments = $this->documentsObj->nameList;
-    // The current are the ones that have already been moved from the module to the public files.
     $currentDocuments = $this->documentsObj->getDocuments();
-    // Remove from the list of default documents those that are not already in the database.
-    // What remains is anything that is missing.  Note that the actual filenames may have
-    // changed if the admin made updates after installation.  These updates should
-    // not be overwritten.
     foreach ($currentDocuments as $currentDocument) {
-      if(isset($defaultDocuments[$currentDocument['name']])) {
+      if (isset($defaultDocuments[$currentDocument['name']])) {
         unset($defaultDocuments[$currentDocument['name']]);
       }
     }
-    // Check if the docs folder in the module is empty.  This should never happen.
-    $documentFiles = scandir($modulePath.'/docs/');
+    $documentFiles = scandir($modulePath . '/docs/');
 
-    foreach ($documentFiles as $index => $documentFile) {
-      if($documentFile == '.' || $documentFile == '..') {
-        unset($documentFiles[$index]);
-      }
-    }
-    if(empty($documentFiles)) {
-      $messenger->addWarning( $this->t('Default documents are missing'));
+    if ($documentFiles === FALSE) {
+      $this->messenger()->addWarning($this->t('Default documents are missing'));
       return;
     }
 
+    foreach ($documentFiles as $index => $documentFile) {
+      if ($documentFile == '.' || $documentFile == '..') {
+        unset($documentFiles[$index]);
+      }
+    }
+    if (empty($documentFiles)) {
+      $this->messenger()->addWarning($this->t('Default documents are missing'));
+      return;
+    }
 
-    // Find the docx files in the modules docs folder and remember the root names.
-    // The PDF files have the same root name as the docx files.
     $defaultFiles = [];
     foreach ($documentFiles as $documentFile) {
-      if(!is_dir($modulePath.'/docs/'.$documentFile)) {
+      if (!is_dir($modulePath . '/docs/' . $documentFile)) {
         $pathParts = pathinfo($documentFile);
-        if($pathParts['extension'] == 'docx') {
+        if ($pathParts['extension'] == 'docx') {
           $filename = $pathParts['filename'];
           $filenameParts = explode('-', $filename);
           $fileNameIndex = $filenameParts[0];
@@ -151,7 +111,7 @@ class DocumentConfigurationForm extends ConfigFormBase {
 
     foreach ($defaultDocuments as $name => $defaultDocument) {
       $defaultFilename = $defaultDocument['defaultFilename'];
-      if(isset($defaultFiles[$defaultFilename])) {
+      if (isset($defaultFiles[$defaultFilename])) {
         $doc = $defaultFiles[$defaultFilename].'.docx';
         $pdf = $defaultFiles[$defaultFilename].'.pdf';
         $document = [

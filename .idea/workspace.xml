@@ -4,11 +4,46 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="PHP errors from auto logout.">
-      <change afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Site configuration Claude code review">
       <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_county.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_county.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_first_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_first_name.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_hd.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_hd.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_last_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_last_name.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_mcid.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_mcid.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_phone.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_phone.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_county.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_county.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_first_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_first_name.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_hd.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_hd.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_last_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_last_name.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_mcid.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_mcid.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_phone.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_phone.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiKeyVerification.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyVerification.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ElectionConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ElectionConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/HomePageEditForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/HomePageEditForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/NlpResetForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/NlpResetForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/SurveyQuestionForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/SurveyQuestionForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/VoteBuilderUpdateDate.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/VoteBuilderUpdateDate.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +80,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="232" />
+    <option name="cachedIndexableFilesCount" value="237" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -82,61 +117,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.0" />
-      <entry key="M30" value="1.00000000004004" />
-      <entry key="H1" value="1.0000065502402826" />
-      <entry key="H2" value="1.0040613349484966" />
-      <entry key="H4" value="1.2499552079268976" />
-      <entry key="D1" value="27.049552128139414" />
-      <entry key="W1" value="68.79798849367423" />
+      <entry key="MS100" value="1.0025433612347607" />
+      <entry key="MS500" value="1.4003546909672486" />
+      <entry key="S2" value="3.005928573692156" />
+      <entry key="S5" value="4.673643732338766" />
+      <entry key="S10" value="5.905798925317345" />
+      <entry key="S30" value="7.288208583346968" />
+      <entry key="S60" value="8.238414175340218" />
+      <entry key="M2" value="9.76559277164888" />
+      <entry key="M5" value="13.32686548904613" />
+      <entry key="M10" value="17.754541847234087" />
+      <entry key="M15" value="21.38798914204243" />
+      <entry key="M30" value="30.788395263048326" />
+      <entry key="H1" value="47.035618346707864" />
+      <entry key="H2" value="68.2604046076261" />
+      <entry key="H4" value="90.08239969850659" />
+      <entry key="D1" value="148.3480311780371" />
+      <entry key="W1" value="213.5812975333594" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="8.9827698235E-313" />
-      <entry key="M2" value="9.477747529641756E-157" />
-      <entry key="M5" value="3.896566157551653E-63" />
-      <entry key="M10" value="6.242248118708238E-32" />
-      <entry key="M15" value="1.5735988085708673E-21" />
-      <entry key="M30" value="3.9668612388376565E-11" />
-      <entry key="H1" value="6.298358295825449E-6" />
-      <entry key="H2" value="0.002517122135946414" />
-      <entry key="H4" value="0.052831332508108744" />
-      <entry key="D1" value="0.9811180331998751" />
-      <entry key="W1" value="1.800110871826398" />
+      <entry key="MS500" value="5.384220835029473E-101" />
+      <entry key="S2" value="8.566052189837609E-26" />
+      <entry key="S5" value="9.399663065478487E-11" />
+      <entry key="S10" value="9.695185952563516E-6" />
+      <entry key="S30" value="0.021323183667976985" />
+      <entry key="S60" value="0.14602459953027433" />
+      <entry key="M2" value="0.38213165905382596" />
+      <entry key="M5" value="0.6816496427560673" />
+      <entry key="M10" value="0.8844517082865054" />
+      <entry key="M15" value="1.1135816538632746" />
+      <entry key="M30" value="1.8848061340045594" />
+      <entry key="H1" value="2.902309729767704" />
+      <entry key="H2" value="3.7625949578433966" />
+      <entry key="H4" value="4.368564835368713" />
+      <entry key="D1" value="5.936149510862378" />
+      <entry key="W1" value="7.527495626045106" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.678302163723836" />
-      <entry key="MS500" value="0.9253044280378523" />
-      <entry key="S2" value="0.9807790039885513" />
-      <entry key="S5" value="0.9922668077625937" />
-      <entry key="S10" value="0.9961258995541646" />
-      <entry key="S30" value="0.9987069619579739" />
-      <entry key="S60" value="0.9993532718503372" />
-      <entry key="M2" value="0.9996765836260931" />
-      <entry key="M5" value="0.9998706208964937" />
-      <entry key="M10" value="0.9999353083557424" />
-      <entry key="M15" value="0.9999568717721472" />
-      <entry key="M30" value="0.9999784357331605" />
-      <entry key="H1" value="1.0000020575149522" />
-      <entry key="H2" value="1.0065711274654394" />
-      <entry key="H4" value="1.3027473272457364" />
-      <entry key="D1" value="28.030184961586503" />
-      <entry key="W1" value="70.5979294023543" />
+      <entry key="MS100" value="0.9484471815758512" />
+      <entry key="MS500" value="1.3842418764961164" />
+      <entry key="S2" value="2.996608421090209" />
+      <entry key="S5" value="4.667605363458641" />
+      <entry key="S10" value="5.901767644800559" />
+      <entry key="S30" value="7.290645974916929" />
+      <entry key="S60" value="8.337316817171613" />
+      <entry key="M2" value="10.088474973931532" />
+      <entry key="M5" value="13.956958106955474" />
+      <entry key="M10" value="18.596394279174735" />
+      <entry key="M15" value="22.463189387730267" />
+      <entry key="M30" value="32.64119218613268" />
+      <entry key="H1" value="49.91278805484791" />
+      <entry key="H2" value="72.00533559579641" />
+      <entry key="H4" value="94.4389413365083" />
+      <entry key="D1" value="154.277923513677" />
+      <entry key="W1" value="221.10737353868734" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -157,39 +192,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "NLP__Services__V7__2__0",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "settings.php.frameworks",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__2__0&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.php.frameworks&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-022fa7b8ab75-com.jetbrains.php.sharedIndexes-PS-261.23567.149" />
+        <option value="bundled-php-predefined-a98d8de5180a-6bbb74dbab74-com.jetbrains.php.sharedIndexes-PS-261.24374.185" />
       </set>
     </attachedChunks>
   </component>
@@ -241,14 +276,7 @@
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
       <workItem from="1778860226265" duration="39588000" />
-    </task>
-    <task id="LOCAL-00030" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375273807</created>
-      <option name="number" value="00030" />
-      <option name="presentableId" value="LOCAL-00030" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375273807</updated>
+      <workItem from="1779670787241" duration="7757000" />
     </task>
     <task id="LOCAL-00031" summary="Create separate form to initialize the training documents.">
       <option name="closed" value="true" />
@@ -634,7 +662,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778956699745</updated>
     </task>
-    <option name="localTasksCounter" value="79" />
+    <task id="LOCAL-00079" summary="Add key management">
+      <option name="closed" value="true" />
+      <created>1779551678567</created>
+      <option name="number" value="00079" />
+      <option name="presentableId" value="LOCAL-00079" />
+      <option name="project" value="LOCAL" />
+      <updated>1779551678568</updated>
+    </task>
+    <option name="localTasksCounter" value="80" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -686,8 +722,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add precinct names list" />
-    <MESSAGE value="Correct calls with null values in DeleteTurfForm" />
     <MESSAGE value="Correct the version number." />
     <MESSAGE value="Add code to trap missing contact id for reporting pedge-to-vote response." />
     <MESSAGE value="Use county key when syncing saved lists." />
@@ -711,7 +745,9 @@
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
     <MESSAGE value="Phone number nnot needed for social media message." />
     <MESSAGE value="PHP errors from auto logout." />
-    <option name="LAST_COMMIT_MESSAGE" value="PHP errors from auto logout." />
+    <MESSAGE value="Add key management" />
+    <MESSAGE value="Site configuration Claude code review" />
+    <option name="LAST_COMMIT_MESSAGE" value="Site configuration Claude code review" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

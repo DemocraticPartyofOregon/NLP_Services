@@ -1,45 +1,41 @@
 <?php
 
 namespace Drupal\nlpservices;
-use Drupal;
+
 use DateTime;
 use Exception;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\Config\ImmutableConfig;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpConfiguration
 {
-  protected NlpVoters $votersObj;
-  protected NlpTurfs $turfsObj;
   protected NlpEncryption $nlpEncrypt;
   protected ConfigFactoryInterface $config;
-  protected Drupal\Core\Config\ImmutableConfig $nlpConfig;
-  
-  public array $apiKeys;
+  protected ImmutableConfig $nlpConfig;
+  protected ApiKeyManagement $apiKeyManagementObj;
 
   private array $canvassResponseCodes;
-  
-  public function __construct($nlpEncrypt,$config ) {
+
+  public function __construct( $apiKeyManagementObj, $nlpEncrypt, $config ) {
     $this->nlpEncrypt = $nlpEncrypt;
     $this->config = $config;
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
+
     $this->nlpConfig = $this->config->get('nlpservices.configuration');
-
-    $this->apiKeys = (empty($this->nlpConfig->get('nlpservices-api-keys')))?
-      []:$this->nlpConfig->get('nlpservices-api-keys');
-
-    $this->canvassResponseCodes = empty($this->nlpConfig->get('nlpservices_canvass_response_codes'))?
-      []:$this->nlpConfig->get('nlpservices_canvass_response_codes');
-    
+    $canvassResponseCodes = $this->nlpConfig->get('nlpservices_canvass_response_codes');
+    $this->canvassResponseCodes = empty($canvassResponseCodes) ? [] : $canvassResponseCodes;
   }
-  
-  public static function create(ContainerInterface $container): NlpConfiguration
+
+  public static function create(ContainerInterface $container): static
   {
     return new static(
+      $container->get('nlpservices.api_key_management'),
       $container->get('nlpservices.encryption'),
       $container->get('config.factory'),
     );
   }
-  
+
   /**
    * getDebug
    *
@@ -51,13 +47,13 @@ class NlpConfiguration
   public function getDebug(): bool
   {
     $debug = $this->nlpConfig->get('nlpservices-debug');
-    return  (empty($debug))?FALSE:$debug;
+    return empty($debug) ? FALSE : $debug;
   }
-  
+
   /**
    * setDebug
    *
-   * Set the debug mode for NLP Services.  Used to insert debug messages during a live election,
+   * Set the debug mode for NLP Services.  Used to insert debug messages during a live election.
    *
    * @param bool $debug
    *   TRUE to enable debug mode, FALSE to disable.
@@ -65,9 +61,20 @@ class NlpConfiguration
   public function setDebug(bool $debug): void
   {
     $iConfig = $this->config->getEditable('nlpservices.configuration');
-    $iConfig->set('nlpservices-debug',$debug)->save();
+    $iConfig->set('nlpservices-debug', $debug)->save();
   }
-  
+
+  /**
+   * @param string $key
+   * @param mixed $value
+   * @return void
+   */
+  public function set( string $key, mixed $value): void
+  {
+    $iConfig = $this->config->getEditable('nlpservices.configuration');
+    $iConfig->set($key, $value)->save();
+  }
+
   /**
    * getStateKey
    *
@@ -82,49 +89,10 @@ class NlpConfiguration
    */
   public function getStateKey(): array
   {
-    if(empty($this->apiKeys['State Committee'])) {return [];}
-    $stateCommitteeKey = $this->apiKeys['State Committee'];
-    $stateCommitteeKey['API Key'] =
-      $this->nlpEncrypt->encrypt_decrypt('decrypt', $stateCommitteeKey['API Key']);
-    return $stateCommitteeKey;
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    return (empty($stateCommitteeKey))?[]: $stateCommitteeKey;
   }
-  
-  /**
-   * getCountyKey
-   *
-   * Get the API credentials for a county committee.
-   *
-   * @param string $county
-   *   The name of the county.
-   *
-   * @return array
-   *   Returns the API credentials for keys:
-   * - API Key
-   * - API userName
-   * - API Password
-   */
-  public function getCountyKey(string $county): array
-  {
-    if(empty($county)) {return [];}
-    $countyCommitteeKey = $this->apiKeys[$county];
-    $countyCommitteeKey['API Key'] = $this->nlpEncrypt->encrypt_decrypt('decrypt', $countyCommitteeKey['API Key']);
-    return $countyCommitteeKey;
-  }
-  
-  /**
-   * getKeys
-   *
-   * Get the API keys for all committees.  The keys are stored in the configuration
-   * and are encrypted.
-   *
-   * @return array
-   *   Returns an array of API keys for all committees.
-   */
-  public function getKeys(): array
-  {
-    return $this->apiKeys;
-  }
-  
+
   /**
    * getActivistCode
    *
@@ -137,9 +105,9 @@ class NlpConfiguration
   public function getActivistCode(string $codeName): int
   {
     $activistCode = $this->nlpConfig->get($codeName);
-    return empty($activistCode)? 0 : $activistCode;
+    return empty($activistCode) ? 0 : $activistCode;
   }
-  
+
   /**
    * setActivistCode
    *
@@ -147,26 +115,26 @@ class NlpConfiguration
    * @param int $codeValue
    * @return void
    */
-  public function setActivistCode(string $codeName,int $codeValue): void
+  public function setActivistCode(string $codeName, int $codeValue): void
   {
     $iConfig = $this->config->getEditable('nlpservices.configuration');
-    $iConfig->set($codeName,$codeValue)->save();
+    $iConfig->set($codeName, $codeValue)->save();
   }
-  
+
   /**
-   * getNlpVoterAC
+   * getCycle
    *
    * Get the election cycle. This text is configured in the election setup.
    *
    * @return string
-   *   Returns the NLP Voter Activist Code.
+   *   Returns the election cycle.
    */
   public function getCycle(): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
     return empty($electionDates['nlp_election_cycle'])?'':$electionDates['nlp_election_cycle'];
   }
-  
+
   /**
    * getElectionName
    *
@@ -180,7 +148,7 @@ class NlpConfiguration
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
     return $electionDates['nlp_cycle_name'];
   }
-  
+
   /**
    * getElectionDate
    *
@@ -210,7 +178,7 @@ class NlpConfiguration
     }
     return $electionDate;
   }
-  
+
   /**
    * getBallotDropDate
    *
@@ -240,7 +208,7 @@ class NlpConfiguration
     }
     return $ballotDropDate;
   }
-  
+
   /**
    * getStateName
    *
@@ -252,11 +220,16 @@ class NlpConfiguration
    */
   public function getStateName(): string
   {
-    $countyNames = $this->nlpConfig->get('nlpservices-county-names');
-    $stateName = (!empty($countyNames['State']))?$countyNames['State']:'';
-    return $stateName;
+    $committeeNames = $this->nlpConfig->get('nlpservices-county-names');
+    return (!empty($committeeNames['State']))?$committeeNames['State']:'';
   }
-  
+
+  public function setStateName(string $stateName): void
+  {
+    $iConfig = $this->config->getEditable('nlpservices.configuration');
+    $iConfig->set('nlpservices-state-name', $stateName)->save();
+  }
+
   /**
    * getVoterBuilderUpdateDate
    *
@@ -266,14 +239,26 @@ class NlpConfiguration
    * a resyncing is needed.
    *
    * @return string
-   *   Returns the local election name.
+   *   Returns the VoteBuilder update date.
    */
   public function getVoterBuilderUpdateDate(): string
   {
     return empty($this->nlpConfig->get('nlpservices-votebuilder-update-date'))?'':
         $this->nlpConfig->get('nlpservices-votebuilder-update-date');
   }
-  
+
+  /**
+   * setVotebuilderUpdateDate
+   *
+   * @param string $date
+   * @return void
+   */
+  public function setVotebuilderUpdateDate(string $date): void
+  {
+    $iConfig = $this->config->getEditable('nlpservices.configuration');
+    $iConfig->set('nlpservices-votebuilder-update-date', $date)->save();
+  }
+
   /**
    * getCountyNames
    *
@@ -285,9 +270,10 @@ class NlpConfiguration
   public function getCountyNames(): array
   {
     $counties = $this->nlpConfig->get('nlpservices-county-names');
+    $counties = (!empty($counties)) ? $counties : [];
     return array_keys($counties);
   }
-  
+
   /**
    * getHDNames
    *
@@ -295,7 +281,7 @@ class NlpConfiguration
    * configured in the election setup.  The house districts are assumed to be
    * numbers, and the name and index are the same.
    *
-   * @param string $county
+   * @param string $committee
    *   The name of the county to get.
    * @param bool $all
    *  If TRUE, include an "All" option in the list of house districts.
@@ -303,20 +289,20 @@ class NlpConfiguration
    * @return array
    *   Returns an array of house districts in the county.
    */
-  public function getHDNames(string $county, bool $all=TRUE): array {
+  public function getHDNames(string $committee, bool $all = TRUE): array {
     $counties = $this->nlpConfig->get('nlpservices-county-names');
-    if(empty($counties[$county])) {return [];}
-    $hdNames = ($all)?['All' => 'All']:[];
-    foreach ($counties[$county] as $hd) {
+    if (empty($counties[$committee])) { return []; }
+    $hdNames = ($all) ? ['All' => 'All'] : [];
+    foreach ($counties[$committee] as $hd) {
       $hdNames[$hd] = $hd;
     }
     return $hdNames;
   }
-  
+
   /**
    * getPledgeSurveyQuestion
    *
-   * Get the local election name. This text is configured in the election setup.
+   * Get the pledge-to-vote survey question. This is configured in the election setup.
    *
    * The survey question provides the following keys:
    * - surveyQuestionId (int) - The ID of the survey question.
@@ -332,10 +318,10 @@ class NlpConfiguration
    */
   public function getPledgeSurveyQuestion(): array
   {
-    $surveyQuestions = $this->nlpConfig->get('nlpservices_survey_questions');
-    return empty($surveyQuestions['pledgeToVote'])?[]:$surveyQuestions['pledgeToVote'];
+    $pledgeToVote = $this->nlpConfig->get('nlpservices_pledge_to_vote');
+    return empty($pledgeToVote) ? [] : $pledgeToVote;
   }
-  
+
   /**
    * getNlParticipationQuestion
    *
@@ -355,10 +341,10 @@ class NlpConfiguration
    */
   public function getNlParticipationQuestion(): array
   {
-    $surveyQuestions = $this->nlpConfig->get('nlpservices_survey_questions');
-    return empty($surveyQuestions['nlParticipation'])?[]:$surveyQuestions['nlParticipation'];
+    $nlParticipation = $this->nlpConfig->get('nlpservices_nl_participation');
+    return empty($nlParticipation) ? [] : $nlParticipation;
   }
-  
+
   /**
    * getCanvassResponseCodes
    *
@@ -372,7 +358,23 @@ class NlpConfiguration
   {
     return $this->canvassResponseCodes;
   }
-  
+
+  /**
+   * setCanvassResponseCodes
+   *
+   * Set the canvass response codes.  These are the responses used by the canvassers
+   * to record the results of their canvassing.
+   *
+   * @param array $responseCodes
+   * @return void
+   */
+  public function setCanvassResponseCodes(array $responseCodes): void
+  {
+    $iConfig = $this->config->getEditable('nlpservices.configuration');
+    $iConfig->set('nlpservices_canvass_response_codes', $responseCodes)->save();
+    $this->canvassResponseCodes = $responseCodes;
+  }
+
   /**
    * getResponseId
    *
@@ -388,10 +390,10 @@ class NlpConfiguration
    */
   public function getResponseId(string $methodName, string $responseName): int
   {
-    return (!empty($this->canvassResponseCodes[$methodName]['responses'][$responseName]))?
-      $this->canvassResponseCodes[$methodName]['responses'][$responseName]:0;
+    return !empty($this->canvassResponseCodes[$methodName]['responses'][$responseName])
+      ? $this->canvassResponseCodes[$methodName]['responses'][$responseName] : 0;
   }
-  
+
   /**
    * getContactResponses
    *
@@ -405,10 +407,10 @@ class NlpConfiguration
    *   Returns an array of contact responses for the specified method.
    */
   public function getContactResponses(array $method): array {
-    if(empty($this->canvassResponseCodes[$method['name']])) {return [];}
+    if (empty($this->canvassResponseCodes[$method['name']])) { return []; }
     return $this->canvassResponseCodes[$method['name']]['responses'];
   }
-  
+
   /**
    * getContactResponse
    *
@@ -423,15 +425,15 @@ class NlpConfiguration
    *   Returns the contact response name or an empty string if not found.
    */
   public function getContactResponse(string $method, int $responseId): string {
-    $responses = $this->getContactResponses(['name'=>$method]);
-    foreach ($responses as $responseName=>$response) {
-      if($response == $responseId) {
+    $responses = $this->getContactResponses(['name' => $method]);
+    foreach ($responses as $responseName => $response) {
+      if ($response == $responseId) {
         return $responseName;
       }
     }
     return '';
   }
-  
+
   /**
    * getContactId
    *
@@ -447,13 +449,13 @@ class NlpConfiguration
   {
     return $this->canvassResponseCodes[$contactMethodName]['code'];
   }
-  
+
   /**
    * getContactMethods
    *
    * Get the contact methods.  The contact methods are the methods used by the canvassers
    * to record the results of their canvassing.
-   * * The contact methods are returned as an array with the contactMethodId as the key
+   * The contact methods are returned as an array with the contactMethodId as the key
    * and the contactMethodName as the value.
    *
    * @return array
@@ -467,7 +469,7 @@ class NlpConfiguration
     }
     return $contactMethods;
   }
-  
+
   /**
    * getContactMethod
    *
@@ -482,7 +484,33 @@ class NlpConfiguration
   public function getContactMethod(int $contactId): string
   {
     $contactMethods = $this->getContactMethods();
-    return (!empty($contactMethods[$contactId]))?$contactMethods[$contactId]:'';
+    return !empty($contactMethods[$contactId]) ? $contactMethods[$contactId] : '';
+  }
+
+  /**
+   * getAlternatePhoneReportCodes
+   *
+   * Get the alternate phone report codes. These are the codes used to report
+   * alternate phone numbers for voters.
+   *
+   * @return array
+   *   Returns an array of alternate phone report codes.
+   */
+  public function getAlternatePhoneReportCodes(): array
+  {
+    return $this->nlpConfig->get('nlpservices_alt_phone_response_codes');
+  }
+
+  /**
+   * setAltPhoneResponseCodes
+   *
+   * @param array $responseCodes
+   * @return void
+   */
+  public function setAltPhoneResponseCodes(array $responseCodes): void
+  {
+    $iConfig = $this->config->getEditable('nlpservices.configuration');
+    $iConfig->set('nlpservices_alt_phone_response_codes', $responseCodes)->save();
   }
 
   /**
@@ -499,7 +527,7 @@ class NlpConfiguration
     return empty($this->nlpConfig->get('nlpservices-crosstab-create-time'))?0
         :$this->nlpConfig->get('nlpservices-crosstab-create-time');
   }
-  
+
   /**
    * getNotificationEmail
    *
@@ -514,7 +542,7 @@ class NlpConfiguration
     $emailConfiguration = $this->nlpConfig->get('nlpservices-email-configuration');
     return $emailConfiguration['notifications']['email'];
   }
-  
+
   /**
    * getEmailConfiguration
    *
@@ -531,19 +559,5 @@ class NlpConfiguration
     $emailConfiguration = $this->nlpConfig->get('nlpservices-email-configuration');
     return $emailConfiguration[$type];
   }
-  
-  /**
-   * getAlternatePhoneReportCodes
-   *
-   * Get the alternate phone report codes. These are the codes used to report
-   * alternate phone numbers for voters.
-   *
-   * @return array
-   *   Returns an array of alternate phone report codes.
-   */
-  public function getAlternatePhoneReportCodes(): array
-  {
-    return $this->nlpConfig->get('nlpservices_alt_phone_response_codes');
-  }
-  
+
 }

@@ -1,8 +1,9 @@
-
-uuid: 0b214a94-ec1a-4911-a692-1ba0ff678c9a
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.field_first_name

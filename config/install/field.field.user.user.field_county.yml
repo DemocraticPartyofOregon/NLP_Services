@@ -1,11 +1,11 @@
-# Defines the County field.
-
-uuid: d339520d-4b63-4d5b-9d00-34d92ad551b8
 langcode: en
 status: true
 dependencies:
   config:
     - field.storage.user.field_county
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.user.field_county

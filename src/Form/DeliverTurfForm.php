@@ -97,7 +97,7 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_folders'),
     );
   }
 

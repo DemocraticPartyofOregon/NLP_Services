@@ -1,7 +1,9 @@
-uuid: 015d6feb-3f15-4bdd-b5f0-bb52c708caa9
 langcode: en
 status: true
 dependencies:
+  enforced:
+    module:
+      - nlpservices
   module:
     - user
 id: user.field_mcid
@@ -9,7 +11,7 @@ field_name: field_mcid
 entity_type: user
 type: integer
 settings:
-  unsigned: false
+  unsigned: true
   size: normal
 module: core
 locked: false

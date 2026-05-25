@@ -19,7 +19,7 @@
       <paths name="SandboxNLP">
         <serverdata>
           <mappings>
-            <mapping local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

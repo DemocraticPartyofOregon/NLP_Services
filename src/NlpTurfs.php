@@ -54,7 +54,7 @@ class NlpTurfs
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.matchbacks'),
-      $container->get('nlpservices.folders')
+      $container->get('nlpservices.api_folders')
     );
   }
   
