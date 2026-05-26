@@ -175,7 +175,7 @@ services:
 
   nlpservices.awards:
     class: Drupal\nlpservices\NlpAwards
-    arguments: [ '@database', '@nlpservices.configuration', '@nlpservices.nls' ]
+    arguments: [ '@database', '@nlpservices.configuration', '@nlpservices.nls', '@nlpservices.database_functions' ]
 
   nlpservices.configuration:
     class: Drupal\nlpservices\NlpConfiguration

@@ -4,9 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="User password security - Claude review">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude review of awards and remove the database function">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCoordinators.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCoordinators.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,22 +84,22 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000732548677875" />
-      <entry key="S2" value="1.11231607207092" />
-      <entry key="S5" value="1.687768100285133" />
-      <entry key="S10" value="2.473465416251954" />
-      <entry key="S30" value="4.6554959695931055" />
-      <entry key="S60" value="7.158720907824455" />
-      <entry key="M2" value="11.087804925656" />
-      <entry key="M5" value="18.778571223974133" />
-      <entry key="M10" value="25.485746923690225" />
-      <entry key="M15" value="29.398526943691724" />
-      <entry key="M30" value="35.83654875032599" />
-      <entry key="H1" value="41.60994162409378" />
-      <entry key="H2" value="47.17946892002424" />
-      <entry key="H4" value="58.241519752126166" />
-      <entry key="D1" value="170.42417239256855" />
-      <entry key="W1" value="330.2344941976496" />
+      <entry key="MS500" value="1.0003286512393292" />
+      <entry key="S2" value="1.1728818465861002" />
+      <entry key="S5" value="1.916340326161829" />
+      <entry key="S10" value="2.828064528771879" />
+      <entry key="S30" value="4.055628339998392" />
+      <entry key="S60" value="4.733002419682057" />
+      <entry key="M2" value="6.380512963760596" />
+      <entry key="M5" value="10.947340714982413" />
+      <entry key="M10" value="17.759271859154374" />
+      <entry key="M15" value="25.321221053252227" />
+      <entry key="M30" value="45.67809741054433" />
+      <entry key="H1" value="69.89544721822442" />
+      <entry key="H2" value="91.16835620836791" />
+      <entry key="H4" value="111.98697990375913" />
+      <entry key="D1" value="233.42991091027716" />
+      <entry key="W1" value="397.69081826857496" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -105,36 +108,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="3.0617047686183433E-181" />
-      <entry key="M2" value="5.533267360808025E-91" />
-      <entry key="M5" value="7.892101501141735E-37" />
-      <entry key="M10" value="8.883750053407885E-19" />
-      <entry key="M15" value="9.241253594129946E-13" />
-      <entry key="M30" value="9.613821213418206E-7" />
-      <entry key="H1" value="9.961307047744994E-4" />
-      <entry key="H2" value="0.0393923902572505" />
-      <entry key="H4" value="0.3860022844984648" />
-      <entry key="D1" value="6.591209660881891" />
-      <entry key="W1" value="13.856165634251669" />
+      <entry key="S60" value="7.947414794810614E-200" />
+      <entry key="M2" value="2.819115959802044E-100" />
+      <entry key="M5" value="1.5137187000044701E-40" />
+      <entry key="M10" value="1.2303327598680821E-20" />
+      <entry key="M15" value="5.329441827393252E-14" />
+      <entry key="M30" value="2.308721037655244E-7" />
+      <entry key="H1" value="4.881508349883783E-4" />
+      <entry key="H2" value="0.027575994802350193" />
+      <entry key="H4" value="0.32296042087269866" />
+      <entry key="D1" value="6.398208144369612" />
+      <entry key="W1" value="13.797463156213622" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="9.060812809015183E-5" />
-      <entry key="MS500" value="0.15540112919974003" />
-      <entry key="S2" value="0.6921402329617595" />
-      <entry key="S5" value="1.382744662681991" />
-      <entry key="S10" value="2.2374527703409557" />
-      <entry key="S30" value="4.521909390865485" />
-      <entry key="S60" value="7.062452521953702" />
-      <entry key="M2" value="11.011788903614471" />
-      <entry key="M5" value="18.723793908275603" />
-      <entry key="M10" value="25.448035738599554" />
-      <entry key="M15" value="29.369753715419122" />
-      <entry key="M30" value="35.81952033992581" />
-      <entry key="H1" value="41.6013526917162" />
-      <entry key="H2" value="47.213542332924824" />
-      <entry key="H4" value="58.624185257083035" />
-      <entry key="D1" value="177.01158149976135" />
-      <entry key="W1" value="344.0891229322757" />
+      <entry key="MS100" value="7.779300703852919E-5" />
+      <entry key="MS500" value="0.15077374680186198" />
+      <entry key="S2" value="0.7309606033605311" />
+      <entry key="S5" value="1.5978016822037173" />
+      <entry key="S10" value="2.5923545876354694" />
+      <entry key="S30" value="3.9439548315089947" />
+      <entry key="S60" value="4.667564747220004" />
+      <entry key="M2" value="6.33491058641749" />
+      <entry key="M5" value="10.914488276624775" />
+      <entry key="M10" value="17.73352551473528" />
+      <entry key="M15" value="25.29808217465432" />
+      <entry key="M30" value="45.65885085297028" />
+      <entry key="H1" value="69.88178666761245" />
+      <entry key="H2" value="91.18685821288143" />
+      <entry key="H4" value="112.30429172527477" />
+      <entry key="D1" value="239.82392595705534" />
+      <entry key="W1" value="411.48667834716105" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -240,23 +243,7 @@
       <workItem from="1778727172734" duration="14606000" />
       <workItem from="1778860226265" duration="39588000" />
       <workItem from="1779670787241" duration="8742000" />
-      <workItem from="1779684952982" duration="22855000" />
-    </task>
-    <task id="LOCAL-00034" summary="Fix delete turf to allow sorting after a change in HD, and remove the slow display of MiniVAN info.">
-      <option name="closed" value="true" />
-      <created>1773519752265</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1773519752265</updated>
-    </task>
-    <task id="LOCAL-00035" summary="Raise max turf size temporarily.">
-      <option name="closed" value="true" />
-      <created>1773865381431</created>
-      <option name="number" value="00035" />
-      <option name="presentableId" value="LOCAL-00035" />
-      <option name="project" value="LOCAL" />
-      <updated>1773865381431</updated>
+      <workItem from="1779684952982" duration="25914000" />
     </task>
     <task id="LOCAL-00036" summary="Claify the text for the printable walksheets">
       <option name="closed" value="true" />
@@ -634,7 +621,23 @@
       <option name="project" value="LOCAL" />
       <updated>1779805618867</updated>
     </task>
-    <option name="localTasksCounter" value="83" />
+    <task id="LOCAL-00083" summary="Fix polymorphic errors in DrupalUser">
+      <option name="closed" value="true" />
+      <created>1779808477403</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1779808477405</updated>
+    </task>
+    <task id="LOCAL-00084" summary="Claude review of awards and remove the database function">
+      <option name="closed" value="true" />
+      <created>1779809072726</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
+      <option name="project" value="LOCAL" />
+      <updated>1779809072727</updated>
+    </task>
+    <option name="localTasksCounter" value="85" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -686,8 +689,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Use county key when syncing saved lists." />
-    <MESSAGE value="Fix the version number." />
     <MESSAGE value="Use the county committee key when reporting participation survey question for Montana." />
     <MESSAGE value="Code review" />
     <MESSAGE value="Protect initialization of cycle name." />
@@ -711,7 +712,9 @@
     <MESSAGE value="Site configuration Claude code review" />
     <MESSAGE value="API calls Claude review and key protection" />
     <MESSAGE value="User password security - Claude review" />
-    <option name="LAST_COMMIT_MESSAGE" value="User password security - Claude review" />
+    <MESSAGE value="Fix polymorphic errors in DrupalUser" />
+    <MESSAGE value="Claude review of awards and remove the database function" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude review of awards and remove the database function" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

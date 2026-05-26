@@ -8,7 +8,7 @@ use Exception;
 
 class NlpCoordinators {
   
-  const string COORDINATOR_TBL = "nlp_coordinator";
+  public const string COORDINATOR_TBL = "nlp_coordinator";
   
   protected Connection $connection;
   
@@ -24,10 +24,16 @@ class NlpCoordinators {
   }
   
   /**
-   * @param $req
+   * createCoordinator
+   *
+   * Create a coordinator in the database.
+   * The coordinator is identified by the county, hd, and precinct.
+   * The coordinator is assigned a unique index.
+   *
+   * @param array $req
    * @return void
    */
-  public function createCoordinator($req): void
+  public function createCoordinator(array $req): void
   {
     try {
       $this->connection->insert(self::COORDINATOR_TBL)
@@ -40,12 +46,14 @@ class NlpCoordinators {
   }
   
   /**
+   * getCoordinators
+   *
    * Get all the assigned coordinators for a county.
    *
-   * @param $county
+   * @param string $county
    * @return array
    */
-  public function getCoordinators($county): array
+  public function getCoordinators( string $county ): array
   {
     $query = $this->connection->select(self::COORDINATOR_TBL, 'c');
     $query->fields('c');
@@ -61,17 +69,21 @@ class NlpCoordinators {
     do {
       $coordinator = $result->fetchAssoc();
       if(empty($coordinator)) {break;}
-      //if(empty($coordinator['mcid'])) {continue;}
       $coordinators[$coordinator['cIndex']] = $coordinator;
     } while (TRUE);
     return $coordinators;
   }
   
   /**
-   * @param $cIndex
+   * deleteCoordinator
+   *
+   * Delete a coordinator from the database.
+   * The coordinator is identified by the unique index.
+   *
+   * @param int $cIndex
    * @return void
    */
-  public function deleteCoordinator($cIndex): void
+  public function deleteCoordinator( int $cIndex ): void
   {
     try {
       $this->connection->delete(self::COORDINATOR_TBL)
@@ -84,72 +96,70 @@ class NlpCoordinators {
   }
   
   /**
-   * @param $region
+   * getCoordinator
+   *
+   * Get the coordinator for a county/hd/precinct.
+   * The coordinator is identified by the county, hd, and precinct.
+   * The coordinator is assigned a unique index.
+   *
+   * @param array $region - array with keys 'county', 'pct', 'hd'
    * @return array - the coordinator for the NL based on the county/hd/precinct of the NL.
    */
-  public function getCoordinator($region): array
+  public function getCoordinator( array $region ): array
   {
-    $allCoordinators = $this->getAllCoordinators();
-    
-    if(empty($allCoordinators)) {return [];}
-    $county  = $region['county'];
-    // If there is a coordinator assigned to the precinct, use that person.  Else
-    // chose the house district coordinator.  If there is no HD coordinator,
-    // then the county coordinator.  There should be at least one of these.
-    // If not, no one will be chosen.
-    $precinct = $region['pct'];
-    $hd = $region['hd'];
-    if(empty($allCoordinators[$county])) {
-      return [];  // No one in the county is a coordinator.
-    }
-    $countyCoordinator = $allCoordinators[$county];
-    $coordinator = [];
-    if(isset($countyCoordinator['pct'][$precinct])) {
-      $coordinator = $countyCoordinator['pct'][$precinct];
-    } elseif(isset($countyCoordinator['hd'][$hd])) {
-      $coordinator = $countyCoordinator['hd'][$hd];
-    } elseif (isset($countyCoordinator['county'])) {
-      $coordinator = $countyCoordinator['county'];
-    }
-    return $coordinator;
+    return $this->getAssignedCoordinator([
+      'county'   => $region['county'],
+      'hd'       => $region['hd'],
+      'precinct' => $region['pct'],
+    ]);
   }
-  
-  public function getAssignedCoordinator($nls): array
+
+  /**
+   * getAssignedCoordinator
+   *
+   * Get the coordinator for a county/hd/precinct.
+   * The coordinator is identified by the county, hd, and precinct.
+   * The coordinator is assigned a unique index.
+   *
+   * @param array $nls - array with keys 'county', 'hd', 'precinct'
+   * @return array - the coordinator assigned to the NL's county/hd/precinct.
+   */
+  public function getAssignedCoordinator( array $nls ): array
   {
-    //nlp_debug_msg('$nls',$nls);
     $hd = $nls['hd'];
     $precinct = $nls['precinct'];
     $county = $nls['county'];
-    
+
     $coordinatorsInCounty = $this->getAllCoordinators($county);
-    //nlp_debug_msg('coordinatorsInCounty',$coordinatorsInCounty);
     if(empty($coordinatorsInCounty)) {return [];}
-    
     if(empty($coordinatorsInCounty[$county])) {
-      return [];  // No one in the county is a coordinator.
+      return [];
     }
     $countyCoordinator = $coordinatorsInCounty[$county];
-    //nlp_debug_msg('countyCoordinator',$countyCoordinator);
     $coordinator = [];
-    //$dp = (!empty($countyCoordinator['pct'][$precinct]))?$countyCoordinator['pct'][$precinct]:'';
-    //nlp_debug_msg('precinct '.$precinct,$dp);
     if(isset($countyCoordinator['pct'][$precinct])) {
       $coordinator = $countyCoordinator['pct'][$precinct];
     } elseif(isset($countyCoordinator['hd'][$hd])) {
       $coordinator = $countyCoordinator['hd'][$hd];
-    } elseif (isset($countyCoordinator['county'])) {
+    } elseif(isset($countyCoordinator['county'])) {
       $coordinator = $countyCoordinator['county'];
     }
-    
     return $coordinator;
   }
+
   /**
-   * @param $scope
-   * @param $value
-   * @param $countyCoordinators
+   * duplicateScope
+   *
+   * Check to see if the region already has a coordinator assigned.
+   * If so, return TRUE.
+   * If not, return FALSE.
+   *
+   * @param string $scope
+   * @param string $value
+   * @param array $countyCoordinators
    * @return bool - returns true if the region already has a coordinator assigned.
    */
-  public function duplicateScope($scope,$value,$countyCoordinators): bool
+  public function duplicateScope(string $scope, string $value, array $countyCoordinators): bool
   {
     switch ($scope) {
       case 'county':
@@ -166,9 +176,15 @@ class NlpCoordinators {
   }
   
   /**
+   * getAllCoordinators
+   *
+   * Get all the coordinators in the database.
+   * If the county is provided, only return coordinators for that county.
+   *
+   * @param string $county - county name.
    * @return array - array of all the known coordinators.
    */
-  public function getAllCoordinators($county=NULL): array
+  public function getAllCoordinators(string $county=''): array
   {
     $query = $this->connection->select(self::COORDINATOR_TBL, 'c');
     $query->fields('c');
@@ -187,26 +203,26 @@ class NlpCoordinators {
       $coordinator = $result->fetchAssoc();
       if(empty($coordinator)) {break;}
       $coordinators[$coordinator['cIndex']] = $coordinator;
-      $county = $coordinator['county'];
+      $rowCounty = $coordinator['county'];
       $scope = $coordinator['scope'];
       switch ($scope) {
         case 'precinct':
           $precincts = explode(',',$coordinator['precinctList']);
           foreach ($precincts as $precinct) {
-            if(!isset($coordinators[$county]['pct'][$precinct])) {
-              $coordinators[$county]['pct'][$precinct] = $coordinator;
+            if(!isset($coordinators[$rowCounty]['pct'][$precinct])) {
+              $coordinators[$rowCounty]['pct'][$precinct] = $coordinator;
             }
           }
           break;
         case 'hd':
           $hd = $coordinator['hd'];
-          if(!isset($coordinators[$county]['hd'][$hd])) {
-            $coordinators[$county]['hd'][$hd] = $coordinator;
+          if(!isset($coordinators[$rowCounty]['hd'][$hd])) {
+            $coordinators[$rowCounty]['hd'][$hd] = $coordinator;
           }
           break;
         case 'county':
-          if(!isset($coordinators[$county]['county'])) {
-            $coordinators[$county]['county'] = $coordinator;
+          if(!isset($coordinators[$rowCounty]['county'])) {
+            $coordinators[$rowCounty]['county'] = $coordinator;
           }
           break;
       }
@@ -214,8 +230,18 @@ class NlpCoordinators {
     
     return $coordinators;
   }
-  
-  public function getCoordinatorById($mcid): array
+
+  /**
+   * getCoordinatorById
+   *
+   * Get the coordinator for a county/hd/precinct.
+   * The coordinator is identified by the county, hd, and precinct.
+   * The coordinator is assigned a unique index.
+   *
+   * @param int $mcid - the mcid of the NL.
+   * @return array - the coordinator for the NL based on the county/hd/precinct of the NL.
+   */
+  public function getCoordinatorById( int $mcid ): array
   {
     $query = $this->connection->select(self::COORDINATOR_TBL, 'c');
     $query->fields('c');

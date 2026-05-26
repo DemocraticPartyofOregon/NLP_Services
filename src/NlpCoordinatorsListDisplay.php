@@ -7,19 +7,22 @@ class NlpCoordinatorsListDisplay
   private array $header = [];
   
   /**
-   * @param $type
-   * @param $nlRecords
+   * buildCoordinatorTableArray
+   *
+   * This function builds an array of information about the NLs found in $form_state.
+   * The array is used to build the HTML table.
+   *
+   * @param string $type
+   * @param array $nlRecords
    * @return array
    */
-  public function buildCoordinatorTableArray($type, $nlRecords): array
+  public function buildCoordinatorTableArray( string $type, array $nlRecords ): array
   {
     $rows = [];
     foreach ($nlRecords as $mcid=>$nlRecord)
     {
       $column = [];
-      //if($type!='current') {
-        $column['cb'] = ['type'=>'cd', 'mcid'=>$mcid];
-      //}
+      $column['cb'] = ['type'=>'cd', 'mcid'=>$mcid];
       if($type=='current') {
         $column['cb']['cIndex'] = $nlRecord['cIndex'];
       }
@@ -36,8 +39,7 @@ class NlpCoordinatorsListDisplay
       if($type=='add') {
         $column['precinct'] = $nlRecord['precinct'];
       }
-      $rolesDisplay = (!empty($nlRecord['roles']))?implode('<br>',$nlRecord['roles']):'';
-      $column['roles'] = $rolesDisplay;
+      $column['roles'] = (!empty($nlRecord['roles'])) ? implode(', ', $nlRecord['roles']) : '';
       
       $index = ($type!='current')?$mcid:$nlRecord['cIndex'];
       $rows[$index] = $column;
@@ -51,11 +53,11 @@ class NlpCoordinatorsListDisplay
    * This function builds an HTML table using the array of information about
    * the NLs found in $form_state.
    *
-   * @param $type
-   * @param  $rows
+   * @param string $type
+   * @param array $rows
    * @return array - $form - form elements for the table.
    */
-  function buildCoordinatorsTable($type, $rows): array
+  public function buildCoordinatorsTable( string $type, array $rows ): array
   {
     $this->headerBuild($type);
     $tableName = 'contacts';
@@ -86,15 +88,18 @@ class NlpCoordinatorsListDisplay
   }
   
   /**
+   * headerBuild
+   *
+   * Builds the header for the coordinator table.
+   * The header is built based on the type of the coordinator table.
+   *
    * @param string $type
    * @return void
    */
-  private function headerBuild(string $type):void
+  private function headerBuild( string $type ):void
   {
     $this->header = [];
-    //if($type!='current') {
-      $this->header[] = ['data' => t('cb'), 'field' => 't.cb', 'class' => ['nlp-th-color'] ];
-    //}
+    $this->header[] = ['data' => t('cb'), 'field' => 't.cb', 'class' => ['nlp-th-color'] ];
     $this->header[] =   ['data' => t('Name'), 'field' => 'n.name', 'class' => ['nlp-th-color'] ];
     $this->header[] =   ['data' => t('Email'), 'field' => 'n.email', 'class' => ['nlp-th-color'] ];
     $this->header[] =   ['data' => t('Phone'), 'field' => 'n.phone', 'class' => ['nlp-th-color'] ];
@@ -111,10 +116,16 @@ class NlpCoordinatorsListDisplay
   }
   
   /**
-   * @param $contacts
+   * validateCoordinatorSelection
+   *
+   * This function validates the coordinator selection made by the user.
+   * It checks the 'cb' value of each contact and builds an array of selected coordinators.
+   * The 'cb' value is expected to be in the format 'CB_cIndex_mcid'.
+   *
+   * @param array $contacts
    * @return array
    */
-  public function validateCoordinatorSelection($contacts):array
+  public function validateCoordinatorSelection( array $contacts ):array
   {
     $selections = [];
     foreach($contacts as $contact) {
@@ -128,11 +139,16 @@ class NlpCoordinatorsListDisplay
   
   
   /**
-   * @param $data
-   * @param $type
+   * getSortField
+   *
+   * This function returns the field name for the given sort order.
+   * The field name is used to sort the coordinator table.
+   *
+   * @param string $data
+   * @param string $type
    * @return string
    */
-  public function getSortField($data,$type):string
+  public function getSortField( string $data, string $type ):string
   {
     $this->headerBuild($type);
     foreach ($this->header as $headerInfo) {
@@ -144,23 +160,27 @@ class NlpCoordinatorsListDisplay
   }
   
   /**
-   * @param $nlsTable
-   * @param $sort
-   * @param $order
-   * @param $type
+   * sortNlsTable
+   *
+   * This function sorts the coordinator table based on the given sort order.
+   * The sort order is used to sort the coordinator table.
+   * The sort order is based on the field name returned by getSortField().
+   *
+   * @param array $nlsTable
+   * @param string $sort
+   * @param string $order
+   * @param string $type
    * @return void
    */
-  public function sortNlsTable(&$nlsTable,$sort,$order,$type):void
+  public function sortNlsTable( array &$nlsTable, string $sort, string $order, string $type ):void
   {
     $sortField = $this->getSortField($order,$type);
-    //nlp_debug_msg('$sortField',$sortField);
     if(empty($sortField)) {return;}
     $sortFieldParts = explode('.',$sortField);
     if($sortFieldParts[0]!='n') {return;}
     $sortColumn = $sortFieldParts[1];
     $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;
     $column = array_column($nlsTable, $sortColumn);
-    //nlp_debug_msg('$column',$column);
     array_multisort($column, $sortOrder, $nlsTable);
   }
   
