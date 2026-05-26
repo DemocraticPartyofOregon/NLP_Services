@@ -4,8 +4,6 @@ namespace Drupal\nlpservices;
 
 //use Drupal;
 use Drupal\Core\Database\Connection;
-//use Drupal\nlpservices\NlpConfiguration;
-//use Drupal\nlpservices\NlpNls;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -17,21 +15,24 @@ class NlpAwards
   protected Connection $connection;
   protected NlpConfiguration $configurationObj;
   protected NlpNls $nlsObj;
+  protected DatabaseFunctions $dbFunctionsObj;
 
-  public function __construct($connection, $configurationObj, $nlsObj) {
+  public function __construct($connection, $configurationObj, $nlsObj, $dbFunctionsObj) {
     $this->connection = $connection;
     $this->configurationObj = $configurationObj;
     $this->nlsObj = $nlsObj;
-    
-    $this->awardsHeader = $this->getColumnNames();
+    $this->dbFunctionsObj = $dbFunctionsObj;
+
+    $this->awardsHeader = $this->dbFunctionsObj->getColumnNames(self::AWARDS_TBL);
   }
-  
+
   public static function create(ContainerInterface $container): NlpAwards
   {
     return new static(
       $container->get('database'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.nls'),
+      $container->get('nlpservices.database_functions'),
     );
   }
   
@@ -165,35 +166,9 @@ class NlpAwards
   
   
   /**
-   * getColumnNames
-   *
-   * Returns an array of the column names in the award table, used to export the table.
-   *
-   * @return array
-   */
-  public function getColumnNames(): array
-  {
-    try {
-      $select = "SHOW COLUMNS FROM  {".self::AWARDS_TBL.'}';
-      $result = $this->connection->query($select);
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('e', $e->getMessage() );
-      return array();
-    }
-    $colNames = [];
-    do {
-      $name = $result->fetchAssoc();
-      if(empty($name)) {break;}
-      $colNames[] = $name['Field'];
-    } while (TRUE);
-    return $colNames;
-  }
-  
-  /**
    * decodeAwardHeader
    *
-   * Checks the header of the awards file to make sure it contains the correct columns.
+   * Checks the header of the award file to make sure it contains the correct columns.
    *
    * Returns an array with the column number for the relevant fields.
    *
@@ -249,12 +224,12 @@ class NlpAwards
    * Creates a new award record for an NL.
    *
    * Returns an array with the fields:
-   *   mcid
-   *   nickname
-   *   lastName
-   *   electionCount - set to zero for a new NL.
-   *   participation - empty but will contain a json encoded array of participation.
-   *   preferredContactMethod
+   *   `mcid`
+   *   `nickname`
+   *   `lastName`
+   *   `electionCount` - set to zero for a new NL.
+   *   `participation` - empty but will contain a json encoded array of participation.
+   *   `preferredContactMethod`
    *
    * @param int $mcid
    * @return array
@@ -271,7 +246,7 @@ class NlpAwards
       'notes' => '',
     ];
     $nl = $this->nlsObj->getNlById($mcid);
-    if(!empty($nls)) { // Should never be empty.
+    if(!empty($nl)) { // Should never be empty.
       $award['nickname'] = $nl['nickname'];
       $award['lastName'] = $nl['lastName'];
       $nlsStatus = $this->nlsObj->getNlsStatus($mcid);
