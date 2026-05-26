@@ -3,7 +3,7 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -207,7 +207,7 @@ class ExportVoterContactReportsForm extends FormBase
     $fileName = self::NR_NLS_REPORTS.'_'.$rangeName.'_date'.'-'.$createDate.'.csv';
     $tempUri = $tempDir.'/'.$fileName;
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
-    $file = Drupal::service('file.repository')->writeData('', $tempUri, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $tempUri, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();

@@ -3,7 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -419,7 +419,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $createDate = date('Y-m-d-H-i-s', time());
     $fileType = ($type == 'call')?self::DD_CALL_FILE:self::DD_POSTCARD_FILE;
     $listUri = "public://temp/$fileType-$mcid-$createDate.html";
-    $file = Drupal::service('file.repository')->writeData('', $listUri, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $listUri, FileExists::Replace);
     $file->setTemporary();
     try {
       $file->save();

@@ -68,7 +68,7 @@ services:
 
   nlpservices.drupal_user:
     class: Drupal\nlpservices\DrupalUser
-    arguments: [ '@nlpservices.magic_word' ]
+    arguments: [ '@nlpservices.magic_word', '@request_stack' ]
 
   nlpservices.encryption:
     class: Drupal\nlpservices\NlpEncryption
@@ -148,7 +148,7 @@ services:
 
   nlpservices.magic_word:
     class: Drupal\nlpservices\MagicWord
-    arguments: [ '@config.factory' , '@database' ]
+    arguments: [ '@config.factory', '@database', '@nlpservices.encryption' ]
 
   nlpservices.mcid_recovery:
     class: Drupal\nlpservices\NlpMcidRecovery

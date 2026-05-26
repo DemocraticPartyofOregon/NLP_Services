@@ -5,7 +5,7 @@ namespace Drupal\nlpservices;
 require_once DRUPAL_ROOT . '/../vendor/autoload.php';
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 
@@ -37,7 +37,7 @@ class PdfGenerator {
     $mpdf->WriteHTML($html);
     // Create a Drupal temporary file to store the PDF.  It's deleted in a few days.
     $file_repository = Drupal::service('file.repository');
-    $file = $file_repository->writeData('Placeholder', $tempFile, FileSystemInterface::EXISTS_REPLACE);
+    $file = $file_repository->writeData('Placeholder', $tempFile, FileExists::Replace);
     if ($file) {
       $file_uri = $file->getFileUri();
     }

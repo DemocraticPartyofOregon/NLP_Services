@@ -4,6 +4,7 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -49,7 +50,7 @@ class NlpExportUserAccounts
     $contactDate = date('Y-m-d-H-i-s',time());
     $userUri = $temp_dir.'/'.'drupal_users'.'-'.$contactDate.'.csv';
     try {
-      $file = Drupal::service('file.repository')->writeData('', $userUri, FileSystemInterface::EXISTS_REPLACE);
+      $file = Drupal::service('file.repository')->writeData('', $userUri, FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.',$e->getMessage());
       return 'Oops!';

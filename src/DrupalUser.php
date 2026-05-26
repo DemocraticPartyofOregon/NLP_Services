@@ -3,29 +3,33 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\user\Entity\User;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Exception;
 
 class DrupalUser {
   public const int USER_ALL_MAX = 200;
-  
-  protected MagicWord $magicWordObj;
-  //protected array $columnNames = [];
 
-  public function __construct ($magicWordObj) {
+  protected MagicWord $magicWordObj;
+  protected RequestStack $requestStack;
+
+  public function __construct ($magicWordObj, $requestStack) {
     $this->magicWordObj = $magicWordObj;
-    //$this->columnNames = $this->getColumnNames();
+    $this->requestStack = $requestStack;
   }
-  
+
   public static function create(ContainerInterface $container): DrupalUser
   {
     return new static(
       $container->get('nlpservices.magic_word'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * Get the custom fields used by NLP as well as a few of the standard fields we use.
    * Returns a nice associative array of user information.
@@ -38,13 +42,12 @@ class DrupalUser {
     $roles = $user->getRoles();
     $uid = $user->id();
     $userInfo['uid'] = $uid;
-  
+
     $userInfo['email'] = $user->getEmail();
     $userInfo['userName'] = $user->getAccountName();
     $userInfo['roles'] = $roles;
     $userInfo['access'] = $user->getLastAccessedTime();
-    $userEntity = User::load($uid);
-    
+
     $userInfo['mcid'] = NULL;
     $userInfo['firstName'] =
     $userInfo['lastName'] =
@@ -53,30 +56,30 @@ class DrupalUser {
     $userInfo['hd'] =
     $userInfo['created'] =
     $userInfo['login'] = NULL;
-    
+
     // Attempt to get the mcid field.   If an error is thrown, the custom fields are not set up.
     try {
-      $mcid = $userEntity->get('field_mcid')->value;
+      $mcid = $user->get('field_mcid')->value;
     }
     catch (Exception $e) {
       $messenger = Drupal::messenger();
       $messenger->addError($e->getMessage());
       return $userInfo;
     }
-    
+
     // No need to catch errors as we can assume all were set up correctly if the mcid field is present.
     $userInfo['mcid'] = $mcid;
-    $userInfo['firstName'] = $userEntity->get('field_first_name')->value;
-    $userInfo['lastName'] = $userEntity->get('field_last_name')->value;
-    $userInfo['phone'] = $userEntity->get('field_phone')->value;
-    $userInfo['county'] = $userEntity->get('field_county')->value;
-    $userInfo['hd'] = $userEntity->get('field_hd')->value;
-    $userInfo['created'] = $userEntity->get('created')->value;
-    $userInfo['login'] = $userEntity->get('login')->value;
-    
+    $userInfo['firstName'] = $user->get('field_first_name')->value;
+    $userInfo['lastName'] = $user->get('field_last_name')->value;
+    $userInfo['phone'] = $user->get('field_phone')->value;
+    $userInfo['county'] = $user->get('field_county')->value;
+    $userInfo['hd'] = $user->get('field_hd')->value;
+    $userInfo['created'] = $user->get('created')->value;
+    $userInfo['login'] = $user->get('login')->value;
+
     return $userInfo;
   }
-  
+
   /**
    * Returns the NLP User account array for the current user.
    *
@@ -84,10 +87,11 @@ class DrupalUser {
    */
   public function getCurrentUser(): array
   {
-    $userCurrent = Drupal::currentUser();
-    return $this->extractUserInfo($userCurrent);
+    $uid = Drupal::currentUser()->id();
+    $user = User::load($uid);
+    return $this->extractUserInfo($user);
   }
-  
+
   /**
    * Returns TRUE if the user has admin permissions.
    *
@@ -104,10 +108,10 @@ class DrupalUser {
     if(in_array('administrator',$userRoles)) {return TRUE;}
     return FALSE;
   }
-  
+
   /**
    * Returns the NLP user array given the mcid.
-   * 
+   *
    * @param $mcid
    * @return array
    */
@@ -118,18 +122,18 @@ class DrupalUser {
       $userMcid = Drupal::entityTypeManager()
         ->getStorage('user')
         ->loadByProperties(['field_mcid.value' => $mcid,]);
-    } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException $e) {
+    } catch (InvalidPluginDefinitionException $e) {
       nlp_debug_msg('getUserByMcid', $e->getMessage());
-    } catch (Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+      return [];
+    } catch (PluginNotFoundException $e) {
       nlp_debug_msg('getUserByMcid', $e->getMessage());
       return [];
     }
-    //nlp_debug_msg('$userMcid',$userMcid);
     if(empty($userMcid)) {return [];}
     $user = reset($userMcid);
     return $this->extractUserInfo($user);
   }
-  
+
   /**
    * Returns the NLP user array given the userName.
    *
@@ -143,11 +147,11 @@ class DrupalUser {
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
   }
-  
+
   /**
    * Returns the NLP user array given the email.
    * Note, the email is required and unique for each NLP user.
-   * 
+   *
    * @param $email
    * @return array
    */
@@ -157,10 +161,10 @@ class DrupalUser {
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
   }
-  
+
   /**
    * Returns the NLP user array given the Drupal uid.
-   * 
+   *
    * @param $uid
    * @return array
    */
@@ -170,7 +174,7 @@ class DrupalUser {
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
   }
-  
+
   /**
    * Creates a new Drupal user account given information about the user.
    *
@@ -202,8 +206,8 @@ class DrupalUser {
    * Optional keys:
    * - access - the last access time for the user.
    * - created - the time the user was created.
-   * 
-   * 
+   *
+   *
    * Returns the NLP user array with the following keys:
    * - uid
    * - userName
@@ -220,7 +224,7 @@ class DrupalUser {
    * - access
    * - created
    * - status - indicates the status of the user creation.
-   * 
+   *
    * @param $user
    * @return array - simplified information from the newly created user entity.
    */
@@ -240,10 +244,10 @@ class DrupalUser {
       $addUserError['status'] = 'no email';
       return $addUserError;
     }
-    
+
     $email = $user['email'];
     $roles = $user['roles'];
-    
+
     $login = (empty($user['login']))?NULL:$user['login'];
     $values = [
       'name'                     => $userName,
@@ -255,7 +259,7 @@ class DrupalUser {
       'preferred_langcode'       => 'en',
       'preferred_admin_langcode' => 'en',
     ];
-    
+
     if(!empty($user['created'])) {
       $values['created'] = $user['created'];
     }
@@ -264,16 +268,16 @@ class DrupalUser {
       $newUser = Drupal::entityTypeManager()
         ->getStorage('user')
         ->create($values);
-    } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException $e) {
+    } catch (InvalidPluginDefinitionException $e) {
       nlp_debug_msg('addUser',$e->getMessage());
       $addUserError['status'] = 'add user error';
       return $addUserError;
-    } catch (Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+    } catch (PluginNotFoundException $e) {
       $addUserError['status'] = 'add user error';
       nlp_debug_msg('addUser',$e->getMessage());
       return $addUserError;
     }
-    
+
     try {
       $newUser->save();
     } catch (EntityStorageException $e) {
@@ -281,28 +285,27 @@ class DrupalUser {
       nlp_debug_msg('addUser',$e->getMessage());
       return $addUserError;
     }
-    
+
     $newUser = user_load_by_name($userName);
-    
+
     $newUser->set("field_first_name", $user['firstName']);
     $newUser->set("field_last_name", $user['lastName']);
     $newUser->set("field_county", $user['county']);
     $newUser->set("field_hd", $user['hd']);
     $newUser->set("field_phone", $user['phone']);
-   
+
     $mcid = (!empty($user['mcid']))?$user['mcid']:NULL;
     $newUser->set("field_mcid", $mcid);
     $newUser->activate();
-    
-    $roleIds = array_flip($roles);
-    foreach ($roleIds as $roleId) {
+
+    foreach (array_keys($roles) as $roleId) {
       $newUser->addRole($roleId);
     }
     if(!empty($user['access'])) {
       $newUser->setLastAccessTime($user['access']);
     }
     $newUser->save();
-    
+
     if(!empty($user['created'])) {
       $newUser->created = $user['created'];
     }
@@ -314,7 +317,7 @@ class DrupalUser {
       $user['status'] = 'error';
       return $user;
     }
-  
+
     $user = $this->extractUserInfo($newUser);
     $user['status'] = 'complete';
     return $user;
@@ -373,9 +376,7 @@ class DrupalUser {
           $user->setLastAccessTime($nlpValue);
           break;
         case 'created':
-          $user->created = $user['created'];
-          
-          
+          $user->created = $nlpValue;
           try {
             $user->save();
           } catch (EntityStorageException $e) {
@@ -384,7 +385,7 @@ class DrupalUser {
           break;
       }
     }
-  
+
     try {
       $user->save();
     }
@@ -393,14 +394,11 @@ class DrupalUser {
       $updatedUser['status'] = 'error';
       return $updatedUser;
     }
-    if(empty($user)) {
-      return ['status' => 'error'];
-    }
     $updatedUser = $this->extractUserInfo($user);
     $updatedUser['status'] = 'complete';
     return $updatedUser;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * createDrupalAccount
    *
@@ -423,7 +421,7 @@ class DrupalUser {
    * used in SyncActiveNlsBatch.php
    * @noinspection PhpUnused
    */
-  function  createDrupalAccount($userInfo): array
+  public function createDrupalAccount($userInfo): array
   {
     if(empty($userInfo['email'])) {return [];}
     $roles = (!empty($userInfo['roles']))?$userInfo['roles']:[ NLP_LEADER_ROLE_ID => NLP_LEADER_ROLE_LABEL,];
@@ -449,7 +447,7 @@ class DrupalUser {
     }
     return $this->addUser($account);
   }
-  
+
   /**
    * Returns a list of counties that have NLP users.
    *
@@ -472,7 +470,7 @@ class DrupalUser {
     ksort($countyNames);
     return $countyNames;
   }
-  
+
   /**
    * Returns a list of NLP user arrays for all users or those in a specific county.  Or, for
    * all counties if the searchCounty is empty.
@@ -483,41 +481,33 @@ class DrupalUser {
   public function getUsers($searchCounty=NULL): array
   {
     $query = Drupal::entityQuery('user')
-      ->accessCheck(FALSE)
-    ;
+      ->accessCheck(FALSE);
+    if (!empty($searchCounty)) {
+      $query->condition('field_county', $searchCounty);
+    }
     $result = $query->execute();
     $users = [];
     foreach ($result as $uid) {
       try {
         $user = Drupal::entityTypeManager()->getStorage('user')->load($uid);
-      } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException $e) {
+      } catch (InvalidPluginDefinitionException $e) {
         nlp_debug_msg('getUsers', $e->getMessage());
-      } catch (Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+        continue;
+      } catch (PluginNotFoundException $e) {
         nlp_debug_msg('getUsers', $e->getMessage());
         return [];
       }
-      if(empty($user)) {return [];}
-      $userEntity = User::load($uid);
-      $county = $userEntity->get('field_county')->value;
-      if (empty($searchCounty)) {
-        if (!empty($county)) {
-          $userArray = $this->extractUserInfo($user);
-          if($userArray['uid'] > 1) {
-            $users[$userArray['uid']] = $userArray;
-          }
-        }
-      } else {
-        if ($county == $searchCounty) {
-          $userArray = $this->extractUserInfo($user);
-          if($userArray['uid'] > 1) {
-            $users[$userArray['uid']] = $userArray;
-          }
-        }
+      if(empty($user)) { continue; }
+      $county = $user->get('field_county')->value;
+      if(empty($searchCounty) && empty($county)) { continue; }
+      $userArray = $this->extractUserInfo($user);
+      if($userArray['uid'] > 1) {
+        $users[$userArray['uid']] = $userArray;
       }
     }
     return $users;
   }
-  
+
   /**
    * Adds the NLP roles to a user account given the uid and an array of role ids.
    *
@@ -543,7 +533,7 @@ class DrupalUser {
     }
     return TRUE;
   }
-  
+
   /**
    * Removes the NLP roles from a user account given the uid and an array of role ids.
    *
@@ -566,7 +556,7 @@ class DrupalUser {
     }
     return TRUE;
   }
-  
+
   /**
    * Deleted a Drupal user account given the uid.
    *
@@ -577,9 +567,10 @@ class DrupalUser {
   {
     try {
       $userStorage = Drupal::entityTypeManager()->getStorage('user');
-    } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException $e) {
+    } catch (InvalidPluginDefinitionException $e) {
       nlp_debug_msg('deleteUser', $e->getMessage());
-    } catch (Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
+      return;
+    } catch (PluginNotFoundException $e) {
       nlp_debug_msg('deleteUser', $e->getMessage());
       return;
     }
@@ -591,7 +582,7 @@ class DrupalUser {
       nlp_debug_msg('Delete user error',$e->getMessage());
     }
   }
-  
+
   /**
    * Returns TRUE if the given plain-text password matches the stored password for the named user.
    *
@@ -624,7 +615,7 @@ class DrupalUser {
     }
     return $nlpRoles;
   }
-  
+
   /**
    * Returns a displayable string with the login credentials for an NLP user given an NLP user array or
    * alternatively, the mcid of the user.
@@ -638,7 +629,7 @@ class DrupalUser {
     if(empty($user)) {
       $user = $this->getUserByMcid($mcid);
     }
-    
+
     if(!isset($user['mcid'])) {
       $msg = var_export($user, true);
       Drupal::logger('nlpservices')->notice('User is missing NLP fields:'.' '.$msg);
@@ -649,9 +640,8 @@ class DrupalUser {
       $mcid = $user['mcid'];
       $credentials = "<b>$firstName $lastName</b> [$mcid] <br>";
     }
-    
-    $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
-    $serverUrl = 'https://'.$serverName;
+
+    $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     $credentials .= $serverUrl.'<br>';
     $password = 'unknown';
     if(!empty($mcid)) {
@@ -661,14 +651,14 @@ class DrupalUser {
     $credentials .= "Username: $userName <br>Password: $password<br><br>";
     return $credentials;
   }
-  
+
   /**
    * Returns a list of NLP users with the coordinator role for a specific county.
    *
    * @param $county
    * @return array
    */
-    public function getCoordinators($county): array
+  public function getCoordinators($county): array
   {
     $userList = [];
     $ids = Drupal::entityQuery('user')
@@ -677,15 +667,14 @@ class DrupalUser {
       ->condition('roles', 'nlp_coordinator')
       ->condition('field_county', $county, 'CONTAINS')
       ->execute();
-  
-    $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+
     foreach ($ids as $uid) {
-      $user = $drupalUserObj->getUserByUid($uid);
+      $user = $this->getUserByUid($uid);
       $userList[$user['mcid']] = $user;
     }
     return $userList;
   }
-  
+
   /**
    * purgeNlUsers
    *
@@ -704,7 +693,7 @@ class DrupalUser {
       foreach ($users as $user) {
         $roles = $user['roles'];
         if(count($roles)==2 AND isset($roles['authenticated']) AND isset($roles[NLP_LEADER_ROLE_ID])) {
-          $this->deleteUser($user['uuid']);
+          $this->deleteUser($user['uid']);
         }
       }
     }

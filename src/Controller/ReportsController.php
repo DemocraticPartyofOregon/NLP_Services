@@ -4,7 +4,7 @@ namespace Drupal\nlpservices\Controller;
 
 use Drupal;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpExportNlsStatus;
 use Drupal\nlpservices\NlpExportTurfStatus;
@@ -144,7 +144,7 @@ class ReportsController extends ControllerBase
     $tempDir = 'public://temp';
     $contactDate = date('Y-m-d-H-i-s',time());
     $tempFileName = "$tempDir/$statusType-$contactDate.csv";
-    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();

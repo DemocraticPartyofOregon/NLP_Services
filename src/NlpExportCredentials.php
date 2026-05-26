@@ -4,6 +4,7 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -13,15 +14,15 @@ class NlpExportCredentials
 {
   protected FileSystemInterface $fileSystem;
   protected Connection $connection;
-  protected DrupalUser $drupalUser;
-  protected MagicWord $magicWord;
+  protected MagicWord $magicWordObj;
+  protected DatabaseFunctions $dbFunctionsObj;
   
-  public function __construct($fileSystem, $connection, $drupalUser, $magicWord)
+  public function __construct($fileSystem, $connection, $magicWordObj, $dbFunctionsObj )
   {
     $this->fileSystem = $fileSystem;
     $this->connection = $connection;
-    $this->drupalUser = $drupalUser;
-    $this->magicWord = $magicWord;
+    $this->magicWordObj = $magicWordObj;
+    $this->dbFunctionsObj = $dbFunctionsObj;
   }
   
   public static function create(ContainerInterface $container): NlpExportCredentials
@@ -29,8 +30,8 @@ class NlpExportCredentials
     return new static(
       $container->get('file.system'),
       $container->get('database'),
-      $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.database_functions'),
     );
   }
   
@@ -51,7 +52,7 @@ class NlpExportCredentials
     $contactDate = date('Y-m-d-H-i-s', time());
     $userUri = $temp_dir . '/' . 'nl_user_credentials' . '-' . $contactDate . '.csv';
     try {
-      $file = Drupal::service('file.repository')->writeData('', $userUri, FileSystemInterface::EXISTS_REPLACE);
+      $file = Drupal::service('file.repository')->writeData('', $userUri, FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.', $e->getMessage());
       return 'Oops!';
@@ -66,16 +67,16 @@ class NlpExportCredentials
     
     $fh = fopen($userUri, "w");
     
-    $columns = $this->magicWord->getColumnNames();
+    $columns = $this->dbFunctionsObj->getColumnNames($this->magicWordObj::MAGIC_WORD_TBL);
     $key = array_search('magicWordEncrypted', $columns);
     if ($key !== false) {
       $columns[$key] = 'magicWord';
     }
     fputcsv($fh, $columns);
 
-    $mcids = $this->magicWord->getKeys();
+    $mcids = $this->magicWordObj->getKeys();
     foreach ($mcids as $mcid) {
-      $credentials = $this->magicWord->getCredentials($mcid);
+      $credentials = $this->magicWordObj->getCredentials($mcid);
       if (empty($credentials)) {continue;}
       foreach ($columns as $column) {
         $reordered[$column] = $credentials[$column];

@@ -4,7 +4,7 @@ namespace Drupal\nlpservices\Form;
 
 use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Exception;
@@ -159,7 +159,7 @@ the NLP Services Admin.</p>',
     $localFileUrl = $temp_dir . '/nls_list_' . $createDate . '.csv';
     try {
       $file = Drupal::service('file.repository')->writeData('', $localFileUrl,
-        FileSystemInterface::EXISTS_REPLACE);
+        FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.', $e->getMessage());
       return;

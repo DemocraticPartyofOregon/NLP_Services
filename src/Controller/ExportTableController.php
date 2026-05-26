@@ -3,8 +3,9 @@
 namespace Drupal\nlpservices\Controller;
 
 use Drupal;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\DatabaseFunctions;
 use Drupal\nlpservices\DrupalUser;
@@ -41,6 +42,10 @@ class ExportTableController extends ControllerBase
   public function exportTable(): array
   {
     $tableName = $_GET['tableName'];
+    $allowedTables = ['nlp_turf', 'nlp_turf_assignment', 'nlp_awards'];
+    if (!in_array($tableName, $allowedTables, true)) {
+      return ['#markup' => 'Invalid table name.'];
+    }
     $source = empty($_GET['source'])? '': $_GET['source'];
     
     $county = '';
@@ -59,7 +64,7 @@ class ExportTableController extends ControllerBase
     $tempFileName = "$tempDir/$tableName-$contactDate.csv";
     
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
-    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();
@@ -75,7 +80,7 @@ class ExportTableController extends ControllerBase
     $page = '';
     if($results) {
       $url = Drupal::service('file_url_generator')->generateAbsoluteString($tempFileName);
-      $page .= "<h2>Export of NLP Database table $tableName.</h2>";
+      $page .= '<h2>Export of NLP Database table ' . Html::escape($tableName) . '.</h2>';
       $page .= '<a href="'.$url.'">Right-click to download.  </a>';
     } else {
       $page .= "</h2><p>There are no records in the table.</p>";

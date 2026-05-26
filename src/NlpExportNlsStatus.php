@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Database\Connection;
@@ -88,7 +89,7 @@ class NlpExportNlsStatus
     ];
     $hdrCsv = implode(',', $hdr);
     $fileRepository = Drupal::service('file.repository');
-    $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileSystemInterface::EXISTS_REPLACE);
+    $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileExists::Replace);
     if ($file) {
       $fileUri = $file->getFileUri();
     } else {

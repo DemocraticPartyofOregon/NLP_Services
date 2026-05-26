@@ -3,7 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -214,7 +214,7 @@ class NlpResultsSummary
     $contactDate = date('Y-m-d-H-i-s',time());
     $tempUri = "$tempDir/$prefix-$contactDate.csv";
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
-    $file = Drupal::service('file.repository')->writeData('', $tempUri, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $tempUri, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();

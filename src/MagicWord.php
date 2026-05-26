@@ -11,25 +11,25 @@ class MagicWord {
   
   const string MAGIC_WORD_TBL = 'nlp_magic_word';
 
-  const string KEY = 'In order to create a more perfect union';
-  const string IV = 'Kamala Harris';
-
   // These fields are used to detect and update credentials when a change is made.
   const array CREDENTIAL_FIELDS = ['userName','email','magicWord','roles','access','created','vfid'];
 
   protected ConfigFactoryInterface $config;
   protected Connection $connection;
-  
-  public function __construct( $config,  $connection) {
+  protected NlpEncryption $nlpEncryptObj;
+
+  public function __construct( $config,  $connection, $nlpEncryptObj) {
     $this->config = $config;
     $this->connection = $connection;
+    $this->nlpEncryptObj = $nlpEncryptObj;
   }
-  
+
   public static function create(ContainerInterface $container): MagicWord
   {
     return new static(
       $container->get('config.factory'),
       $container->get('database'),
+      $container->get('nlpservices.encryption'),
     );
   }
   
@@ -50,21 +50,21 @@ class MagicWord {
   }
   
   /**
-   * @param $mcid
-   * @param $magicWord
+   * setMagicWord
+   *
+   * Save the NL's password in an encrypted form.
+   * '
+   * @param int $mcid
+   * @param string $magicWord
    * @return bool - the NL's password is saved in an encrypted form.
    */
-  public function setMagicWord($mcid,$magicWord): bool
+  public function setMagicWord( int $mcid, string $magicWord): bool
   {
-    $key = hash('sha256', self::KEY);
-    $iv = substr(hash('sha256', self::IV), 0, 16);
-    $output = openssl_encrypt($magicWord, "AES-256-CBC", $key, 0, $iv);
-    $magicWordEncrypted = base64_encode($output);
+    $magicWordEncrypted = $this->nlpEncryptObj->encrypt_decrypt('encrypt', $magicWord);
     try {
       $this->connection->merge(self::MAGIC_WORD_TBL)
         ->keys(array('mcid' => $mcid))
         ->fields(array(
-          //'magicWord' => $magicWord,
           'magicWordEncrypted' => $magicWordEncrypted,
         ))
         ->execute();
@@ -78,10 +78,14 @@ class MagicWord {
   }
   
   /**
-   * @param $mcid
+   * deleteMagicWord
+   *
+   * Delete the NL's password from the database.
+   * '
+   * @param int $mcid
    * @return void
    */
-  public function deleteMagicWord($mcid): void
+  public function deleteMagicWord( int $mcid ): void
   {
     try{
       $this->connection->delete(self::MAGIC_WORD_TBL)
@@ -95,10 +99,15 @@ class MagicWord {
   }
   
   /**
-   * @param $mcid
+   * getMagicWord
+   *
+   * Get the NL's password from the database.
+   * 1. If the NL has a password, decrypt it.
+   * 2. If the NL has no password, return an empty string.'
+   * @param int $mcid
    * @return string - the decrypted password for an NL.
    */
-  public function getMagicWord($mcid): string
+  public function getMagicWord( int $mcid ): string
   {
     try {
       $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
@@ -114,12 +123,14 @@ class MagicWord {
     $magicWordRecord = $result->fetchAssoc();
     if(empty($magicWordRecord)) {return '';}
     if(empty($magicWordRecord['magicWordEncrypted'])) {return '';}
-    $key = hash('sha256', self::KEY);
-    $iv = substr(hash('sha256', self::IV), 0, 16);
-    return openssl_decrypt(base64_decode($magicWordRecord['magicWordEncrypted']), "AES-256-CBC", $key, 0, $iv);
+    return $this->nlpEncryptObj->encrypt_decrypt('decrypt', $magicWordRecord['magicWordEncrypted']);
   }
   
   /**
+   * getKeys
+   *
+   * Get the NL's MCIDs.
+   * '
    * @return array
    */
   public function getKeys(): array
@@ -170,11 +181,16 @@ class MagicWord {
   }
   
   /**
-   * @param $mcid
+   * getCredentials
+   *
+   * Get NL credentials from the database.
+   * 1. If the NL has a password, decrypt it.
+   * 2. If the NL has no password, return an empty string.''
+   * @param int $mcid
    * @param bool $decrypted
    * @return array
    */
-  public function getCredentials($mcid, bool $decrypted=TRUE): array
+  public function getCredentials(int $mcid, bool $decrypted=TRUE): array
   {
     try {
       $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
@@ -190,14 +206,9 @@ class MagicWord {
     $credentials = $result->fetchAssoc();
     if(empty($credentials)) {return [];}
     if($decrypted) {
-      if(!empty($credentials['magicWordEncrypted'])) {
-        $key = hash('sha256', self::KEY);
-        $iv = substr(hash('sha256', self::IV), 0, 16);
-        $pw = openssl_decrypt(base64_decode($credentials['magicWordEncrypted']), "AES-256-CBC", $key, 0, $iv);
-        $credentials['magicWord'] = $pw;
-      } else {
-        $credentials['magicWord'] = '';  // The password has been forgotten, probably a symptom of a past bug.
-      }
+      $credentials['magicWord'] = !empty($credentials['magicWordEncrypted'])
+        ? $this->nlpEncryptObj->encrypt_decrypt('decrypt', $credentials['magicWordEncrypted'])
+        : '';  // The password has been forgotten, probably a symptom of a past bug.
       unset($credentials['magicWordEncrypted']);
     }
     
@@ -276,24 +287,19 @@ class MagicWord {
    * 5. If the email is already in use, add a number suffix, starting with 2 and incrementing
    *      until a unique email is found or we reach 10 attempts.
    *
-   * @param $credentials
+   * @param array $credentials
    * @return bool
    */
-  public function updateCredentials($credentials): bool
+  public function updateCredentials( array $credentials ): bool
   {
     if(!empty($credentials['magicWord'])) {
-      //if(!empty($credentials['magicWord'])) {
-        $key = hash('sha256', self::KEY);
-        $iv = substr(hash('sha256', self::IV), 0, 16);
-        $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
-        $credentials['magicWordEncrypted'] = base64_encode($output);
-      //}
+      $credentials['magicWordEncrypted'] = $this->nlpEncryptObj->encrypt_decrypt('encrypt', $credentials['magicWord']);
       unset($credentials['magicWord']);
     }
     $mcid = $credentials['mcid'];
     $current = $this->getCredentials($mcid,FALSE);
-    foreach($credentials as $key => $value) {
-      $current[$key] = $value;
+    foreach($credentials as $field => $value) {
+      $current[$field] = $value;
     }
     
     if(!empty($current['roles'])) {
@@ -308,10 +314,10 @@ class MagicWord {
    *
    * Delete NL credentials from the database.
    *
-   * @param $mcid
+   * @param int $mcid
    * @return void
    */
-  public function deleteCredentials($mcid): void
+  public function deleteCredentials( int $mcid ): void
   {
     try{
       $this->connection->delete(self::MAGIC_WORD_TBL)
@@ -329,25 +335,21 @@ class MagicWord {
    *
    * Create NL credentials in the database.
    *
-   * @param $credentials
+   * @param array $credentials
    * @return bool
    */
-  public function createCredentials($credentials): bool
+  public function createCredentials( array $credentials ): bool
   {
     if(isset($credentials['magicWord'])) {
-      if(!empty($credentials['magicWord'])) {
-        $key = hash('sha256', self::KEY);
-        $iv = substr(hash('sha256', self::IV), 0, 16);
-        $output = openssl_encrypt($credentials['magicWord'], "AES-256-CBC", $key, 0, $iv);
-        $credentials['magicWordEncrypted'] = base64_encode($output);
-      }
+      $credentials['magicWordEncrypted'] = !empty($credentials['magicWord'])
+        ? $this->nlpEncryptObj->encrypt_decrypt('encrypt', $credentials['magicWord'])
+        : '';
       unset($credentials['magicWord']);
     }
     if(!empty($credentials['roles'])) {
       $credentials['roles'] = json_encode($credentials['roles']);
     }
     $mcid = $credentials['mcid'];
-    //unset($credentials['mcid']);
     try {
       $this->connection->merge(self::MAGIC_WORD_TBL)
         ->key('mcid', $mcid)

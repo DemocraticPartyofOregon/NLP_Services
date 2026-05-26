@@ -4,7 +4,7 @@ namespace Drupal\nlpservices\Controller;
 
 use Drupal;
 use Drupal\Core\Controller\ControllerBase;
-use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileExists;
 use Drupal\nlpservices\NlpExportTurfStatus;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 //use Drupal\nlpservices\DatabaseFunctions;
@@ -76,7 +76,7 @@ class BasicTestController extends ControllerBase
     $tempFileName = "$tempDir/$statusType-$contactDate.csv";
     
     // Create a managed file for temporary use.  Drupal will delete after 6 hours.
-    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileSystemInterface::EXISTS_REPLACE);
+    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();
