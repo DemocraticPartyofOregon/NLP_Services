@@ -4,31 +4,21 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
-use stdClass;
 
 class ApiVoter
 {
   
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
+  protected ApiKeyManagement $apiKeyManagementObj;
   
-  const array VOTER_SEARCH_FIELDS = [
-    'addressLine1',
-    'addressLine2',
-    'city',
-    'stateOrProvince',
-    'zipOrPostalCode',
-    'countryCode',
-    'type',
-  ];
-  
-  public function __construct($client, $nlpConfigurationObj ) {
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiVoter
@@ -36,6 +26,7 @@ class ApiVoter
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management')
     );
   }
   
@@ -140,7 +131,7 @@ class ApiVoter
   /**
    * getApiVoter
    *
-   * @param $vanid
+   * @param int $vanid
    * @return array - array of voter information.
    *
    * This function retrieves the voter information from the API using the VANID.
@@ -156,9 +147,9 @@ class ApiVoter
    * Year is the two-digit year, and Participation is @Y for Yes and@NforNo.
    *
    */
-  public function getApiVoter($vanid): array
+  public function getApiVoter(int $vanid): array
   {
-    $committeeKey = $this->stateCommitteeKey;
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -167,11 +158,18 @@ class ApiVoter
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
     try {
       $request = $this->client->get($url);
-      $result = json_decode($request->getBody(), true);
+      $result = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
+      }
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getApiVoter', $e->getMessage());
+      return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getApiVoter',$e->getMessage());
+      nlp_debug_msg('getApiVoter', $e->getMessage());
       return [];
     }
+    if (empty($result)) {return [];}
     $voterAddress = $voter = [];
     $voter['vanid'] = $result['vanId'];
     $voter['firstName'] = $result['firstName'];
@@ -294,12 +292,11 @@ class ApiVoter
     $voter['votingHistory'] = $voting;
     return $voter;
   }
-  
-  
+
   /**
    * findVotingRecord
    *
-   * @param $electionRecords
+   * @param array $electionRecords
    * @return array - array of the most recent voting records.
    *
    * This function finds the most recent voting records for the voter.
@@ -312,12 +309,12 @@ class ApiVoter
    *
    * The @ is used for a search to add color to the voting history.
    */
-  private function findVotingRecord($electionRecords): array
+  private function findVotingRecord(array $electionRecords): array
   {
     $config = Drupal::service('config.factory')->get('nlpservices.configuration');
     $electionDates = $config->get('nlpservices-election-configuration');
     $cycle = $electionDates['nlp_election_cycle'];
-    list($year,$month,$type) = explode('-',$cycle);
+    [$year, $month, $type] = explode('-', $cycle);
     // For a general election in an even year, look back starting with the primary else look back starting with the
     // previous general election.
     if($year % 2 == 0){
@@ -360,13 +357,13 @@ class ApiVoter
     $mostRecent = [];
     foreach ($electionRecords as $election) {
       $electionRecordType = $election['electionRecordType'];
-      list($year,$electionType) = explode('-', $electionRecordType);
+      [$year, $electionType] = explode('-', $electionRecordType);
       $year = trim($year);
       $electionType = trim($electionType);
       if($year < 2008) {continue;}  // Too old.
       $type = substr($electionType,0,1);
       $twoDigitYear = substr($year,-2);
-      if($type == "G" OR $type == "P") {
+      if($type == "G" || $type == "P") {
         $electionTypeCode = ($type == "G")?1:0;
         $electionIndex = $year.$electionTypeCode;
         $electionArrays[$electionIndex]['type'] = $type;
@@ -395,7 +392,7 @@ class ApiVoter
    * It returns an array with the following keys:
    * vanid, firstName, lastName, nickname, dateOfBirth, age, party
    */
-  public function getVoters($listVoters): array
+  public function getVoters(array $listVoters): array
   {
     $state = $this->nlpConfigurationObj->getStateName();
     $voters = [];
@@ -448,77 +445,31 @@ class ApiVoter
    * It returns TRUE if the voter exists, FALSE otherwise.
    * @noinspection PhpUnused
    */
-  public function voterExists($vanid): bool
+  public function voterExists(int $vanid): bool
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
-    
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+
     $url = 'https://'.$user.':'.$apiKey.'|0@'.$apiURL.'/people/'.$vanid;
     try {
-      $this->client->get($url);  // Catch exception if a voter does not exist in the database.
-    } catch (Exception $e) {
+      $this->client->get($url);
+    } catch (GuzzleException $e) {
       $code = $e->getCode();
-      if($code == 404) {return FALSE;}
-      nlp_debug_msg('voterExists',$e->getMessage());
+      if ($code == 404) {return FALSE;}
+      nlp_debug_msg('voterExists', $e->getMessage());
+      return FALSE;
+    } catch (Exception $e) {
+      nlp_debug_msg('voterExists', $e->getMessage());
       return FALSE;
     }
     return TRUE;
   }
   
-  /**
-   * @param $address
-   * @return array
-   */
-  public function getVotersByAddressOld(string $address, string $county=''): array
+  public function getVotersByAddress(array $address, string $committee=''): array
   {
-    if(!empty($county)) {
-      $countyCommitteeKey = $this->nlpConfigurationObj->getCountyKey( $county );
-      nlp_debug_msg('$countyCommitteeKey',$countyCommitteeKey);;
-      $apiKey = $countyCommitteeKey['API Key'];
-      $apiURL = $countyCommitteeKey['Url'];
-      $user = $countyCommitteeKey['App Name'];
-    } else {
-      $apiKey = $this->stateCommitteeKey['API Key'];
-      $apiURL = $this->stateCommitteeKey['Url'];
-      $user = $this->stateCommitteeKey['App Name'];
-    }
-    
-    $searchAddressObj = new stdClass();
-    foreach ($this::VOTER_SEARCH_FIELDS as $field) {
-      if(!empty($address[$field])) {
-        $searchAddressObj->$field = $address[$field];
-      }
-    }
-    //$searchAddressObj->type = 'Voting';
-    $searchObj = new stdClass();
-    $searchObj->vanId = 1764176;
-    $searchObj->addresses = [$searchAddressObj];
-    
-    $dataJson = json_encode($searchObj);
-    //nlp_debug_msg('$body',$dataJson);
-    
-    $postUrl = "https://$user:$apiKey|0@$apiURL/people/find";
-    nlp_debug_msg('$postUrl',$postUrl);
-    
-    $headers = ['Content-Type' => 'application/json', "Accept: application/json, Expect:"];
-    //nlp_debug_msg('$headers', $headers);
-    try {
-      $response = $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('getVotersByAddress', $e->getMessage());
-      return [];
-    }
-    $body = (string) $response->getBody();
-    //nlp_debug_msg('$body',$body);
-    //$dataObj = json_decode($body);
-    return [];
-  }
-  
-  
-  public function getVotersByAddress(array $address, string $county=''): array
-  {
-    $committeeKey = (empty($county))?$this->stateCommitteeKey:$this->nlpConfigurationObj->getCountyKey($county);
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -527,22 +478,22 @@ class ApiVoter
     $url = "$baseUrl/people?"
       . "streetAddress=" . urlencode($address['addressLine1'])
       . "&city=" . urlencode($address['city']);
-      //. "&stateOrProvince=" . urlencode($address['stateOrProvince']);
-    //nlp_debug_msg('$url',$url);;
-    //$post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid.$expandOptions;
     try {
       $request = $this->client->get($url);
-      $results = json_decode($request->getBody(), true);
-    } catch (Exception $e) {
-      $code = $e->getCode();
-      if($code == 404) {return [];}
-      if($code==401) {
-        return ['Invalid key'];
+      $results = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
       }
-      nlp_debug_msg('nlApiCall',$e->getMessage());
+    } catch (GuzzleException $e) {
+      $code = $e->getCode();
+      if ($code == 404) {return [];}
+      if ($code == 401) {return ['Invalid key'];}
+      nlp_debug_msg('getVotersByAddress', $e->getMessage());
+      return [];
+    } catch (Exception $e) {
+      nlp_debug_msg('getVotersByAddress', $e->getMessage());
       return [];
     }
-    //nlp_debug_msg('$results',$results);
     if(empty($results)) {return [];}
     return $results;
   }

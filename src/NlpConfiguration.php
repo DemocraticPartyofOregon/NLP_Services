@@ -76,24 +76,6 @@ class NlpConfiguration
   }
 
   /**
-   * getStateKey
-   *
-   * Get the API credentials for the state committee.
-   *
-   * @return array
-   *   Returns the API credentials for keys:
-   * - API Key
-   * - API userName
-   * - API Password
-   *
-   */
-  public function getStateKey(): array
-  {
-    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
-    return (empty($stateCommitteeKey))?[]: $stateCommitteeKey;
-  }
-
-  /**
    * getActivistCode
    *
    * Get the Activist Code associated with the given code name.

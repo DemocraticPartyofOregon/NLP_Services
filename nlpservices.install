@@ -219,7 +219,7 @@ function nlpservices_schema(): array
     'description' => 'Status of job request to VoteBuilder.',
     'fields' => [
       'eventId' => [ 'type' => 'serial', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => 'Unique id to associate response to request.', ],
-      'county' => [ 'type' => 'varchar', 'length' => 32, ],
+      'committee' => [ 'type' => 'varchar', 'length' => 32, ],
       'listId' => [ 'type' => 'int', 'unsigned' => TRUE, 'description' => 'Id of list we requested from VoteBuilder.'],
       'startTime' => [ 'type' => 'int', 'unsigned' => TRUE, ],
       'endTime' => [ 'type' => 'int', 'unsigned' => TRUE, ],

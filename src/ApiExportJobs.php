@@ -5,6 +5,7 @@ use Drupal;
 use Drupal\Core\Database\Connection;
 use Exception;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use stdClass;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -15,13 +16,13 @@ class ApiExportJobs {
   protected ClientInterface $client;
   protected Connection $connection;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  
-  public function __construct($client,  $connection, $nlpConfigurationObj) {
+  protected ApiKeyManagement $apiKeyManagementObj;
+
+  public function __construct($client,  $connection, $nlpConfigurationObj, $apiKeyManagementObj) {
     $this->client = $client;
     $this->connection = $connection;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiExportJobs
@@ -30,6 +31,7 @@ class ApiExportJobs {
       $container->get('http_client'),
       $container->get('database'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -40,28 +42,28 @@ class ApiExportJobs {
    * The export job signals it is finished by a GET to the uri: nlp-webhook-callback.
    *
    * Returns an array with the following keys:
-   *   result - 'ok' or 'error'
-   *   savedListId - ID of the saved list or turf.
-   *   downloadUrl - URL to download the file.
-   *   eventId - code to identify the export job.
-   *   msg - error message if the result is 'error'.
+   *   `result` - 'ok' or 'error'
+   *   `savedListId` - ID of the saved list or turf.
+   *   `downloadUrl` - URL to download the file.
+   *   `eventId` - code to identify the export job.
+   *   `msg` - error message if the result is 'error'.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $database - 0=VoterFile, 1=MyCampaign
    * @param int $listId - either the ID for a saved list or a turf associated with a Map Region.
    * @param string|array $activistCode - a single code or an array of codes, eg 'NLPVoterAC'.
    * @return array
    */
-  public function getExportJobs(string $county,int $database,int $listId,string|array $activistCode='' ): array
+  public function getExportJobs(string $committee,int $database,int $listId,string|array $activistCode='' ): array
   {
     global $base_url;
-    $req['county'] = $county;
+    $req['committee'] = $committee;
     $req['listId'] = $listId;
     $req['startTime'] = time();
     $req['endTime'] = 0;
     $eventId = $this->insertExportJob($req);
     
-    $committeeKey = (empty($county))?$this->stateCommitteeKey:$this->nlpConfigurationObj->getCountyKey($county);
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -71,7 +73,7 @@ class ApiExportJobs {
     $jobObj = new stdClass();
     $jobObj->savedListId = $listId;
     $jobObj->type = 4;
-    $jobObj->webhookUrl = "$base_url/nlp-webhook-callback?county=$county&listId=$listId&eventId=$eventId";
+    $jobObj->webhookUrl = "$base_url/nlp-webhook-callback?committee=$committee&listId=$listId&eventId=$eventId";
     
     if(!empty($activistCode)) {
       $activistCodeNames = (is_array($activistCode))?$activistCode:[$activistCode,];
@@ -89,7 +91,12 @@ class ApiExportJobs {
     $dataJson = json_encode($jobObj);
     $headers = ['Content-Type' => 'application/json'];
     try {
-      $response = $this->client->post($post_url, ['headers' => $headers, 'body' => $dataJson]);
+      try {
+        $response = $this->client->post($post_url, ['headers' => $headers, 'body' => $dataJson]);
+      } catch (GuzzleException $e) {
+        nlp_debug_msg('getExportJobs', $e->getMessage());
+        return [];
+      }
     } catch (Exception $e) {
       $errorMessage = $e->getMessage();
       $lostList = str_contains($errorMessage, "must be a valid saved list ID");
@@ -130,10 +137,10 @@ class ApiExportJobs {
    * The entry is deleted when the export job is finished.
    *
    * $req is an array with the following keys:
-   *   county
-   *   listId - ID of the turf or saved list.
-   *   startTime
-   *   endTime
+   *   'committee'
+   *   'listId' - ID of the turf or saved list.
+   *   'startTime'
+   *   'endTime'
    *
    * @param array $req
    * @return int - ID for this export job.  Used to identify the end of the job.

@@ -12,6 +12,7 @@ use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\ApiMapRegions;
 
 /**
  * @noinspection PhpUnused
@@ -26,16 +27,18 @@ class DisplayTurfsForm extends FormBase
   protected NlpTurfDisplay $turfDisplayObj;
   protected NlpSessionData $sessionDataObj;
   protected ApiFolders $foldersObj;
+  protected ApiMapRegions $apiMapRegionObj;
 
 
   public function __construct(   $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
-                                 $sessionDataObj, $foldersObj) {
+                                 $sessionDataObj, $foldersObj, $apiMapRegionObj ) {
     $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
     $this->turfDisplayObj = $turfDisplayObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->foldersObj = $foldersObj;
+    $this->apiMapRegionObj = $apiMapRegionObj;
   }
 
   /**
@@ -44,12 +47,13 @@ class DisplayTurfsForm extends FormBase
   public static function create(ContainerInterface $container): DisplayTurfsForm
   {
     return new static(
-        $container->get('nlpservices.turfs'),
-        $container->get('nlpservices.awards'),
-        $container->get('nlpservices.search_bar'),
-        $container->get('nlpservices.turf_display'),
-        $container->get('nlpservices.session_data'),
-        $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.turfs'),
+      $container->get('nlpservices.awards'),
+      $container->get('nlpservices.search_bar'),
+      $container->get('nlpservices.turf_display'),
+      $container->get('nlpservices.session_data'),
+      $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.api_map_regions'),
     );
   }
 
@@ -98,7 +102,7 @@ class DisplayTurfsForm extends FormBase
     }
 
     // Update the latest minivan information.
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->apiMapRegionObj->updateMinivanInfo($county, $turfArray);
 
     // Create the table data for building the list of turfs.
     $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray,'display');

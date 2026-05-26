@@ -7,7 +7,7 @@ services:
     # noinspection ComposeUnknownKeys
     class: Drupal\nlpservices\ApiActivistCodes
     # noinspection ComposeUnknownKeys
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.api_folders:
     class: Drupal\nlpservices\ApiFolders
@@ -22,21 +22,26 @@ services:
     class: Drupal\nlpservices\ApiKeyManagement
     arguments: [ '@nlpservices.encryption' ]
 
+  nlpservices.api_map_regions:
+    class: Drupal\nlpservices\ApiMapRegions
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
+
   nlpservices.api_nls:
     class: Drupal\nlpservices\ApiNls
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.api_saved_lists:
     class: Drupal\nlpservices\ApiSavedLists
-    arguments: [ '@http_client' , '@nlpservices.turfs', '@nlpservices.nls' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.turfs', '@nlpservices.nls' , '@nlpservices.configuration',
+                 '@nlpservices.api_key_management']
 
   nlpservices.api_voter:
     class: Drupal\nlpservices\ApiVoter
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.export_jobs:
     class: Drupal\nlpservices\ApiExportJobs
-    arguments: [ '@http_client' , '@database' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@database' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.folders:
     class: Drupal\nlpservices\ApiFolders
@@ -44,15 +49,16 @@ services:
 
   nlpservices.response_codes:
     class: Drupal\nlpservices\ApiResponseCodes
-    arguments: [ '@http_client' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   nlpservices.saved_lists:
     class: Drupal\nlpservices\ApiSavedLists
-    arguments: [ '@http_client' , '@nlpservices.turfs', '@nlpservices.nls' , '@nlpservices.configuration' ]
+    arguments: [ '@http_client' , '@nlpservices.turfs', '@nlpservices.nls' , '@nlpservices.configuration',
+                 '@nlpservices.api_key_management']
 
   nlpservices.survey_question:
     class: Drupal\nlpservices\ApiSurveyQuestion
-    arguments: [ '@http_client' , '@nlpservices.configuration']
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
   # Drupal services
 
@@ -273,7 +279,8 @@ services:
     arguments: [ '@database' , '@file_system', '@nlpservices.nls',
                  '@nlpservices.paths', '@nlpservices.voters',
                  '@nlpservices.activist_codes', '@nlpservices.configuration',
-                 '@nlpservices.reports', '@nlpservices.matchbacks', '@nlpservices.api_folders' ]
+                 '@nlpservices.reports', '@nlpservices.matchbacks', '@nlpservices.api_folders',
+                 '@nlpservices.api_map_regions']
 
   nlpservices.turf_map_regions:
     class: Drupal\nlpservices\NlpTurfMapRegions

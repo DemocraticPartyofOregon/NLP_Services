@@ -3,11 +3,12 @@
 namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 use stdClass;
 
-class      ApiSurveyQuestion
+class ApiSurveyQuestion
 {
   const string SURVEY_RESPONSE = 'SurveyResponse';
   const string ACTIVIST_CODE = 'ActivistCode';
@@ -15,11 +16,11 @@ class      ApiSurveyQuestion
   
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  public function __construct($client, $nlpConfigurationObj) {
+  protected ApiKeyManagement $apiKeyManagementObj;
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiSurveyQuestion
@@ -27,6 +28,7 @@ class      ApiSurveyQuestion
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -58,22 +60,29 @@ class      ApiSurveyQuestion
    * @return array
    * @noinspection GrazieStyle
    */
-  public function  getApiSurveyQuestions( string $cycleYear, int $database=0): array
+  public function getApiSurveyQuestions(string $cycleYear, int $database=0): array
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
    
     $url = "https://$user:$apiKey|$database@$apiURL/surveyQuestions";
     try {
       $request = $this->client->get($url);
-      $result = json_decode($request->getBody(), true);
+      $result = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
+      }
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getApiSurveyQuestions', $e->getMessage());
+      return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getApiSurveyQuestions',$e->getMessage());
+      nlp_debug_msg('getApiSurveyQuestions', $e->getMessage());
       return [];
     }
     $questionsArray = [];
-    foreach ($result['items'] as $question) {
+    foreach ($result['items'] ?? [] as $question) {
       $questionCycle = $question['cycle'];
       $responses = [];
       if($questionCycle==$cycleYear) {
@@ -101,7 +110,6 @@ class      ApiSurveyQuestion
    * - rid - the response ID
    * - phoneNumber - the phone number
    * - phoneId - the phone ID
-   * '
    *
    * @param array $surveyResponse
    * @param string $committeeName - The name of the county or if empty the state committee is used.
@@ -111,16 +119,10 @@ class      ApiSurveyQuestion
    */
   public function reportSurveyResponse(array $surveyResponse, string $committeeName=''): void
   {
-    if(empty($committeeName)) {
-      $apiKey = $this->stateCommitteeKey['API Key'];
-      $apiURL = $this->stateCommitteeKey['Url'];
-      $user = $this->stateCommitteeKey['App Name'];
-    } else {
-      $committeeKey = $this->nlpConfigurationObj->getCountyKey($committeeName);
-      $apiKey = $committeeKey['API Key'];
-      $apiURL = $committeeKey['Url'];
-      $user = $committeeKey['App Name'];
-    }
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committeeName);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
@@ -177,46 +179,24 @@ class      ApiSurveyQuestion
         break;
     }
 
-    // Something is wrong!
     if(empty($cid)) {
       $cid = $canvassResponseCodes['Walk']['code'];
     }
-
 
     // If the type is set, then we have a response to a survey question to record.
     if(!empty($type)) {
       $responseObj->type = $type;
       $responseObj->surveyQuestionId = $qid;
       $responseObj->surveyResponseId = $rid;
-      
-      $canvassContextObj->dateCanvassed = $surveyResponse['dateCanvassed'];
-      $canvassContextObj->contactTypeId = $cid;
-      $canvassContextObj->inputTypeId = 11;
-      if(!empty($surveyResponse['phoneId'])) {
-        $canvassContextObj->phoneId = $surveyResponse['phoneId'];
-      }
-      if(!empty($surveyResponse['phoneNumber'])) {
-        $canvassContextObj->phone = ["phoneNumber" => $surveyResponse['phoneNumber'],];
-      }
-      
-      $canvassResponseObj->canvassContext = $canvassContextObj;
+
+      $surveyResponse = $this->getArr($surveyResponse, $canvassContextObj, $cid, $canvassResponseObj);
       $canvassResponseObj->resultCodeId = NULL;
       $canvassResponseObj->responses = [ $responseObj,];
     
     } else {
       
       // Report a voter contact attempt.
-      $canvassContextObj->dateCanvassed = $surveyResponse['dateCanvassed'];
-      $canvassContextObj->contactTypeId = $cid;
-      $canvassContextObj->inputTypeId = 11;
-      // A phone number is required for certain contact attempts.
-      if(!empty($surveyResponse['phoneId'])) {
-        $canvassContextObj->phoneId = $surveyResponse['phoneId'];
-      }
-      if(!empty($surveyResponse['phoneNumber'])) {
-        $canvassContextObj->phone = ["phoneNumber" => $surveyResponse['phoneNumber'],];
-      }
-      $canvassResponseObj->canvassContext = $canvassContextObj;
+      $surveyResponse = $this->getArr($surveyResponse, $canvassContextObj, $cid, $canvassResponseObj);
       $canvassResponseObj->resultCodeId = $rid;
       $canvassResponseObj->responses = NULL;
       
@@ -227,16 +207,45 @@ class      ApiSurveyQuestion
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
     
     $dataJson = json_encode( $canvassResponseObj );
-    $headers = ['Content-Type' => 'application/json', "Accept: application/json, Expect:"];
+    $headers = [
+      'Content-Type' => 'application/json',
+      'Accept'       => 'application/json',
+      'Expect'       => '',
+    ];
     try {
       $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiSurveyResponse', $e->getMessage());
-      nlp_debug_msg('setApiSurveyResponse', "postUrl: $postUrl");
-      nlp_debug_msg('setApiSurveyResponse', "dataJson: $dataJson");
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('reportSurveyResponse', $e->getMessage());
+      nlp_debug_msg('reportSurveyResponse', "postUrl: $postUrl");
+      nlp_debug_msg('reportSurveyResponse', "dataJson: $dataJson");
       nlp_debug_msg('$surveyResponse', $surveyResponse);
+    } catch (Exception $e) {
+      nlp_debug_msg('reportSurveyResponse', $e->getMessage());
     }
 
   }
-  
+
+  /**
+   * @param array $surveyResponse
+   * @param stdClass $canvassContextObj
+   * @param mixed $cid
+   * @param stdClass $canvassResponseObj
+   * @return array
+   */
+  private function getArr(array $surveyResponse, stdClass $canvassContextObj, mixed $cid, stdClass $canvassResponseObj): array
+  {
+    $canvassContextObj->dateCanvassed = $surveyResponse['dateCanvassed'];
+    $canvassContextObj->contactTypeId = $cid;
+    $canvassContextObj->inputTypeId = 11;
+    if (!empty($surveyResponse['phoneId'])) {
+      $canvassContextObj->phoneId = $surveyResponse['phoneId'];
+    }
+    if (!empty($surveyResponse['phoneNumber'])) {
+      $canvassContextObj->phone = ["phoneNumber" => $surveyResponse['phoneNumber'],];
+    }
+
+    $canvassResponseObj->canvassContext = $canvassContextObj;
+    return $surveyResponse;
+  }
+
 }

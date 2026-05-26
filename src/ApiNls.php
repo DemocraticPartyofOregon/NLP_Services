@@ -2,9 +2,10 @@
 
 namespace Drupal\nlpservices;
 
+use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
-use GuzzleHttp\ClientInterface;
 
 /**
  * @noinspection PhpUnused
@@ -13,17 +14,19 @@ class ApiNls {
   
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  public function __construct($client, $nlpConfigurationObj) {
+  private ApiKeyManagement $apiKeyManagementObj;
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();}
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
+  }
   
   public static function create(ContainerInterface $container): ApiNls
   {
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -32,20 +35,16 @@ class ApiNls {
    *
    * Make an API call to get the record from MyCampaign associated with the mcid.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $mcid - the vanid in MyCampaign for the person.
    * @param string  $expandOptions - options for additional information, like
    *               '?$expand=phones, emails, addresses, districts, preferences, externalIds'
    * @param bool $errorStatus - set to true to check for an invalid key.
    * @return array - results body of API call.
    */
-  private function nlApiCall(string $county, int $mcid, string $expandOptions, bool $errorStatus=FALSE): array
+  private function nlApiCall(string $committee, int $mcid, string $expandOptions, bool $errorStatus=FALSE): array
   {
-    if(empty($county)) {
-      $committeeKey = $this->stateCommitteeKey;
-    } else {
-      $committeeKey = $this->nlpConfigurationObj->getCountyKey($county);
-    }
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -53,18 +52,23 @@ class ApiNls {
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid.$expandOptions;
     try {
       $request = $this->client->get($post_url);
-      $results = json_decode($request->getBody(), true);
-    } catch (Exception $e) {
+      $results = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
+      }
+      return $results ?? [];
+    } catch (GuzzleException $e) {
       $code = $e->getCode();
-      if($code == 404) {return [];}
-      if($errorStatus AND $code==401) {
+      if ($code == 404) {return [];}
+      if ($errorStatus && $code == 401) {
         return ['Invalid key'];
       }
-      nlp_debug_msg('nlApiCall',$e->getMessage());
+      nlp_debug_msg('nlApiCall', $e->getMessage());
+      return [];
+    } catch (Exception $e) {
+      nlp_debug_msg('nlApiCall', $e->getMessage());
       return [];
     }
-    if(empty($results)) {return [];}
-    return $results;
   }
   
   /**
@@ -72,25 +76,28 @@ class ApiNls {
    *
    * Check to see if a record exists in MyCampaign for the mcid.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $mcid
    * @return bool
    * @noinspection PhpUnused
    * Used in ImportCredentialsForm
    */
-  public function nlExists(string $county, int $mcid): bool
+  public function nlExists(string $committee, int $mcid): bool
   {
-    $committeeKey = $this->nlpConfigurationObj->getCountyKey($county);
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid;
     try {
       $this->client->get($post_url);
-    } catch (Exception $e) {
+    } catch (GuzzleException $e) {
       $code = $e->getCode();
-      if($code == 404) {return FALSE;}
-      nlp_debug_msg('nlApiCall',$e->getMessage());
+      if ($code == 404) {return FALSE;}
+      nlp_debug_msg('nlExists', $e->getMessage());
+      return FALSE;
+    } catch (Exception $e) {
+      nlp_debug_msg('nlExists', $e->getMessage());
       return FALSE;
     }
     return TRUE;
@@ -120,17 +127,17 @@ class ApiNls {
    * vfid - VoterFile ID if it exists. If missing, the volunteer's record is not linked to
    *         a record in the VoterFile.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $mcid
    * @param bool $errorStatus - set to true to check for an invalid key.
    * @return array - simplified array of information about a volunteer in MyCampaign.
    */
-  public function getApiNls(string $county, int $mcid, bool $errorStatus=FALSE): array
+  public function getApiNls(string $committee, int $mcid, bool $errorStatus=FALSE): array
   {
     $expandOptions = '?$expand=phones,emails,addresses,districts,preferences,externalIds';
-    $result = $this->nlApiCall($county,$mcid,$expandOptions, $errorStatus);
+    $result = $this->nlApiCall($committee,$mcid,$expandOptions, $errorStatus);
     if(empty($result)) {return [];}
-    if(!empty($result[0]) AND $result[0] == 'Invalid key') {return $result;}
+    if(!empty($result[0]) && $result[0] == 'Invalid key') {return $result;}
     $nl = [];
     $nl['mcid'] = $result['vanId'];
     $nl['firstName'] = $result['firstName'];
@@ -145,8 +152,8 @@ class ApiNls {
           $nl['address'] = $address['addressLine1'];
           $nl['city'] = $address['city'];
           $nl['zip'] = '';
-          if(!empty($nl['zipOrPostalCode'])) {
-            $zipOrPostalCode = $nl['zipOrPostalCode'];
+          if(!empty($address['zipOrPostalCode'])) {
+            $zipOrPostalCode = $address['zipOrPostalCode'];
             $zipParts = explode("-",$zipOrPostalCode);
             $nl['zip'] = $zipParts[0];
           }
@@ -219,7 +226,7 @@ class ApiNls {
   /**
    * apiKeyVerify
    *
-   * Verify that the API key is valid by accessing a known mcid in MyCampaign..
+   * Verify that the API key is valid by accessing a known mcid in MyCampaign.
    *
    * @param array $committeeKey
    * @param int $mcid
@@ -233,11 +240,14 @@ class ApiNls {
     $postUrl = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid;
     try {
       $this->client->get($postUrl);
-    } catch (Exception $e) {
+    } catch (GuzzleException $e) {
       $code = $e->getCode();
-      if($code == 404) {return 'Invalid mcid';}
-      if($code==401) {return 'Invalid key';}
-      nlp_debug_msg('apiKeyVerify',$e->getMessage());
+      if ($code == 404) {return 'Invalid mcid';}
+      if ($code == 401) {return 'Invalid key';}
+      nlp_debug_msg('apiKeyVerify', $e->getMessage());
+      return 'Invalid key';
+    } catch (Exception $e) {
+      nlp_debug_msg('apiKeyVerify', $e->getMessage());
       return 'Invalid key';
     }
     return 'ok';

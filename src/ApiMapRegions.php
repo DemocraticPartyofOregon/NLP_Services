@@ -2,8 +2,8 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -12,12 +12,12 @@ class ApiMapRegions
 {
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
+  protected ApiKeyManagement $apiKeyManagementObj;
   private array $mapRegions;
-  public function __construct($client, $nlpConfigurationObj ) {
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiMapRegions
@@ -25,10 +25,10 @@ class ApiMapRegions
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
-  
-  
+
   /**
    * mapRegionOptions
    *
@@ -37,14 +37,14 @@ class ApiMapRegions
    * map region options where the key is the map region ID and the value is the
    * map region name.  The first element in the array is 'all' => 'All'.
    *
-   * @param $county
+   * @param $committee
    * @param $folderId
    * @return array
    */
-  public function mapRegionOptions($county,$folderId): array
+  public function mapRegionOptions($committee,$folderId): array
   {
-    if(empty($county)) {return [];}
-    $mapRegionInfo = $this->getMapRegionInfo($county,$folderId);
+    if(empty($committee)) {return [];}
+    $mapRegionInfo = $this->getMapRegionInfo($committee,$folderId);
     $mapOptions = array_map(function ($mapRegion) {
       return $mapRegion['mapRegionName'];
     }, $mapRegionInfo);
@@ -116,24 +116,19 @@ class ApiMapRegions
    * If a mapRegionId is provided, it retrieves information for that specific map region.
    * If no mapRegionId is provided, it retrieves all map regions for the specified folder.
    *
-   * @param $county
-   * @param $folderId
+   * @param string $committee
+   * @param int $folderId
    * @param int $mapRegionId
    * @return array
    */
-  public function getMapRegionInfo($county, $folderId, int $mapRegionId=0): array
+  public function getMapRegionInfo( string $committee, int $folderId, int $mapRegionId=0): array
   {
     if(empty($folderId)) {return [];}
-    if(empty($county)) {
-      $apiKey = $this->stateCommitteeKey['API Key'];
-      $apiURL = $this->stateCommitteeKey['Url'];
-      $user = $this->stateCommitteeKey['App Name'];
-    } else {
-      $committeeKey = $this->nlpConfigurationObj->getCountyKey($county);
-      $apiKey = $committeeKey['API Key'];
-      $apiURL = $committeeKey['Url'];
-      $user = $committeeKey['App Name'];
-    }
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+
     $foldersURL = "https://$user:$apiKey|0@$apiURL/folders/$folderId/mapRegions";
     if(!empty($mapRegionId)) {
       $foldersURL .= '/'.$mapRegionId;
@@ -154,8 +149,11 @@ class ApiMapRegions
       // Handle other errors
       nlp_debug_msg('getMapRegionInfo', $e->getMessage());
       return [];
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getMapRegionInfo', $e->getMessage());
+      return [];
     }
-    
+
     $regions = json_decode($request->getBody(), true);
     if(!empty($mapRegionId)) {
       return $this->extractRegion($regions);
@@ -175,27 +173,27 @@ class ApiMapRegions
    * This function is used to format the map region data into a more usable structure.
    *
    * The map region array contains the following keys:
-   * - name: The name of the map region.
-   * - mapRegionId: The unique identifier for the map region.
-   * - dateRefreshed: The date the map region was last refreshed.
-   * - mapRoutes: An array of turf information for the map region.
+   * - `name`: The name of the map region.
+   * - `mapRegionId`: The unique identifier for the map region.
+   * - `dateRefreshed`: The date the map region was last refreshed.
+   * - `mapRoutes`: An array of turf information for the map region.
    *
    * The turf information contains:
-   * - name: The name of the turf.
-   * - mapRouteId: The unique identifier for the turf.
-   * - savedListId: The saved list ID for the turf.
-   * - routeSize: The size of the route (number of voters).
-   * - doorCount: The number of doors in the turf.
-   * - printedList: An array containing the minivan number and date created for the turf.
+   * - `name`: The name of the turf.
+   * - `mapRouteId`: The unique identifier for the turf.
+   * - `savedListId`: The saved list ID for the turf.
+   * - `routeSize`: The size of the route (number of voters).
+   * - `doorCount`: The number of doors in the turf.
+   * - `printedList`: An array containing the minivan number and date created for the turf.
    *
    * The printedList array contains:
-   * - number: The minivan number for the turf.
-   * - dateCreated: The date the minivan was created.
+   * - `number`: The minivan number for the turf.
+   * - `dateCreated`: The date the minivan was created.
    *
-   * @param $region
+   * @param array $region
    * @return array
    */
-  private function extractRegion($region): array
+  private function extractRegion( array $region): array
   {
     $mapRegion = [
       'mapRegionName' => $region['name'],
@@ -245,11 +243,11 @@ class ApiMapRegions
    * Use the API call to get the latest minivan number and date created.  These are
    * stored in the provided turfArray and returned to the caller.
    *
-   * @param $county
-   * @param $turfArray
+   * @param string $committee
+   * @param array $turfArray
    * @return void
    */
-  public function updateMinivanInfo($county, &$turfArray): void
+  public function updateMinivanInfo( string $committee, array &$turfArray): void
   {
     $mapRegionOptionsSaved = [];
     foreach ($turfArray as $turfIndex => $turf) {
@@ -260,7 +258,7 @@ class ApiMapRegions
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];
       } else {
         $folderId = $turf['folderId'];
-        $this->getMapRegionInfo($county,$folderId);
+        $this->getMapRegionInfo($committee,$folderId);
         $mapRegionOptions = $this->mapRegionTurfOptions($mapRegionId);
         $mapRegionOptionsSaved[$mapRegionId] = $mapRegionOptions;
       }

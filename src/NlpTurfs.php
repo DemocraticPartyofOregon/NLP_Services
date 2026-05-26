@@ -25,10 +25,11 @@ class NlpTurfs
   protected NlpReports $nlpReportsObj;
   protected NlpMatchbacks $nlpMatchbacksObj;
   protected ApiFolders $apiFoldersObj;
+  protected ApiMapRegions $apiMapRegionsObj;
   
   public function __construct( $connection, $fileSystem, $nlsObj, $pathsObj,
                                $votersObj, $apiActivistCodesObj, $nlpConfigurationObj, $nlpReportsObj,
-                               $nlpMatchbacksObj, $apiFoldersObj )
+                               $nlpMatchbacksObj, $apiFoldersObj, $apiMapRegionsObj )
   {
     $this->connection = $connection;
     $this->fileSystem = $fileSystem;
@@ -40,6 +41,7 @@ class NlpTurfs
     $this->nlpReportsObj = $nlpReportsObj;
     $this->nlpMatchbacksObj = $nlpMatchbacksObj;
     $this->apiFoldersObj = $apiFoldersObj;
+    $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
   
   public static function create(ContainerInterface $container): NlpTurfs
@@ -54,7 +56,8 @@ class NlpTurfs
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.matchbacks'),
-      $container->get('nlpservices.api_folders')
+      $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.api_map_regions')
     );
   }
   
@@ -203,7 +206,7 @@ class NlpTurfs
     foreach ($mapRegionInfo as $mapRegionItem) {
       $folderId = $mapRegionItem['folderId'];
       $mapRegionId = $mapRegionItem['mapRegionId'];
-      $mapRegionInfo = $this->apiFoldersObj->getMapRegionInfo($county, $folderId, $mapRegionId );
+      $mapRegionInfo = $this->apiMapRegionsObj->getMapRegionInfo($county, $folderId, $mapRegionId );
       
       $mapRegionRefreshDate = $mapRegionInfo['dateRefreshed'];
       $mapRegionRefreshTime = strtotime($mapRegionRefreshDate);

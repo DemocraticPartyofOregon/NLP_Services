@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -12,14 +13,15 @@ class ApiSavedLists {
   protected NlpTurfs $turfsObj;
   protected NlpNls $nlsObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  
-  public function __construct($client, $turfsObj, $nlsObj, $nlpConfigurationObj) {
+  protected ApiKeyManagement $apiKeyManagementObj;
+
+  public function __construct($client, $turfsObj, $nlsObj, $nlpConfigurationObj,
+                              $apiKeyManagementObj ) {
     $this->client = $client;
     $this->turfsObj = $turfsObj;
     $this->nlsObj = $nlsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiSavedLists
@@ -29,6 +31,7 @@ class ApiSavedLists {
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -44,15 +47,14 @@ class ApiSavedLists {
    * returned.  If there are more than 1000 saved lists, VoteBuilder will chunk
    * the response.  The $skip parameter is used to skip the items already returned.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $folderId
    * @param array $excludedTurfIds
    * @return array
    */
-  public function getTurfLists( string $county, int $folderId, array $excludedTurfIds=[]): array
+  public function getTurfLists( string $committee, int $folderId, array $excludedTurfIds=[]): array
   {
-    $committeeKey = (empty($county))?$this->stateCommitteeKey:
-      $this->nlpConfigurationObj->getCountyKey($county);
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -68,12 +70,17 @@ class ApiSavedLists {
       }
       try {
         $request = $this->client->get($url);
-        $results = json_decode($request->getBody(), true);
+        $results = json_decode($request->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          return [];
+        }
+      } catch (GuzzleException $e) {
+        nlp_debug_msg('getTurfLists', $e->getMessage());
+        return [];
       } catch (Exception $e) {
-        nlp_debug_msg('getTurfList',$e->getMessage());
+        nlp_debug_msg('getTurfLists', $e->getMessage());
         return [];
       }
-      //nlp_debug_msg_safe('apiSavedLists $results',$results);
       if(empty($results['items'])) {return [];}
       $fragmentCount = count($results['items']);
       $count += $fragmentCount;
@@ -105,21 +112,20 @@ class ApiSavedLists {
    *   'savedListId' => The id of the saved list,
    *   'name' => The saved list name.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $database
    * @param int $folderId
    * @param int $listId
    *
    * @return array
    */
-  public function getSavedLists(string $county, int $database, int $folderId=0,
+  public function getSavedLists(string $committee, int $database, int $folderId=0,
     int $listId=0): array
   {
     // Get a list of saved lists in a folder or the information about a specific
     // saved list.  The request is for a specific committee and the specific
     // database for that committee.
-    $committeeKey = (empty($county))?$this->stateCommitteeKey:
-      $this->nlpConfigurationObj->getCountyKey($county);
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
@@ -137,15 +143,21 @@ class ApiSavedLists {
       // Get the information about a specific saved list.
       try {
         $request = $this->client->get($listsURL);
-        $results = json_decode($request->getBody(), true);
-      } catch (Exception $e) {
-        $statusCode = $e->getCode();
-        if ($statusCode == 404) {
+        $results = json_decode($request->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
         }
-        nlp_debug_msg('getSavedLists',$e->getMessage());
+      } catch (GuzzleException $e) {
+        if ($e->getCode() == 404) {
+          return [];
+        }
+        nlp_debug_msg('getSavedLists', $e->getMessage());
+        return [];
+      } catch (Exception $e) {
+        nlp_debug_msg('getSavedLists', $e->getMessage());
         return [];
       }
+      if (empty($results['savedListId'])) {return [];}
       $totalList[$results['savedListId']] = $results;
     } else {
       // Get the information about all the saved lists in a folder.  For large
@@ -159,9 +171,15 @@ class ApiSavedLists {
         }
         try {
           $request = $this->client->get($url);
-          $results = json_decode($request->getBody(), true);
+          $results = json_decode($request->getBody(), TRUE);
+          if (json_last_error() !== JSON_ERROR_NONE) {
+            return [];
+          }
+        } catch (GuzzleException $e) {
+          nlp_debug_msg('getSavedLists', $e->getMessage());
+          return [];
         } catch (Exception $e) {
-          nlp_debug_msg('getSavedLists',$e->getMessage());
+          nlp_debug_msg('getSavedLists', $e->getMessage());
           return [];
         }
         if(empty($results['items'])) {return [];}
@@ -186,25 +204,23 @@ class ApiSavedLists {
    * The array is sorted by turf name. And the keys are:
    * turfId, turfName, mapRegionName, description, voterCount, doorCount.
    *
-   * @param $savedLists
+   * @param array $savedLists
    * @return array
    */
-  public function savedListOptions($savedLists): array
+  public function savedListOptions(array $savedLists): array
   {
     $turfOptions = [];
     foreach ($savedLists as $list) {
       $listId = $list['savedListId'];
+      $listInfo = [];
       $listInfo['turfName'] = $list['name'];
       $listInfo['mapRegionName'] = '';
       $listInfo['turfId'] = $listId;
-      $listInfo['description'] =  (!empty($list['description']))?$list['description']:'';
+      $listInfo['description'] = $list['description'] ?? '';
       $listInfo['voterCount'] = $list['listCount'];
       $listInfo['doorCount'] = $list['doorCount'];
-      
       $turfOptions[$listId] = $listInfo;
     }
-    //array_multisort($turfOptions);
-    
     return $turfOptions;
   }
   
@@ -215,17 +231,17 @@ class ApiSavedLists {
    * So, search for the turf by name and return the new turf id. If the list
    * name was changed, then give up because turf names are not to be changed.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $folderId
    * @param string $turfName
    * @return array
    * Used in SyncTurfBatch
    * @noinspection PhpUnused
    */
-  public function recoverTurfId(string $county, int $folderId, string $turfName): array
+  public function recoverTurfId(string $committee, int $folderId, string $turfName): array
   {
     $newTurfId = 0;
-    $savedLists = $this->getSavedLists($county, 0, $folderId);
+    $savedLists = $this->getSavedLists($committee, 0, $folderId);
     
     foreach ($savedLists as $savedList) {
       if (str_contains($savedList['name'], $turfName)) {
@@ -245,6 +261,6 @@ class ApiSavedLists {
         'turfId' => $newTurfId,
       ];
     }
-}
-  
+  }
+
 }

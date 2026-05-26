@@ -20,12 +20,12 @@ class ApiActivistCodes
   ];
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  
-  public function __construct( $client, $nlpConfigurationObj) {
+  private ApiKeyManagement $apiKeyManagementObj;
+
+  public function __construct( $client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiActivistCodes
@@ -33,6 +33,7 @@ class ApiActivistCodes
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -53,13 +54,25 @@ class ApiActivistCodes
    */
   public function getApiActivistCodes(int $database): array
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiKey = $stateCommitteeKey['API Key'];
+    $apiURL = $stateCommitteeKey['Url'];
+    $user = $stateCommitteeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/activistCodes".'?$top=200';
-    $request = $this->client->get($postUrl);
-    $results = json_decode($request->getBody(), true);
-    return $results['items'];
+    try {
+      $request = $this->client->get($postUrl);
+      $results = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        return [];
+      }
+      return $results['items'] ?? [];
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getApiActivistCodes', $e->getMessage());
+      return [];
+    } catch (Exception $e) {
+      nlp_debug_msg('getApiActivistCodes', $e->getMessage());
+      return [];
+    }
   }
   
   /**
@@ -74,9 +87,10 @@ class ApiActivistCodes
   public function getApiVoterActivistCodes(int $vanid): array
   {
     $database = $this->supportedActivistCodes['NLPVoterAC'];
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiKey = $stateCommitteeKey['API Key'];
+    $apiURL = $stateCommitteeKey['Url'];
+    $user = $stateCommitteeKey['App Name'];
     $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
     try {
       $request = $this->client->get($url);
@@ -89,10 +103,10 @@ class ApiActivistCodes
         $codes[] = (int) $item['activistCodeId'];
       }
       return $codes;
-    } catch (Exception $e) {
+    } catch (GuzzleException $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
       return [];
-    } catch (GuzzleException $e) {
+    } catch (Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
       return [];
     }
@@ -103,11 +117,11 @@ class ApiActivistCodes
    *
    * Returns TRUE if the given voter already has the named activist code applied.
    *
-   * @param $vanid
+   * @param int $vanid
    * @param string $codeName - e.g. 'NLPVoterAC'
    * @return bool
    */
-  public function hasApiActivistCode($vanid, string $codeName): bool
+  public function hasApiActivistCode(int $vanid, string $codeName): bool
   {
     $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
     if (empty($rid)) {
@@ -131,7 +145,6 @@ class ApiActivistCodes
    */
   public function setApiActivistCode(array $request): void
   {
-    //nlp_debug_msg('$request', $request);
     $activistCodeName = $request['codeName'];
     $rid = $this->nlpConfigurationObj->getActivistCode($activistCodeName);
     if(empty($rid)) {return;}
@@ -141,10 +154,11 @@ class ApiActivistCodes
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
     $canvassResponseObj = new stdClass();
-    
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiKey = $stateCommitteeKey['API Key'];
+    $apiURL = $stateCommitteeKey['Url'];
+    $user = $stateCommitteeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
     
     $responseObj->type = self::ACTIVIST_CODE;
@@ -160,10 +174,16 @@ class ApiActivistCodes
     $canvassResponseObj->responses = [ $responseObj,];
     
     $dataJson = json_encode( $canvassResponseObj );
-    $headers = ['Content-Type' => 'application/json', "Accept: application/json, Expect:"];
+    $headers = [
+      'Content-Type' => 'application/json',
+      'Accept'       => 'application/json',
+      'Expect'       => '',
+    ];
     try {
       $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (Exception $e) {
+      nlp_debug_msg('setApiActivistCode', $e->getMessage());
+    } catch (GuzzleException $e) {
       nlp_debug_msg('setApiActivistCode', $e->getMessage());
     }
   }

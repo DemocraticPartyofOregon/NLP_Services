@@ -5,44 +5,27 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Site configuration Claude code review">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/project.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/project.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_county.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_county.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_first_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_first_name.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_hd.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_hd.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_last_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_last_name.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_mcid.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_mcid.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.field.user.user.field_phone.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.field.user.user.field_phone.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_county.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_county.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_first_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_first_name.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_hd.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_hd.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_last_name.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_last_name.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_mcid.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_mcid.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/install/field.storage.user.field_phone.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/install/field.storage.user.field_phone.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiEarlyVoteFields.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiEarlyVoteFields.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiExportJobs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiExportJobs.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiKeyVerification.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyVerification.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ElectionConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ElectionConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/HomePageEditForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/HomePageEditForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/NlpResetForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/NlpResetForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiMapRegions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiMapRegions.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiNls.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiResponseCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiResponseCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiSavedLists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSavedLists.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiSurveyQuestion.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSurveyQuestion.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiVoter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiVoter.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Config/SurveyQuestionForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/SurveyQuestionForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/VoteBuilderUpdateDate.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/VoteBuilderUpdateDate.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -117,61 +100,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0025433612347607" />
-      <entry key="MS500" value="1.4003546909672486" />
-      <entry key="S2" value="3.005928573692156" />
-      <entry key="S5" value="4.673643732338766" />
-      <entry key="S10" value="5.905798925317345" />
-      <entry key="S30" value="7.288208583346968" />
-      <entry key="S60" value="8.238414175340218" />
-      <entry key="M2" value="9.76559277164888" />
-      <entry key="M5" value="13.32686548904613" />
-      <entry key="M10" value="17.754541847234087" />
-      <entry key="M15" value="21.38798914204243" />
-      <entry key="M30" value="30.788395263048326" />
-      <entry key="H1" value="47.035618346707864" />
-      <entry key="H2" value="68.2604046076261" />
-      <entry key="H4" value="90.08239969850659" />
-      <entry key="D1" value="148.3480311780371" />
-      <entry key="W1" value="213.5812975333594" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.000000079428736" />
+      <entry key="M10" value="1.0003139639382503" />
+      <entry key="M15" value="1.0061039052393022" />
+      <entry key="M30" value="1.183475130183923" />
+      <entry key="H1" value="2.569480763287096" />
+      <entry key="H2" value="7.9646362386789695" />
+      <entry key="H4" value="20.46857400310593" />
+      <entry key="D1" value="123.83256094797557" />
+      <entry key="W1" value="252.86471841783916" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="5.384220835029473E-101" />
-      <entry key="S2" value="8.566052189837609E-26" />
-      <entry key="S5" value="9.399663065478487E-11" />
-      <entry key="S10" value="9.695185952563516E-6" />
-      <entry key="S30" value="0.021323183667976985" />
-      <entry key="S60" value="0.14602459953027433" />
-      <entry key="M2" value="0.38213165905382596" />
-      <entry key="M5" value="0.6816496427560673" />
-      <entry key="M10" value="0.8844517082865054" />
-      <entry key="M15" value="1.1135816538632746" />
-      <entry key="M30" value="1.8848061340045594" />
-      <entry key="H1" value="2.902309729767704" />
-      <entry key="H2" value="3.7625949578433966" />
-      <entry key="H4" value="4.368564835368713" />
-      <entry key="D1" value="5.936149510862378" />
-      <entry key="W1" value="7.527495626045106" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="1.4670900212538588E-244" />
+      <entry key="S60" value="1.2172349685115778E-122" />
+      <entry key="M2" value="1.1781107521373694E-61" />
+      <entry key="M5" value="5.569760459616503E-25" />
+      <entry key="M10" value="1.037852373958937E-12" />
+      <entry key="M15" value="1.3483229386987605E-8" />
+      <entry key="M30" value="1.9843984337284152E-4" />
+      <entry key="H1" value="0.02681221414298778" />
+      <entry key="H2" value="0.33428878203894347" />
+      <entry key="H4" value="1.3446336187242378" />
+      <entry key="D1" value="7.966771871763139" />
+      <entry key="W1" value="13.480950416969588" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9484471815758512" />
-      <entry key="MS500" value="1.3842418764961164" />
-      <entry key="S2" value="2.996608421090209" />
-      <entry key="S5" value="4.667605363458641" />
-      <entry key="S10" value="5.901767644800559" />
-      <entry key="S30" value="7.290645974916929" />
-      <entry key="S60" value="8.337316817171613" />
-      <entry key="M2" value="10.088474973931532" />
-      <entry key="M5" value="13.956958106955474" />
-      <entry key="M10" value="18.596394279174735" />
-      <entry key="M15" value="22.463189387730267" />
-      <entry key="M30" value="32.64119218613268" />
-      <entry key="H1" value="49.91278805484791" />
-      <entry key="H2" value="72.00533559579641" />
-      <entry key="H4" value="94.4389413365083" />
-      <entry key="D1" value="154.277923513677" />
-      <entry key="W1" value="221.10737353868734" />
+      <entry key="MS100" value="1.7259047588154144E-9" />
+      <entry key="MS500" value="0.017676788481967194" />
+      <entry key="S2" value="0.36462869348372473" />
+      <entry key="S5" value="0.6679444360159157" />
+      <entry key="S10" value="0.8172786770838425" />
+      <entry key="S30" value="0.9349535954869417" />
+      <entry key="S60" value="0.9669299847904923" />
+      <entry key="M2" value="0.98332598093943" />
+      <entry key="M5" value="0.9932968090597118" />
+      <entry key="M10" value="0.996956597749787" />
+      <entry key="M15" value="1.0038632757775998" />
+      <entry key="M30" value="1.1825180179168124" />
+      <entry key="H1" value="2.5954131659080306" />
+      <entry key="H2" value="8.297594304289458" />
+      <entry key="H4" value="21.81123505234743" />
+      <entry key="D1" value="131.79510552192275" />
+      <entry key="W1" value="266.3441771995647" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -276,15 +259,8 @@
       <workItem from="1777783039529" duration="4900000" />
       <workItem from="1778727172734" duration="14606000" />
       <workItem from="1778860226265" duration="39588000" />
-      <workItem from="1779670787241" duration="7757000" />
-    </task>
-    <task id="LOCAL-00031" summary="Create separate form to initialize the training documents.">
-      <option name="closed" value="true" />
-      <created>1773375283884</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1773375283884</updated>
+      <workItem from="1779670787241" duration="8742000" />
+      <workItem from="1779684952982" duration="16391000" />
     </task>
     <task id="LOCAL-00032" summary="Create separate form to initialize the training documents.">
       <option name="closed" value="true" />
@@ -670,7 +646,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779551678568</updated>
     </task>
-    <option name="localTasksCounter" value="80" />
+    <task id="LOCAL-00080" summary="Site configuration Claude code review">
+      <option name="closed" value="true" />
+      <created>1779684686993</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1779684686994</updated>
+    </task>
+    <option name="localTasksCounter" value="81" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -762,7 +746,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/src/Form/DataEntryForm.php</url>
-          <line>333</line>
+          <line>338</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>

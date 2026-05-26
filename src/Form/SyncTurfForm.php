@@ -15,6 +15,7 @@ use Drupal\nlpservices\NlpSyncTurfBuilder;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
+use Drupal\nlpservices\ApiMapRegions;
 
 class SyncTurfForm extends FormBase {
   protected ApiSavedLists $savedListsObj;
@@ -26,13 +27,15 @@ class SyncTurfForm extends FormBase {
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpTurfListDisplayVoteBuilder $turfListDisplayObj;
+  protected ApiMapRegions $apiMapRegionsObj;
 
   const int TURF_SIZE_LIMIT = 110;
   const int TURF_SIZE_WARNING = 75;
 
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
-                                $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj ) {
+                                $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
+                                $apiMapRegionsObj ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -42,6 +45,7 @@ class SyncTurfForm extends FormBase {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
+    $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
 
   /**
@@ -50,15 +54,16 @@ class SyncTurfForm extends FormBase {
   public static function create(ContainerInterface $container): SyncTurfForm
   {
     return new static(
-        $container->get('nlpservices.saved_lists'),
-        $container->get('nlpservices.api_folders'),
-        $container->get('nlpservices.nls'),
-        $container->get('nlpservices.turfs'),
-        $container->get('nlpservices.sync_turf_builder'),
-        $container->get('nlpservices.nls_list_display'),
-        $container->get('nlpservices.configuration'),
-        $container->get('nlpservices.session_data'),
-        $container->get('nlpservices.turf_list_display_votebuilder'),
+      $container->get('nlpservices.saved_lists'),
+      $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.nls'),
+      $container->get('nlpservices.turfs'),
+      $container->get('nlpservices.sync_turf_builder'),
+      $container->get('nlpservices.nls_list_display'),
+      $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.session_data'),
+      $container->get('nlpservices.turf_list_display_votebuilder'),
+      $container->get('nlpservices.api_map_regions'),
     );
   }
 
@@ -576,7 +581,7 @@ class SyncTurfForm extends FormBase {
 
     if(!$showLists) {
       // Reveal the Map Regions.
-      $mapRegionOptions = $this->foldersObj->mapRegionOptions($county, $currentFolderId);
+      $mapRegionOptions = $this->apiMapRegionsObj->mapRegionOptions($county, $currentFolderId);
       $mapRegionId = $this->nlpSessionDataObj->get('mapRegionId');
 
       if (empty($mapRegionOptions[$mapRegionId])) {  // It appears the Map Region has been deleted.
@@ -587,7 +592,7 @@ class SyncTurfForm extends FormBase {
       }
       // Remember the working Map Region and the turf choices in the map region.
       $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);
-      $turfOptions = $this->foldersObj->mapRegionTurfOptions($mapRegionId);
+      $turfOptions = $this->apiMapRegionsObj->mapRegionTurfOptions($mapRegionId);
       foreach ($turfOptions as $turfId => $turfOption) {
         $this->turfsObj->checkTurfIdChange($currentFolderId, $turfOption);
         $turfInUse = $this->turfsObj->turfInUse($currentFolderId, $turfId, $turfOption['turfName']);
@@ -605,7 +610,7 @@ class SyncTurfForm extends FormBase {
 
     } else {
       // Reveal only lists.
-      $this->foldersObj->getMapRegionInfo($county, $currentFolderId);
+      $this->apiMapRegionsObj->getMapRegionInfo($county, $currentFolderId);
       $excludedTurfIds = $this->foldersObj->getTurfIds();
       $savedLists = $this->savedListsObj->getTurfLists($county, $currentFolderId, $excludedTurfIds);
 

@@ -96,10 +96,6 @@ class DeleteTurfForm extends FormBase
     } else {
       $turfArray = (!empty($currentHd))?$this->turfsObj->getTurfs($county,$currentHd):[];
     }
-
-    // Update the latest minivan information.
-    // $this->foldersObj->updateMinivanInfo($county, $turfArray);
-
     // Create the table data for building the list of turfs.
     $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray);
 

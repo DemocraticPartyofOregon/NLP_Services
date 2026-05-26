@@ -221,7 +221,9 @@ class SurveyQuestionForm extends FormBase
         '#title' => $this->t('Survey Question Choice'),
         '#default_value' => 1,
         '#options' => $questionList,
-        '#description' => $this->t('Choose a @type survey question for the county.', ['@type' => $type]),
+      ];
+      $form_element[$type . '_question'][$type . 'QuestionDescription'] = [
+        '#markup' => '<p>' . $this->t('Choose a @type survey question for the county.', ['@type' => $type]) . '</p>',
       ];
     }
     return $form_element;

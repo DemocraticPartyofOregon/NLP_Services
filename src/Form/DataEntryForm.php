@@ -3,7 +3,6 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-//use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -19,6 +18,8 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpDataEntryReports;
 use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\ApiMapRegions;
+
 
 /**
  * @noinspection PhpUnused
@@ -37,11 +38,13 @@ class DataEntryForm extends FormBase
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
   protected ApiFolders $foldersObj;
+  protected ApiMapRegions $apiMapRegionsObj;
   
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
                                 $dataEntryDateBarObj, $nlpConfigurationObj,
-                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj, $foldersObj) {
+                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj, $foldersObj,
+                                $apiMapRegionsObj ) {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
@@ -56,6 +59,7 @@ class DataEntryForm extends FormBase
     $this->dataEntryVoterListDisplayObj = $dataEntryVoterListDisplayObj;
     $this->dataEntryReportsObj = $dataEntryReportsObj;
     $this->foldersObj = $foldersObj;
+    $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
   
   /**
@@ -78,6 +82,7 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
       $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.map_regions')
     );
   }
   
@@ -709,7 +714,7 @@ the remaining postcards. </p>
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->sessionDataObj->getCounty();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->apiMapRegionsObj->updateMinivanInfo($county, $turfArray);
     
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {

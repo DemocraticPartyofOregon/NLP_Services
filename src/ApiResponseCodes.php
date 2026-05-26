@@ -4,6 +4,7 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -64,12 +65,12 @@ class ApiResponseCodes
   
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
-  private array $stateCommitteeKey;
-  
-  public function __construct( $client, $nlpConfigurationObj ) {
+  private ApiKeyManagement $apiKeyManagementObj;
+
+  public function __construct( $client, $nlpConfigurationObj, $apiKeyManagementObj  ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->stateCommitteeKey = $this->nlpConfigurationObj->getStateKey();
+    $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
   
   public static function create(ContainerInterface $container): ApiResponseCodes
@@ -77,6 +78,7 @@ class ApiResponseCodes
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -92,14 +94,19 @@ class ApiResponseCodes
   public function getApiContactTypes(): array
   {
     $messenger = Drupal::messenger();
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     $post_url = "https://$user:$apiKey|0@$apiURL/canvassResponses/contactTypes?inputTypeId=11";
     try {
       $request = $this->client->get($post_url);
       $result = json_decode($request->getBody(), true);
     } catch (Exception $e)  {
+      $error = $e->getMessage();
+      $messenger->addStatus( t('An error occurred. Please contact the Administrator. '.$error));
+      return [];
+    } catch (GuzzleException $e) {
       $error = $e->getMessage();
       $messenger->addStatus( t('An error occurred. Please contact the Administrator. '.$error));
       return [];
@@ -122,9 +129,10 @@ class ApiResponseCodes
    */
   public function getApiResultCodes(int $contactTypeId ): array
   {
-    $apiKey = $this->stateCommitteeKey['API Key'];
-    $apiURL = $this->stateCommitteeKey['Url'];
-    $user = $this->stateCommitteeKey['App Name'];
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     $url = "https://$apiURL/canvassResponses/resultCodes?contactTypeId=$contactTypeId";
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
@@ -194,7 +202,7 @@ class ApiResponseCodes
    * This is used to get the expected abbreviations for the contact types.
    * The abbreviations are used to determine the short form of the contact type.
    */
-  public function getApiExpectedAbbreviations($contactType='Walk'): array
+  public function getApiExpectedAbbreviations( string $contactType='Walk'): array
   {
     $expectedAbbreviations = [];
     $eResultArray = $this->expectedContactTypes[$contactType];

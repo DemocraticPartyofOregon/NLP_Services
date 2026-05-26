@@ -9,7 +9,6 @@ use Drupal\nlpservices\NlpSearchBar;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Component\Utility\Html;
-
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpPaths;
 use Drupal\nlpservices\NlpMcidRecovery;
@@ -23,6 +22,7 @@ use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\ApiMapRegions;
 
 
 class DeliverTurfForm extends FormBase
@@ -42,6 +42,7 @@ class DeliverTurfForm extends FormBase
   protected NlpSendEmail $sendMailObj;
   protected NlpNls $nlsObj;
   protected ApiFolders $foldersObj;
+  protected ApiMapRegions $apiMapRegionsObj;
 
   public function __construct(
     $turfsObj,
@@ -59,6 +60,7 @@ class DeliverTurfForm extends FormBase
     $sendMailObj,
     $nlsObj,
     $foldersObj,
+    $apiMapRegionsObj,
   ) {
     $this->turfsObj = $turfsObj;
     $this->drupalUserObj = $drupalUserObj;
@@ -75,6 +77,7 @@ class DeliverTurfForm extends FormBase
     $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
     $this->foldersObj = $foldersObj;
+    $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
 
   /**
@@ -98,6 +101,7 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.api_map_regions'),
     );
   }
 
@@ -180,8 +184,6 @@ class DeliverTurfForm extends FormBase
         $turfArray = $this->turfsObj->getTurfs($county, $currentHd);
       }
     }
-    // Update the minivan information for the turfs to be displayed.
-    //$this->foldersObj->updateMinivanInfo($county, $turfArray);
 
     $form_state->set('turfArray', $turfArray);
 
@@ -388,7 +390,7 @@ class DeliverTurfForm extends FormBase
 <br><b>Username:</b> @name<br><a href="@reveal_url">Click here to retrieve your password</a> (this link can only be used once)</p>';
 
     $turfArray[$turfChoice['turfIndex']] = $turfChoice;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->apiMapRegionsObj->updateMinivanInfo($county, $turfArray);
 
     if ($turfChoice['minivanNumber'] != $turfArray[$turfChoice['turfIndex']]['minivanNumber']) {
       $minivanNumber = $turfArray[$turfChoice['turfIndex']]['minivanNumber'];
@@ -492,7 +494,7 @@ class DeliverTurfForm extends FormBase
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->nlpSessionDataObj->getCounty();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->apiMapRegionsObj->updateMinivanInfo($county, $turfArray);
     $turf = $turfArray[$turfIndex];
     if (!empty($turf['minivanNumber'])) {
       $minivanNumber = $turf['minivanNumber'];
