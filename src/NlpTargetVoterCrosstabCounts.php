@@ -2,20 +2,13 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
-class NlpTargetVoterCrosstabCounts
+class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
 {
-  protected Connection $connection;
-
-  const TARGET_VOTER_CROSSTAB_TBL = 'nlp_target_voter_count';
-  const ALL_VOTER_CROSSTAB_TBL    = 'nlp_all_voter_count';
-
-  public function __construct($connection) {
-    $this->connection = $connection;
-  }
+  public const string TARGET_VOTER_CROSSTAB_TBL = 'nlp_target_voter_count';
+  public const string ALL_VOTER_CROSSTAB_TBL    = 'nlp_all_voter_count';
 
   public static function create(ContainerInterface $container): NlpTargetVoterCrosstabCounts
   {
@@ -53,7 +46,7 @@ class NlpTargetVoterCrosstabCounts
    * @param string $tableName
    * @return array - ['ok' => bool, 'err' => string[]]
    */
-  public function verifyTable(string $tableName): array
+  public function verifyTable( string $tableName ): array
   {
     $errors = [];
     $schema = $this->connection->schema();
@@ -72,13 +65,13 @@ class NlpTargetVoterCrosstabCounts
   /**
    * decodeCrosstabsHeader
    *
-   * @param $fileHdr
-   * @param $fileHdr2
+   * @param string $fileHdr
+   * @param string $fileHdr2
    * @return array - array of column indexes for the crosstab ballot status counts.
    *
    * The header is represented by the first two rows. Also verifies we have the right file.
    */
-  public function decodeCrosstabsHeader($fileHdr, $fileHdr2): array
+  public function decodeCrosstabsHeader( string $fileHdr, string $fileHdr2): array
   {
     $hdrErr = $hdrPos = [];
     foreach ($this->targetVoterVanHdr1 as $nlpKey => $vanField) {
@@ -115,11 +108,17 @@ class NlpTargetVoterCrosstabCounts
   }
 
   /**
+   * updateCrosstabCounts
+   *
+   * Updates the crosstab counts table.
+   * 1. If the row already exists, it updates the registered voters and registered voted counts.
+   * 2. If the row does not exist, it inserts a new row.
+   *
    * @param array $counts
    * @param string $tableName
    * @return bool
    */
-  public function updateCrosstabCounts(array $counts, string $tableName): bool
+  public function updateCrosstabCounts( array $counts, string $tableName ): bool
   {
     try {
       $this->connection->merge($tableName)
@@ -146,10 +145,16 @@ class NlpTargetVoterCrosstabCounts
   }
 
   /**
+   * fetchCrosstabCounts
+   *
+   * Fetches the crosstab counts from the database.
+   * 1. The counts are grouped by congressional district.
+   * 2. The counts are grouped by county.
+   * 3. The counts are grouped by party.
    * @param string $tableName
    * @return array - all crosstab counts from the given table.
    */
-  public function fetchCrosstabCounts(string $tableName): array
+  public function fetchCrosstabCounts( string $tableName ): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -180,11 +185,15 @@ class NlpTargetVoterCrosstabCounts
   /**
    * getCountsByCd
    *
-   * @param $cd - the congressional district to get counts for.
+   * Gets the counts for a given congressional district.
+   * 1. The counts are grouped by party.
+   * 2. The counts are summed.
+   *
+   * @param int $cd - the congressional district to get counts for.
    * @param string $tableName
    * @return array - counts summed by party for the given congressional district.
    */
-  public function getCountsByCd($cd, string $tableName): array
+  public function getCountsByCd( int $cd, string $tableName): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -227,11 +236,15 @@ class NlpTargetVoterCrosstabCounts
   /**
    * getCountsByCounty
    *
-   * @param $county - the county to get counts for.
+   * Gets the counts for a given county.
+   * 1. The counts are grouped by party.
+   * 2. The counts are summed.
+   *
+   * @param string $county - the county to get counts for.
    * @param string $tableName
    * @return array - counts summed by party for the given county.
    */
-  public function getCountsByCounty($county, string $tableName): array
+  public function getCountsByCounty( string $county, string $tableName ): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -269,34 +282,6 @@ class NlpTargetVoterCrosstabCounts
       }
     } while (TRUE);
     return $counts;
-  }
-
-  /**
-   * getCds
-   *
-   * @param string $tableName
-   * @return array - unique congressional districts from the given table.
-   */
-  public function getCds(string $tableName): array
-  {
-    $query = $this->connection->select($tableName, 'c');
-    $query->distinct();
-    $query->addField('c', 'cd');
-    try {
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getCds', $e->getMessage());
-      return [];
-    }
-
-    $cds = [];
-    do {
-      $cd = $result->fetchAssoc();
-      if (empty($cd)) {break;}
-      if ($cd['cd'] == 0) {continue;}
-      $cds[] = $cd['cd'];
-    } while (TRUE);
-    return $cds;
   }
 
 }

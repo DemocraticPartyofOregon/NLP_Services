@@ -4,12 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude review of awards and remove the database function">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude review of coordinator setup">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCoordinators.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCoordinators.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCreateWalksheet.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +48,6 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="237" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -83,23 +84,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0003286512393292" />
-      <entry key="S2" value="1.1728818465861002" />
-      <entry key="S5" value="1.916340326161829" />
-      <entry key="S10" value="2.828064528771879" />
-      <entry key="S30" value="4.055628339998392" />
-      <entry key="S60" value="4.733002419682057" />
-      <entry key="M2" value="6.380512963760596" />
-      <entry key="M5" value="10.947340714982413" />
-      <entry key="M10" value="17.759271859154374" />
-      <entry key="M15" value="25.321221053252227" />
-      <entry key="M30" value="45.67809741054433" />
-      <entry key="H1" value="69.89544721822442" />
-      <entry key="H2" value="91.16835620836791" />
-      <entry key="H4" value="111.98697990375913" />
-      <entry key="D1" value="233.42991091027716" />
-      <entry key="W1" value="397.69081826857496" />
+      <entry key="MS100" value="1.0000000000000013" />
+      <entry key="MS500" value="1.0010568600044196" />
+      <entry key="S2" value="1.1803161417180112" />
+      <entry key="S5" value="1.519727724202003" />
+      <entry key="S10" value="1.885794727461565" />
+      <entry key="S30" value="2.8230693920299705" />
+      <entry key="S60" value="3.783019190839831" />
+      <entry key="M2" value="5.927260586345575" />
+      <entry key="M5" value="10.727929496540746" />
+      <entry key="M10" value="15.101006860052669" />
+      <entry key="M15" value="19.0433833388162" />
+      <entry key="M30" value="33.66331048002678" />
+      <entry key="H1" value="60.07445616126203" />
+      <entry key="H2" value="89.65585407863672" />
+      <entry key="H4" value="118.324376725281" />
+      <entry key="D1" value="249.11401149140144" />
+      <entry key="W1" value="417.39064246130965" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -108,36 +109,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="7.947414794810614E-200" />
-      <entry key="M2" value="2.819115959802044E-100" />
-      <entry key="M5" value="1.5137187000044701E-40" />
-      <entry key="M10" value="1.2303327598680821E-20" />
-      <entry key="M15" value="5.329441827393252E-14" />
-      <entry key="M30" value="2.308721037655244E-7" />
-      <entry key="H1" value="4.881508349883783E-4" />
-      <entry key="H2" value="0.027575994802350193" />
-      <entry key="H4" value="0.32296042087269866" />
-      <entry key="D1" value="6.398208144369612" />
-      <entry key="W1" value="13.797463156213622" />
+      <entry key="S60" value="4.5871952185273075E-214" />
+      <entry key="M2" value="2.1417738485954342E-107" />
+      <entry key="M5" value="2.149361396978551E-43" />
+      <entry key="M10" value="4.636120573258153E-22" />
+      <entry key="M15" value="5.990133235180931E-15" />
+      <entry key="M30" value="7.74014039880939E-8" />
+      <entry key="H1" value="2.826459231000899E-4" />
+      <entry key="H2" value="0.020983384226383826" />
+      <entry key="H4" value="0.28172246170430737" />
+      <entry key="D1" value="6.254180239090144" />
+      <entry key="W1" value="13.752659031622517" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="7.779300703852919E-5" />
-      <entry key="MS500" value="0.15077374680186198" />
-      <entry key="S2" value="0.7309606033605311" />
-      <entry key="S5" value="1.5978016822037173" />
-      <entry key="S10" value="2.5923545876354694" />
-      <entry key="S30" value="3.9439548315089947" />
-      <entry key="S60" value="4.667564747220004" />
-      <entry key="M2" value="6.33491058641749" />
-      <entry key="M5" value="10.914488276624775" />
-      <entry key="M10" value="17.73352551473528" />
-      <entry key="M15" value="25.29808217465432" />
-      <entry key="M30" value="45.65885085297028" />
-      <entry key="H1" value="69.88178666761245" />
-      <entry key="H2" value="91.18685821288143" />
-      <entry key="H4" value="112.30429172527477" />
-      <entry key="D1" value="239.82392595705534" />
-      <entry key="W1" value="411.48667834716105" />
+      <entry key="MS100" value="4.315837287515549E-5" />
+      <entry key="MS500" value="0.1340881329574843" />
+      <entry key="S2" value="0.7088885729869445" />
+      <entry key="S5" value="1.2368433885452517" />
+      <entry key="S10" value="1.7099015710158323" />
+      <entry key="S30" value="2.745698635378195" />
+      <entry key="S60" value="3.7322710485773447" />
+      <entry key="M2" value="5.8850068915144345" />
+      <entry key="M5" value="10.696472787978315" />
+      <entry key="M10" value="15.079495752740229" />
+      <entry key="M15" value="19.025709365655736" />
+      <entry key="M30" value="33.64853654780083" />
+      <entry key="H1" value="60.06216962784346" />
+      <entry key="H2" value="89.66768759601398" />
+      <entry key="H4" value="118.6000347002448" />
+      <entry key="D1" value="255.3639014483992" />
+      <entry key="W1" value="431.14167620262083" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -243,15 +244,8 @@
       <workItem from="1778727172734" duration="14606000" />
       <workItem from="1778860226265" duration="39588000" />
       <workItem from="1779670787241" duration="8742000" />
-      <workItem from="1779684952982" duration="25914000" />
-    </task>
-    <task id="LOCAL-00036" summary="Claify the text for the printable walksheets">
-      <option name="closed" value="true" />
-      <created>1773871609030</created>
-      <option name="number" value="00036" />
-      <option name="presentableId" value="LOCAL-00036" />
-      <option name="project" value="LOCAL" />
-      <updated>1773871609030</updated>
+      <workItem from="1779684952982" duration="29305000" />
+      <workItem from="1779850901047" duration="793000" />
     </task>
     <task id="LOCAL-00037" summary="Claify the text for the printable walksheets">
       <option name="closed" value="true" />
@@ -637,7 +631,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779809072727</updated>
     </task>
-    <option name="localTasksCounter" value="85" />
+    <task id="LOCAL-00085" summary="Claude review of coordinator setup">
+      <option name="closed" value="true" />
+      <created>1779813668307</created>
+      <option name="number" value="00085" />
+      <option name="presentableId" value="LOCAL-00085" />
+      <option name="project" value="LOCAL" />
+      <updated>1779813668308</updated>
+    </task>
+    <option name="localTasksCounter" value="86" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +691,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Use the county committee key when reporting participation survey question for Montana." />
     <MESSAGE value="Code review" />
     <MESSAGE value="Protect initialization of cycle name." />
     <MESSAGE value="Montana county names" />
@@ -714,7 +715,8 @@
     <MESSAGE value="User password security - Claude review" />
     <MESSAGE value="Fix polymorphic errors in DrupalUser" />
     <MESSAGE value="Claude review of awards and remove the database function" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude review of awards and remove the database function" />
+    <MESSAGE value="Claude review of coordinator setup" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude review of coordinator setup" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

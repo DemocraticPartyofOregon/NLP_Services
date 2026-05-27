@@ -21,7 +21,7 @@ class NlpCrosstabCounts
     );
   }
 
-  const string CROSSTAB_COUNTS_TBL = 'nlp_ballot_count';
+  public const string CROSSTAB_COUNTS_TBL = 'nlp_ballot_count';
 
   private array $crosstabCountVanHdr1 = [
     'cd' => 'CD',
@@ -38,16 +38,17 @@ class NlpCrosstabCounts
   /**
    * decodeCrosstabsHeader
    *
-   * @param $fileHdr
-   * @param $fileHdr2
+   * Decodes the header of the crosstab export file.
+   *
+   * @param string $fileHdr
+   * @param string $fileHdr2
    * @return array - array of column indexes for the ballot returned counts.
    *
    * The header is represented by the first two rows.  Also, it verifies we have the right file.
    */
-  public function decodeCrosstabsHeader($fileHdr,$fileHdr2): array
+  public function decodeCrosstabsHeader( string $fileHdr, string $fileHdr2 ): array
   {
-    $vanField['err'] = 'Unknown';
-    $hdrErr = $hdrPos =  [];
+    $hdrErr = $hdrPos = [];
     foreach ($this->crosstabCountVanHdr1 as $nlpKey => $vanField) {
       $found = FALSE;
       foreach ($fileHdr as $fileCol=>$fileColName) {
@@ -81,20 +82,25 @@ class NlpCrosstabCounts
   }
   
   /**
-   * @param $counts
+   * updateCrosstabCounts
+   *
+   * Updates the crosstab counts table.
+   * 1. If the row already exists, it updates the registered voters and registered voted counts.
+   * 2. If the row does not exist, it inserts a new row.
+   * @param array $counts
    * @return bool
    */
-  public function updateCrosstabCounts($counts): bool
+  public function updateCrosstabCounts( array $counts ): bool
   {
     try {
       $this->connection->merge(self::CROSSTAB_COUNTS_TBL)
-        ->keys(array(
+        ->keys([
           'cd' => $counts['cd'],
           'county' => $counts['county'],
-          'party' => $counts['party']))
-        ->fields(array(
+          'party' => $counts['party']])
+        ->fields([
           'registeredVoters' => $counts['regVoters'],
-          'registeredVoted' => $counts['regVoted']))
+          'registeredVoted' => $counts['regVoted']])
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('updateCrosstabCounts',$e->getMessage());
@@ -104,6 +110,12 @@ class NlpCrosstabCounts
   }
   
   /**
+   * fetchCrosstabCounts
+   *
+   * Fetches the crosstab counts from the database.
+   * 1. The counts are grouped by congressional district.
+   * 2. The counts are grouped by county.
+   * 3. The counts are grouped by party.
    * @return array - array of counts from VotedBuilder to report voter turnout by county and party.
    */
   public function fetchCrosstabCounts(): array
@@ -130,10 +142,12 @@ class NlpCrosstabCounts
   /**
    * getCountsByCd
    *
-   * @param $cd - the congressional district to get counts for.
+   * Gets the counts for a given congressional district.
+   *
+   * @param int $cd - the congressional district to get counts for.
    * @return array - array of counts by party for the given congressional district.
    */
-  function getCountsByCd($cd): array
+  public function getCountsByCd( int $cd ): array
   {
     $query = $this->connection->select(self::CROSSTAB_COUNTS_TBL, 'c');
     $query->fields('c');
@@ -149,7 +163,6 @@ class NlpCrosstabCounts
     do {
       $count = $result->fetchAssoc();
       if(empty($count)) {break;}
-      if($count['cd'] != $cd ) {continue;}
       if(empty($counts[$count['party']])) {
         $counts[$count['party']]['regVoted'] = $count['registeredVoted'];
         $counts[$count['party']]['regVoters'] = $count['registeredVoters'];
@@ -165,10 +178,12 @@ class NlpCrosstabCounts
   /**
    * getCountsByCounty
    *
-   * @param $county - the county to get counts for.
+   * Gets the counts for a given county.
+   *
+   * @param string $county - the county to get counts for.
    * @return array - array of counts by party for the given county.
    */
-  public function getCountsByCounty($county): array
+  public function getCountsByCounty( string $county ): array
   {
     $query = $this->connection->select(self::CROSSTAB_COUNTS_TBL, 'c');
     $query->fields('c');
@@ -184,7 +199,6 @@ class NlpCrosstabCounts
     do {
       $count = $result->fetchAssoc();
       if(empty($count)) {break;}
-      if($count['county'] != $county ) {continue;}
       if(empty($counts[$count['party']])) {
         $counts[$count['party']]['regVoted'] = $count['registeredVoted'];
         $counts[$count['party']]['regVoters'] = $count['registeredVoters'];
@@ -200,13 +214,16 @@ class NlpCrosstabCounts
   /**
    * getCds
    *
-   * @return array - array of unique cds from the crosstab counts table.
+   * Gets the unique congressional districts from the given table.
+   *
+   * @param string $tableName
+   * @return array - array of unique cds from the given table.
    *
    * This is used to populate the select list for the Crosstab Counts page.
    */
-  public function getCds(): array
+  public function getCds( string $tableName = self::CROSSTAB_COUNTS_TBL ): array
   {
-    $query = $this->connection->select(self::CROSSTAB_COUNTS_TBL, 'c');
+    $query = $this->connection->select($tableName, 'c');
     $query->distinct();
     $query->addField('c', 'cd');
     try {
@@ -215,7 +232,7 @@ class NlpCrosstabCounts
       nlp_debug_msg('getCds',$e->getMessage());
       return [];
     }
-    
+
     $cds = [];
     do {
       $cd = $result->fetchAssoc();
@@ -223,7 +240,7 @@ class NlpCrosstabCounts
       if($cd['cd'] == 0 ) {continue;}
       $cds[] = $cd['cd'];
     } while (TRUE);
-    
+
     return $cds;
   }
 
