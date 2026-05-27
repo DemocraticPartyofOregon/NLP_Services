@@ -1,51 +1,47 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Drupal\nlpservices;
 
 use Drupal;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class NlpCredentialsEmail
 {
   protected DrupalUser $drupalUserObj;
-  protected NlpPaths $pathsObj;
   protected NlpCoordinators $coordinatorsObj;
   protected NlpMcidRecovery $mcidRecoveryObj;
-  
   protected NlpConfiguration $nlpConfigurationObj;
-  protected NlpSessionData $nlpSessionDataObj;
   protected NlpSendEmail $sendMailObj;
-  protected  NlpNls $nlsObj;
-  
-  public function __construct( $drupalUserObj, $pathsObj,
-                               $coordinatorsObj, $mcidRecoveryObj,
-                               $nlpConfigurationObj, $nlpSessionDataObj, $sendMailObj, $nlsObj )
+  protected NlpNls $nlsObj;
+  protected RequestStack $requestStack;
+
+  public function __construct( $drupalUserObj, $coordinatorsObj, $mcidRecoveryObj,
+                               $nlpConfigurationObj, $sendMailObj, $nlsObj, $requestStack )
   {
     $this->drupalUserObj = $drupalUserObj;
-    $this->pathsObj = $pathsObj;
     $this->coordinatorsObj = $coordinatorsObj;
     $this->mcidRecoveryObj = $mcidRecoveryObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
+    $this->requestStack = $requestStack;
   }
-  
- 
+
+
   public static function create(ContainerInterface $container): NlpCredentialsEmail
   {
     return new static(
       $container->get('nlpservices.drupal_user'),
-      $container->get('nlpservices.paths'),
       $container->get('nlpservices.coordinators'),
       $container->get('nlpservices.mcid_recovery'),
       $container->get('nlpservices.configuration'),
-      $container->get('nlpservices.session_data'),
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * sendCredentialsEmail
    *
@@ -64,9 +60,13 @@ class NlpCredentialsEmail
    * @param array $miniVanArray
    * @return bool
    */
-  function sendCredentialsEmail(int $mcid, string $messageTemplate, string $note='', array $miniVanArray=[]): bool
+  public function sendCredentialsEmail(int $mcid, string $messageTemplate, string $note='', array $miniVanArray=[]): bool
   {
     $nl = $this->nlsObj->getNlById($mcid);
+    if(empty($nl)) {
+      Drupal::logger('nlpservices')->notice('sendCredentialsEmail: NL not found for mcid: '.$mcid);
+      return FALSE;
+    }
     $county = $nl['county'];
     $nlCoordinator = $this->coordinatorsObj->getAssignedCoordinator($nl);
     $coordinatorContactInfo = '';
@@ -76,12 +76,11 @@ class NlpCredentialsEmail
       $phone = $nlCoordinator['phone'];
       $email = $nlCoordinator['email'];
       $coordinatorContactInfo = "<p>$firstName $lastName<br>Phone: $phone<br>Email:".
-'<a href="mailto:@email?subject=Request for help with turf">'."$email</a></p>";
+        '<a href="mailto:'.$email.'?subject=Request for help with turf">'."$email</a></p>";
     }
-    
-    $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
-    $serverUrl = 'https://'.$serverName;
-    
+
+    $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+
     $user = $this->drupalUserObj->getUserByMcid($mcid);
     if(empty($user)) {
       Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
@@ -97,31 +96,30 @@ class NlpCredentialsEmail
       '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>'.
       "<br><b>Username:</b> $userName".
       '<br><a href="' . $revealUrl . '">Click here to retrieve your password</a> (this link can only be used once)</p>';
-    
+
     $miniVanInfo = '';
     if(!empty($miniVanArray)) {
       $minivanNumber = $miniVanArray['minivanNumber'];
       $minivanCreateDate = $miniVanArray['minivanCreateDate'];
       $miniVanInfo = "<p><b>MiniVan Number: </b>$minivanNumber<br>MiniVan was created $minivanCreateDate</p>";
     }
-    
+
     $plainNote = '';
     if (!empty($note)) {
       $plainNote = '<p>' . $note . '</p>';
     }
-    
+
     $needles = ['@nlpLogin','@coordinatorContactInfo','@plainNote', '@miniVanInfo'];
     $replace = [$nlpLoginInfo,$coordinatorContactInfo,$plainNote, $miniVanInfo];
     $paragraphsAdded = str_replace($needles, $replace ,$messageTemplate);
-    
+
     $electionDate = $this->nlpConfigurationObj->getElectionDate();
     $ballotDropDate = $this->nlpConfigurationObj->getBallotDropDate();
     $electionTimeStamp = strtotime($electionDate);
     $ballotDropTimeStamp = strtotime($ballotDropDate);
-    
-    $nl = $this->nlsObj->getNlById($mcid);
+
     $to = $nl['email'];
-    
+
     $message = t($paragraphsAdded, [
       '@county' => $county,
       '@electionDay' => date("F j, Y",$electionTimeStamp),
@@ -130,17 +128,17 @@ class NlpCredentialsEmail
       '@lastName' => $nl['lastName'],
       '@nickname' => (!empty($nl['nickname']))?$nl['nickname']:$nl['firstName'],
     ]);
-    
-    $subject =  "Neighborhood Leader Materials - $county County";
-    $reply = $nlCoordinator['email'];
-    
+
+    $subject = "Neighborhood Leader Materials - $county County";
+    $reply = $nlCoordinator['email'] ?? '';
+
     $message = (string)$message;
     $result = $this->sendMailObj->sendEmail('deliver_turf',$to, $subject, $message, $reply);
     if (!$result) {
       Drupal::logger('nlpservices')->notice('There was a problem sending your message and it was not sent.');
       return FALSE;
     }
-    
+
     return TRUE;
   }
 }

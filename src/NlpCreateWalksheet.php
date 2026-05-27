@@ -7,10 +7,10 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class NlpCreateWalksheet
 {
   
-  const array WALKSHEET_COLUMNS_NAMES = [
+  public const array WALKSHEET_COLUMNS_NAMES = [
     'control', 'address', 'name', 'votingHistory', 'results', 'question', 'notes'
   ];
-  const array WALKSHEET_COLUMNS_WIDTHS = [
+  public const array WALKSHEET_COLUMNS_WIDTHS = [
     'address' => '26%',
     'name' => '18%',
     'votingHistory' => '7%',
@@ -18,10 +18,10 @@ class NlpCreateWalksheet
     'question' => '15%',
     'notes' => '20%'
   ];
-  const string WALKSHEET_COlUMN_SPAN = '40%';
-  
-  const string WALKSHEET_RESULTS = '<b>Canvass results</b><br>';
-  const string WALKSHEET_QUESTION = '<b>Survey Question</b><br>';
+  public const string WALKSHEET_COLUMN_SPAN = '40%';
+
+  public const string WALKSHEET_RESULTS = '<b>Canvass results</b><br>';
+  public const string WALKSHEET_QUESTION = '<b>Survey Question</b><br>';
   
   private string $walksheetQuestionResponseList = '';
   private string $walksheetCanvassResponseList = '';
@@ -152,7 +152,6 @@ class NlpCreateWalksheet
               'addressLine1' => $voter['address']['addressLine1'],
               'addressLine2' => $voter['address']['addressLine2'],
               'city' => $voter['address']['city'],
-              //'stateOrProvince' => $voter['address']['state'],
             ];
             
             break;
@@ -298,37 +297,13 @@ class NlpCreateWalksheet
    */
   private function otherVotersInHousehold(array $address, array $householdVanids): array
   {
-    $county = $this->nlpSessionDataObj->getCounty();
-    $allInHousehold = $this->apiVoterObj->getVotersByAddress($address,$county);
+    //$county = $this->nlpSessionDataObj->getCounty();
+    //$allInHousehold = $this->apiVoterObj->getVotersByAddress($address,$county);
     
     $name = $alsoAddress = $votingHistory1 = $votingHistory2 = '';
     $voterCount = 0;
-    $exist = false;
-    /*
-    foreach ($allInHousehold['items'] as $voter) {
-      if(!in_array($voter['vanId'],$householdVanids)) {
-        $alsoAddress = 'Also in household';
-        $vanid = $voter['vanId'];
-        $voterRecord = $this->apiVoterObj->getApiVoter($vanid);
-        
-        $voterName = $voterRecord['lastName'] . ', ' . $voterRecord['firstName']
-          . ', ' . $voterRecord['age']. ', ' . $voterRecord['sex']. ', ' . $voterRecord['party'];
-        $name = (empty($name)) ? $voterName : $name.'<br>'.$voterName;
-        
-        $votingHistory = str_replace('@', '', $voterRecord['votingHistory']);
-        $voting = explode(' ',$votingHistory);
-        $votingHistoryP1 = $voting[0].' '.$voting[1];
-        $votingHistoryP2 = $voting[2].' '.$voting[3];
-        $votingHistory1 = (empty($votingHistory1)) ? $votingHistoryP1: '<br>'.$votingHistoryP1;
-        $votingHistory2 = (empty($votingHistory2)) ? $votingHistoryP2: '<br>'.$votingHistoryP2;
-        
-        $voterCount++;
-        $exist = true;
-      }
-    }
-    */
     return [
-      'exist' => $exist,
+      'exist' => false,
       'address' => $alsoAddress,
       'name' => $name,
       'votingHistory' => $votingHistory1,
@@ -373,7 +348,7 @@ class NlpCreateWalksheet
       $pageLineCount = $pageLineCount + $household['householdLineCount'];
       
       foreach ($household['votersInHousehold'] as $voter) {
-        if ($voter['control']['row'] == 'dotted') {
+        if ($voter['control']['row'] == 'dashed') {
           $html .= '<tr style="border-bottom: 1px dashed LightGray;">';
         } else {
           $html .= '<tr style="border-bottom: 1px solid Black;">';
@@ -465,7 +440,6 @@ class NlpCreateWalksheet
    */
   private function createWalksheetInstructions(array $turfInfo): string
   {
-    //$county = $turfInfo['county'];
     $electionName = $turfInfo['electionName'];
     $ballotDropDate = $turfInfo['ballotDropDate'];
     $ballotDropTime = strtotime($ballotDropDate);
@@ -506,7 +480,7 @@ That's great, thanks! Were asking folks to turn in their ballots as early as pos
 be taken off the call lists of the campaigns, and they can focus on people who haven't voted yet.<br>
 Have a great day!</p>";
     
-    $html .= "<p>Canvass results key, if unable to meet voter:<br>
+    $html .= "<p>Canvass result key, if unable to meet voter:<br>
 $canvassResultsCodeTable</p>";
     
     $html .= '<p>If the voter said they were not planning to vote for Democratic candidates, mark them
@@ -547,7 +521,7 @@ NLP Hostile in the canvass dispositions.</p>
       '">' . $cellData . '</td>';
     
     $cellData = $row['results'];
-    $width = self::WALKSHEET_COlUMN_SPAN;
+    $width = self::WALKSHEET_COLUMN_SPAN;
     $html .= '<td colspan="3" style="vertical-align: top;  width:' . $width .
       '; font-size:8pt; font-family: Arial, Helvetica, sans-serif;' . $borderStyle .
       '">' . $cellData . '</td>';
