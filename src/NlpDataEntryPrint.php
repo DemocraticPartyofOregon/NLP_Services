@@ -4,8 +4,9 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Core\File\FileExists;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\Core\Render\Markup;
 use Exception;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryPrint
 {
@@ -56,10 +57,10 @@ class NlpDataEntryPrint
    *
    * Returns an array of voters for the turf index.
    *
-   * @param $turfIndex
+   * @param int $turfIndex
    * @return array
    */
-  public function getVoters($turfIndex): array
+  public function getVoters( int $turfIndex ): array
   {
     $voters = $this->votersObj->fetchVotersByTurf($turfIndex);
     foreach ($voters as $vanid=>$voter) {
@@ -74,14 +75,14 @@ class NlpDataEntryPrint
    *
    * Creates a long string of HTML that represents a printable page with links
    * for the walksheet PDF, the canvass instructions PDF, the postcard instructions PDF,
-   * the postcard mailing list and the GOTV calling list.
+   * the postcard mailing list, and the GOTV calling list.
    *
    * The postcard and call lists are in HTML format and are displayed in the browser as
    * very simple tables.  The user can print these pages using the browser print function. Some
    * day it may be preferable to create a PDF of these lists, but for now, the HTML is enough.
    *
    * The walksheet PDF is created by the coordinator using the print function of VoteBuilder.  The
-   * print function creates a map of the contact addresses, and this map is very difficult to
+   * print function creates a map of the contact addresses, and this map is very challenging to
    * reproduce.   However, after an update of the VoterFile, the list of voters may change and
    * the walksheet and map may be stale.   Some day, it may be possible to request a new walksheet.
    *
@@ -129,7 +130,7 @@ recent information from VoteBuilder.)</p>';
     if(empty($turfIndex)) {
       $turfArray = $this->turfsObj->turfExists($mcid,$county);
       if (empty($turfArray)) {
-        $messenger->addWarning("You do not have a turf assigned");
+        $messenger->addWarning(t("You do not have a turf assigned"));
         return '';
       }
       $turfIndex = $turfArray['turfIndex'];
@@ -137,7 +138,7 @@ recent information from VoteBuilder.)</p>';
     
     $turf = $this->turfsObj->getTurf($turfIndex);
     
-    $page .= "<h2>Printable walksheet (Original with map)</h2>";
+    $page .= "<h2>Printable walksheet (Original with a map)</h2>";
 
     if(!empty($turf['turfPDF'])) {
       $pdfPath = $this->pathsObj->getPath('PDF',$county);
@@ -157,8 +158,8 @@ your county coordinator.</p>';
 
     $page .= "<h2>Printable walksheet (Latest list of voters but without a map)</h2>";
 
-    $page .=  '<p>Approximately every thirty days, the database of registered voters is updated by the state 
-party.   If your turf was created before the latest update of voters, it may have experienced some change.   Some 
+    $page .=  '<p>Approximately every thirty days, the state 
+party updates the database of registered voters.   If your turf was created before the latest update of voters, it may have experienced some change.   Some 
 voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf 
 in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from 
 the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if 
@@ -190,10 +191,10 @@ a good idea to be cautious about calling voters that always vote late. </p>";
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallList
    * 
-   * @param $voters
+   * @param array $voters
    * @return array
    */
-  public function buildCallList($voters): array
+  public function buildCallList( array $voters ): array
   {
     $note = '<div class="call-list-display">';
     
@@ -208,7 +209,6 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       '#markup' => $note,
     ];
     $voterArrays = $this->buildCallTableArray($voters);
-    //nlp_debug_msg('$voterArrays',$voterArrays);
     
     $page = $this->buildCallListDisplay($voterArrays);
   
@@ -224,24 +224,24 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $rows = [];
     foreach ($voterArrays as $voterArray) {
       $row = [];
-      $row['names'] = t('<span style="font-family:Calibri,sans-serif;">'.$voterArray['names'].'</span>');
-      $row['phoneNumbers'] = t('<span style="font-family:Calibri,sans-serif;">'.$voterArray['phoneNumbers'].'</span>');
-      $row['address'] = t('<span style="font-family:Calibri,sans-serif;">'.$voterArray['address'].'</span>');
+      $row['names'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['names'].'</span>');
+      $row['phoneNumbers'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['phoneNumbers'].'</span>');
+      $row['address'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['address'].'</span>');
       $call = ($voterArray['someOneToCall'])?'<span class="help-call">call</span>':'';
-      $row['someOneToCall'] = t('<span style="font-family:Calibri,sans-serif;">'.$call.'</span>');
+      $row['someOneToCall'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$call.'</span>');
       $rows[] = $row;
     }
     
     // Create the table as a render array.
     $contacts[] = [
       '#theme' => 'table',
-      '#tableselect' => TRUE,
+      '#tableselect' => FALSE,
       '#header' => $header,
       '#rows' => $rows,
-      '#empty' =>t('No files found'),
-      '#attributes' => array (
-        'class' => array('table table-striped',"call-table"),
-      ),
+      '#empty' => t('No files found'),
+      '#attributes' => [
+        'class' => ['table table-striped', 'call-table'],
+      ],
       '#prefix' => '<div class="call-list-display">',
       '#suffix' => '</div>',
     ];
@@ -263,10 +263,10 @@ Microsoft Word and edited or printed.</p></div>";
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallListDisplay
    *
-   * @param $voterArrays
+   * @param array $voterArrays
    * @return array
    */
-  public function buildCallListDisplay($voterArrays): array
+  public function buildCallListDisplay( array $voterArrays ): array
   {
   
     $page = [];
@@ -299,10 +299,10 @@ household has not yet voted, and a reminder call might be helpful.</p>";
    *
    * Returns an array of arrays with information to build the call list table.
    *
-   * @param $voters
+   * @param array $voters
    * @return array
    */
-  function buildCallTableArray($voters): array
+  public function buildCallTableArray( array $voters ): array
   {
     $voterArrays = [];
     // Create the display of voter's, grouped BY ADDRESS if more than one at the same address.
@@ -311,7 +311,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     foreach ($voters as $voter) {
       $voterArray = [];
       
-      $exclude = ($voter['status']['deceased'] OR $voter['status']['hostile']);
+      $exclude = ($voter['status']['deceased'] || $voter['status']['hostile']);
       // Extracted the name, address and age info from the vtr record.
       $voterNickname = " [".$voter['nickname']."]";
       $voterName = $voter['firstName']." ".$voter['lastName'];
@@ -323,18 +323,18 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $voterAge = " - Age(".$voter['age'].")";
       $voterSex = " ".$voter['sex'];
       $status = $voter['status'];
-      if(empty($status['voted']) AND !$exclude) {
+      if (empty($status['voted']) && !$exclude) {
         $householdNames = '<span class="help-not-voted">'
           .$voterName.$voterNickname.'</span>'.$voterSex.$voterAge.' *';
       } else {
         $householdNames = $voterName.$voterNickname.$voterSex.$voterAge.' '.$exclusion;
       }
       $votingHistory = $voter['votingHistory'];
-      $formattedVotingHistory = str_replace(array('@Y','@N'),array('Yes','No'),$votingHistory);
+      $formattedVotingHistory = str_replace(['@Y','@N'],['Yes','No'],$votingHistory);
       $householdNames .= '<br>&nbsp;&nbsp;'.$formattedVotingHistory;
-     
-      if(!empty(empty($status['voted']))) {
-        if(!empty($voter['homePhone']) OR !empty($voter['cellPhone'])) {
+
+      if (empty($status['voted'])) {
+        if (!empty($voter['homePhone']) || !empty($voter['cellPhone'])) {
           // This voter hasn't voted yet, and there is a phone number.
           $someOneToCall = TRUE;
         }
@@ -354,7 +354,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $voterAddress = $voter['address'];
       $householdAddress = $voterAddress['streetNo'].' '
         .$voterAddress['streetPrefix'].' '.$voterAddress['streetName'].' '.$voterAddress['streetType'];
-      if(!empty($voterAddress['aptType']) OR !empty($voterAddress['aptNo'])) {
+      if (!empty($voterAddress['aptType']) || !empty($voterAddress['aptNo'])) {
         $householdAddress .= '<br>'.$voterAddress['aptType'].' '.$voterAddress['aptNo'];
       }
       $householdAddress .= '<br>'.$voterAddress['city'];
@@ -404,18 +404,18 @@ household has not yet voted, and a reminder call might be helpful.</p>";
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallListPrint
    *
-   * @param $type
-   * @param $page
-   * @param $title
+   * @param string $type
+   * @param string $page
+   * @param string $title
    * @return string
    */
-  public function buildListPrint($type,$page,$title): string
+  public function buildListPrint( string $type, string $page, string $title ): string
   {
     $messenger = Drupal::messenger();
-    
+
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];
-    
+
     $createDate = date('Y-m-d-H-i-s', time());
     $fileType = ($type == 'call')?self::DD_CALL_FILE:self::DD_POSTCARD_FILE;
     $listUri = "public://temp/$fileType-$mcid-$createDate.html";
@@ -429,29 +429,34 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       return '';
     }
     $fh = fopen($listUri, "w");
-  
+    if (!$fh) {
+      $messenger->addError(t('Failed to open list file'));
+      return '';
+    }
+
     fputs($fh, '<html lang="EN-uS"><head><title></title>');
-    
+
     // Get the CSS file.
     $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $cssFile = $modulePath.'/css/call-print.css';
     $cssFh = fopen($cssFile, "r");
-    if (empty($cssFh)) {
-      $messenger->addError('Failed to open CSS file');
+    if (!$cssFh) {
+      $messenger->addError(t('Failed to open CSS file'));
+      fclose($fh);
       return '';
     }
     fputs($fh,"<style>");
     $skip = false;
     do {
       $css = fgets($cssFh);
-      if(empty($css)) {break;}
-      if(empty(trim($css))) {continue;}  // Blank line.
-      if($skip) {
-        if ((bool)strpos($css, '*/') === true) {$skip = false;}
+      if (empty($css)) {break;}
+      if (empty(trim($css))) {continue;}  // Blank line.
+      if ($skip) {
+        if (strpos($css, '*/') !== false) {$skip = false;}
         continue;
       }
-      if ((bool)strpos($css, '/*') === true) {
-        if ((bool)strpos($css, '*/') === false) {$skip = true;}
+      if (strpos($css, '/*') !== false) {
+        if (strpos($css, '*/') === false) {$skip = true;}
         continue;
       }
       fputs($fh,$css);
@@ -466,7 +471,6 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     fputs($fh,"<span style='font-family:Calibri,sans-serif'>");
   
     foreach ($page as $line) {
-      //nlp_debug_msg('$line',$line);
       fputs($fh,$line."\n");
     }
   
@@ -480,13 +484,13 @@ household has not yet voted, and a reminder call might be helpful.</p>";
    *
    * Returns a phone number formatted as (xxx) xxx-xxxx.
    *
-   * @param $phone_number
+   * @param string $phoneNumber
    * @return string
    */
-  function formatTelephone($phone_number): string
+  public function formatTelephone( string $phoneNumber ): string
   {
-    if(empty($phone_number)) {return'';}
-    $cleaned = preg_replace('/[^[:digit:]]/', '', $phone_number);
+    if(empty($phoneNumber)) {return'';}
+    $cleaned = preg_replace('/[^[:digit:]]/', '', $phoneNumber);
     $matches = [];
     preg_match('/(\d{3})(\d{3})(\d{4})/', $cleaned, $matches);
     return "($matches[1]) $matches[2]-$matches[3]";
@@ -498,10 +502,10 @@ household has not yet voted, and a reminder call might be helpful.</p>";
    * Create a mailing address list for each household.   The names and ages of
    * every voter in the household will be listed to help address the postcard.
    *
-   * @param $voters
+   * @param array $voters
    * @return array
    */
-  function buildMailingList($voters): array
+  public function buildMailingList( array $voters ): array
   {
     $tableArrays = $this->buildMailListArray($voters);
     $page = $this->buildMailListDisplay($tableArrays);
@@ -521,22 +525,21 @@ Microsoft Word and edited or printed.</p></div>";
     $rows = [];
     foreach($tableArrays as $tableArray) {
       $rows[] = [
-        'names' => t((string)$tableArray['names']),
-        'address' => t((string)$tableArray['address']),
+        'names' => Markup::create((string)$tableArray['names']),
+        'address' => Markup::create((string)$tableArray['address']),
       ];
     }
-    
+
     // Create the table as a render array.
     $content[] = [
       '#theme' => 'table',
-      '#tableselect' => TRUE,
-      
+      '#tableselect' => FALSE,
       '#header' => $header,
       '#rows' => $rows,
-      '#empty' =>t('No files found'),
-      '#attributes' => array (
-        'class' => array('table table-striped',"mail-table"),
-      ),
+      '#empty' => t('No files found'),
+      '#attributes' => [
+        'class' => ['table table-striped', 'mail-table'],
+      ],
       '#prefix' => '<div class="mail-list-display">',
       '#suffix' => '</div>',
     ];
@@ -552,10 +555,10 @@ Microsoft Word and edited or printed.</p></div>";
    *
    * Create an HTML table for the mailing list.
    *
-   * @param $tableArrays
+   * @param array $tableArrays
    * @return array
    */
-  public function buildMailListDisplay($tableArrays): array
+  public function buildMailListDisplay( array $tableArrays ): array
   {
     $page = [];
     $page[] = '<div class="call-list-display">';
@@ -584,17 +587,17 @@ Microsoft Word and edited or printed.</p></div>";
    *
    * Build an array of mailing addresses for each household.
    *
-   * @param $voters
+   * @param array $voters
    * @return array
    */
-  public function buildMailListArray($voters): array
+  public function buildMailListArray( array $voters ): array
   {
     $voterArrays = [];
     $current = [];
     foreach ($voters as $voter) {
       
       $voterArray = [];
-      $exclude = ($voter['status']['deceased'] OR $voter['status']['hostile']);
+      $exclude = ($voter['status']['deceased'] || $voter['status']['hostile']);
       // Extracted the name, address and age info from the vtr record.
       $salutation = " [".$voter['nickname']."]";
       $name = $voter['firstName']." ".$voter['lastName'];
@@ -610,7 +613,7 @@ Microsoft Word and edited or printed.</p></div>";
       }
       
       $votingHistory = $voter['votingHistory'];
-      $formattedVotingHistory = str_replace(array('@Y','@N'),array('Yes','No'),$votingHistory);
+      $formattedVotingHistory = str_replace(['@Y','@N'],['Yes','No'],$votingHistory);
       
       $voterName .= '<br>&nbsp;&nbsp;'.$formattedVotingHistory;
       
@@ -630,7 +633,6 @@ Microsoft Word and edited or printed.</p></div>";
         // same address, then add the name to the list.
         if($mailingAddress == $current['address']) {
           $current['name'] .= "<br>".$voterName;
-          //nlp_debug_msg('$current',$current);
         } else {
           // If this voter is registered at a different address, write the
           // mailing address record and start over with this voter.
@@ -651,11 +653,24 @@ Microsoft Word and edited or printed.</p></div>";
     }
     return $voterArrays;
   }
-  
-  public function buildWalksheetPage($turfIndex): array
+
+  /**
+   * buildWalksheetPage
+   *
+   * Generates a walksheet page for a specified turf index. The method retrieves
+   * data related to the walksheet, creates a PDF for the walksheet, and returns
+   * a render array containing a link to view or download the PDF.
+   *
+   * @param int $turfIndex
+   *   The index of the turf for which the walksheet is to be created.
+   *
+   * @return array
+   *   A render array containing either a link to the walksheet PDF or a message
+   *   indicating no walksheet data is available.
+   */
+  public function buildWalksheetPage( int $turfIndex ): array
   {
     $walksheetData = $this->createWalksheetObj->createWalksheetArray($turfIndex);
-    //nlp_debug_msg('$walksheetData',$walksheetData);
     if(empty($walksheetData)) {
       return [
         '#markup' => '<p>No walksheet data available.</p>',

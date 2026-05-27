@@ -70,80 +70,87 @@ class DataEntryPostcardsForm extends FormBase
     $turfIndex = $this->sessionDataObj->get('turfIndex');
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
     $voterList = $this->buildPostcardSelection($voters);
-    $vanids = array_keys($voterList);
-    
+
     if(empty($form_state->get('reenter'))) {
-      $form_state->set('allVoters',FALSE);
-      $form_state->set('rep',1);  // used to avoid the Drupal decision to
+      $form_state->set('allVoters', FALSE);
+      $form_state->set('rep', 1);  // used to avoid the Drupal decision to
       // preserve user checkbox values for a rebuild.
-      $canvassDate = date('Y-m-d',time());  // Today.
-      $form_state->set('canvassDate',$canvassDate);
+      $canvassDate = date('Y-m-d', time());
+      $form_state->set('canvassDate', $canvassDate);
     }
-    
+
+    $pendingVanids = [];
+    $sentVanids = [];
+    foreach (array_keys($voterList) as $vanid) {
+      if($this->reportsObj->voterSentPostcard($vanid)) {
+        $sentVanids[] = $vanid;
+      } else {
+        $pendingVanids[] = $vanid;
+      }
+    }
+
     $form['postcards'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="postcard-wrapper" class="postcard-mailed-box">',
+      '#suffix' => '</div>',
     ];
-    
+
     $defaultDate = $form_state->get('canvassDate');
     $form['postcards']['canvassDate'] = [
       '#type' => 'date',
-      '#title' => 'Date of the voter contact',
+      '#title' => t('Date of the voter contact'),
       '#default_value' => $defaultDate,
     ];
-    
-    $form['postcards']['AllVotersDescription'] = [
-      '#markup' => '<p>Check the <b>All Voters</b> box below to select all the
-voters in your turf that you have not already marked as having sent them a
-postcard for this election.  It should be rare that a voter gets two postcards.
-</p>',
-    ];
-    
-    $form['postcards']['allVoters'] = [
-      '#type' => 'checkbox',
-      '#title' => 'All Voters',
-      '#ajax' => [
-        'callback' => '::postcardCallback',
-        'wrapper' => 'postcard-wrapper',
-      ],
-      '#suffix' => '</div>',
-    ];
-    
-    $form['postcards']['space'] = [
-      '#markup' => '<p> </p>',
-    ];
-    
-    // Identify the voters that have already been reported as having a postcard sent.
-    foreach ($vanids as $vanid) {
-      $postcardSend = $this->reportsObj->voterSentPostcard($vanid);
-      if($postcardSend) {
-        $voterList[$vanid] .= ' **';
-      }
-    }
-    
-    $allVoters = !empty($form_state->get('allVoters'));
-    $rep = $form_state->get('rep');
-    foreach ($vanids as $vanid) {
-      $postcardSend = $this->reportsObj->voterSentPostcard($vanid);
-      $default = (!$postcardSend AND $allVoters)?1:0;
 
-      $form['postcards']['voter-'.$rep.'-'.$vanid] = [
+    if(!empty($pendingVanids)) {
+      $form['postcards']['pendingTitle'] = [
+        '#markup' => '<h3>' . t('Postcards not yet sent') . '</h3>',
+      ];
+      $form['postcards']['AllVotersDescription'] = [
+        '#markup' => '<p>' . t('Check each voter you are sending a postcard to, or use <b>All Voters</b> to select everyone below at once.') . '</p>',
+      ];
+      $form['postcards']['allVoters'] = [
         '#type' => 'checkbox',
-        '#title' => $voterList[$vanid],
-        '#default_value' => $default,
+        '#title' => t('All Voters'),
+        '#ajax' => [
+          'callback' => '::postcardCallback',
+          'wrapper' => 'postcard-wrapper',
+        ],
+      ];
+      $allVoters = !empty($form_state->get('allVoters'));
+      $rep = $form_state->get('rep');
+      foreach ($pendingVanids as $vanid) {
+        $form['postcards']['voter-'.$rep.'-'.$vanid] = [
+          '#type' => 'checkbox',
+          '#title' => $voterList[$vanid],
+          '#default_value' => $allVoters ? 1 : 0,
+        ];
+      }
+    } else {
+      $form['postcards']['allSentNote'] = [
+        '#markup' => '<p>' . t('All voters in your turf have already been reported as sent.') . '</p>',
       ];
     }
-    
-    $form['postcards']['AllVotersFootnote'] = [
-      '#markup' => '<p>** Voter has already been reported as having a postcard
-sent.  There is no need to report this an additional time.</p>',
-    ];
-    
+
+    if(!empty($sentVanids)) {
+      $form['postcards']['sentTitle'] = [
+        '#markup' => '<h3>' . t('Already reported sent') . '</h3>',
+      ];
+      $sentItems = '';
+      foreach ($sentVanids as $vanid) {
+        $sentItems .= '<li>' . $voterList[$vanid] . '</li>';
+      }
+      $form['postcards']['sentList'] = [
+        '#markup' => '<ul>' . $sentItems . '</ul>',
+      ];
+    }
+
     $form['reportMailed'] = [
       '#type' => 'submit',
-      '#value' => 'Report postcards mailed',
-      '#name' => 'reportMailed',];
-    
+      '#value' => t('Report postcards mailed'),
+      '#name' => 'reportMailed',
+    ];
+
     return $form;
   }
   
@@ -181,7 +188,6 @@ sent.  There is no need to report this an additional time.</p>',
     $mcid = $currentUser['mcid'];
     $canvassDate = $values['canvassDate'];
 
-    // For each voter with the checkbox checked, report the postcard mailed.
     foreach ($values as $valueIndex=>$value) {
       $valueIndexParts =  explode('-',$valueIndex);
       if($valueIndexParts[0] == 'voter') {
@@ -204,7 +210,7 @@ sent.  There is no need to report this an additional time.</p>',
    * @param array $voters
    * @return array
    */
-  public function buildPostcardSelection(array $voters): array
+  private function buildPostcardSelection(array $voters): array
   {
     $voterDisplay = [];
     foreach ($voters as $voter) {
@@ -225,11 +231,9 @@ sent.  There is no need to report this an additional time.</p>',
    * @param int $mcid
    * @return void
    */
-  public function reportPostcardMailed(array $vanid, string $canvassDate, int $mcid): void
+  private function reportPostcardMailed(int $vanid, string $canvassDate, int $mcid): void
   {
     $county = $this->sessionDataObj->getCounty();
-    
-    // Get the canvass response codes for the Postcard contact method.
     $canvassResponseCodes = $this->configurationObj->getCanvassResponseCodes();
     $contactMethod = 'Postcard';
     $noContactOption = 'Mailed';
@@ -238,8 +242,7 @@ sent.  There is no need to report this an additional time.</p>',
     $cycle = $this->configurationObj->getCycle();
     $nlsInfo = $this->nlsObj->getNlById($mcid);
     $cd = $this->votersObj->getVoterCd($vanid);
-    
-    // Record a voter contact in the NLP database.
+
     $report = [
       'vanid'=>$vanid,
       'cycle'=>$cycle,
@@ -255,16 +258,14 @@ sent.  There is no need to report this an additional time.</p>',
       'text'=>'',
     ];
     $rIndex = $this->reportsObj->setNlReport($report);
-    
-    //  Report the canvass response code to VoteBuilder.
+
     $surveyResponse['vanid'] = $vanid;
     $surveyResponse['type'] = 'contactAttempt';
     $surveyResponse['rid'] = $rid;
     $surveyResponse['ContactTypeCode'] = $cid;
     $surveyResponse['dateCanvassed'] = $canvassDate;
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
-    
-    // Mark Contact attempt for this voter.
+
     $turfIndex = $this->sessionDataObj->get('turfIndex');
     $turfVoter = [];
     $turfVoter['vanid'] = $vanid;
@@ -273,8 +274,7 @@ sent.  There is no need to report this an additional time.</p>',
     $turfVoter['turfIndex'] = $turfIndex;
     $turfVoter['attemptedContact'] = $rIndex;
     $this->votersObj->updateTurfVoter($turfVoter);
-    
-    // This NL has reported results.
+
     $this->nlsObj->resultsReported($mcid,$county);
   }
   
@@ -287,7 +287,7 @@ sent.  There is no need to report this an additional time.</p>',
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function postcardCallback($form, $unused): array
+  public function postcardCallback($form, $unused): array
   {
     return $form['postcards'];
   }

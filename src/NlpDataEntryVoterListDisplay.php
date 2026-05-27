@@ -3,16 +3,18 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Render\Markup;
 use DateTimeZone;
 use Exception;
-use Drupal\Core\Datetime\DrupalDateTime;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryVoterListDisplay
 {
   protected NlpReports $reportsObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  protected  NlpSessionData $nlpSessionDataObj;
+  protected NlpSessionData $nlpSessionDataObj;
   
   public function __construct( $reportsObj, $nlpConfigurationObj, $nlpSessionDataObj)
   {
@@ -36,29 +38,31 @@ class NlpDataEntryVoterListDisplay
    * Given the NLP voter record, reformat the information for display in the data entry form.
    * The information is used to build the various cells in the data entry table.
    *
-   * @param $voter
+   * @param array $voter
    * @return array
    */
-  function buildDataEntryVoterArray($voter):array
+  public function buildDataEntryVoterArray( array $voter ):array
   {
     $voterArray = [];
     // Basic voter information.
     $vanid = $voter['vanid'];
     $voterArray['vanid'] = $voter['vanid'];
-    $firstName = $voter['firstName'];
+    $firstName = Html::escape($voter['firstName']);
     $voterArray['firstName'] = $firstName;
-    $lastName = $voter['lastName'];
+    $lastName = Html::escape($voter['lastName']);
     $voterArray['lastName'] = $lastName;
-    $age = $voter['age'];
-    $gender = $voter['sex'];
-    $party = $voter['party'];
+    $age = Html::escape($voter['age']);
+    $gender = Html::escape($voter['sex']);
+    $party = Html::escape($voter['party']);
     $voterArray['name'] = "<b>$lastName, $firstName</b> - Age:$age Gender:$gender Party:$party";
     $voterArray['nickname'] = $voter['nickname'];
     // Address information.
-    $street = $voter['address']['streetNo']." ".$voter['address']['streetPrefix']." "
-      .$voter['address']['streetName']." ".$voter['address']['streetType'];
-    $apt = (!empty($voter['address']['aptType']))?'<br>'.$voter['address']['aptType']." ".$voter['address']['aptNo']:'';
-    $city = $voter['address']['city'];
+    $street = Html::escape($voter['address']['streetNo'])." ".Html::escape($voter['address']['streetPrefix'])." "
+      .Html::escape($voter['address']['streetName'])." ".Html::escape($voter['address']['streetType']);
+    $apt = (!empty($voter['address']['aptType']))
+      ? '<br>'.Html::escape($voter['address']['aptType'])." ".Html::escape($voter['address']['aptNo'])
+      : '';
+    $city = Html::escape($voter['address']['city']);
     $voterArray['address'] = "$street$apt<br>$city";
     $voterArray['cd'] = $voter['address']['cd'];
     // Contact information.
@@ -69,7 +73,7 @@ class NlpDataEntryVoterListDisplay
     $voterArray['homePhoneId'] = $voter['homePhoneId'];
     $voterArray['cellPhoneId'] = $voter['cellPhoneId'];
     $phones = "<br/>";
-    if(empty($homePhone) AND empty($cellPhone)) {
+    if (empty($homePhone) && empty($cellPhone)) {
       $phones .= "<i>No phone numbers.</i>";
     }
     if (!empty($homePhone)) {
@@ -86,8 +90,6 @@ class NlpDataEntryVoterListDisplay
       if($voter['preferredPhoneType'] == 'C') {
         $phones .= ' <span class="voter-sms-status">Preferred</span>';
       }
-      //$optIn = (!empty($voter['smsOptInStatus']))?$voter['smsOptInStatus']:'Unknown';
-      //$phones .= ' <br>&nbsp;<span class="voter-sms-status" >SMS Text Status: '.$optIn.'</span>';
     }
     $voterArray['address'] .= $phones;
     // The note created by the NL.
@@ -124,12 +126,13 @@ class NlpDataEntryVoterListDisplay
     // Voting history.
     $yes = '<span class="yes">Y</span> ';
     $no = '<span class="no">N</span> ';
-    $formattedVotingHistory = str_replace(array('@Y','@N'),array($yes,$no),$voter['votingHistory']);
+    $formattedVotingHistory = str_replace(['@Y','@N'],[$yes,$no],$voter['votingHistory']);
     $voterArray['votingRecord'] = '<div><b>Voting Record</b><br>'.$formattedVotingHistory.'<br></div>';
     // The gold star for voting if the ballot was returned.
-    $star = '<div><span class="not-voted">'.$voter['nickname']." hasn't voted yet.<br></span></div>";
+    $nickname = Html::escape($voter['nickname']);
+    $star = '<div><span class="not-voted">'.$nickname." hasn't voted yet.<br></span></div>";
     if(!empty($voter['status']['voted'])) {
-      $votedMsg = ' Success! </br>'.$voter['nickname'].' voted on '.$voter['status']['voted'];
+      $votedMsg = ' Success! <br>'.$nickname.' voted on '.Html::escape($voter['status']['voted']);
       $color = 'green';
       $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
       $goldStar = $modulePath."/img/nlp-gold-star_rotator-50.gif";
@@ -141,7 +144,7 @@ class NlpDataEntryVoterListDisplay
     $voterArray['star'] = $star;
     //  The status message.
     $statusMessage = [
-      'deceased' => ['class'=>'#voter-deceased', 'text'=>':fn has been marked as deceased.'],
+      'deceased' => ['class'=>'voter-deceased', 'text'=>':fn has been marked as deceased.'],
       'hostile' => ['class'=>'voter-hostile', 'text'=>':fn has been marked as hostile and will be removed from future turfs.  Do not attempt to contact this voter again.'],
       'moved' => ['class'=>'voter-moved', 'text'=>':fn has moved.'],
       'pledge' => ['class'=>'voter-pledge', 'text'=>'On :contactDate you asked :fn to pledge to vote. The response was - :response.'],
@@ -195,13 +198,16 @@ class NlpDataEntryVoterListDisplay
     } else {
       $contactStatusType = 'noAttempt';
     }
-    $rawMsg = $preMsg = $statusMessage[$contactStatusType]['text'];
-    if(!empty($scriptQuestion) OR !empty($response)) {
-      $preMsg = (string) t($rawMsg, [':scriptQuestion'=>$scriptQuestion, ':response'=>$response]);
-    }
-    $contactStatusMsg = t($preMsg,[':fn'=>$fn, ':contactDate'=>$contactDate]);
-    $voterArray['contactStatusMsg'] =
-      t('<div class="'.$statusMessage[$contactStatusType]['class'].'">'.$contactStatusMsg.'</div>');
+    $rawMsg = $statusMessage[$contactStatusType]['text'];
+    $contactStatusMsg = t($rawMsg, [
+      ':fn' => $fn,
+      ':contactDate' => $contactDate,
+      ':scriptQuestion' => $scriptQuestion,
+      ':response' => $response,
+    ]);
+    $voterArray['contactStatusMsg'] = Markup::create(
+      '<div class="' . $statusMessage[$contactStatusType]['class'] . '">' . $contactStatusMsg . '</div>'
+    );
     return $voterArray;
   }
   
@@ -211,10 +217,10 @@ class NlpDataEntryVoterListDisplay
    *
    * Convert the phone number into a standard form.
    *
-   * @param  $phoneNumber
+   * @param  string $phoneNumber
    * @return string
    */
-  private function formatTelephone($phoneNumber): string
+  private function formatTelephone( string $phoneNumber ): string
   {
     if(empty($phoneNumber)) {return'';}
     $cleaned = preg_replace('/[^[:digit:]]/', '', $phoneNumber);
@@ -228,10 +234,10 @@ class NlpDataEntryVoterListDisplay
    *
    * Creates the Drupal form elements for the voter data entry page.
    *
-   * @param $voterArrays - An array of voter data arrays created above.
+   * @param array $voterArrays - An array of voter data arrays created above.
    * @return array
    */
-  function buildVoterDataEntryTable($voterArrays):array
+  public function buildVoterDataEntryTable( array $voterArrays ):array
   {
     
     $form['dataEntry'] = [
@@ -293,7 +299,7 @@ class NlpDataEntryVoterListDisplay
         $responseList[$responseId] = $response['name'];
       }
       $responseList = (!empty($voterArray['nickname'])) ?
-        str_replace(":fn", $voterArray['nickname'], $responseList) : '';
+        str_replace(":fn", $voterArray['nickname'], $responseList) : $responseList;
       $form['dataEntry']['row_2_' . $vanid]['col_2_3']['line_2_3_2'] = [
         '#type' => 'markup',
         '#markup' => "<div>$question</div>",
@@ -434,10 +440,10 @@ class NlpDataEntryVoterListDisplay
    *           'newContact' = The new contact information, e.g., a new phone number or email.
    *     'Note' = The note entered by the user for this voter.
    *
-   * @param $dataEntry
+   * @param array $dataEntry
    * @return array
    */
-  public function validateDataEntrySelection($dataEntry):array
+  public function validateDataEntrySelection( array $dataEntry ):array
   {
     $selections = [];
     foreach($dataEntry as $rowId=>$row) {
@@ -483,11 +489,11 @@ class NlpDataEntryVoterListDisplay
    * *   'type' = The type of action, e.g., 'surveyResponse', 'notContacted', 'moved', 'hostile', 'deceased', 'updateContact', 'note'.
    * *   'contactMethod' = The contact method used for this action, e.g., 'Phone', 'Walk', etc.
    *
-   * @param $selections - from above
-   * @param $voterArrays
+   * @param array $selections - from above
+   * @param array $voterArrays
    * @return array
    */
-  public function whatChanged($selections,$voterArrays): array
+  public function whatChanged( array $selections, array $voterArrays ): array
   {
     $actions = [];
     foreach ($selections as $vanid => $selection) {
@@ -518,7 +524,7 @@ class NlpDataEntryVoterListDisplay
         $actions[$vanid][] = ['type'=>'notContacted', 'contactMethod'=>$contactMethod, 'notContacted'=>$notContacted];
       }
       
-      if(isset($selection['moved']) AND isset($voterArray['moved'])) {
+      if(isset($selection['moved']) && isset($voterArray['moved'])) {
         if($selection['moved'] != $voterArray['moved']) {
           $actions[$vanid][] = ['type'=>'moved', 'contactMethod'=>$contactMethod, 'moved'=>$selection['moved']];
         }

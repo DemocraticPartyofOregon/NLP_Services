@@ -1,4 +1,4 @@
-<?php /** @noinspection PhpMissingFieldTypeInspection */
+<?php
 
 namespace Drupal\nlpservices\Form;
 
@@ -82,7 +82,7 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
       $container->get('nlpservices.api_folders'),
-      $container->get('nlpservices.map_regions')
+      $container->get('nlpservices.api_map_regions')
     );
   }
   
@@ -237,7 +237,7 @@ class DataEntryForm extends FormBase
     $newCanvassDate = (!empty($values['canvassDate']))?$values['canvassDate']:'';
     
     $canvassDate = $this->sessionDataObj->get('canvassDate');
-    if(!empty($newCanvassDate) AND $canvassDate != $newCanvassDate) {
+    if(!empty($newCanvassDate) && $canvassDate != $newCanvassDate) {
       $this->sessionDataObj->set('canvassDate',$newCanvassDate);
     }
     switch ($elementClicked) {
@@ -248,8 +248,7 @@ class DataEntryForm extends FormBase
           'unreportedChanges' => 0,
         ];
         $this->turfsObj->updateTurfFields($turfIndex, $newTurf);
-        $messenger->addStatus('Thanks for acknowledging the changes to your turf.  Now click the
-        My turf tab to see your turf.');
+        $messenger->addStatus(t('Thanks for acknowledging the changes to your turf.  Now click the My turf tab to see your turf.'));
         return;
       
       case 'postcardSubmit':
@@ -263,8 +262,6 @@ class DataEntryForm extends FormBase
         return;
     }
     
-    $triggeringElement = $form_state->getTriggeringElement();
-    $elementClicked = $triggeringElement['#name'];
     $navButtonParts = explode('-',$elementClicked);
     switch ($navButtonParts[0]) {
       
@@ -275,10 +272,12 @@ class DataEntryForm extends FormBase
         $this->sessionDataObj->set('currentPage', $NewPage);
         break;
       case 'next':
-        $this->sessionDataObj->set('currentPage', 6);
+        $currentPage = $this->sessionDataObj->get('currentPage');
+        $this->sessionDataObj->set('currentPage', $currentPage + 1);
         break;
       case 'previous':
-        $this->sessionDataObj->set('currentPage', 5);
+        $currentPage = $this->sessionDataObj->get('currentPage');
+        $this->sessionDataObj->set('currentPage', max(0, $currentPage - 1));
         break;
       case 'last_name_search':
         $turfIndex = $form_state->get('turfIndex');
@@ -328,8 +327,7 @@ class DataEntryForm extends FormBase
             $report['contactMethod'] = $contactMethod;
             if ($contactMethod == 'Postcard') {
               $voterName = $voterArrays[$vanid]['firstName'] . ' ' . $voterArrays[$vanid]['lastName'];
-              $messenger->addWarning('If you received an answer from ' . $voterName
-                . ' please change the contact method to something other than postcard.');
+              $messenger->addWarning(t('If you received an answer from @name please change the contact method to something other than postcard.', ['@name' => $voterName]));
               break;
             }
             $action['turfIndex'] = $form_state->get('turfIndex');
@@ -388,11 +386,11 @@ class DataEntryForm extends FormBase
                 $voterName = $action['firstName'] . ' ' . $action['lastName'];
                 $cellPhone = $action['updateContact']['newContact'];
                 if(empty($cellPhone))  {
-                  $messenger->addWarning('You must enter a new cell phone, Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a new cell phone, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 if(!$this->validatePhoneNumber($cellPhone)) {
-                  $messenger->addWarning('You must enter a valid cell phone number , Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a valid cell phone number, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 $report['value'] = 'New cell number';
@@ -412,11 +410,11 @@ class DataEntryForm extends FormBase
                 $voterName = $action['firstName'] . ' ' . $action['lastName'];
                 $homePhone = $action['updateContact']['newContact'];
                 if(empty($homePhone))  {
-                  $messenger->addWarning('You must enter a new home phone, Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a new home phone, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 if(!$this->validatePhoneNumber($homePhone)) {
-                  $messenger->addWarning('You must enter a valid home phone number , Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a valid home phone number, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 $report['value'] = 'New home number';
@@ -436,15 +434,14 @@ class DataEntryForm extends FormBase
               
               case 'NE': // New email.
                 $messenger = Drupal::messenger();
-                $email = $action['updateContact']['newContact'];                $voterName = $action['firstName'] . ' ' . $action['lastName'];
-                
-                //nlp_debug_msg('$email',$email);
+                $email = $action['updateContact']['newContact'];
+                $voterName = $action['firstName'] . ' ' . $action['lastName'];
                 if(empty($email))  {
-                  $messenger->addWarning('You must enter a new email, Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a new email, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                  $messenger->addWarning('You must enter a valid email address , Voter is '.$voterName);
+                  $messenger->addWarning(t('You must enter a valid email address, Voter is @name', ['@name' => $voterName]));
                   break;
                 }
                 
@@ -628,7 +625,7 @@ the remaining postcards. </p>
    * @param FormStateInterface $form_state
    * @return bool
    */
-  function initializeDataReporting(FormStateInterface $form_state): bool
+  private function initializeDataReporting(FormStateInterface $form_state): bool
   {
     $messenger = Drupal::messenger();
     
@@ -692,7 +689,7 @@ the remaining postcards. </p>
    * @param string $phone
    * @return false|int
    */
-  function validatePhoneNumber(string $phone): false|int
+  private function validatePhoneNumber(string $phone): false|int
   {
     // Comprehensive phone number validation
     return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
@@ -709,7 +706,7 @@ the remaining postcards. </p>
    * @param int $turfIndex
    * @return void
    */
-  function updateMinivanInfo(int $turfIndex): void
+  private function updateMinivanInfo(int $turfIndex): void
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->sessionDataObj->getCounty();
@@ -735,17 +732,17 @@ the remaining postcards. </p>
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  function formCallback($form, FormStateInterface $form_state) {
+  public function formCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * formCallback
    *
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  function selectionCallback($form, FormStateInterface $form_state) {
+  public function selectionCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
   

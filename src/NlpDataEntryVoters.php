@@ -2,21 +2,21 @@
 
 namespace Drupal\nlpservices;
 
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryVoters
 {
   protected NlpVoters $votersObj;
   protected NlpReports $reportsObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  
+
   public function __construct($votersObj,$reportsObj, $nlpConfigurationObj) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpDataEntryVoters
   {
     return new static(
@@ -25,57 +25,58 @@ class NlpDataEntryVoters
       $container->get('nlpservices.configuration')
     );
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * fetchVoters
    *
    * Build the array of voter information for the voters in this NL's turf.
    *
-   * @param $turfIndex
-   * @return array - of voter information for this turf or FALSE if error.
+   * @param int $turfIndex
+   * @return array - of voter information for this turf.
    */
-  function fetchVoters($turfIndex): array
+  public function fetchVoters( int $turfIndex ): array
   {
     $voters = [];
     $votersInTurf = $this->votersObj->fetchVotersByTurf($turfIndex);
     foreach ($votersInTurf as $voterInfo) {
       $vanid = $voterInfo['vanid'];
-      $voterStatus = $this->votersObj->getVoterStatus($vanid);
-      $voterInfo['status'] = $voterStatus;
+      $voterInfo['status'] = $this->votersObj->getVoterStatus($vanid);
       $voterContacts = $this->reportsObj->getNlpReports($vanid);
+      $voterInfo['contacts'] = $voterContacts;
       $voterInfo['activist'] = $this->reportsObj->getNlpAcReport($vanid);
       $voterInfo['historic'] = $this->reportsObj->displayNlReports($voterContacts);
       $voters[$vanid] = $voterInfo;
     }
     return $voters;
   }
-  
+
   /**
    * turfCounts
    *
    * Counts the number of voters in a turf, how many have voted, how many have been contacted,
    * and how many have been attempted.
    *
-   * @param $turfIndex
+   * Accepts an optional pre-fetched voters array from fetchVoters() to avoid redundant
+   * database queries when the caller already has the voter list.
+   *
+   * @param int $turfIndex
+   * @param array $voters
    * @return int[]
    */
-  public function turfCounts($turfIndex): array
+  public function turfCounts(int $turfIndex, array $voters = []): array
   {
-    $votersInTurf = $this->votersObj->fetchVotersByTurf($turfIndex);
+    if (empty($voters)) {
+      $voters = $this->fetchVoters($turfIndex);
+    }
     $voterCount = $votedCount = $attemptedCount = $contactedCount = 0;
+    $cycle = $this->nlpConfigurationObj->getCycle();
 
-    foreach ($votersInTurf as $voterInfo) {
-      $vanid = $voterInfo['vanid'];
-      $voterStatus = $this->votersObj->getVoterStatus($vanid);
-      $voterInfo['status'] = $voterStatus;
-      if(!empty($voterStatus['voted'])) {
+    foreach ($voters as $voterInfo) {
+      if (!empty($voterInfo['status']['voted'])) {
         $votedCount++;
       }
-      $voterContacts = $this->reportsObj->getNlpReports($vanid);
       $contacted = $attempted = false;
-      $cycle = $this->nlpConfigurationObj->getCycle();
-      
-      foreach ($voterContacts as $voterContactList) {
+      foreach ($voterInfo['contacts'] as $voterContactList) {
         foreach ($voterContactList as $voterContact) {
           if ($voterContact['cycle'] == $cycle) {
             if ($voterContact['type'] == $this->reportsObj::SURVEY) {
@@ -87,11 +88,11 @@ class NlpDataEntryVoters
           }
         }
       }
-      if($attempted) {$attemptedCount++;}
-      if($contacted) {$contactedCount++;}
+      if ($attempted) { $attemptedCount++; }
+      if ($contacted) { $contactedCount++; }
       $voterCount++;
     }
-    
+
     return [
       'voterCount' => $voterCount,
       'votedCount' => $votedCount,
@@ -99,39 +100,38 @@ class NlpDataEntryVoters
       'contactedCount' => $contactedCount,
     ];
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * voterSearch
    *
    * Search for a voter in the turf by last name.  If found, return the page number
    * where the voter is located.
    *
-   * @param $turfIndex int
-   * @param $needle string
-   * @param $pageSize
+   * @param int $turfIndex
+   * @param string $needle
+   * @param int $pageSize
    * @return array
    */
-  function voterSearch( int $turfIndex, string $needle, $pageSize): array
+  public function voterSearch(int $turfIndex, string $needle, int $pageSize): array
   {
     $voters = $this->fetchVoters($turfIndex);
     $lcNeedle = strtolower($needle);
     $voterIndex = $page = 0;
     $found = FALSE;
-    foreach($voters as $voter) {
-      $lcLastName = strtolower( $voter['lastName']);
-      if(str_contains($lcLastName,$lcNeedle)) {
+    foreach ($voters as $voter) {
+      $lcLastName = strtolower($voter['lastName']);
+      if (str_contains($lcLastName, $lcNeedle)) {
         $found = TRUE;
         break;
       }
       $voterIndex++;
     }
-    if($found) {
-      $page = (int) floor($voterIndex/$pageSize);
+    if ($found) {
+      $page = (int) floor($voterIndex / $pageSize);
     } else {
-      $messenger = Drupal::messenger();
-      $messenger->addStatus('Voter not found.');
+      Drupal::messenger()->addStatus(t('Voter not found.'));
     }
-    return ['found'=> $found,'page'=> $page];
+    return ['found' => $found, 'page' => $page];
   }
-  
+
 }

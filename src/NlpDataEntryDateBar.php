@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Component\Utility\Html;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryDateBar
@@ -200,7 +201,7 @@ class NlpDataEntryDateBar
     $contactedCount = $turfCounts['contactedCount'];
     
     if(empty($voterCount)) {
-      $percentage = $attemptedPercentage = $contactedPercentage = 0;
+      $percentage = $attemptedPercentage = $contactedPercentage = '';
       $voterCount = 1;
     } else {
       $percentage = '('.round($votedCount/$voterCount*100,1).'%)';
@@ -256,7 +257,7 @@ class NlpDataEntryDateBar
     ];
     $form_element['canvassDate'] = [
       '#type' => 'date',
-      '#title' => 'Date of the voter contact',
+      '#title' => t('Date of the voter contact'),
     ];
     if(!empty($defaultDate)) {
       $form_element['canvassDate']['#default_value'] = $defaultDate;
@@ -289,7 +290,7 @@ class NlpDataEntryDateBar
 <tr class="no-white white-back"><td class="no-white">'];
     $form_element['last-name'] = [
       '#type' => 'textfield',
-      '#decription' => 'Last name.',
+      //'#description' => t('Last name.'),
       '#size' => 20,
       '#maxlength' => 40,
     ];
@@ -297,7 +298,7 @@ class NlpDataEntryDateBar
     $form_element['last_name_submit'] = [
       '#type' => 'submit',
       '#name' => 'last_name_search',
-      '#value' => 'Search',
+      '#value' => t('Search'),
     ];
     $form_element['search-name-end'] = ['#markup' => '</td></tr></tbody></table>'];
     $form_element['search-cell-end'] = ['#markup'=>" \n ".'</section>'];
@@ -321,7 +322,7 @@ class NlpDataEntryDateBar
     $form_element['postcardSubmit'] = [
       '#type' => 'submit',
       '#name' => 'postcardSubmit',
-      '#value' => 'postcards sent',
+      '#value' => t('postcards sent'),
       '#prefix' => '<div class="no-white">',
       '#suffix' => '</div>'
     ];
@@ -347,20 +348,21 @@ class NlpDataEntryDateBar
   public function navigate(int $pageCount, int $currentPage): array
   {
     $currentPage++;
-    if($pageCount < 7) {
+    if ($pageCount < 7) {
       $page = 1;
       $elementCount = $pageCount;
       $less = $more = FALSE;
-    } elseif ($currentPage < 7) {
-      $page = 1;
-      $elementCount = 6;
-      $less = FALSE;
-      $more = TRUE;
     } else {
-      $page = 7;
-      $elementCount = $pageCount-6;
-      $less = TRUE;
-      $more = FALSE;
+      $windowStart = max(1, $currentPage - 2);
+      $windowEnd = $windowStart + 5;
+      if ($windowEnd > $pageCount) {
+        $windowEnd = $pageCount;
+        $windowStart = max(1, $windowEnd - 5);
+      }
+      $page = $windowStart;
+      $elementCount = $windowEnd - $windowStart + 1;
+      $less = $windowStart > 1;
+      $more = $windowEnd < $pageCount;
     }
     
     $form_element['navigation_box'] = [
@@ -370,13 +372,13 @@ class NlpDataEntryDateBar
       '#type' => 'fieldset',
       '#prefix' => " \n".'<div class="nav_div">'." \n",
       '#suffix' => " \n".'</div>'." \n",
-      '#attributes' => array(
-        'style' => array('background-image: none; border:0; padding:0; margin:0; '),),
+      '#attributes' => [
+        'style' => ['background-image: none; border:0; padding:0; margin:0; '],],
     ];
     if($less) {
       $form_element['nav']['previous'] = [
         '#type' => 'submit',
-        '#value' => '< Previous',
+        '#value' => t('< Previous'),
         '#name' => 'previous',
         '#prefix' => " \n".'<div class="nav_number" >'." \n",
         '#suffix' => " \n".'</div>'." \n",
@@ -388,11 +390,11 @@ class NlpDataEntryDateBar
       ];
     }
     for ($element=1; $element<=$elementCount; $element++) {
-      if($page == $currentPage) {
-        $hoverMessage = "You are on page $page.";
+      if ($page == $currentPage) {
+        $hoverMessage = t('You are on page @page.', ['@page' => $page]);
         $pageClass = 'nav_current_number';
       } else {
-        $hoverMessage = "Go to page $page.";
+        $hoverMessage = t('Go to page @page.', ['@page' => $page]);
         $pageClass = 'nav_number';
       }
       $form_element['nav']['pageSelect-'.$page] = [
@@ -412,7 +414,7 @@ class NlpDataEntryDateBar
       ];
       $form_element['nav']['next'] = [
         '#type' => 'submit',
-        '#value' => 'Next >',
+        '#value' => t('Next >'),
         '#name' => 'next',
         '#prefix' => " \n".'<div class="nav_number" >'." \n",
         '#suffix' => " \n".'</div>'." \n",
@@ -420,7 +422,7 @@ class NlpDataEntryDateBar
     }
     $form_element['nav']['save_reports'] = [
       '#type' => 'submit',
-      '#value' => 'Save reports',
+      '#value' => t('Save reports'),
       '#name' => 'save_reports',
       '#prefix' => " \n".'<div class="nav_number" title="And stay on this page.">'." \n",
       '#suffix' => " \n".'</div>'." \n",
@@ -467,25 +469,25 @@ class NlpDataEntryDateBar
   private function turfName(int $turfIndex): array
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
-    if(!empty($turf)) {
+    if (!empty($turf)) {
       $turfNameStamp = $turf['turfName'];
-      $turfNameParts = explode('_',$turfNameStamp);
-      $turfName = $turfNameParts[0];
+      $turfNameParts = explode('_', $turfNameStamp);
+      $turfName = Html::escape($turfNameParts[0]);
     } else {
-      $turfName = 'Unknown turf';
+      $turfName = t('Unknown turf');
     }
-    
+
     $form_element['turf_name_box'] = [
       '#markup' => "  \n ".'<section class="turf-name-box no-white">',
     ];
-    
+
     $minivanInfo = $this->turfsObj->getMinivanInfo($turfIndex);
-    if(!empty($minivanInfo['minivanNumber'])) {
-      $minivanNumber = $minivanInfo['minivanNumber'];
-      $minivanCreateDate = $minivanInfo['minivanCreateDate'];
+    if (!empty($minivanInfo['minivanNumber'])) {
+      $minivanNumber = Html::escape($minivanInfo['minivanNumber']);
+      $minivanCreateDate = Html::escape($minivanInfo['minivanCreateDate']);
       $minivanDisplay = "MiniVAN No: $minivanNumber, Create date: $minivanCreateDate";
     } else {
-      $minivanDisplay = "The MiniVAN number was not created or has expired.";
+      $minivanDisplay = t('The MiniVAN number was not created or has expired.');
     }
     
     $turfDisplay = "<b>You're working with turf named:</b><br>".$turfName."<br>".$minivanDisplay;

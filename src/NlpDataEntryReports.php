@@ -48,16 +48,16 @@ class NlpDataEntryReports
    * 
    * Record a change in the Hostile status for a voter in both VoteBuilder and NLP Services.
    *
-   * @param $report - The report data for the voter.
+   * @param array $report - The report data for the voter.
    *              'vanid' => The Voter Access Number (VANID) of the voter.
    *              'mcid' => The MyCampaign ID for the NL.
    *              'county' => The county of the voter.
    * 
-   * @param $action - The action array containing the contact method and hostile status.
+   * @param array $action - The action array containing the contact method and hostile status.
    *              'contactMethod' => The contact method ID.
    *              'hostile' => A boolean indicating if the voter is hostile.
    */
-  function hostileVoter($report,$action): void
+  public function hostileVoter( array $report, array $action): void
   {
     // Record the change in the Hostile status for this voter in the NLP database.
     $contactMethodId = $action['contactMethod'];
@@ -91,17 +91,17 @@ class NlpDataEntryReports
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * deceasedVoter
    *
-   * @param $report - The report data for the voter.
+   * @param array $report - The report data for the voter.
    *              'vanid' => The Voter Access Number (VANID) of the voter.
    *              'mcid' => The MyCampaign ID for the NL.
    *              'county' => The county of the voter.
    *              'contactDate' => The date of the voter contact.
    *
-   * @param $action - The action array containing the contact method and hostile status.
+   * @param array $action - The action array containing the contact method and hostile status.
    *              'contactMethod' => The contact method ID.
    *              'turfIndex' => The turf index for the voter.
  */
-  function deceasedVoter($report,$action): void
+  public function deceasedVoter( array $report, array $action ): void
   {
     // This voter is being reported as deceased.  Record in NLP Services.
     $contactMethodId = $action['contactMethod'];
@@ -148,22 +148,22 @@ class NlpDataEntryReports
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * noContactResponse
    *
-   * @param $report - The report data for the voter.
+   * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *             'mcid' => The MyCampaign ID for the NL.
    *             'county' => The county of the voter.
    *             'contactDate' => The date of the voter contact.
    *
-   * @param $action - The action array containing the contact method and attempt result.
+   * @param array $action - The action array containing the contact method and attempt result.
    *             'contactMethod' => The contact method ID.
    *             'notContacted' => The response ID for not contacted.
    */
-  public function noContactResponse($report,$action): void
+  public function noContactResponse( array $report, array $action): void
   {
     $contactMethodId = $action['contactMethod'];
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
     $responseId = $action['notContacted'];
-    
+
     // Save the contact attempt in NLP Services.
     $report['type'] = 'contact';
     $report['text'] = '';
@@ -171,14 +171,13 @@ class NlpDataEntryReports
     $report['contactType'] = $contactMethod;
     $report['value'] = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
     $rIndex = $this->reportsObj->setNlReport($report);
-    
+
     //  Report the canvass response code to VoteBuilder.
     $surveyResponse['vanid'] = $report['vanid'];
     $surveyResponse['type'] = 'contactAttempt';
     $surveyResponse['rid'] = $responseId;
     $surveyResponse['ContactTypeCode'] = $contactMethodId;
     $vanid = $report['vanid'];
-    $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
     $responseName = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
     $altPhone = $this->phoneContact($vanid,$contactMethod,$responseName);
     if (!empty($altPhone['phoneNo'])) {
@@ -214,15 +213,15 @@ class NlpDataEntryReports
    *
    * Record a bad phone number for a voter in NLP Services and VoteBuilder.
    *
-   * @param $type - Phone type, either cellPhone or homePhone.
-   * @param $report - The report data for the voter.
-   * @param $action - The action array containing the contact method and phone number.
+   * @param string $type - Phone type, either cellPhone or homePhone.
+   * @param array $report - The report data for the voter.
+   * @param array $action - The action array containing the contact method and phone number.
    *            'contactMethod' => The contact method ID.
    *           'phoneNumber' => The phone number that is bad.
    *           'phoneId' => The phone ID for the bad phone number.
    * @return void
    */
-  public function badPhone($type, $report, $action): void
+  public function badPhone( string $type, array $report, array $action): void
   {
     $phoneNumber = $action['phoneNumber'];
     // Save the bad phone number in NLP Services.
@@ -267,19 +266,17 @@ class NlpDataEntryReports
    *
    * And, there has to be a phone number for the voter.  If the voter has a cell phone, it is used.
    *
-   * @param $vanid
-   * @param $contactMethod
-   * @param $responseName
+   * @param int $vanid
+   * @param string $contactMethod
+   * @param string $responseName
    * @return array
    */
-  private function phoneContact($vanid,$contactMethod,$responseName): array
+  private function phoneContact( string $vanid, string $contactMethod, string $responseName): array
   {
-    if (!($contactMethod == 'Phone' OR $contactMethod == 'SMS Text')) {
+    if (!($contactMethod == 'Phone' || $contactMethod == 'SMS Text')) {
       return [];  // Alternate contact method is only for Phone and SMS Text.
     }
     $altPhone = $this->nlpConfigurationObj->getAlternatePhoneReportCodes();
-
-    //$altPhoneRc = [];
     $voter = $this->votersObj->getVoterById($vanid);
     
     // If a cell phone is available, use it.  Use a home phone only if no cell phone and not SMS Text.
@@ -308,20 +305,20 @@ class NlpDataEntryReports
    * A note entered for a voter is saved in NLP Services.  If the voter already has a note,
    * the previous note is updated.
    *
-   * @param $report
-   * @param $action
+   * @param array $report
+   * @param array $action
    * @return void
    */
-  public function addNote($report,$action): void
+  public function addNote( array $report, array $action): void
   {
-    $noteString = trim(strip_tags(htmlentities(stripslashes($action['note']), ENT_QUOTES)));
+    $noteString = trim(htmlentities(strip_tags($action['note']), ENT_QUOTES));
     $commentMax = $this->reportsObj::MAX_COMMENT;
     if (strlen($noteString) > $commentMax) {
       $note = substr($noteString, 0, $commentMax);  // Truncate the comment.
     } else {
       $note = $noteString;
     }
-    $note = str_replace("\r\n", "<br>", $note);
+    $note = str_replace(["\r\n", "\n", "\r"], "<br>", $note);
     // if a note for this voter already exists, update the note else create one.
     $reportIndex = $action['reportIndex'];
     if (empty($reportIndex)) {
@@ -340,17 +337,17 @@ class NlpDataEntryReports
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * voterMoved
    *
-   * @param $report - The report data for the voter.
+   * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *            'mcid' => The MyCampaign ID for the NL.
    *            'county' => The county of the voter.
    *            'contactDate' => The date of the voter contact.
-   * @param $action - The action array containing the contact method and turf index.
+   * @param array $action - The action array containing the contact method and turf index.
    *            'contactMethod' => The contact method ID.
    *           'turfIndex' => The turf index for the voter.
    * @return void
    */
-  public function voterMoved($report,$action): void
+  public function voterMoved( array $report, array $action): void
   {
     $contactMethodId = $action['contactMethod'];
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
@@ -395,13 +392,6 @@ class NlpDataEntryReports
     $report['contactType'] = $contactMethod;
     $this->reportsObj->setNlReport($report);
     
-    // Tracking a suspected bug.
-    if(empty($report['movedStatus'])) {
-      if(empty($report['moved']) AND empty($report['Moved']) AND $report['value']!='Moved') {
-        $msg = var_export($report, true);
-        Drupal::logger('nlpservices')->notice('Moved status is missing: '.$msg);
-      }
-    }
     // The voter moved from this address.
     $this->votersObj->setMovedStatus($action['turfIndex'], $vanid, TRUE);
     
@@ -415,17 +405,17 @@ class NlpDataEntryReports
    *
    * Record a pledge to vote for a voter in NLP Services and VoteBuilder.
    *
-   * @param $report - The report data for the voter.
+   * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *            'mcid' => The MyCampaign ID for the NL.
    *           'county' => The county of the voter.
-   * @param $action - The action array containing the contact method and survey response
+   * @param array $action - The action array containing the contact method and survey response
    *            'contactMethod' => The contact method ID.
    *           'surveyResponse' => The survey response ID for the pledge to vote.
    *            'turfIndex' => The turf index for the voter.
    * @return void
    */
-  public function pledgeToVote($report,$action): void
+  public function pledgeToVote( array $report, array $action ): void
   {
     // Save the survey question response in NLP Services.
    
@@ -436,13 +426,14 @@ class NlpDataEntryReports
     $rid = $action['surveyResponse'];
     $county = $report['county'];
     $mcid = $report['mcid'];
-    
+    $contactMethod = $this->nlpConfigurationObj->getContactMethod($cid);
+
     $pledgeQuestion = $this->nlpConfigurationObj->getPledgeSurveyQuestion();
     $qid = $pledgeQuestion['surveyQuestionId'];
     $surveyResponseList = $pledgeQuestion['responses'];
     $responseName = $surveyResponseList[$rid]['name'];
-    
-    $altPhone = $this->phoneContact($vanid,$report['contactMethod'],$responseName);
+
+    $altPhone = $this->phoneContact($vanid, $contactMethod, $responseName);
     if (!empty($altPhone['subContext'])) {
       $cid = $altPhone['subContext'];
     }
@@ -452,7 +443,7 @@ class NlpDataEntryReports
     $report['type'] = 'Survey';
     $report['qid'] = $qid;
     $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-    $report['contactType'] = $report['contactMethod'];
+    $report['contactType'] = $contactMethod;
     $rIndex = $this->reportsObj->setNlReport($report);
     
     // Report the response to VoteBuilder.

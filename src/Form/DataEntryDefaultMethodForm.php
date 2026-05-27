@@ -47,36 +47,33 @@ class DataEntryDefaultMethodForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    // Get the list of contact methods configured for this site.
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
-    // Check if a default already exists in the session data.
     $defaultVoterContactMethod = $this->sessionDataObj->get('defaultVoterContactMethod');
-    $default = 0;
+    $default = false;
     if(!empty($defaultVoterContactMethod)) {
       $default = array_search($defaultVoterContactMethod['name'],$contactMethods);
     }
-    // If no default is set, use 'Walk' as the default method (or something close to it).
-    if(empty($default)) {
+    if($default === false) {
       $default = array_search('Walk', $contactMethods);
       if($default === false) {
-        $default = reset($contactMethods)['code'];  // The first code.
+        $default = array_key_first($contactMethods);
       }
     }
-    
+
     $form['contact_title'] = [
-      '#markup' => 'Choose the most common contact method for your voter contacts',
+      '#markup' => t('Choose the most common contact method for your voter contacts'),
     ];
-    
+
     $form["contact_method"] = [
       '#type' => 'select',
       '#options' => $contactMethods,
       '#default_value' => $default,
       '#title' => t('Select default method'),
-      ];
-  
+    ];
+
     $form['save'] = [
       '#type' => 'submit',
-      '#value' => 'Save',
+      '#value' => t('Save'),
     ];
     
     return $form;
@@ -95,6 +92,6 @@ class DataEntryDefaultMethodForm extends FormBase
       'name' => $contactMethods[$selectedContactMethodIndex],
     ];
     $this->sessionDataObj->set('defaultVoterContactMethod', $method);
-    $messenger->addStatus('You selected the method: '.$method['name']);
+    $messenger->addStatus(t('You selected the method: @name', ['@name' => $method['name']]));
   }
 }
