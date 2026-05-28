@@ -16,16 +16,16 @@ class NlpMatchbacks
   const int MATCHBACK_MAX_QUEUE = 2000;
   
   
-  private array $records = array();
+  private array $records = [];
   private int $sqlCnt = 0;
   private int $batchCnt = 0;
   
   private array $fields = ['vanid','date'];
   
   private array $matchbackVanHdr = [
-    'vanid' => array('name'=>'VoterFileVANID','err'=>'Voter File VANID missing.'),
-    'ballotReceived' => array('name'=>'BallotReceived','err'=>'BallotReceived missing.'),
-    'earlyVoted' => array('name'=>'EarlyVoted','err'=>'BallotReceived missing'),
+    'vanid' => ['name'=>'VoterFileVANID','err'=>'Voter File VANID missing.'],
+    'ballotReceived' => ['name'=>'BallotReceived','err'=>'BallotReceived missing.'],
+    'earlyVoted' => ['name'=>'EarlyVoted','err'=>'BallotReceived missing'],
   ];
   
   protected Connection $connection;
@@ -57,9 +57,9 @@ class NlpMatchbacks
    *   ok - true if the field is present
    *
    * The pos field key is:
-   *  - the column name for the field
+   *  - The column name for the field
    * and the value is:
-   *  - the column number for the field
+   *  - The column number for the field
    *
    * @param array $fileHdr
    * @return array
@@ -76,10 +76,10 @@ class NlpMatchbacks
         }
       }
     }
-    if(empty($hdrPos['vanid']) AND $hdrPos['vanid'] !== 0) {
+    if(!isset($hdrPos['vanid'])) {
       $hdrErr['vanid'] = $this->matchbackVanHdr['vanid']['err'];
     }
-    if (empty($hdrPos['ballotReceived']) AND empty($hdrPos['earlyVoted'])) {
+    if (empty($hdrPos['ballotReceived']) && empty($hdrPos['earlyVoted'])) {
       $hdrErr['ballotReceived'] = $this->matchbackVanHdr['ballotReceived']['err'];
     }
     return ['pos'=>$hdrPos, 'err'=>$hdrErr, 'ok'=>empty($hdrErr),];
@@ -120,7 +120,7 @@ class NlpMatchbacks
         nlp_debug_msg('Insert Matchback fail.',$e->getMessage());
         return FALSE;
       }
-      $this->records = array();
+      $this->records = [];
       if($this->batchCnt==self::BATCH) {
         $batchSubmit = TRUE;
       }
@@ -197,8 +197,8 @@ class NlpMatchbacks
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getMatchbackDate', $e->getMessage() );
+      return '';
     }
-    if(empty($result)) { return ''; }
     $matchback = $result->fetchAssoc();
     if(empty($matchback)) {return '';}
     return $matchback['date'];
@@ -207,7 +207,7 @@ class NlpMatchbacks
   /**
    * setLatestMatchbackDate
    *
-   * Set the latest ballot received date for a NLP Voter.  The date is stored in the
+   * Set the latest ballot-received date for a NLP Voter.  The date is stored in the
    * database as a string in the format YYYY-MM-DD with a vanid of 0.
    *
    * @param string $date
@@ -229,7 +229,7 @@ class NlpMatchbacks
   /**
    * getLatestMatchbackDate
    *
-   * The record with 0(Zero) for the vanid is the latest date for a ballot returned by an NLP Voter.
+   * The record with 0 (Zero) for the vanid is the latest date for a ballot returned by an NLP Voter.
    *
    * @return string
    * @noinspection PhpUnused
@@ -244,8 +244,8 @@ class NlpMatchbacks
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getLatestMatchbackDate', $e->getMessage() );
+      return '';
     }
-    if(empty($result)) { return ''; }
     $lastDate = $result->fetchAssoc();
     if(!$lastDate) {return '';}
     return $lastDate['date'];
@@ -283,6 +283,7 @@ class NlpMatchbacks
     foreach ($items as $item) {
       $columnNames = str_getcsv($item['header']);
       
+      $itemInfo = [];
       $itemInfo['progress'] = 'chunk';
       $itemInfo['subject'] = $item['subject'];
       $itemInfo['month'] = $item['month'];
@@ -303,11 +304,11 @@ class NlpMatchbacks
       foreach ($item['reports'] as $rowRaw) {
         $reportRaw = str_getcsv($rowRaw);
         $report = array_map(function ($index) use ($reportRaw) {
-          return trim(strip_tags(htmlentities(stripslashes($reportRaw[$index]), ENT_QUOTES)));
+          return trim(strip_tags(htmlentities(stripslashes($reportRaw[$index] ?? ''), ENT_QUOTES)));
         }, $pos);
         $queueItems[$queueIndex]['reports'][] = json_encode($report);
         $recordCount++;
-        if($recordCount == $this::MATCHBACK_MAX_QUEUE) {
+        if($recordCount == self::MATCHBACK_MAX_QUEUE) {
           $queueIndex++;
           $itemInfo['reportCount'] = $reportCount;
           $recordCount = 0;
@@ -325,10 +326,10 @@ class NlpMatchbacks
    * Check if the header record contains the required fields.  If not, something is wrong
    * with the script used by the DPO to create the attachment.
    *
-   * @param $headerRaw
+   * @param array $headerRaw
    * @return array
    */
-  public function headerValidate($headerRaw): array
+  public function headerValidate( array $headerRaw ): array
   {
     $fieldPos = $this->decodeMatchbackHdr($headerRaw);
     if(!$fieldPos['ok']) {
@@ -349,15 +350,15 @@ class NlpMatchbacks
    * Returns an array of counts with the following keys:
    *  recordCount - total number of records in this matchback update.
    *  newRecordCount - number of new records written to the database.
-   *  skippedRecordCount - number of records that were already in the database and were skipped.
-   *  rejectedRecordCount - number of records that were rejected, either because the vanid or date was empty.
+   *  skippedRecordCount - the number of records that were already in the database and were skipped.
+   *  rejectedRecordCount - the number of records that were rejected, either because the vanid or date was empty.
    *
    * @param array $reports
    * @return array
    * @noinspection PhpUnused
    *  Used in nlpservices_matchback_queue.php
    */
-  function processMatchbackQueueReports(array $reports): array
+  public function processMatchbackQueueReports(array $reports): array
   {
     if(empty($reports)) {return [];}
     $latestMatchbackDate = $this->getLatestMatchbackDate();
@@ -383,13 +384,13 @@ class NlpMatchbacks
           $skippedRecordCount++;
           continue;
         }
-        $newRecordCount++;
         $ballotReceivedDate = $report['ballotReceived'];
         $ballotReceivedTime = strtotime($ballotReceivedDate);  // Convert US date to time.
-        if($ballotReceivedTime === FALSE OR $ballotReceivedTime==0) {
+        if($ballotReceivedTime==0) {
           $rejectedRecordCount++;
           continue;
         }
+        $newRecordCount++;
         $convertedDate = date('Y-m-d',$ballotReceivedTime);  // Convert to ISO date.
         if($ballotReceivedTime > $latestMatchbackTime) {
           $latestMatchbackTime = $ballotReceivedTime;

@@ -23,24 +23,31 @@ class NlpLegislativeFixes
       $container->get('database'),
     );
   }
-  
+
   /**
-   * @param $fix
-   * @return bool
+   * createLegFix
+   *
+   * Creates or updates a legislative fix entry in the database.
+   *
+   * @param array $fix An associative array containing the required fields:
+   *                    - 'county' (string): The county associated with the legislative fix.
+   *                    - 'mcid' (string): The unique identifier for the legislative fix.
+   *                    - 'firstName' (string): The first name of the legislator.
+   *                    - 'lastName' (string): The last name of the legislator.
+   *                    - 'cd' (string): The congressional district associated with the legislator.
+   *                    - 'hd' (string): The house district associated with the legislator.
+   *                    - 'precinct' (string): The precinct associated with the legislator.
+   * @return bool Returns TRUE on success, FALSE on failure.
    */
-  public function createLegFix($fix): bool
+  public function createLegFix( array $fix ): bool
   {
-    $fields = array();
-    foreach ($fix as $key => $value) {
-      if (in_array($key,$this->legList)) {
-        $fields[$key] = $value;
-      } else {
-        $fields[$key] = NULL;
-      }
-    }
+    $fields = array_filter($fix, function ($key) {
+      return in_array($key, $this->legList);
+    }, ARRAY_FILTER_USE_KEY);
+
     try {
       $this->connection->merge(self::LEG_FIX_TBL)
-        ->keys(array('mcid' => $fix['mcid']))
+        ->keys(['mcid' => $fix['mcid']])
         ->fields($fields)
         ->execute();
     } catch (Exception $e) {
@@ -49,12 +56,16 @@ class NlpLegislativeFixes
     }
     return TRUE;
   }
-  
+
   /**
-   * @param $county
-   * @return array
+   * getLegFixes
+   *
+   * Retrieves all legislative fixes for a given county, ordered by house district, precinct, last name, and first name.
+   *
+   * @param string $county The county for which to retrieve legislative fixes.
+   * @return array An associative array of legislative fixes, keyed by 'mcid'.
    */
-  public function getLegFixes($county): array
+  public function getLegFixes( string $county ): array
   {
     try {
       $query = $this->connection->select(self::LEG_FIX_TBL, 'l');
@@ -70,21 +81,21 @@ class NlpLegislativeFixes
       return [];
     }
     $fixes = [];
-    do {
-      $fix = $result->fetchAssoc();
-      if (empty($fix)) {
-        break;
-      }
+    while ($fix = $result->fetchAssoc()) {
       $fixes[$fix['mcid']] = $fix;
-    } while (TRUE);
+    }
     return $fixes;
   }
-  
+
   /**
-   * @param $mcid
-   * @return bool
+   * deleteLegFix
+   *
+   * Deletes a legislative fix entry from the database based on the provided 'mcid'.
+   *
+   * @param int  $mcid The unique identifier for the legislative fix to be deleted.
+   * @return bool Returns TRUE on successful deletion, FALSE on failure.
    */
-  public function deleteLegFix($mcid): bool
+  public function deleteLegFix( int $mcid ): bool
   {
     try {
       $this->connection->delete(self::LEG_FIX_TBL)
@@ -96,12 +107,16 @@ class NlpLegislativeFixes
     }
     return TRUE;
   }
-  
+
   /**
-   * @param $mcid
-   * @return array
+   * getLegFix
+   *
+   * Retrieves a single legislative fix entry from the database based on the provided 'mcid'.
+   *
+   * @param int $mcid The unique identifier for the legislative fix to be retrieved.
+   * @return array An associative array containing the legislative fix details, or an empty array if not found or on error.
    */
-  public function getLegFix($mcid): array
+  public function getLegFix( int $mcid ): array
   {
     try {
       $query = $this->connection->select(self::LEG_FIX_TBL, 'l');

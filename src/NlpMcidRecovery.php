@@ -44,6 +44,7 @@ class NlpMcidRecovery {
       // valid but less resistant to guessing, so this should only be used in
       // extreme circumstances.
       $key = hash('sha256', $mcid . ':' . Drupal::time()->getRequestTime());
+      Drupal::logger('nlpservices')->error('saveRecoveryKey: random_bytes failed, using weak fallback key. Error: @msg', ['@msg' => $e->getMessage()]);
     }
     try {
       $this->connection->insert(self::RECOVERY_TBL)
@@ -55,6 +56,7 @@ class NlpMcidRecovery {
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('saveRecoveryKey', $e->getMessage());
+      return '';
     }
     return $key;
   }
@@ -64,7 +66,7 @@ class NlpMcidRecovery {
    *
    * Returns the MCID for a key if the record exists and is within the 14-day window.
    *
-   * Returns NULL when the key is unknown or the record has expired.
+   * Returns 0 when the key is unknown, the record has expired, or a DB error occurs.
    *
    * @param string $key
    * @return int

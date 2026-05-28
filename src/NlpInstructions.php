@@ -24,43 +24,56 @@ class NlpInstructions {
       $container->get('database'),
     );
   }
-  
+
   /**
-   * @param $req
+   * createInstructions
+   *
+   * Creates or updates an instruction entry in the database.
+   *
+   * @param array $req An associative array containing the required fields:
+   *                    - 'county' (string): The county associated with the instruction.
+   *                    - 'type' (string): The type of the instruction.
+   *                    - 'fileName' (string): The name of the file to be recorded.
+   *                    - 'originalFileName' (string|null): The original name of the file, if applicable.
    * @return void
    */
-  public function createInstructions($req): void
+  public function createInstructions( array $req ): void
   {
-    $originalFileName = (!empty($req['originalFileName']))?$req['originalFileName']:NULL;
+    $originalFileName = $req['originalFileName'] ?? null;
     try {
       $this->connection->merge(self::INSTRUCTIONS_TBL)
-        ->keys(array(
+        ->keys([
           'county' => $req['county'],
-          'type' => $req['type'],))
-        ->fields(array(
+          'type' => $req['type'],
+        ])
+        ->fields([
           'fileName' => $req['fileName'],
           'originalFileName' => $originalFileName,
-          ))
+        ])
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('createInstructions', $e->getMessage() );
       return;
     }
   }
-  
+
   /**
-   * @param $county
-   * @return array[]
+   * getInstructions
+   *
+   * Retrieves instructions for a given county from the database.
+   *
+   * @param string $county The county for which to retrieve instructions.
+   * @return array An associative array containing the instructions for 'canvass' and 'postcard' types, or an empty array if an error occurs.
    */
-  public function getInstructions($county): array
+  public function getInstructions( string $county ): array
   {
     $rec = [];
     foreach ($this->instructionsList as $key) {
       $rec[$key] = '';
     }
     $instructs = [
-      'canvass'=>$rec,
-      'postcard'=>$rec,
+      'canvass' => $rec,
+      'postcard' => $rec,
     ];
     $query = $this->connection->select(self::INSTRUCTIONS_TBL, 'i');
     $query->fields('i');
@@ -71,11 +84,9 @@ class NlpInstructions {
       nlp_debug_msg('getInstructions', $e->getMessage());
       return [];
     }
-    do {
-      $instruct = $result->fetchAssoc();
-      if(empty($instruct)) {break;}
+    while ($instruct = $result->fetchAssoc()) {
       $instructs[$instruct['type']] = $instruct;
-    } while (TRUE);
+    }
     return $instructs;
   }
   
