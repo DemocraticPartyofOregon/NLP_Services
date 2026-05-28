@@ -45,9 +45,8 @@ class NlpPaths {
    */
   public function getPath(string $type, string $county='', bool $full=FALSE): string
   {
-    $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
-    $serverUrl = 'https://'.$serverName;
-    $dir = $serverUrl.'/sites/default/files/'.self::NLP_FILES."/";
+    $baseUrl = Drupal::request()->getSchemeAndHttpHost();
+    $dir = $baseUrl.'/sites/default/files/'.self::NLP_FILES."/";
     if(!$full) {
       $dir = 'public://'.self::NLP_FILES."/";
     }
@@ -63,7 +62,7 @@ class NlpPaths {
         $dir .= self::INSTRUCTIONS_DIR.'/';
         break;
       case 'DOCS':
-        $dir = $dir."docs/";
+        $dir .= "docs/";
         break;
       case 'DEFAULT_DOCS':
         $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
@@ -71,6 +70,9 @@ class NlpPaths {
         break;
       case 'TURF':
         $dir .= self::TURF_MESSAGE_DIR.'/';
+        break;
+      default:
+        Drupal::logger('nlpservices')->notice('getPath: unknown type @type', ['@type' => $type]);
         break;
     }
     return $dir;
@@ -102,7 +104,7 @@ class NlpPaths {
       case 'DOCS':
         $dir = 'public://'.self::NLP_DOCUMENTS;
         break;
-      case 'county':
+      case 'COUNTY':
         $dir = 'public://'.self::NLP_FILES."/".$county;
         break;
       case 'PDF':
@@ -114,6 +116,9 @@ class NlpPaths {
       case 'TURF':
         $dir = 'public://'.self::NLP_FILES."/".$county."/".self::TURF_MESSAGE_DIR;
         break;
+      default:
+        Drupal::logger('nlpservices')->notice('createDir: unknown type @type', ['@type' => $type]);
+        return;
     }
     $this->fileSystem->prepareDirectory($dir,FileSystemInterface::CREATE_DIRECTORY |
       FileSystemInterface::MODIFY_PERMISSIONS);

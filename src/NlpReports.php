@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-//use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -26,21 +25,24 @@ class NlpReports {
   private string $cycle;
   protected NlpConfiguration $nlpConfiguration;
   protected Connection $connection;
-  
-  public function __construct( $nlpConfiguration,  $connection) {
+  protected DatabaseFunctions $dbFunctionsObj;
+
+  public function __construct( $nlpConfiguration, $connection, $dbFunctionsObj) {
     $this->nlpConfiguration = $nlpConfiguration;
     $this->connection = $connection;
-    $this->reportFields = $this->getColumnNames();
+    $this->dbFunctionsObj = $dbFunctionsObj;
+    $this->reportFields = $this->dbFunctionsObj->getColumnNames(self::NLP_RESULTS_TBL);
     unset($this->reportFields[0]);  // reportIndex.
-    
+
     $this->cycle = $this->nlpConfiguration->getCycle();
   }
-  
+
   public static function create(ContainerInterface $container): NlpReports
   {
     return new static(
       $container->get('nlpservices.configuration'),
       $container->get('database'),
+      $container->get('nlpservices.database_functions'),
     );
   }
   
@@ -69,24 +71,22 @@ class NlpReports {
       return [];
     }
     $voterReports = [];
-    do {
-      $report = $result->fetchAssoc();
-      if(!$report) {break;}
+    while ($report = $result->fetchAssoc()) {
       $voterReports[] = $report;
-    } while (TRUE);
+    }
     return $voterReports;
   }
-  
+
   /**
    * getNlpReports
    *
    * Get all the NLP reports for a voter for all known past elections.  Reports for
    * elections more than a decade old are not in the database.
    *
-   * @param $vanid
+   * @param int $vanid
    * @return array
    */
-  public function getNlpReports($vanid): array
+  public function getNlpReports(int $vanid): array
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'v');
@@ -100,11 +100,9 @@ class NlpReports {
       return [];
     }
     $voterReports = [];
-    do {
-      $report = $result->fetchAssoc();
-      if(!$report) {break;}
+    while ($report = $result->fetchAssoc()) {
       $voterReports[$report['vanid']][] = $report;
-    } while (TRUE);
+    }
     return $voterReports;
   }
   
@@ -151,14 +149,12 @@ class NlpReports {
       return [];
     }
     $latestReports = [];
-    do {
-      $report = $result->fetchAssoc();
-      if(!$report) {break;}
+    while ($report = $result->fetchAssoc()) {
       $type = $report['type'];
       $vanid = $report['vanid'];
       $contactDate = $report['contactDate'];
       $contactMessage = (!empty($report['value']))?$report['value']:'';
-      
+
       $latestContactInfo = [
         'vanid' => $vanid,
         'contactDate' => $contactDate,
@@ -175,12 +171,12 @@ class NlpReports {
             $latestReports['attempt'] = $latestContactInfo;
           }
           // The voter was reported as deceased.
-          if($contactMessage == 'deceased' OR $contactMessage == 'Deceased') {
+          if($contactMessage == 'deceased' || $contactMessage == 'Deceased') {
             $latestReports['deceased'] = $latestContactInfo;
             break;
           }
           // The voter was reported as moved.
-          if($contactMessage == 'moved' OR $contactMessage == 'Moved') {
+          if($contactMessage == 'moved' || $contactMessage == 'Moved') {
             $latestReports['moved'] = $latestContactInfo;
             $latestReports['moved']['address'] = $report['text'];
             break;
@@ -190,12 +186,12 @@ class NlpReports {
           if($report['contactType'] == 'Postcard') {
             if (empty($latestReports['postcard'])) {
               $latestReports['postcard'] = $latestContactInfo;
-            } elseif ($contactDate > $latestReports['attempt']['contactDate']) {
+            } elseif ($contactDate > $latestReports['postcard']['contactDate']) {
               $latestReports['postcard'] = $latestContactInfo;
             }
           }
           break;
-          
+
         case 'Survey':
           // Get the latest response to the survey question.
           if($report['qid'] == $pledgeToVoteQid) {
@@ -206,14 +202,14 @@ class NlpReports {
             }
           }
           break;
-          
+
         case 'Activist':
           // A report that the voter was hostile.
-          if($report['text'] == 'NLPHostile' AND $contactMessage == 1) {
+          if($report['text'] == 'NLPHostile' && $contactMessage == 1) {
             $latestReports['hostile'] = $latestContactInfo;
           }
           break;
-          
+
         case 'Comment':
           // A note was reported, make sure we have the latest note.
           $latestContactInfo['text'] = $report['text'];
@@ -225,8 +221,7 @@ class NlpReports {
           }
           break;
       }
-      
-    } while (TRUE);
+    }
     return $latestReports;
   }
   
@@ -255,11 +250,9 @@ class NlpReports {
       return [];
     }
     $voterReports = [];
-    do {
-      $report = $result->fetchAssoc();
-      if(!$report) {break;}
+    while ($report = $result->fetchAssoc()) {
       $voterReports[$report['mcid']][] = $report;
-    } while (TRUE);
+    }
     return $voterReports;
   }
   
@@ -309,6 +302,7 @@ class NlpReports {
       foreach ($reports as $report) {
         if(empty($report['type'])) {continue;}
         $reportType = strtolower($report['type']);
+        $reportDisplay = '';
         switch ($reportType) {
           case 'contact':
             $reportDisplay = $report['value'].' '.$report['text'];
@@ -357,7 +351,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('e', $e->getMessage() );
+      nlp_debug_msg('getNlpReport', $e->getMessage() );
       return [];
     }
     $report = $result->fetchAssoc();
@@ -381,8 +375,7 @@ class NlpReports {
     }
     
     if(empty($canvassResult['cycle'])) {
-      $cycle = $this->nlpConfiguration->getCycle();
-      $canvassResult['cycle'] = $cycle;
+      $canvassResult['cycle'] = $this->cycle;
     }
     
     $fields = [];
@@ -434,10 +427,10 @@ class NlpReports {
    * edited and replaced by the NL.  However, if a comment is entered via MiniVAN, that one
    * takes precedence and becomes the only one that can be edited.
    *
-   * @param $req
+   * @param array $req
    * @return array
    */
-  public function getComment($req): array
+  public function getComment(array $req): array
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'v');
@@ -454,13 +447,11 @@ class NlpReports {
       return [];
     }
     $newestComment = ['reportIndex'=>NULL,'text'=>'', ];
-    do {
-      $comment = $result->fetchAssoc();
-      if(empty($comment)) {break;}
+    while ($comment = $result->fetchAssoc()) {
       if($comment['reportIndex'] >= $newestComment['reportIndex']) {
         $newestComment = $comment;
       }
-    } while (TRUE);
+    }
     return ['reportIndex'=>$newestComment['reportIndex'],'text'=>$newestComment['text']];
   }
   
@@ -470,10 +461,10 @@ class NlpReports {
    * Get the most recent report for an activist code.  This is a generic request, and the only
    * activist code in use for a voter is NLP Hostile.
    *
-   * @param $vanId
+   * @param int $vanId
    * @return array
    */
-  public function getNlpAcReport($vanId): array
+  public function getNlpAcReport(int $vanId): array
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'v');
@@ -507,7 +498,8 @@ class NlpReports {
   public function getAcReportIndex(int $vanid,string $activistCodeName): int
   {
     $cycle = $this->cycle;
-    try {$query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
+    try {
+      $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
       $query->addField('r','reportIndex');
       $query->condition('vanid',$vanid);
       $query->condition('cycle',$cycle);
@@ -537,7 +529,7 @@ class NlpReports {
    * @param bool $newest - If TRUE, return the most recent report.  If FALSE, return the oldest report.
    * @return array - The most recent report for this voter.
    */
-  public function getReport(array $request,$newest=TRUE): array
+  public function getReport(array $request, bool $newest=true): array
   {
     // Get the request reports for this voter.
     try {
@@ -563,18 +555,16 @@ class NlpReports {
     // Now find the newest report (or all reports if asked).
     $report = [];
     $reportIndex = 0;
-    do {
-      $dbReport = $result->fetchAssoc();
-      if(!$dbReport) {break;}
+    while ($dbReport = $result->fetchAssoc()) {
       if($dbReport['reportIndex'] > $reportIndex) {
         $reportIndex = $dbReport['reportIndex'];
         if($newest) {
-           $report = $dbReport;
+          $report = $dbReport;
         } else {
-          $report[] = $dbReport;  // Add to the array of reports.
+          $report[] = $dbReport;
         }
       }
-    } while (TRUE);
+    }
     return $report;
   }
   
@@ -609,34 +599,6 @@ class NlpReports {
   }
   
   /**
-   * setNlAcReport
-   *
-   * Creates a report that the voter is hostile and should not be on our list of
-   * target voters.
-   * @param array $canvassResult
-   */
-  public function setNlAcReport(array $canvassResult): void
-  {
-    $reportIndex = $canvassResult['reportIndex'];
-    $fields = [];
-    foreach ($this->reportFields as $field)  {
-      if(key_exists($field,$canvassResult)) {
-        $fields[$field] = $canvassResult[$field];
-      }
-    }
-    try {
-      $this->connection->merge(self::NLP_RESULTS_TBL)
-        ->keys(['reportIndex' => $reportIndex])
-        ->fields($fields)
-        ->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('setNlAcReport', $e->getMessage());
-      return;
-    }
-  }
-  
-  /**
    * contactAttempt
    *
    * Return canvass results for this voter.
@@ -646,19 +608,20 @@ class NlpReports {
    * 'attempt' - boolean indicating if at least one attempt was made to contact the voter.
    * 'survey' - boolean indicating if the voter has responded to the pledge-to-vote survey.
    */
-  function contactAttempt(int $vanid): array
+  public function contactAttempt(int $vanid): array
   {
     $canvassResult = [
       'attempt'=> FALSE,
-      'survey' => FALSE, ];
+      'survey' => FALSE,
+    ];
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
       $query->fields('r');
       $query->condition('cycle',$this->cycle);
       $query->condition('vanid',$vanid);
       $orGroup1 = $query->orConditionGroup()
-        ->condition ('r.Type', self::SURVEY )
-        ->condition ('r.Type', self::CONTACT );
+        ->condition('type', self::SURVEY)
+        ->condition('type', self::CONTACT);
       $query->condition($orGroup1);
       $result = $query->execute();
     }
@@ -666,14 +629,12 @@ class NlpReports {
       nlp_debug_msg('contactAttempt', $e->getMessage() );
       return $canvassResult;
     }
-    do {
-      $report = $result->fetchAssoc();
-      if(empty($report)) {break;}
+    while ($report = $result->fetchAssoc()) {
       $canvassResult['attempt'] = TRUE;
       if($report['type'] == 'Survey') {
         $canvassResult['survey'] = TRUE;
       }
-    } while (TRUE);
+    }
     return $canvassResult;
   }
   
@@ -682,10 +643,10 @@ class NlpReports {
    *
    * Check if the voter has been sent a postcard by the NL.
    *
-   * @param $vanid
+   * @param int $vanid
    * @return bool
    */
-  function voterSentPostcard($vanid): bool
+  public function voterSentPostcard(int $vanid): bool
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
@@ -713,12 +674,12 @@ class NlpReports {
    * pledge to vote survey question for each NL in the county in the current election.
    * The count is for NLs that have made at least one report of a voter contact attempt.
    *
-   * @param $committee
+   * @param string $committee
    * @return array - array of counts for each NL in the county, indexed by mcid. The keys are
    * 'attempts' and 'contacts'.
    *
    */
-  public function getCommitteeReportCounts($committee): array
+  public function getCommitteeReportCounts(string $committee): array
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
@@ -732,17 +693,15 @@ class NlpReports {
       return [];
     }
     $voterStatus = [];
-    do {
-      $report = $result->fetchAssoc();
-      if(!$report) {break;}
+    while ($report = $result->fetchAssoc()) {
       $vanid = $report['vanid'];
       $voterStatus[$vanid]['mcid'] = $report['mcid'];
       $voterStatus[$vanid]['attempt'] = TRUE;
       if($report['type']==self::SURVEY) {
         $voterStatus[$vanid]['survey'] = TRUE;
       }
-    } while (TRUE);
-    $counts = array();
+    }
+    $counts = [];
     foreach ($voterStatus as $status) {
       $mcid = $status['mcid'];
       if(empty($counts[$mcid]['attempts'])) {
@@ -756,32 +715,6 @@ class NlpReports {
       }
     }
     return $counts;
-  }
-  
-  /**
-   * getColumnNames
-   *
-   * Get the names of the columns in the report database.
-   *
-   * @return array
-   */
-  public function getColumnNames(): array
-  {
-    try {
-      $select = "SHOW COLUMNS FROM  {".self::NLP_RESULTS_TBL.'}';
-      $result = $this->connection->query($select);
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getColumnNames', $e->getMessage() );
-      return [];
-    }
-    $colNames = [];
-    do {
-      $name = $result->fetchAssoc();
-      if(empty($name)) {break;}
-      $colNames[] = $name['Field'];
-    } while (TRUE);
-    return $colNames;
   }
   
   /**
@@ -906,11 +839,9 @@ class NlpReports {
       return [];
     }
     $cycles = [];
-    do {
-      $dbReport = $result->fetchAssoc();
-      if(!$dbReport) {break;}
+    while ($dbReport = $result->fetchAssoc()) {
       $cycles[] = $dbReport['cycle'];
-    } while (TRUE);
+    }
     return $cycles;
   }
   
@@ -958,7 +889,7 @@ class NlpReports {
   {
     $record = [];
     foreach ($this->reportFields as $key) {
-      if(!empty($report[$key]) AND $report[$key]!='NULL') {
+      if(!empty($report[$key]) && $report[$key]!='NULL') {
         $record[$key] = $report[$key];
       } else {
         $record[$key] = NULL;
@@ -971,7 +902,7 @@ class NlpReports {
       $this->sqlCnt = 0;
       $this->batchCnt++;
       $this->insertNlBatch();
-      $this->records = array();
+      $this->records = [];
       if($this->batchCnt==self::BATCH) {
         $this->batchCnt=0;
         $batchSubmit = TRUE;
@@ -1018,12 +949,10 @@ class NlpReports {
       return [];
     }
     $reports = [];
-    do {
-      $dbReport = $result->fetchAssoc();
-      if(!$dbReport) {break;}
+    while ($dbReport = $result->fetchAssoc()) {
       $reportIndex = $dbReport['reportIndex'];
       $reports[$reportIndex] = $reportIndex;
-    } while (TRUE);
+    }
     return $reports;
   }
   

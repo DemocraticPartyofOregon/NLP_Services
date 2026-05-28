@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
+use Drupal\nlpservices\DatabaseFunctions;
 use Drupal\nlpservices\NlpReports;
 
 /**
@@ -19,9 +20,11 @@ class ExportVoterContactReportsForm extends FormBase
   const string NR_NLS_REPORTS = 'voter_contact_reports';
 
   protected NlpReports $reports;
+  protected DatabaseFunctions $dbFunctionsObj;
 
-  public function __construct( $reports) {
+  public function __construct( $reports, $dbFunctionsObj) {
     $this->reports = $reports;
+    $this->dbFunctionsObj = $dbFunctionsObj;
   }
 
   /**
@@ -31,6 +34,7 @@ class ExportVoterContactReportsForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.reports'),
+      $container->get('nlpservices.database_functions'),
     );
   }
 
@@ -219,7 +223,7 @@ class ExportVoterContactReportsForm extends FormBase
     // Open the new temp file for writing by PHP functions.
     $fh = fopen($tempUri,"w");
     // Get the column names for the export and add the NL name to ease editing.
-    $columnNames = $this->reports->getColumnNames();
+    $columnNames = $this->dbFunctionsObj->getColumnNames(NlpReports::NLP_RESULTS_TBL);
     // Write the header as the first record in this tab-delimited file.
     $string = implode(",", $columnNames)."\n";
     fwrite($fh,$string);

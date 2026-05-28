@@ -68,7 +68,7 @@ class NlpDataEntryReports
     $report['value'] = (!empty($action['hostile']))?1:0; // Set value true if hostile checked, else clear it.
     $report['cycle'] = $this->nlpConfigurationObj->getCycle();
     $report['contactType'] = $contactMethod;
-    $this->reportsObj->setNlAcReport($report);
+    $this->reportsObj->mergeReport($report);
     
     // Record the change of the NLP Hostile activist code.
     $request = [

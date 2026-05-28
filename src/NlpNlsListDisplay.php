@@ -58,7 +58,7 @@ class NlpNlsListDisplay
    * * @see headerBuild() for details on the $brief parameter.
    *
    */
-  public function createTableArray($nlRecords,bool $brief=FALSE): array
+  public function createTableArray(array $nlRecords, bool $brief=FALSE): array
   {
     $row = $rows = [];
     $rowCount = 1;
@@ -74,7 +74,7 @@ class NlpNlsListDisplay
       
       $coordinator = $this->coordinatorsObj->getAssignedCoordinator($nlRecord);
       if(empty($coordinator)) {
-        $coordinator = "<i>Coordinator&nbsp;not&nbsp;assigned</i";
+        $coordinator = "<i>Coordinator&nbsp;not&nbsp;assigned</i>";
       } else {
         $firstName = $coordinator['firstName'];
         $lastName = $coordinator['lastName'];
@@ -139,7 +139,7 @@ class NlpNlsListDisplay
     return $rows;
   }
 
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * buildNlsTable
    *
    * This function builds an HTML table using the array of information about
@@ -151,7 +151,7 @@ class NlpNlsListDisplay
    * @param string $callback
    * @return array - $form - form elements for the table.
    */
-  function buildNlsTable(array $rows, bool $brief=FALSE, string $type='contacts', string $callback='nlsForm'): array
+  public function buildNlsTable(array $rows, bool $brief=FALSE, string $type='contacts', string $callback='nlsForm'): array
   {
     $this->headerBuild($brief);
     
@@ -197,7 +197,6 @@ class NlpNlsListDisplay
                 '#ajax' => [
                   'callback' => '::selectboxCallback',
                   'wrapper' => $callback."Div",
-                  //'disable-refocus' => FALSE,
                 ],
                 '#default_value' => $default,
               ];
@@ -212,7 +211,6 @@ class NlpNlsListDisplay
                 '#ajax' => [
                   'callback' => '::selectboxCallback',
                   'wrapper' => $callback."Div",
-                  //'disable-refocus' => TRUE,
                 ],
                 '#default_value' => $columnValue['text'],
               ];
@@ -277,9 +275,9 @@ class NlpNlsListDisplay
       $this->header[] = ['data' => t('Vtrs<br>Drs'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Att<br>P2V'),  'class' => ['nlp-th-color'] ];
     }
-    
+
   }
-  
+
   /**
    * validateNlSelection
    *
@@ -289,21 +287,20 @@ class NlpNlsListDisplay
    * The form API provides the contact array in the form_state values.   The syntax is created
    * in the buildNlsTable() function, where the checkbox is created.
    *
-   * @param $contacts
+   * @param array $contacts
    * @return array
    */
-  public function validateNlSelection($contacts):array
+  public function validateNlSelection(array $contacts): array
   {
     $selections = [];
     foreach($contacts as $contact) {
       foreach ($contact as $key => $value) {
         $keyParts = explode('-',$key);
-        if($keyParts[0] != 'cb' || empty($value)) {break;}
+        if($keyParts[0] != 'cb' || empty($value)) {continue 2;}
         $contactParts = explode('_',$value);
         $selections[$contactParts[1]] = ['rowCount'=>$contactParts[1], 'mcid'=>$contactParts[2]];
         break;
       }
-
     }
     return $selections;
   }
@@ -318,7 +315,7 @@ class NlpNlsListDisplay
    * @param bool $brief - If TRUE, the sort field is for a brief display of NLs.
    * @return string - The sort field for the NLs list display.
    */
-  public function getSortField($data,bool $brief=FALSE):string
+  public function getSortField(string $data, bool $brief=FALSE): string
   {
     $this->headerBuild($brief);
     foreach ($this->header as $headerInfo) {
@@ -340,7 +337,7 @@ class NlpNlsListDisplay
    * @param $order - The field to sort by.
    * @param bool $brief - If TRUE, the sort is for a brief display of NLs.
    */
-  public function sortNlsTable(&$nlsTable,$sort,$order,bool $brief=FALSE):void
+  public function sortNlsTable(array &$nlsTable, string $sort, string $order, bool $brief=FALSE): void
   {
     $sortColumn = $this->getSortField($order,$brief);
     $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;

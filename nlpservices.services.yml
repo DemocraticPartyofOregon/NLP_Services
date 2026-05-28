@@ -164,7 +164,7 @@ services:
 
   nlpservices.reports:
     class: Drupal\nlpservices\NlpReports
-    arguments: [ '@nlpservices.configuration' , '@database' ]
+    arguments: [ '@nlpservices.configuration', '@database', '@nlpservices.database_functions' ]
 
   nlpservices.results_summary:
     class: Drupal\nlpservices\NlpResultsSummary
