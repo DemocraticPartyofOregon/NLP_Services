@@ -114,9 +114,12 @@ services:
   nlpservices.coordinators_display:
     class: Drupal\nlpservices\NlpCoordinatorsListDisplay
 
+  nlpservices.file_functions:
+    class: Drupal\nlpservices\NlpFileFunctions
+
   nlpservices.export_credentials:
     class: Drupal\nlpservices\NlpExportCredentials
-    arguments: [ '@file_system' , '@database' ,'@nlpservices.drupal_user', '@nlpservices.magic_word' ]
+    arguments: [ '@nlpservices.file_functions', '@nlpservices.magic_word', '@nlpservices.database_functions' ]
 
   nlpservices.documents:
     class: Drupal\nlpservices\NlpDocuments
@@ -135,8 +138,8 @@ services:
 
   nlpservices.export_user_accounts:
     class: Drupal\nlpservices\NlpExportUserAccounts
-    arguments: [ '@file_system' , '@database' ,'@nlpservices.drupal_user',
-                 '@nlpservices.magic_word','@nlpservices.nls', '@nlpservices.api_nls' ]
+    arguments: [ '@nlpservices.file_functions', '@nlpservices.drupal_user',
+                 '@nlpservices.magic_word', '@nlpservices.nls', '@nlpservices.api_nls' ]
 
   nlpservices.instructions:
     class: Drupal\nlpservices\NlpInstructions

@@ -37,6 +37,17 @@ class NlpExportTurfStatus
     );
   }
 
+  /**
+   * Creates a CSV file with the status of turfs in a county.
+   *
+   * @param string $tempFileName
+   *   The name of the temporary file to create.
+   * @param string $county
+   *   The county for which to create the turf status file.
+   *
+   * @return bool
+   *   TRUE if the file was created successfully, FALSE otherwise.
+   */
   public function createTurfStatusFile(string $tempFileName, string $county): bool
   {
     $header = [

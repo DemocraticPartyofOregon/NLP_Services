@@ -3,25 +3,19 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
-use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\File\FileExists;
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Database\Connection;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Exception;
 
 class NlpExportUserAccounts
 {
-  protected FileSystemInterface $fileSystem;
-  protected Connection $connection;
+  protected NlpFileFunctions $fileFunctionsObj;
   protected DrupalUser $drupalUser;
   protected MagicWord $magicWord;
   protected NlpNls $nls;
   protected ApiNls $apiNlsObj;
-  
-  public function __construct( $fileSystem,$connection,$drupalUser,$magicWord,$nls, $apiNlsObj ) {
-    $this->fileSystem = $fileSystem;
-    $this->connection = $connection;
+
+  public function __construct($fileFunctionsObj, $drupalUser, $magicWord, $nls, $apiNlsObj)
+  {
+    $this->fileFunctionsObj = $fileFunctionsObj;
     $this->drupalUser = $drupalUser;
     $this->magicWord = $magicWord;
     $this->nls = $nls;
@@ -31,8 +25,7 @@ class NlpExportUserAccounts
   public static function create(ContainerInterface $container): NlpExportUserAccounts
   {
     return new static(
-      $container->get('file.system'),
-      $container->get('database'),
+      $container->get('nlpservices.file_functions'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.nls'),
@@ -40,61 +33,38 @@ class NlpExportUserAccounts
     );
   }
 
-  /**
-   * getUserAccountsFile
-   *
-   * Create a file with the user accounts and passwords for the new site.
-   *
-   * @return string
-   */
   public function getUserAccountsFile(): string
   {
-    $output = '';
-    $temp_dir = 'public://temp';
-    $contactDate = date('Y-m-d-H-i-s',time());
-    $userUri = $temp_dir.'/'.'drupal_users'.'-'.$contactDate.'.csv';
-    try {
-      $file = Drupal::service('file.repository')->writeData('', $userUri, FileExists::Replace);
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('File create failed.',$e->getMessage());
+    $result = $this->fileFunctionsObj->createTempCsvFile('drupal_users');
+    if ($result === false) {
       return 'Oops!';
     }
-    $file->setTemporary();
-    try {
-      $file->save();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('error', $e->getMessage() );
-      return '';
-    }
-    $fh = fopen($userUri,"w");
+    ['uri' => $userUri, 'fh' => $fh] = $result;
+
     $counties = $this->drupalUser->getCounties();
     $first = TRUE;
     foreach ($counties as $county) {
       $users = $this->drupalUser->getUsers($county);
       foreach ($users as $user) {
-        if(!empty($user['mcid'])) {
+        if (!empty($user['mcid'])) {
           $mcid = $user['mcid'];
           $nl = $this->nls->getNlById($mcid);
-          $hdNlp = (empty($nl))?'Unknown':$nl['hd'];
-          $newHd = $this->resolveHd($user['hd'],$hdNlp,$mcid,$user['uid']);
-          if(!empty($newHd)) {
+          $hdNlp = empty($nl) ? 'Unknown' : $nl['hd'];
+          $newHd = $this->resolveHd($user['hd'], $hdNlp, $mcid, $user['uid']);
+          if (!empty($newHd)) {
             $user['hd'] = $newHd;
           }
-          $password = $this->magicWord->getMagicWord($user['mcid']);
-          $user['password'] = $password;
+          $user['password'] = $this->magicWord->getMagicWord($user['mcid']);
         } else {
-          //$user['hd'] = '';
           $user['password'] = 'unknown';
         }
         $roleStr = '';
         foreach ($user['roles'] as $roleId => $role) {
-          $roleStr .= $roleId.':'.$role.';';
+          $roleStr .= $roleId . ':' . $role . ';';
         }
         $user['roles'] = $roleStr;
-        if($first) {
-          $keys = array_keys($user);
-          fputcsv($fh, $keys);
+        if ($first) {
+          fputcsv($fh, array_keys($user));
           $first = FALSE;
         }
         fputcsv($fh, $user);
@@ -102,84 +72,59 @@ class NlpExportUserAccounts
     }
     fclose($fh);
     $userUrl = Drupal::service('file_url_generator')->generateAbsoluteString($userUri);
-    $output .= "<p>The file is a list of NLP users in CSV format.  It is used to move user accounts and passwords
+    $output = "<p>The file is a list of NLP users in CSV format.  It is used to move user accounts and passwords
 to a new site.</p>";
-    $output .= '<p> <a href="'.$userUrl.'">Right-click to download the user accounts file. </a></p>';
+    $output .= '<p> <a href="' . $userUrl . '">Right-click to download the user accounts file. </a></p>';
     return $output;
   }
-  
-  /**
-   * resolveHd
-   *
-   * Resolve the HD for a user.
-   *
-   * @param string $hdDrupal
-   * @param string  $hdNlp
-   * @param int $mcid
-   * @param int $uid
-   * @return string
-   */
-  function resolveHd( string $hdDrupal, string $hdNlp, int $mcid, int $uid): string
+
+  public function resolveHd(string $hdDrupal, string $hdNlp, int $mcid, int $uid): string
   {
     $updateDrupal = FALSE;
     $hdNew = '';
-    if($hdDrupal=='Unknown') {
-      // The Drupal login does not have the HD, probably means the lookup of the HD failed in the past.
-      if ($hdNlp != 'Unknown') {
-        //  The list of active NLs does not have this NL.
+    if ($hdDrupal === 'Unknown') {
+      if ($hdNlp !== 'Unknown') {
         if (!empty($hdNlp)) {
-          // The HD is known so update the Drupal record.
           $updateDrupal = TRUE;
           $hdNew = $hdNlp;
         } else {
-          // Look up the NL in VoteBuilder to get the HD.
-          
           $nlRecord = $this->apiNlsObj->getApiNls(NULL, $mcid);
-          if (empty($nlRecord) or empty($nlRecord['hd'])) {
-            $hdNew = 'Unknown';  // This NL seems to be missing from VoteBuilder.
+          if (empty($nlRecord) || empty($nlRecord['hd'])) {
+            $hdNew = 'Unknown'; // This NL seems to be missing from VoteBuilder.
           } else {
-            $hdNew = $nlRecord['hd'];  // This NL seems to be missing from VoteBuilder.
+            $hdNew = $nlRecord['hd'];
           }
           $updateDrupal = TRUE;
         }
       }
     } elseif (!empty($hdDrupal)) {
-      // The login record is not empty, so the HD was known in the past.
-      if ($hdNlp != 'Unknown' and !empty($hdNlp)) {
-          // We have a known value for the NL's HD.
-          if ($hdDrupal != $hdNlp) {
-            // The NL's HD is new, update Drupal login record.
-            $hdNew = $hdNlp;  // The HD of this NL changed
-            $updateDrupal = TRUE;
-          }
+      if ($hdNlp !== 'Unknown' && !empty($hdNlp)) {
+        if ($hdDrupal !== $hdNlp) {
+          $hdNew = $hdNlp;
+          $updateDrupal = TRUE;
         }
-        
+      }
     } else {
-      //  The Drupal login has an empty HD, probably created before the HD field was created.
-      if($hdNlp=='Unknown') {
-        //  This NL is not active this cycle.
-        // API lookup.
-        $nlRecord = $this->apiNlsObj->getApiNls(NULL,$mcid);
-        if(empty($nlRecord) OR empty($nlRecord['hd'])) {
-          $hdNew = 'Unknown';  // This NL seems to be missing from VoteBuilder.
+      // The Drupal login has an empty HD, probably created before the HD field was created.
+      if ($hdNlp === 'Unknown') {
+        $nlRecord = $this->apiNlsObj->getApiNls(NULL, $mcid);
+        if (empty($nlRecord) || empty($nlRecord['hd'])) {
+          $hdNew = 'Unknown'; // This NL seems to be missing from VoteBuilder.
         } else {
-          $hdNew = $nlRecord['hd'];  // This NL seems to be missing from VoteBuilder.
+          $hdNew = $nlRecord['hd'];
         }
-      } elseif(empty($hdNlp)) {
-        $hdNew = 'Unknown';  // The HD of this NL can't be resolved from the geo data.
+      } elseif (empty($hdNlp)) {
+        $hdNew = 'Unknown';
       } else {
-        $hdNew = $hdNlp;  // The HD of this NL can't be resolved from the geo data.
+        $hdNew = $hdNlp;
       }
       $updateDrupal = TRUE;
     }
-    
-    if($updateDrupal) {
-      $editUpdate = [
-        'uid' => $uid,
-        'hd' => $hdNew,
-      ];
-      $this->drupalUser->updateUser($editUpdate);
+
+    if ($updateDrupal) {
+      $this->drupalUser->updateUser(['uid' => $uid, 'hd' => $hdNew]);
     }
     return $hdNew;
   }
+
 }
