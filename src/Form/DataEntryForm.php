@@ -123,7 +123,7 @@ class DataEntryForm extends FormBase
         $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
         return $form;
       case 'postcardsSent':
-        $form['postcardsList'] = $this->displayVoterList($turfIndex);
+        $form['postcardsList'] = $this->displayPostcardReportingList($turfIndex);
         return $form;
     }
     
@@ -521,7 +521,7 @@ Please acknowledge that you have reviewed these changes.</p>',
   }
   
   /**
-   * displayVoterList
+   * displayPostcardReportingList
    *
    * Returns form elements for displaying the voters in the turf for reporting
    * that a postcard was sent to them.
@@ -532,43 +532,75 @@ Please acknowledge that you have reviewed these changes.</p>',
    * @param int $turfIndex
    * @return array
    */
-  private function displayVoterList(int $turfIndex): array
+  private function displayPostcardReportingList(int $turfIndex): array
   {
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
-    $voterDisplay = $postcardsSent = [];
+    $voterDisplay = [];
     foreach ($voters as $vanid => $voter) {
-      $postcardSent = $this->reportsObj->voterSentPostcard($vanid);
-      if(!$postcardSent) {
-        $postcardsSent[] = $vanid;
-      }
       $voterDisplay[$vanid] = $voter['lastName'].', '.$voter['firstName'];
     }
-    
-    $form['postcardNote'] = [
-      '#markup' => '<div class="form-box-medium">
-<h2>Report the mailing of postcards</h2>
-<p>All checkboxes below are pre-checked at the beginning of an election season. Uncheck the names 
-of those to whom you are not sending postcards, or those not being sent immediately. Then click 
-the “Submit” button at the bottom to report to VAN that you have sent the postcards.</p>
 
-<p>After you leave this page and come back later, you will see that the initially checked and 
-unchecked boxes are reversed. This time if you click “Submit”, it will report that you have sent 
-the remaining postcards. </p>
-</div>',
-    ];
-    $form['postcardsSentList'] = [
-      '#type' => 'checkboxes',
-      '#options' => $voterDisplay,
-      '#default_value' => $postcardsSent,
-      '#title' => t('Check each voter that you want to report that you sent a postcard.'),
-    ];
-  
+    $pendingDisplay = [];
+    $sentVanids = [];
+    foreach (array_keys($voterDisplay) as $vanid) {
+      if($this->reportsObj->voterSentPostcard($vanid)) {
+        $sentVanids[] = $vanid;
+      } else {
+        $pendingDisplay[$vanid] = $voterDisplay[$vanid];
+      }
+    }
+
+    $form = [];
+
+    if(!empty($pendingDisplay)) {
+      $form['pendingTitle'] = [
+        '#markup' => '<h1>' . t('Report that a postcard was sent') . '</h1>' .
+          '<h3>' . t('The list of voters with check boxes are those for whom postcards not yet sent.') . '</h3>',
+      ];
+      $form['pendingNote'] = [
+        '#markup' => '<p>' . t('Check each voter you have sent a postcard to, then click Submit.') . '</p>',
+      ];
+      $form['selectAllPostcards'] = [
+        '#type' => 'inline_template',
+        '#template' => '<div class="postcards-select-all-wrapper"><label><input type="checkbox" id="postcards-select-all"> {{ label }}</label></div>',
+        '#context' => ['label' => t('Select all')],
+        '#attached' => ['library' => ['nlpservices/select-all-postcards']],
+      ];
+      $form['postcardsSentList'] = [
+        '#type' => 'checkboxes',
+        '#options' => $pendingDisplay,
+        '#default_value' => [],
+        '#title' => t('Check each voter that you want to report that you sent a postcard.'),
+      ];
+    } else {
+      $form['allSentNote'] = [
+        '#markup' => '<p>' . t('All voters in your turf have already been reported as sent.') . '</p>',
+      ];
+      $form['postcardsSentList'] = [
+        '#type' => 'value',
+        '#value' => [],
+      ];
+    }
+
+    if(!empty($sentVanids)) {
+      $form['sentTitle'] = [
+        '#markup' => '<h3>' . t('Already reported sent') . '</h3>',
+      ];
+      $sentItems = '';
+      foreach ($sentVanids as $vanid) {
+        $sentItems .= '<li>' . $voterDisplay[$vanid] . '</li>';
+      }
+      $form['sentList'] = [
+        '#markup' => '<ul>' . $sentItems . '</ul>',
+      ];
+    }
+
     $form['postcardSelect'] = [
       '#type' => 'submit',
       '#name' => 'postcardSelect',
-      '#value' => 'Submit',
+      '#value' => t('Submit'),
     ];
-    
+
     return $form;
   }
   

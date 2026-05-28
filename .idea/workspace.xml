@@ -5,16 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude review of counts and crosstabs">
+      <change afterPath="$PROJECT_DIR$/js/select-all-postcards.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.libraries.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.libraries.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryPostcardsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryPostcardsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryDateBar.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryDateBar.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryReports.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryReports.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryVoters.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryVoters.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -51,6 +45,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
+    <option name="cachedIndexableFilesCount" value="237" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -59,7 +54,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="NLP_Services_V7_1_0" />
+        <entry key="$PROJECT_DIR$" value="NLP_Services_V7_0_2" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -88,22 +83,22 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000299309998775" />
-      <entry key="S2" value="1.0739656888595357" />
-      <entry key="S5" value="1.3528678753361811" />
-      <entry key="S10" value="1.5940268305039347" />
-      <entry key="S30" value="1.8412237634659747" />
-      <entry key="S60" value="1.9647902632607712" />
-      <entry key="M2" value="2.392805770178531" />
-      <entry key="M5" value="3.6322789232218398" />
-      <entry key="M10" value="4.942284187817567" />
-      <entry key="M15" value="6.8303622318781185" />
-      <entry key="M30" value="16.742600268159073" />
-      <entry key="H1" value="42.359288537181214" />
-      <entry key="H2" value="82.27203752242777" />
-      <entry key="H4" value="125.76038399569674" />
-      <entry key="D1" value="278.98557376848646" />
-      <entry key="W1" value="456.55104718619793" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0000000000028402" />
+      <entry key="M2" value="1.000003356982516" />
+      <entry key="M5" value="1.0327394054348766" />
+      <entry key="M10" value="1.8649146940901242" />
+      <entry key="M15" value="3.7670893782960233" />
+      <entry key="M30" value="12.493802643794057" />
+      <entry key="H1" value="35.578424312298786" />
+      <entry key="H2" value="76.81683688411336" />
+      <entry key="H4" value="125.97780673203548" />
+      <entry key="D1" value="291.1227340950185" />
+      <entry key="W1" value="473.9676889741656" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -112,36 +107,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="4.217336960894071E-242" />
-      <entry key="M2" value="2.0536155825504596E-121" />
-      <entry key="M5" value="5.308938084577928E-49" />
-      <entry key="M10" value="7.286246005027847E-25" />
-      <entry key="M15" value="8.097219038034304E-17" />
-      <entry key="M30" value="8.9990888781966E-9" />
-      <entry key="H1" value="9.637570697201095E-5" />
-      <entry key="H2" value="0.01225287375084005" />
-      <entry key="H4" value="0.2152795056369264" />
-      <entry key="D1" value="5.979991892008392" />
-      <entry key="W1" value="13.66486281338051" />
+      <entry key="S60" value="9.51324183176316E-257" />
+      <entry key="M2" value="9.753584895700219E-129" />
+      <entry key="M5" value="6.246916592504743E-52" />
+      <entry key="M10" value="2.4993832424230842E-26" />
+      <entry key="M15" value="8.548473502593115E-18" />
+      <entry key="M30" value="2.923983262125579E-9" />
+      <entry key="H1" value="5.4935837210002335E-5" />
+      <entry key="H2" value="0.009250858626110038" />
+      <entry key="H4" value="0.18705732958335583" />
+      <entry key="D1" value="5.8415657452347425" />
+      <entry key="W1" value="13.61921981276217" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="3.757154581741076E-5" />
-      <entry key="MS500" value="0.13030972073541466" />
-      <entry key="S2" value="0.635818055518448" />
-      <entry key="S5" value="1.0772312474226287" />
-      <entry key="S10" value="1.4145888783658653" />
-      <entry key="S30" value="1.766886198733919" />
-      <entry key="S60" value="1.9237967599722283" />
-      <entry key="M2" value="2.365327174572473" />
-      <entry key="M5" value="3.6131297936483393" />
-      <entry key="M10" value="4.929058562708205" />
-      <entry key="M15" value="6.8192165395324675" />
-      <entry key="M30" value="16.73232545116172" />
-      <entry key="H1" value="42.34886958637668" />
-      <entry key="H2" value="82.27502616226072" />
-      <entry key="H4" value="125.96880711199452" />
-      <entry key="D1" value="284.9610503874545" />
-      <entry key="W1" value="470.2142349335016" />
+      <entry key="MS100" value="0.63287829698514" />
+      <entry key="MS500" value="0.9125654885434519" />
+      <entry key="S2" value="0.9773857664108053" />
+      <entry key="S5" value="0.9908921869169763" />
+      <entry key="S10" value="0.9954356769359717" />
+      <entry key="S30" value="0.9984762383082793" />
+      <entry key="S60" value="0.9992378287044337" />
+      <entry key="M2" value="0.9996221953625245" />
+      <entry key="M5" value="1.0325527205393479" />
+      <entry key="M10" value="1.8642284918769612" />
+      <entry key="M15" value="3.765548484352278" />
+      <entry key="M30" value="12.489966504793971" />
+      <entry key="H1" value="35.57206245472018" />
+      <entry key="H2" value="76.81881659879575" />
+      <entry key="H4" value="126.15874813968371" />
+      <entry key="D1" value="296.9598595350607" />
+      <entry key="W1" value="487.5852350113816" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -251,6 +246,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
+      <workItem from="1779972293479" duration="3423000" />
     </task>
     <task id="LOCAL-00039" summary="Temporarily work around the failure of the API to return voters in housthold.">
       <option name="closed" value="true" />

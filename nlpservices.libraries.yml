@@ -85,3 +85,9 @@ walksheet-form:
   css:
     layout:
       css/walksheet-form.css: { }
+select-all-postcards:
+  version: "1.0.0"
+  js:
+    js/select-all-postcards.js: {}
+  dependencies:
+    - core/drupal
