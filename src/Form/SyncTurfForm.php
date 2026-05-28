@@ -176,7 +176,7 @@ class SyncTurfForm extends FormBase {
 
         $nlSearchList = $nlsTable = [];
         if(!empty($needle)) {
-          $nlSearchList = $this->nlsObj->searchNls($county,$needle);
+          $nlSearchList = $this->nlsObj->searchNls($needle,$county);
           $nlsTable = $this->nlsListDisplayObj->createTableArray($nlSearchList,TRUE);
         }
 

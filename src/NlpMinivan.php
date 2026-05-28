@@ -5,42 +5,13 @@ namespace Drupal\nlpservices;
 use Drupal;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-//use Drupal\Core\Queue\DatabaseQueue;
 use Drupal\Core\Queue\QueueFactory;
 
 class NlpMinivan {
 
   const int MINIVAN_MAX_QUEUE = 200;
   const int CANVASSED = 11;  // Report from VAN that voters were canvassed - redundant.
-  /*
-  private array $minivanSurveyHdr = [
-    'vanid' => ['name'=>'myv_van_id','err'=>'myv_van_id'],
-    'dateCanvassed' => ['name'=>'date_canvassed','err'=>'date_canvassed'],
-    'dateCreated' => ['name'=>'date_created','err'=>'date_created'],
-    'inputTypeId' => ['name'=>'input_type_id','err'=>'input_type_id'],
-    'surveyQuestionId' => ['name'=>'survey_question_id','err'=>'survey_question_id'],
-    'surveyResponseId' => ['name'=>'survey_response_id','err'=>'survey_response_id'],
-    'contactId' => ['name'=>'contacts_contact_id','err'=>'contacts_contact_id'],
-  ];
-  
-  private array $minivanCanvassHdr = [
-    'vanid' => ['name'=>'myv_van_id','err'=>'myv_van_id'],
-    'dateCanvassed' => ['name'=>'date_canvassed','err'=>'date_canvassed'],
-    'dateCreated' => ['name'=>'date_created','err'=>'date_created'],
-    'inputTypeId' => ['name'=>'input_type_id','err'=>'input_type_id'],
-    'contactTypeId' => ['name'=>'contact_type_id','err'=>'contact_type_id'],
-    'resultId' => ['name'=>'result_id','err'=>'result_id'],
-    'contactId' => ['name'=>'contacts_contact_id','err'=>'contacts_contact_id'],
-    'noteText' => ['name'=>'note_text','err'=>'note_text'],
-  ];
-  
-  private array $minivanActivistHdr = [
-    'vanid' => ['name'=>'myv_van_id','err'=>'myv_van_id'],
-    'dateCreated' => ['name'=>'date_created','err'=>'date_created'],
-    'activistCodeId' => ['name'=>'activist_code_id','err'=>'activist_code_id'],
-    'contactId' => ['name'=>'contacts_activist_code_id','err'=>'contacts_activist_code_id'],
-  ];
-  */
+
   private array $minivanHdr = [
     'survey' => [
       'vanid' => 'myv_van_id',
@@ -68,14 +39,14 @@ class NlpMinivan {
       'contactId' => 'contacts_activist_code_id',
     ],
   ];
-  
+
   private array $fieldTypeInt = ['vanid', 'inputTypeId', 'contactTypeId', 'activistCodeId',
     'contactId', 'surveyQuestionId', 'surveyResponseId', ];
-  
+
   public array $minivanCountKeys = [
     'recordCount','newRecordCount','skippedRecordCount','rejectedRecordCount','notNlpCount',
   ];
-  
+
   private NlpReports $nlpReportsObj;
   private NlpVoters $voterObj;
   private NlpNls $nlsObj;
@@ -84,8 +55,8 @@ class NlpMinivan {
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected QueueFactory $queueFactory;
   protected DrupalUser $drupalUserObj;
-  
-  
+
+
   public function __construct( $config, $nlpReportsObj, $voterObj,  $nlsObj, $imapObj,
                                $apiSurveyQuestionObj, $queueFactory, $drupalUserObj ) {
     $this->config = $config;
@@ -97,7 +68,7 @@ class NlpMinivan {
     $this->queueFactory = $queueFactory;
     $this->drupalUserObj = $drupalUserObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpMinivan
   {
     return new static(
@@ -111,7 +82,7 @@ class NlpMinivan {
       $container->get('nlpservices.drupal_user'),
     );
   }
-  
+
   /**
    * decodeMinivanHdr
    *
@@ -141,7 +112,7 @@ class NlpMinivan {
         }
       }
       if(!$found) {
-        $hdrErr[] = 'The MyCampaign export option "'.$vanField['err'].'" is missing.';
+        $hdrErr[] = 'The MyCampaign export option "'.$vanField.'" is missing.';
       }
     }
     $fieldPos['pos'] = $hdrPos;
@@ -149,7 +120,7 @@ class NlpMinivan {
     $fieldPos['ok'] = empty($hdrErr);
     return $fieldPos;
   }
-  
+
   /**
    * extractMinivanFields
    *
@@ -167,15 +138,40 @@ class NlpMinivan {
   {
     $record = [];
     foreach ($hdrPos as $nlpKey => $vanField) {
-      if(!empty(in_array($nlpKey,$this->fieldTypeInt))) {
-        $record[$nlpKey] = (int) $rawRecord[$vanField];
+      if(in_array($nlpKey,$this->fieldTypeInt)) {
+        $record[$nlpKey] = (int) ($rawRecord[$vanField] ?? '');
       } else {
-        $record[$nlpKey] = $rawRecord[$vanField];
+        $record[$nlpKey] = $rawRecord[$vanField] ?? '';
       }
     }
     return $record;
   }
-  
+
+  /**
+   * attachNlToResult
+   *
+   * Look up the NL and voter CD and populate the standard NL identity fields on $result.
+   * Returns $result unchanged if the NL record is not found.
+   *
+   * @param array $result
+   * @param int $vanid
+   * @param int $mcid
+   * @return array
+   */
+  private function attachNlToResult(array $result, int $vanid, int $mcid): array
+  {
+    $cd = $this->voterObj->getVoterCd($vanid);
+    $nl = $this->nlsObj->getNlById($mcid);
+    if(!empty($nl)) {
+      $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
+      $result['firstName'] = $nl['firstName'];
+      $result['lastName'] = $nl['lastName'];
+      $result['county'] = $nl['county'];
+      $result['cd'] = $cd;
+    }
+    return $result;
+  }
+
   /**
    * @param array $report
    * @param array $result
@@ -194,7 +190,7 @@ class NlpMinivan {
       $action['counts']['skippedRecordCount'] = 1;
       return $action;
     }
-    
+
     $qid = $report['surveyQuestionId'];
     $rid = $report['surveyResponseId'];
     if(empty($pledgeSurveyQuestion)) {  // No survey question is defined.
@@ -202,9 +198,7 @@ class NlpMinivan {
       $action['counts']['rejectedRecordCount'] = 1;
       return $action;
     }
-    //nlp_debug_msg('$pledgeSurveyQuestion',$pledgeSurveyQuestion);
     $vanid = $report['vanid'];
-    //nlp_debug_msg('$qid',$qid);
     if($pledgeSurveyQuestion['surveyQuestionId'] == $qid) {
       $title = $pledgeSurveyQuestion['name'];
       $surveyResponseList = $pledgeSurveyQuestion['responses'];
@@ -213,7 +207,7 @@ class NlpMinivan {
       $action['counts']['rejectedRecordCount'] = 1;
       return $action;
     }
-    
+
     $response = '';
     if(!empty($surveyResponseList)) {
       if(!empty($surveyResponseList[$rid])) {
@@ -228,17 +222,9 @@ class NlpMinivan {
     $result['contactType'] = 'Walk';
     $result['cid'] = $cid;
     $result['contactId'] = $contactId;
-    
-    $cd = $this->voterObj->getVoterCd($vanid);
-    $nl = $this->nlsObj->getNlById($mcid);
-    if(!empty($nl)) {
-      $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
-      $result['firstName'] = $nl['firstName'];
-      $result['lastName'] = $nl['lastName'];
-      $result['county'] = $nl['county'];
-      $result['cd'] = $cd;
-    }
-    
+
+    $result = $this->attachNlToResult($result, $vanid, $mcid);
+
     $action['processReport'] = TRUE;
     $action['mergeReport'] = FALSE;
     $action['type'] = 'pledgedToVote';
@@ -246,12 +232,12 @@ class NlpMinivan {
     $action['counts']['newRecordCount'] = 1;
     return $action;
   }
-  
+
   /**
    * processCanvass
    *
    * Process a report for a voter contact attempt.  Also, a report may contain a note.
-   * .
+   *
    * @param array $report
    * @param array $result - Array of common values for all reports.
    * @param int $mcid
@@ -264,25 +250,23 @@ class NlpMinivan {
   public function processCanvass(array $report, array $result, int $mcid, array $allowedResponseCodes, int $cid): array
   {
     $action = [];
-    
-    if($report['resultId'] == $this::CANVASSED) { // Remove the redundant report.
+
+    if($report['resultId'] == self::CANVASSED) { // Remove the redundant report.
       $action['processReport'] = FALSE;
       return $action;
     }
-    
+
     $contactId = $report['contactId'];
     $vanid = $report['vanid'];
     $reportExists = $this->nlpReportsObj->reportExists('contact',$contactId);
     if($reportExists) {
-      //nlp_debug_msg('$report',$report);
       $action['processReport'] = FALSE;
       $action['counts']['skippedRecordCount'] = 1;
       $action['counts']['newRecordCount'] = 0;
       return $action;
     }
-    
+
     if(!empty($report['noteText'])) { // A note is included.
-      //$vanid = $report['vanid'];
       $cd = $this->voterObj->getVoterCd($vanid);
       $nl = $this->nlsObj->getNlById($mcid);
       $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
@@ -291,10 +275,10 @@ class NlpMinivan {
       $report['mcid'] = $mcid;
       $action = $this->processNote($report,$result);
     }
-    
+
     $rid = $report['resultId'];
     $contactTypeId = $report['contactTypeId'];
-    
+
     $knownContactTypeName = $knownResponse = '';
     foreach ($allowedResponseCodes as $contactTypeName=>$responseCode) {
       if($responseCode['code'] == $contactTypeId) {
@@ -306,7 +290,7 @@ class NlpMinivan {
         break;
       }
     }
-    
+
     if(empty($knownContactTypeName)) {
       $action['processReport'] = FALSE;
       $action['counts']['rejectedRecordCount'] = 1;
@@ -314,7 +298,7 @@ class NlpMinivan {
       unset($action[0]);
       return $action;
     }
-    
+
     $result['contactType'] = 'Walk';
     $result['cid'] = $cid;
     $result['contactId'] = $contactId;
@@ -324,23 +308,15 @@ class NlpMinivan {
     $result['qid'] = NULL;
     $result['rid'] = $rid;
     $result['rIndex'] = NULL;
-    
-    $cd = $this->voterObj->getVoterCd($vanid);
-    $nl = $this->nlsObj->getNlById($mcid);
-    if(!empty($nl)) {
-      $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
-      $result['firstName'] = $nl['firstName'];
-      $result['lastName'] = $nl['lastName'];
-      $result['county'] = $nl['county'];
-      $result['cd'] = $cd;
-    }
-    
+
+    $result = $this->attachNlToResult($result, $vanid, $mcid);
+
     switch ($knownResponse) {
       case 'Not Home':
       case 'Refused':
       case 'Left Message/Lit':
         break;
-      
+
       case 'Moved':
         $request['vanid'] = $vanid;
         $request['type'] = 'contact';
@@ -354,7 +330,7 @@ class NlpMinivan {
           return $action;
         }
         $voterAddresses = $this->voterObj->getVoterAddresses($vanid);
-        $addressEncode = array();
+        $addressEncode = [];
         foreach ($voterAddresses as $voterAddress) {
           $simpleAddress = $this->voterObj->addressExtract($voterAddress);
           $addressEncode = json_encode($simpleAddress);
@@ -362,7 +338,7 @@ class NlpMinivan {
           $turfIndex = $voterAddress['turfIndex'];
           $this->voterObj->setMovedStatus($turfIndex,$vanid,$movedStatus);
         }
-        
+
         $result['rIndex'] = NULL;
         $result['value'] = 'moved';
         $result['text'] = $addressEncode;
@@ -372,27 +348,27 @@ class NlpMinivan {
         $action['type'] = 'attemptedContact';
         $action['counts']['newRecordCount'] = 1;
         return $action;
-      
+
       case 'Deceased':
-        
+
         // Check if this voter has already been reported as deceased.
         $request['vanid'] = $vanid;
         $request['type'] = 'contact';
         $request['value'] = 'deceased';
         $request['cycle'] = $result['cycle'];
         $report = $this->nlpReportsObj->getReport($request);
-        
+
         $existingRIndex = (!empty($report['reportIndex']))?$report['reportIndex']:NULL;  // An entry for the Deceased status exists.
         if(!empty($existingRIndex)) {
           $action['processReport'] = FALSE;
           return $action;
         }
-        
+
         // Remember the state of the NLP Deceased activist code in VoteBuilder.
         $voterStatus = $this->voterObj->getVoterStatus($vanid);
         $voterStatus['deceased'] = 1;
         $this->voterObj->setVoterStatus($vanid, $voterStatus);
-        
+
         // This voter is being reported as deceased.  Record in NLP Services.
         $action['value'] = 'deceased';
         $action['processReport'] = TRUE;
@@ -413,7 +389,7 @@ class NlpMinivan {
   /**
    * processActivist
    *
-   * Process a report to set of remove the NLPHostile activist code.
+   * Process a report to set or remove the NLPHostile activist code.
    *
    * @param array $report
    * @param array $result - Array of common values for all reports.
@@ -435,7 +411,7 @@ class NlpMinivan {
       return $action;
     }
     $vanid = $report['vanid'];
-  
+
     // Currently, the only code used by NLP is NLPHostile.
     $activistCodeId = $report['activistCodeId'];
     if($activistCodeId != $nlpHostile['activistCodeId']) {
@@ -443,26 +419,17 @@ class NlpMinivan {
       $action['counts']['rejectedRecordCount'] = 1;
       return $action;
     }
-    
-    $cd = $this->voterObj->getVoterCd($vanid);
-    
-    $nl = $this->nlsObj->getNlById($mcid);
-    if(!empty($nl)) {
-      $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
-      $result['firstName'] = $nl['firstName'];
-      $result['lastName'] = $nl['lastName'];
-      $result['county'] = $nl['county'];
-      $result['cd'] = $cd;
-    }
+
+    $result = $this->attachNlToResult($result, $vanid, $mcid);
     $result['mcid'] = $mcid;
-    
+
     $rIndex = $this->nlpReportsObj->getAcReportIndex($vanid,'NLPHostile');
     if(!empty($rIndex)) {
       $action['processReport'] = FALSE;
       $action['counts']['skippedRecordCount'] = 1;
       return $action;
     }
-    
+
     $result['reportIndex'] = NULL;
     $result['rid'] = $nlpHostile['activistCodeId'];
     $result['contactType'] = 'Walk';
@@ -473,20 +440,20 @@ class NlpMinivan {
     $result['qid'] = NULL;
     $result['contactId'] = $contactId;
     $this->nlpReportsObj->setNlReport($result);
-    
+
     // Results reported by this NL.
-    $this->nlsObj->resultsReported($mcid,$nl['county']);
-    
+    $this->nlsObj->resultsReported($mcid,$result['county']);
+
     // Remember the state of the NLP Hostile.
     $voterStatus = $this->voterObj->getVoterStatus($vanid);
     $voterStatus['hostile'] = 1;
     $this->voterObj->setVoterStatus($vanid, $voterStatus);
-    
+
     $action['processReport'] = FALSE;
     $action['counts']['newRecordCount'] = 1;
     return $action;
   }
-  
+
   /**
    * processNote
    *
@@ -494,30 +461,27 @@ class NlpMinivan {
    * so the NL can see and edit it.
    *
    * Returns an array with the following keys:
-   *   processReport - TRUE if the report should be processed, FALSE if it should be ignored.
-   *   counts - array with keys:
-   *     skippedRecordCount - number of duplicate reports
+   *   `processReport` - TRUE if the report should be processed, FALSE if it should be ignored.
+   *   `counts` - array with keys:
+   *   `skippedRecordCount` - number of duplicate reports
    *
    * @param array $report - Array of report data.  Either to set of remove the activist code.
    * @param array $result - Array of common values for all reports.
    * @return array
    */
-  private function processNote(array $report, array $result): array
+  private function processNote( array $report, array $result ): array
   {
     // Check if this report has already been seen before.
     $contactId = $report['contactId'];
     $exists = $this->nlpReportsObj->reportExists('Comment',$contactId);
     if($exists) {
-      //nlp_debug_msg('processNote',$report);
       $action['processReport'] = FALSE;
       $action['counts']['skippedRecordCount'] = 1;
       return $action;
     }
-    
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
-    
+
     $vanid = $report['vanid'];
-    
+
     $noteString = $report['noteText'];
     $commentMax = 190;
     if (strlen($noteString) > $commentMax) {
@@ -526,9 +490,9 @@ class NlpMinivan {
       $note = $noteString;
     }
     $note = str_replace("\r\n", "<br>", $note);
-    $turfIndex = $votersObj->getTurfIndexByVanid($vanid);
+    $turfIndex = $this->voterObj->getTurfIndexByVanid($vanid);
     $mcid = $report['mcid'];
-    
+
     // Add a new comment record.
     $result['type'] = 'Comment';
     $result['value'] = '';
@@ -538,11 +502,10 @@ class NlpMinivan {
     $result['cid'] = NULL;
     $result['rid'] = NULL;
     $result['qid'] = NULL;
-    
+
     $nl = $this->nlsObj->getNlById($mcid);
-    //$result['mcid'] = $mcid;
     $result['county'] = $nl['county'];
-    
+
     // Record the new note.
     $rIndex = $this->nlpReportsObj->setNlReport($result);
     $this->voterObj->updateTurfNote($turfIndex,$vanid,$note,$rIndex,0);
@@ -550,7 +513,7 @@ class NlpMinivan {
     $action['counts']['newRecordCount'] = 1;
     return $action;
   }
-  
+
   /**
    * headerValidate
    *
@@ -573,31 +536,12 @@ class NlpMinivan {
     // Extract the column headers.
     $columnHeader = str_getcsv($headerRecord);
     $fieldPos['ok'] = FALSE;
-    
+
     if(empty($this->minivanHdr[$fileType])) {
       return $fieldPos;
     }
     $fieldPos = $this->decodeMinivanHdr($columnHeader, $this->minivanHdr[$fileType]);
-    
-    /*
-    switch ($fileType) {
-      case 'survey':
-        //$fieldPos = $this->decodeMinivanSurveyHdr($columnHeader);
-        $fieldPos = $this->decodeMinivanHdr($columnHeader, $this->minivanSurveyHdr);
-        break;
-      case 'canvass':
-        //$fieldPos = $this->decodeMinivanCanvassHdr($columnHeader);
-        $fieldPos = $this->decodeMinivanHdr($columnHeader, $this->minivanCanvassHdr);
-        break;
-      case 'activist':
-        //$fieldPos = $this->decodeMinivanActivistHdr($columnHeader);
-        $fieldPos = $this->decodeMinivanHdr($columnHeader, $this->minivanActivistHdr);
-        break;
-      default:
-        $fieldPos['err'][0] = 'Bad file type';
-        break;
-    }
-    */
+
     if(!$fieldPos['ok']) {
       foreach ($fieldPos['err'] as $errMsg) {
         Drupal::logger('nlpservices')->notice($errMsg);
@@ -605,58 +549,24 @@ class NlpMinivan {
     }
     return $fieldPos;
   }
-  
+
   /**
    * fetchReports
    *
    * Extract the relevant fields from the reports and put them in a single array.
+   * Each encoded report includes a 'fileType' key.
    *
    * @param array $reportsRaw
    * @param string $fileType
    * @param int $activistCode
-   * @param array$pos
+   * @param array $pos
    * @return array
    */
   public function fetchReports(array $reportsRaw, string $fileType, int $activistCode, array $pos): array
   {
-    $reports = [];
-    $blockIndex = $recordCount = 0;
-    foreach ($reportsRaw as $rowRaw) {
-      $fieldsRaw = str_getcsv($rowRaw);
-      // Remove any stuff that might be a security risk.
-      $record = [];
-      foreach ($fieldsRaw as $fieldRaw) {
-        $record[] = trim(strip_tags(htmlentities(stripslashes($fieldRaw),ENT_QUOTES)));
-      }
-      $report = $this->extractMinivanFields($record,$pos);
-      $report['fileType'] = $fileType;
-      switch ($fileType) {
-        case 'survey':
-        case 'canvass':
-          if(!empty($report['inputTypeId']) AND $report['inputTypeId'] == 14)  { // MiniVAN report.
-            $reports[$blockIndex][] = json_encode($report);
-            $recordCount++;
-          }
-          break;
-        case 'activist':
-          if($report['activistCodeId'] == $activistCode) {
-            $reports[$blockIndex][] = json_encode($report);
-            $recordCount++;
-          }
-          break;
-        case 'note':
-          $reports[$blockIndex][] = json_encode($report);
-          $recordCount++;
-          break;
-      }
-      if($recordCount == $this::MINIVAN_MAX_QUEUE) {
-        $blockIndex++;
-        $recordCount = 0;
-      }
-    }
-    return $reports;
+    return $this->buildReportChunks($reportsRaw, $fileType, $activistCode, $pos, true);
   }
-  
+
   /**
    * minivanEmailCheck
    *
@@ -677,18 +587,17 @@ class NlpMinivan {
   {
     $queueItems = [];
     $items = $this->imapObj->checkEmail('minivan');
-    //nlp_debug_msg('minivanEmailCheck',$items);
     if(empty($items)) {return [];}  // No new emails.
-    
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     $nlpHostileAC = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
-    
+
     // Each item has an attachment, but there will only be one for each email.
     foreach ($items as $item) {
       $fileType = $item['fileType'];
       $fieldPos = $this->headerValidate($fileType,$item['header']);
       if(!$fieldPos['ok']) {continue;}
-      
+
       // A target email with an attachment with a good header record.
       $reportCount = count($item['reports']);
       $item['reportCount'] = $reportCount;
@@ -696,8 +605,7 @@ class NlpMinivan {
       $posKeys = array_keys($pos);
       $item['header'] = implode(',',$posKeys);
       // Extract the relevant fields from the reports and put them in a single array.
-      $reportChunks = $this->justWhatIsRelevant($item['reports'], $fileType, $nlpHostileAC, $pos);
-      //nlp_debug_msg('minivanEmailCheck',$reportChunks);;
+      $reportChunks = $this->buildReportChunks($item['reports'], $fileType, $nlpHostileAC, $pos);
       if (empty($reportChunks)) {
         $queueItems[0] = $item;
         $queueItems[0]['reports'] = NULL;
@@ -714,20 +622,21 @@ class NlpMinivan {
     }
     return $queueItems;
   }
-  
+
   /**
-   * justWhatIsRelevant
+   * buildReportChunks
    *
-   * Extract the relevant fields from the reports and put them in a single array.  And,
-   * divide the reports into chunks of $this::MINIVAN_MAX_QUEUE records.
+   * Sanitize raw CSV rows, extract the relevant fields, filter by file type, and divide
+   * into chunks of self::MINIVAN_MAX_QUEUE records.
    *
    * @param array $reportsRaw - reports from the email attachment.
-   * @param string $fileType
-   * @param int $activistCode
+   * @param string $fileType - survey, canvass, activist, or note.
+   * @param int $activistCode - activist code ID to filter on (activist type only).
    * @param array $pos - column positions for the relevant fields.
+   * @param bool $tagFileType - when true, add a 'fileType' key to each encoded report.
    * @return array
    */
-  public function justWhatIsRelevant(array $reportsRaw, string $fileType, int $activistCode, array $pos): array
+  private function buildReportChunks(array $reportsRaw, string $fileType, int $activistCode, array $pos, bool $tagFileType = false): array
   {
     $reports = [];
     $blockIndex = $recordCount = 0;
@@ -739,11 +648,14 @@ class NlpMinivan {
         $record[] = trim(strip_tags(htmlentities(stripslashes($fieldRaw),ENT_QUOTES)));
       }
       $report = $this->extractMinivanFields($record,$pos);
+      if($tagFileType) {
+        $report['fileType'] = $fileType;
+      }
       switch ($fileType) {
         case 'survey':
         case 'canvass':
           // Ignore reports not marked as from a MiniVAN user.
-          if(!empty($report['inputTypeId']) AND $report['inputTypeId'] == 14)  { // MiniVAN report.
+          if(!empty($report['inputTypeId']) && $report['inputTypeId'] == 14)  { // MiniVAN report.
             $reports[$blockIndex][] = json_encode($report);
             $recordCount++;
           }
@@ -760,14 +672,14 @@ class NlpMinivan {
           $recordCount++;
           break;
       }
-      if($recordCount == $this::MINIVAN_MAX_QUEUE) {
+      if($recordCount == self::MINIVAN_MAX_QUEUE) {
         $blockIndex++;
         $recordCount = 0;
       }
     }
     return $reports;
   }
-  
+
   /**
    * processMinivanQueueReports
    *
@@ -781,40 +693,33 @@ class NlpMinivan {
    * @noinspection PhpUnused
    * Used in minivan queueWorker
    */
-  function processMinivanQueueReports($reports,$fileType): array
+  public function processMinivanQueueReports($reports,$fileType): array
   {
-    $nlpReportsObj = Drupal::getContainer()->get('nlpservices.reports');
-    $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     $nlpHostile['activistCodeId'] = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
     $allowedResponseCodes = $nlpConfigurationObj->getCanvassResponseCodes();
     $pledgeSurveyQuestion = $nlpConfigurationObj->getPledgeSurveyQuestion();
-    
-    $apiSurveyQuestionObj = Drupal::getContainer()->get('nlpservices.survey_question');
-    $cid = $apiSurveyQuestionObj::CONTACT_TYPE_WALK;
-    
-    $minivanObj = Drupal::getContainer()->get('nlpservices.minivan');
-    
+
+    $cid = ApiSurveyQuestion::CONTACT_TYPE_WALK;
+
     $commonResult['county'] = NULL;
     $commonResult['firstName'] = NULL;
     $commonResult['lastName'] = NULL;
     $commonResult['cycle'] = $nlpConfigurationObj->getCycle();
-    
+
     $counts = [];
     foreach ($this->minivanCountKeys as $minivanCountKey) {
       $counts[$minivanCountKey] = 0;
     }
     if(empty($reports)) {return $counts;}
-    
+
     foreach ($reports as $reportRaw) {
       $report = json_decode($reportRaw,true);
       $counts['recordCount']++;
       $vanid = $report['vanid'];
-      $mcid = $votersObj->getMcidByVanid($vanid);
-      //nlp_debug_msg('mcid',$mcid);
+      $mcid = $this->voterObj->getMcidByVanid($vanid);
       if (!empty($mcid)) {
-        $nl = $nlsObj->getNlById($mcid);
+        $nl = $this->nlsObj->getNlById($mcid);
         if(!empty($nl)) {
           $commonResult['firstName'] = $nl['firstName'];
           $commonResult['lastName'] = $nl['lastName'];
@@ -830,48 +735,42 @@ class NlpMinivan {
         }
       } else {
         // There is no NL assigned to this voter.
-        $counts['notNlpCount'] = $counts['notNlpCount']+1;
-        //nlp_debug_msg('vanid',$vanid);
+        $counts['notNlpCount']++;
         continue;
       }
       $commonResult['mcid'] = $mcid;
-      
+
       if(!empty($report['dateCanvassed'])) {
-        $canvassDate = $report['dateCanvassed'];
-        $canvassTime = strtotime($canvassDate);
+        $canvassTime = strtotime($report['dateCanvassed']);
       } elseif(!empty($report['dateCreated'])) {
-        $canvassDate = $report['dateCreated'];
-        $canvassTime = strtotime($canvassDate);
+        $canvassTime = strtotime($report['dateCreated']);
       } else {
-        $canvassTime = $report['dateTimeCreated'];
+        continue;
       }
-      $commonResult['contactDate'] = date('Y-m-d',$canvassTime) ;
+      $commonResult['contactDate'] = date('Y-m-d',$canvassTime);
       $commonResult['vanid'] = $report['vanid'];
-      //nlp_debug_msg('$commonResult',$commonResult);
       $action = [];
-      //nlp_debug_msg('$fileType',$fileType);
       switch ($fileType) {
         case 'survey':
-          $action = $minivanObj->processSurvey($report,$commonResult,$mcid,$pledgeSurveyQuestion,$cid);
+          $action = $this->processSurvey($report,$commonResult,$mcid,$pledgeSurveyQuestion,$cid);
           break;
         case 'canvass':
-          $action = $minivanObj->processCanvass($report,$commonResult,$mcid,$allowedResponseCodes,$cid);
+          $action = $this->processCanvass($report,$commonResult,$mcid,$allowedResponseCodes,$cid);
           break;
         case 'activist':
-          $action = $minivanObj->processActivist($report,$commonResult,$mcid,$nlpHostile,$cid);
+          $action = $this->processActivist($report,$commonResult,$mcid,$nlpHostile,$cid);
           break;
       }
-      
-      
+
       foreach ($action['counts'] as $countType => $value) {
         $counts[$countType] += $value;
       }
-     
+
       if ($action['processReport']) {
         if (!$action['mergeReport']) {
-          $rIndex = $nlpReportsObj->setNlReport($action['result']);
+          $rIndex = $this->nlpReportsObj->setNlReport($action['result']);
         } else {
-          $nlpReportsObj->mergeReport($action['result']);
+          $this->nlpReportsObj->mergeReport($action['result']);
           $rIndex = $action['result']['reportIndex'];
         }
         // Mark Contact attempt for this voter.
@@ -881,29 +780,24 @@ class NlpMinivan {
         if (!empty($action['type'])) {
           $turfVoter[$action['type']] = $rIndex;
         }
-        $nl = $nlsObj->getNlById($mcid);
+        $nl = $this->nlsObj->getNlById($mcid);
         $nlCounty = $nl['county'] ?? '';
         $turfVoter['county'] = $nlCounty;
-        $turfIndex = $votersObj->getTurfIndexByVanid($vanid);
-        
+        $turfIndex = $this->voterObj->getTurfIndexByVanid($vanid);
+
         $turfVoter['turfIndex'] = $turfIndex;
-        $votersObj->updateTurfVoter($turfVoter);
+        $this->voterObj->updateTurfVoter($turfVoter);
         // This NL has reported results.
-        $nlsObj->resultsReported($mcid, $nlCounty);
+        $this->nlsObj->resultsReported($mcid, $nlCounty);
       }
-      
+
     }
-    
+
     return $counts;
   }
-  
-  /**
-   * @return array
-   * @noinspection PhpUnused
-   * Used in nlpservices_minivan_canvass
-   */
+
   public function getMinivanCountKeys(): array {
     return $this->minivanCountKeys;
   }
-  
+
 }

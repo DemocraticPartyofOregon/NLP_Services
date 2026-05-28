@@ -17,20 +17,21 @@ class NlpNls {
   const string MAIL = 'mail';
   const int NOTES_MAX = 250;   // Notes max length of the note.
   const int NLS_ALL_MAX = 200;
-  public array $contactList = array(self::CANVASS,self::MINIVAN,self::PHONE,self::MAIL,);
+  public array $contactList = [self::CANVASS, self::MINIVAN, self::PHONE, self::MAIL,];
   const string DASH = '-';
   const string ASKED = 'Asked';
   const string YES = 'Yes';
   const string NO = 'Not this election';
   const string QUIT = 'Dropout';
   const string DNR = 'Did not respond';
-  public array $askOptions = array(
+  public array $askOptions = [
     'dash' => self::DASH,
     'asked' => self::ASKED,
     'yes' => self::YES,
     'no' => self::NO,
     'quit' => self::QUIT,
-    'dnr' => self::DNR);
+    'dnr' => self::DNR,
+  ];
   public array $askList = [];
   
   protected Connection $connection;
@@ -53,7 +54,6 @@ class NlpNls {
   {
     return new static(
       $container->get('database'),
-      //$container->get('nlpservices.awards'),
     );
   }
   
@@ -140,18 +140,16 @@ class NlpNls {
       return [];
     }
     $colNames = [];
-    do {
-      $name = $result->fetchAssoc();
-      if(empty($name)) {break;}
+    while ($name = $result->fetchAssoc()) {
       $colNames[] = $name['Field'];
-    } while (TRUE);
+    }
     return $colNames;
   }
   
   /**
    * getNlsStatus
    *
-   * Get the status record  of a NL by mcid and county.
+   * Get the status record of a NL by mcid and county.
    * If no status record exists, return an empty record with default values.
    *
    * @param int $mcid
@@ -275,16 +273,14 @@ class NlpNls {
     // Fetch each NL record and build the array of information about each NL
     // needed to build the display table.
     $nlRecords = [];
-    do {
-      $nlRecord = $result->fetchAssoc();
-      if(empty($nlRecord)) {break;}
+    while ($nlRecord = $result->fetchAssoc()) {
       $mcid = $nlRecord['mcid'];
       $nlRecord['status'] = $this->getNlsStatus($mcid,$county);
       $nlRecords[$mcid] = $nlRecord;
-    } while (TRUE);
+    }
     return $nlRecords;
   }
-  
+
   /**
    * getHdList
    *
@@ -310,12 +306,10 @@ class NlpNls {
       return [];
     }
     
-    $hdOptions  = [];
-    do {
-      $hdRecord = $result->fetchAssoc();
-      if(empty($hdRecord)) {break;}
+    $hdOptions = [];
+    while ($hdRecord = $result->fetchAssoc()) {
       $hdOptions[] = $hdRecord['hd'];
-    } while (TRUE);
+    }
     return $hdOptions;
   }
   
@@ -350,11 +344,9 @@ class NlpNls {
       return [];
     }
     $pctOptions = [];
-    do {
-      $pct = $result->fetchAssoc();
-      if(empty($pct)) {break;}
+    while ($pct = $result->fetchAssoc()) {
       $pctOptions[] = $pct['precinct'];
-    } while (TRUE);
+    }
     return $pctOptions;
   }
   
@@ -403,7 +395,7 @@ class NlpNls {
       $query->fields('n');
       $query->fields('s');
       $query->condition('n.'.'county',$county);
-      if(!empty($hd) AND $hd!='All' ) {
+      if(!empty($hd) && $hd!='All' ) {
         $query->condition('n.'.'hd',$hd);
       }
       $result = $query->execute();
@@ -413,14 +405,12 @@ class NlpNls {
       return [];
     }
     $nlRecords = [];
-    do {
-      $nlRecord = $result->fetchAssoc();
-      if(empty($nlRecord)) {break;}
+    while ($nlRecord = $result->fetchAssoc()) {
       $nlRecords[$nlRecord['mcid']] = $nlRecord;
-    } while (TRUE);
+    }
     return $nlRecords;
   }
-  
+
   /**
    * resultsReported
    *
@@ -449,7 +439,7 @@ class NlpNls {
     }
     try {
       $this->connection->update(self::NLS_STATUS_TBL)
-        ->fields(array('resultsReported' => 'Y',))
+        ->fields(['resultsReported' => 'Y',])
         ->condition('mcid',$mcid)
         ->condition('county',$county)
         ->execute();
@@ -458,12 +448,6 @@ class NlpNls {
       nlp_debug_msg('resultsReported', $e->getMessage() );
       return FALSE;
     }
-    /*
-    $config = Drupal::config('nlpservices.configuration');
-    $electionDates = $config->get('nlpservices-election-configuration');
-    $cycle = $electionDates['nlp_election_cycle'];
-    $this->awardsObj->awardsLevelUp($mcid,$cycle);
-    */
     return TRUE;
   }
   
@@ -492,22 +476,25 @@ class NlpNls {
   /**
    * searchNls
    *
-   * Search for NLs in a given county by a search needle.
-   * The needle is searched in lastName, firstName, nickname, email, and mcid.
-   * The needle is any fragment in any of the fields.
-   * Returns an associative array of NL records keyed by mcid with one of the
-   * fields containing the needle.
+   * Search for NLs by a needle fragment across lastName, firstName, nickname, email, and mcid.
+   * Filter by county (with status attached) or by an explicit mcids list.
+   * Returns an associative array of NL records keyed by mcid.
    *
-   * @param string $county
    * @param string $needle
+   * @param string $county - filter by county and attach status to each record.
+   * @param array $mcids - filter by this set of mcids instead.
    * @return array
    */
-  public function searchNls(string $county, string $needle): array
+  public function searchNls(string $needle, string $county = '', array $mcids = []): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->fields('n');
-      $query->condition('county',$county);
+      if(!empty($county)) {
+        $query->condition('county', $county);
+      } elseif (!empty($mcids)) {
+        $query->condition('mcid', $mcids, 'IN');
+      }
       $orGroup = $query->orConditionGroup()
         ->condition('lastName', "%" . $query->escapeLike($needle) . "%", 'LIKE')
         ->condition('firstName', "%" . $query->escapeLike($needle) . "%", 'LIKE')
@@ -517,70 +504,23 @@ class NlpNls {
       $query->condition($orGroup);
       $query->orderBy('lastName');
       $query->orderBy('nickname');
-      $result =  $query->execute();
+      $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('searchNls', $e->getMessage() );
+      nlp_debug_msg('searchNls', $e->getMessage());
       return [];
     }
-    // Fetch each NL record and build the array of information about each NL
-    // needed to build the display table.
     $nlRecords = [];
-    do {
-      $nlRecord = $result->fetchAssoc();
-      if(empty($nlRecord)) {break;}
+    while ($nlRecord = $result->fetchAssoc()) {
       $mcid = $nlRecord['mcid'];
-      $nlRecord['status'] = $this->getNlsStatus($mcid,$county);
+      if(!empty($county)) {
+        $nlRecord['status'] = $this->getNlsStatus($mcid, $county);
+      }
       $nlRecords[$mcid] = $nlRecord;
-    } while (TRUE);
+    }
     return $nlRecords;
   }
-  
-  /**
-   * searchNlsByIds
-   *
-   * Search for NLs in the given array of mcids for values that contain the needle.
-   * The needle is searched in lastName, firstName, nickname, email, and mcid.
-   * Returns an associative array of NL records keyed by mcid with one of the
-   * fields containing the needle.
-   *
-   * @param array $mcids
-   * @param string $needle
-   * @return array
-   */
-  public function searchNlsByIds(array $mcids, string $needle): array
-  {
-    try {
-      $query = $this->connection->select(self::NLS_TBL, 'n');
-      $query->fields('n');
-      $query->condition('mcid', $mcids, 'IN');
-      $orGroup = $query->orConditionGroup()
-        ->condition('lastName', "%" . $query->escapeLike($needle) . "%", 'LIKE')
-        ->condition('firstName', "%" . $query->escapeLike($needle) . "%", 'LIKE')
-        ->condition('nickname', "%" . $query->escapeLike($needle) . "%", 'LIKE')
-        ->condition('email', "%" . $query->escapeLike($needle) . "%", 'LIKE')
-        ->condition('mcid', "%" . $query->escapeLike($needle) . "%", 'LIKE');
-      $query->condition($orGroup);
-      $query->orderBy('lastName');
-      $query->orderBy('nickname');
-      $result =  $query->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('searchNlsByIds', $e->getMessage() );
-      return [];
-    }
-    // Fetch each NL record and build the array of information about each NL
-    // needed to build the display table.
-    $nlRecords = [];
-    do {
-      $nlRecord = $result->fetchAssoc();
-      if(empty($nlRecord)) {break;}
-      $mcid = $nlRecord['mcid'];
-      $nlRecords[$mcid] = $nlRecord;
-    } while (TRUE);
-    return $nlRecords;
-  }
-  
+
   /**
    * getNlsByIds
    *
@@ -602,7 +542,7 @@ class NlpNls {
       $query->condition('mcid', $mcids, 'IN');
       if(!empty($precinct)) {
         $query->condition('precinct', $precinct);
-      } elseif (!empty($hd) OR $hd !== 0) {
+      } elseif (!empty($hd)) {
         $query->condition('hd', $hd);
       }
       $query->orderBy('hd');
@@ -614,11 +554,9 @@ class NlpNls {
       return [];
     }
     $nlRecords = [];
-    do {
-      $nlRecord = $result->fetchAssoc();
-      if (empty($nlRecord)) { break; }
+    while ($nlRecord = $result->fetchAssoc()) {
       $nlRecords[$nlRecord['mcid']] = $nlRecord;
-    } while (TRUE);
+    }
     return $nlRecords;
   }
   
@@ -648,18 +586,16 @@ class NlpNls {
       return [];
     }
     $hdList = [];
-    do {
-      $row = $result->fetchAssoc();
-      if (empty($row)) { break; }
+    while ($row = $result->fetchAssoc()) {
       $hdList[] = $row['hd'];
-    } while (TRUE);
+    }
     return $hdList;
   }
   
   /**
-   * getDistinctHdByMcids
+   * getDistinctPrecinctByMcids
    *
-   * Get a list of distinct HD values for the given mcid array.
+   * Get a list of distinct precinct values for the given mcid array.
    * The list is ordered numerically.
    *
    * @param array $mcids
@@ -682,11 +618,9 @@ class NlpNls {
       return [];
     }
     $precinctList = [];
-    do {
-      $row = $result->fetchAssoc();
-      if (empty($row)) { break; }
+    while ($row = $result->fetchAssoc()) {
       $precinctList[] = $row['precinct'];
-    } while (TRUE);
+    }
     return $precinctList;
   }
   
@@ -715,11 +649,9 @@ class NlpNls {
       return [];
     }
     $precinctArray = [];
-    do {
-      $row = $result->fetchAssoc();
-      if (empty($row)) { break; }
+    while ($row = $result->fetchAssoc()) {
       $precinctArray[$row['hd']][$row['precinct']] = $row['precinct'];
-    } while (TRUE);
+    }
     return $precinctArray;
   }
   

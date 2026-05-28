@@ -212,7 +212,7 @@ want to participate as an NL.  This case is rare.</p>",
       
       case 'add-submit':
         $needle = $form_state->getValue('needle');
-        $nlList = $this->nls->searchNls($county,$needle);
+        $nlList = $this->nls->searchNls($needle,$county);
         if(empty($nlList)) {
           $messenger->addStatus('No NLs found.');
           return;

@@ -149,7 +149,7 @@ class UpdatePdfAssignmentForm extends FormBase
     $needle = $form_state->get('needle');
     if(!empty($needle)) {
       $mcids = $this->turfsObj->getNlsWithTurfs($county);
-      $nls = $this->nlsObj->searchNlsByIds($mcids,$needle);
+      $nls = $this->nlsObj->searchNls($needle, '', $mcids);
       $hdList = $this->nlpSessionDataObj->getHdOptions();
       array_unshift($hdList, 'Choose...');
       $selectedHdIndex = 0;

@@ -4,13 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Dulicate code resolution in export methods">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpImap.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpImap.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpInstructions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpInstructions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpLegislativeFixes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpLegislativeFixes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMatchbacks.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMatchbacks.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMcidRecovery.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMcidRecovery.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNls.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -93,61 +94,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000742002866" />
-      <entry key="S2" value="1.0165044628961228" />
-      <entry key="S5" value="1.1936602812643538" />
-      <entry key="S10" value="1.4400684961052697" />
-      <entry key="S30" value="1.7606300673013187" />
-      <entry key="S60" value="1.872765813484968" />
-      <entry key="M2" value="1.9910226032401248" />
-      <entry key="M5" value="2.953037879942793" />
-      <entry key="M10" value="4.938347134831432" />
-      <entry key="M15" value="7.15753135391157" />
-      <entry key="M30" value="15.566937047708082" />
-      <entry key="H1" value="35.27947276393623" />
-      <entry key="H2" value="75.80534238130667" />
-      <entry key="H4" value="134.91404791259436" />
-      <entry key="D1" value="331.2406855355509" />
-      <entry key="W1" value="529.4152341633401" />
+      <entry key="MS100" value="1.222401024675547" />
+      <entry key="MS500" value="1.9670657706720434" />
+      <entry key="S2" value="3.345988730344501" />
+      <entry key="S5" value="5.112526470232591" />
+      <entry key="S10" value="7.878747527174754" />
+      <entry key="S30" value="13.618278164836779" />
+      <entry key="S60" value="16.350425176399675" />
+      <entry key="M2" value="18.16730828296009" />
+      <entry key="M5" value="20.17839243194238" />
+      <entry key="M10" value="22.457144839784316" />
+      <entry key="M15" value="24.71012524445645" />
+      <entry key="M30" value="32.85698497414971" />
+      <entry key="H1" value="52.166243852735874" />
+      <entry key="H2" value="92.42733535020102" />
+      <entry key="H4" value="151.88825471206076" />
+      <entry key="D1" value="349.99521486076196" />
+      <entry key="W1" value="549.1306554883635" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="2.302722240908361E-215" />
-      <entry key="S10" value="4.7986688163576774E-108" />
-      <entry key="S30" value="1.6867093767735848E-36" />
-      <entry key="S60" value="1.298733759002816E-18" />
-      <entry key="M2" value="1.1396200064068785E-9" />
-      <entry key="M5" value="2.6466957861351093E-4" />
-      <entry key="M10" value="0.01626866861834461" />
-      <entry key="M15" value="0.06420487557016666" />
-      <entry key="M30" value="0.2533868103163348" />
-      <entry key="H1" value="0.5033875363191598" />
-      <entry key="H2" value="0.7138346289715142" />
-      <entry key="H4" value="0.9705104569883344" />
-      <entry key="D1" value="6.456854450846385" />
-      <entry key="W1" value="14.493172028686576" />
+      <entry key="S5" value="1.4404574625790626E-243" />
+      <entry key="S10" value="3.795335904210668E-122" />
+      <entry key="S30" value="3.3605993545946235E-41" />
+      <entry key="S60" value="5.797067667877119E-21" />
+      <entry key="M2" value="7.613847692118038E-11" />
+      <entry key="M5" value="8.966886527510109E-5" />
+      <entry key="M10" value="0.009469364565539816" />
+      <entry key="M15" value="0.04475901885783836" />
+      <entry key="M30" value="0.21156327400594596" />
+      <entry key="H1" value="0.4599711528680643" />
+      <entry key="H2" value="0.682357046820125" />
+      <entry key="H4" value="0.9488711744301872" />
+      <entry key="D1" value="6.432633909704866" />
+      <entry key="W1" value="14.485392961908712" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.5985600157552746E-4" />
-      <entry key="MS500" value="0.19184326512402078" />
-      <entry key="S2" value="0.6692911396316324" />
-      <entry key="S5" value="0.9888838552136218" />
-      <entry key="S10" value="1.2963699517627907" />
-      <entry key="S30" value="1.6943716870663428" />
-      <entry key="S60" value="1.8363733491328864" />
-      <entry key="M2" value="1.9715817102749886" />
-      <entry key="M5" value="2.9428795175344766" />
-      <entry key="M10" value="4.9466371831887335" />
-      <entry key="M15" value="7.214648653297096" />
-      <entry key="M30" value="15.814392940068448" />
-      <entry key="H1" value="35.77727773913148" />
-      <entry key="H2" value="76.51313768717691" />
-      <entry key="H4" value="135.87887605254298" />
-      <entry key="D1" value="337.6930924938434" />
-      <entry key="W1" value="543.9067068645282" />
+      <entry key="MS100" value="1.1405429625351924" />
+      <entry key="MS500" value="1.9404781326012364" />
+      <entry key="S2" value="3.3348499465237955" />
+      <entry key="S5" value="5.1056174095101055" />
+      <entry key="S10" value="7.87328582553029" />
+      <entry key="S30" value="13.615010404723005" />
+      <entry key="S60" value="16.34827855230015" />
+      <entry key="M2" value="18.164907445642495" />
+      <entry key="M5" value="20.17448019530198" />
+      <entry key="M10" value="22.461729550809864" />
+      <entry key="M15" value="24.74978171016362" />
+      <entry key="M30" value="33.063514866757686" />
+      <entry key="H1" value="52.62107307407786" />
+      <entry key="H2" value="93.10389891957448" />
+      <entry key="H4" value="152.83156002378948" />
+      <entry key="D1" value="356.4234162525308" />
+      <entry key="W1" value="563.6143497907626" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -257,15 +258,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
-      <workItem from="1779972293479" duration="11140000" />
-    </task>
-    <task id="LOCAL-00042" summary="Defend against empty minivan data from votebuilder">
-      <option name="closed" value="true" />
-      <created>1773878954289</created>
-      <option name="number" value="00042" />
-      <option name="presentableId" value="LOCAL-00042" />
-      <option name="project" value="LOCAL" />
-      <updated>1773878954289</updated>
+      <workItem from="1779972293479" duration="14156000" />
     </task>
     <task id="LOCAL-00043" summary="Allow the use of special characters in the display of the password when editing Drupal logins.">
       <option name="closed" value="true" />
@@ -651,7 +644,15 @@
       <option name="project" value="LOCAL" />
       <updated>1779979142766</updated>
     </task>
-    <option name="localTasksCounter" value="91" />
+    <task id="LOCAL-00091" summary="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery">
+      <option name="closed" value="true" />
+      <created>1779983860612</created>
+      <option name="number" value="00091" />
+      <option name="presentableId" value="LOCAL-00091" />
+      <option name="project" value="LOCAL" />
+      <updated>1779983860612</updated>
+    </task>
+    <option name="localTasksCounter" value="92" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -703,7 +704,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Debug code" />
     <MESSAGE value="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere." />
     <MESSAGE value="increase lifetime of password recovery" />
     <MESSAGE value="Fix summary report for counties that have more than one CD." />
@@ -728,7 +728,8 @@
     <MESSAGE value="Improve usability of postcard reporting" />
     <MESSAGE value="Claude code review of documents, email config and exports" />
     <MESSAGE value="Dulicate code resolution in export methods" />
-    <option name="LAST_COMMIT_MESSAGE" value="Dulicate code resolution in export methods" />
+    <MESSAGE value="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
