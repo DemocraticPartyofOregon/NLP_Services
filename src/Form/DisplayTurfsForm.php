@@ -131,7 +131,7 @@ class DisplayTurfsForm extends FormBase
 
     $hdOptions = $this->sessionDataObj->getHdOptions();
     $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
-    $form['hd-change']['options_display'] = $this->searchBarObj->searchAndSortBar($hdOptions, $currentHdIndex);
+    $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfTableArray,'display');
 
     return $form;

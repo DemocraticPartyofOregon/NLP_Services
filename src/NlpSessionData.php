@@ -5,6 +5,7 @@ namespace Drupal\nlpservices;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\Core\TempStore\PrivateTempStore;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal;
 
 class NlpSessionData
@@ -13,20 +14,24 @@ class NlpSessionData
   protected DrupalUser $drupalUser;
   protected PrivateTempStore $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  public function __construct( $tempStoreObj, $drupalUser, $nlpConfigurationObj ) {
+  protected RequestStack $requestStack;
+
+  public function __construct( $tempStoreObj, $drupalUser, $nlpConfigurationObj, $requestStack ) {
     $this->tempStoreObj = $tempStoreObj;
     $this->drupalUser = $drupalUser;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
-    
+    $this->requestStack = $requestStack;
+
     $this->sessionDataObj = $this->tempStoreObj->get('nlpservices.session_data');
   }
-  
+
   public static function create(ContainerInterface $container): NlpSessionData
   {
     return new static(
       $container->get('tempstore.private'),
       $container->get('nlpservices.drupal_user'),
-      $container->get('nlpservices.configuration')
+      $container->get('nlpservices.configuration'),
+      $container->get('request_stack'),
     );
   }
   
@@ -178,8 +183,12 @@ class NlpSessionData
    */
   public function getSavedHdIndex(): int
   {
+    $hdIndexFromQuery = $this->requestStack->getCurrentRequest()->query->get('hd_index');
+    if($hdIndexFromQuery !== NULL) {
+      $this->saveHdIndex((int)$hdIndexFromQuery);
+    }
     $districts = $this->sessionDataObj->get('selectedDistricts');
-    return empty($districts['selectedHdIndex'])?0:$districts['selectedHdIndex'];
+    return empty($districts['selectedHdIndex']) ? 0 : $districts['selectedHdIndex'];
   }
   
   /**

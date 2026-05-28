@@ -525,8 +525,7 @@ coordinator to groups of NLs.</p>',
     ];
     
     // Add the line for selecting an HD.
-    $form['assignment']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex,
-      'coordinator','add');
+    $form['assignment']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     
     $form['assignment']['nl-select-header'] = [
       '#markup' => '<b>Check the box for the NL to be assigned as a coordinator.</b>',

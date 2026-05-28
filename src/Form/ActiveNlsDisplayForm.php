@@ -114,7 +114,7 @@ class ActiveNlsDisplayForm extends FormBase
       $currentHd = $this->sessionDataObj->getSavedHd();
     
       // Add the line for selecting an HD and CSV download.
-      $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex, 'nlsForm');
+      $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
       
       // Fetch the list of NL names and contact information.
       $needle = $form_state->get('nl-search-needle');

@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\File\FileExists;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -22,7 +23,7 @@ class NlpResultsSummary
   protected NlpConfiguration $configurationObj;
   protected NlpSessionData $sessionObj;
   protected HtmlText $htmlTextObj;
-  
+
   public function __construct($votersObj,$matchbacksObj,$nlsObj,$drupalUser,
                               $crosstabsObj,$reportsObj,$turfsObj, $configurationObj,
                               $sessionObj, $htmlTextObj ) {
@@ -53,16 +54,35 @@ class NlpResultsSummary
       $container->get('nlpservices.html_text')
     );
   }
-  
+
+  private function initNlpCounts(): array
+  {
+    return [
+      'allVoters' => 0,
+      'allVotersVoted' => 0,
+      'democrats' => 0,
+      'democratsVoted' => 0,
+      'republicans' => 0,
+      'republicansVoted' => 0,
+      'nonAffiliated' => 0,
+      'nonAffiliatedVoted' => 0,
+      'postcards' => 0,
+      'postcardsVoted' => 0,
+      'attempted' => 0,
+      'attemptedVoted' => 0,
+      'contacted' => 0,
+      'contactedVoted' => 0,
+      'nlpVoters' => 0,
+      'nlpVotersVoted' => 0
+    ];
+  }
+
   /**
-   * displayResultsSummary
-   *
-   * Display the voter turnout for the NL program for each of the
-   * known Counties.
+   * Display the voter turnout for the NL program for each of the known Counties.
    *
    * @return array - render array for display.
    */
-  function displayCountyResultsSummary(): array
+  public function displayCountyResultsSummary(): array
   {
     $userCounty = $this->sessionObj->getCounty();
     $admin = $this->drupalUser->isNlpAdminUser();
@@ -71,10 +91,13 @@ class NlpResultsSummary
     } else {
       $counties = [$userCounty];
     }
-    
+
     $tempUri = $this->createTempFile('nlp_county_summary_report');
     $fh = fopen($tempUri, "w");
-    
+    if (!$fh) {
+      return [];
+    }
+
     // Start with a legend for the CSV file and the render array.
     $legendLines = $this->buildLegend(FALSE);
     $this->writeToTempFile($fh,$legendLines);
@@ -89,64 +112,44 @@ class NlpResultsSummary
       'resultsReported' => 0,
       'numberOfTurfs' => 0
     ];
-    $nlpCounts = [
-      'allVoters' => 0,
-      'allVotersVoted' => 0,
-      'democrats' => 0,
-      'democratsVoted' => 0,
-      'republicans' => 0,
-      'republicansVoted' => 0,
-      'nonAffiliated' => 0,
-      'nonAffiliatedVoted' => 0,
-      'postcards' => 0,
-      'postcardsVoted' => 0,
-      'attempted' => 0,
-      'attemptedVoted' => 0,
-      'contacted' => 0,
-      'contactedVoted' => 0,
-      'nlpVoters' => 0,
-      'nlpVotersVoted' => 0
-    ];
-    
+    $nlpCounts = $this->initNlpCounts();
+
     // Build the tables.
     foreach ($counties as $county) {
       // A header to identify each county in the CSV file.
       $header = [["$county County", 'Registered', 'Voted', 'Participation']];
       $this->writeToTempFile($fh,  $header);
-      
+
       $countyParticipation = $this->gatherCountyParticipationData('County', $county, $nlpParticipation );
       $rows = $this->buildResultsTableArray('County',$county, $nlpCounts);
       $output[$county] = $this->buildDistrictDisplay('County',$county, $rows, $countyParticipation);
       $this->writeToTempFile($fh,  $rows);
     }
-    
+
     // Create a summary table for all participating counties.
     $allCountyParticipation = $this->gatherCountyParticipationData('NLP', '', $nlpParticipation );
     $rows = $this->buildSummaryTableArray( $nlpCounts );
     $output['nlp'] = $this->buildDistrictDisplay('NLP','', $rows, $allCountyParticipation);
-    
+
     fclose($fh);
-    
+
     // A link to allow the user to download the CSV file.
-    $url = Drupal::service('file_url_generator')->generateAbsoluteString($tempUri);
+    $url = Html::escape(Drupal::service('file_url_generator')->generateAbsoluteString($tempUri));
     $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
     $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
     $output['result_file'] = [
       '#markup' => $link,
     ];
-    
+
     return $output;
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * displayResultsSummary
-   *
-   * Display the voter turnout for the NL program for each of the
-   * known CDs.
+
+  /**
+   * Display the voter turnout for the NL program for each of the known CDs.
    *
    * @return array - render array for display.
    */
-  function displayCdResultsSummary(): array
+  public function displayCdResultsSummary(): array
   {
     $cds = $this->crosstabsObj->getCds();
     $output = [];
@@ -160,48 +163,38 @@ class NlpResultsSummary
 
     $tempUri = $this->createTempFile('nlp_cd_summary_report');
     $fh = fopen($tempUri, "w");
+    if (!$fh) {
+      return [];
+    }
 
-    $nlpCounts = [
-      'allVoters' => 0,
-      'allVotersVoted' => 0,
-      'democrats' => 0,
-      'democratsVoted' => 0,
-      'republicans' => 0,
-      'republicansVoted' => 0,
-      'nonAffiliated' => 0,
-      'nonAffiliatedVoted' => 0,
-      'postcards' => 0,
-      'postcardsVoted' => 0,
-      'attempted' => 0,
-      'attemptedVoted' => 0,
-      'contacted' => 0,
-      'contactedVoted' => 0,
-      'nlpVoters' => 0,
-      'nlpVotersVoted' => 0
+    $nlpParticipation = [
+      'participatingNls' => 0,
+      'resultsReported' => 0,
+      'numberOfTurfs' => 0
     ];
-    
+    $nlpCounts = $this->initNlpCounts();
+
     // Build the table for each CD with participating activity.
     foreach ($cds as $cd) {
+      $cdParticipation = $this->gatherCountyParticipationData('CD', $cd, $nlpParticipation);
       $rows = $this->buildResultsTableArray('CD', $cd, $nlpCounts);
-      $output[$cd] = $this->buildDistrictDisplay('CD', $cd, $rows);
+      $output[$cd] = $this->buildDistrictDisplay('CD', $cd, $rows, $cdParticipation);
       $this->writeToTempFile($fh, $rows);
     }
     fclose($fh);
-    
+
     // A link to allow the user to download the CSV file.
-    $url = Drupal::service('file_url_generator')->generateAbsoluteString($tempUri);
+    $url = Html::escape(Drupal::service('file_url_generator')->generateAbsoluteString($tempUri));
     $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
     $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
     $output['result_file'] = [
       '#markup' => $link,
     ];
-    
+
     return $output;
   }
-  
+
   /**
-   * createTempFile
-   *
    * Create a temporary file in the public://temp directory with a unique name.
    * The file is created as a managed file, so Drupal will delete it after 6 hours.
    *
@@ -211,7 +204,7 @@ class NlpResultsSummary
   private function createTempFile(string $prefix): string
   {
     $tempDir = 'public://temp';
-    $contactDate = date('Y-m-d-H-i-s',time());
+    $contactDate = date('Y-m-d-H-i-s');
     $tempUri = "$tempDir/$prefix-$contactDate.csv";
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
     $file = Drupal::service('file.repository')->writeData('', $tempUri, FileExists::Replace);
@@ -225,19 +218,18 @@ class NlpResultsSummary
     }
     return $tempUri;
   }
-  
+
   /**
-   * writeToTempFile
-   *
    * Write the results to the temporary file.  The rows are either an
    * array of arrays that are to be converted to CSV format, or a single
    * array of values that are to be written as a single row in the CSV file.
    *
-   * @param $fh - file handle for the temporary file.
+   * @param resource $fh - file handle for the temporary file.
    * @param array $rows - the rows of data to write.
    */
   private function writeToTempFile($fh, array $rows): void
   {
+    if (!$fh) {return;}
     $row = reset($rows);
     if(is_array($row)) {
       foreach ($rows as $row) {
@@ -250,15 +242,12 @@ class NlpResultsSummary
       }
     }
   }
-  
+
   /**
-   * buildLegend
-   *
    * Build the legend for the result summary.  When returned as HTML, the array of
    * lines is concatenated into a single string with HTML tags.  When returned as plain text,
    * the array of lines is converted to plain text by removing HTML tags and returning an array
    * of lines.  These lines are added to the CSV file.
-   *
    *
    * @param bool $html - whether to return HTML or plain text.
    * @return string|array - the legend text, either as HTML or plain text.
@@ -283,11 +272,11 @@ class NlpResultsSummary
       "<p><i>* These fields are created by VoteBuilder.   The nightly counting by VoteBuilder<br>",
       "  Can be a day behind the counts for the NLP rows.   Check the dates of each update.</i></p>",
     ];
-    
+
     if($html) {
       return implode(' ', $legendText);
     }
-    
+
     $legendPlain = [];
     $legendText = array_map(function($item) {
       return str_replace('<br>', '', $item);
@@ -298,37 +287,35 @@ class NlpResultsSummary
     }
     return $legendPlain;
   }
-  
+
   /**
-   * buildCdDisplay
+   * Build the form elements for the display of the results for a county, CD, or NLP total.
    *
-   * Build the form elements for the display of the results for a county or CD.
-   *
-   * @param string $type - the type of display, either 'County' or 'CD'.
+   * @param string $type - the type of display, either 'County', 'CD', or 'NLP'.
    * @param mixed $value - the value of the County or CD.
    * @param array $rows - the rows of data to display.
+   * @param array $countyParticipation - optional participation summary lines.
    * @return array - renderable array for Drupal.
    */
-  function buildDistrictDisplay( string $type,  mixed $value, array $rows, array $countyParticipation=[] ): array
+  public function buildDistrictDisplay( string $type,  mixed $value, array $rows, array $countyParticipation=[] ): array
   {
-    
     $title = match ($type) {
       'CD' => 'Congressional District ' . $value,
       'County' => $value . ' County',
       default => 'NLP Results Summary',
     };
-    $form_element['cdName'] = [
-      '#markup' => "<H1>$title</H1>",
+    $output['cdName'] = [
+      '#markup' => "<h1>$title</h1>",
     ];
-    
+
     if(!empty($countyParticipation)) {
       $participation = '<p>'.implode('<br>', $countyParticipation).'</p>';
-      $form_element['participation'] = [
+      $output['participation'] = [
         '#markup' => $participation,
       ];
     }
-    
-    $form_element['table-start'] = [
+
+    $output['table-start'] = [
       '#markup' => '<div class="summary-report">',
     ];
     $header = [
@@ -338,25 +325,24 @@ class NlpResultsSummary
       'participation' => 'Participation',
     ];
     $electionName = $this->configurationObj->getElectionName();
-    $form_element['table-rows'] = [
+    $output['table-rows'] = [
       '#type' => 'table',
       '#caption' => "Summary of results for the $electionName",
       '#header' => $header,
       '#rows' => $rows,
     ];
-    $form_element['table-end'] = [
+    $output['table-end'] = [
       '#markup' => '</div>',
     ];
-    return $form_element;
+    return $output;
   }
-  
+
   /**
-   * buildResultsTableArray
-   *
    * Build the result table array for a county or CD.
    *
    * @param string $type - the County or CD.
    * @param mixed $value - the value of the County or CD.
+   * @param array $nlpCounts - accumulator for totals across districts.
    * @return array - the rows of data for the result table.
    */
   public function buildResultsTableArray(string $type, mixed $value, array &$nlpCounts): array
@@ -365,7 +351,7 @@ class NlpResultsSummary
       $this->crosstabsObj->getCountsByCounty($value):
       $this->crosstabsObj->getCountsByCd($value);
     $rows = $this->buildBallotCounts($counts, $nlpCounts);
-    
+
     $row = [];
     // Get the count of voters in assigned turfs.
     $row['name'] = 'NLP Voters';
@@ -374,23 +360,19 @@ class NlpResultsSummary
     // Count the number of these voters who returned ballots.
     $votedCount = $this->turfsObj->getVoterCounts($type, $value, 'All', TRUE);
     $row['voted'] = $votedCount;
-    // Display the voter participation.
     $row['pct'] = (!empty($voterCount)) ? round($votedCount / $voterCount * 100, 1) . '%' : '0%';
     $rows['nlp'] = $row;
-    
+
     // Count the number of voters who we attempted to contact but left lit.
     $row['name'] = 'Attempted';
     $voterAttempts = $this->turfsObj->getVoterCounts($type, $value, 'Attempted');
-    // Count the number of these voters who returned ballots.
-    
     $row['registered'] = $voterAttempts;
-    // Count the number of these voters who returned ballots.
     $attemptedAndVotedCount = $this->turfsObj->getVoterCounts($type, $value, 'Attempted', TRUE);
     $row['voted'] = $attemptedAndVotedCount;
-    $row['pct'] = (!empty($attemptedAndVotedCount)) ?
+    $row['pct'] = (!empty($voterAttempts)) ?
       round($attemptedAndVotedCount / $voterAttempts * 100, 1) . '%' : '0%';
     $rows['attempted'] = $row;
-    
+
     // Count the number of the voters who had a personal contact and who voted.
     $row['name'] = 'Contacted';
     $voterContacts = $this->turfsObj->getVoterCounts($type, $value, 'Contacted');
@@ -400,7 +382,7 @@ class NlpResultsSummary
     $row['pct'] = (!empty($voterContacts)) ?
       round($voterContactsVoted / $voterContacts * 100, 1) . '%' : '0%';
     $rows['contacted'] = $row;
-    
+
     // Count the number of voters who were sent postcards and those who voted.
     $row['name'] = 'Postcard';
     $voterPostcardCount = $this->turfsObj->getVoterCounts($type, $value, 'Postcard');
@@ -410,7 +392,7 @@ class NlpResultsSummary
     $row['pct'] = (!empty($voterPostcardCount)) ?
       round($voterPostcardCountVoted / $voterPostcardCount * 100, 1) . '%' : '0%';
     $rows['postcard'] = $row;
-    
+
     $nlpCounts['postcards'] += $voterPostcardCount;
     $nlpCounts['postcardsVoted'] += $voterPostcardCountVoted;
     $nlpCounts['attempted'] += $voterAttempts;
@@ -422,10 +404,8 @@ class NlpResultsSummary
 
     return $rows;
   }
-  
+
   /**
-   * buildSummaryTableArray
-   *
    * Build the data for a summary table array for either a county or a cd.
    *
    * @param array $nlpCounts - the counts to be displayed for the progress of NLP,
@@ -435,9 +415,8 @@ class NlpResultsSummary
    */
   private function buildSummaryTableArray(array $nlpCounts): array
   {
-    
     $summaryRows = $this->buildBallotCountSummary($nlpCounts);
-    
+
     $dataRows = [
       'allNLP' => ['name' => 'NLP Voters',
         'registered' => $nlpCounts['nlpVoters'],
@@ -460,13 +439,11 @@ class NlpResultsSummary
         'pct' => (!empty($nlpCounts['postcards'])) ?
           round($nlpCounts['postcardsVoted'] / $nlpCounts['postcards'] * 100, 1) . '%' : '0%']
     ];
-    
+
     return array_merge($summaryRows, $dataRows);
   }
-  
+
   /**
-   * buildBallotCountSummary
-   *
    * Build the summary of the ballot counts for all voters, Democrats, Republicans, and Non-Affiliated.
    *
    * @param array $nlpCounts - the counts from VoteBuilder, either for CD or County.
@@ -497,10 +474,8 @@ class NlpResultsSummary
           round($nlpCounts['nonAffiliatedVoted'] / $nlpCounts['nonAffiliated'] * 100, 1) . '%' : '0%'],
     ];
   }
-  
+
   /**
-   * buildBallotCounts
-   *
    * Build 4 rows for a display of voting activity.  The rows are for all
    * participating districts, either County or CD.  The 4 rows
    * are for all voters, Democrats, Republicans, and Non-Affiliated. The
@@ -561,10 +536,8 @@ class NlpResultsSummary
     }
     return $rows;
   }
-  
+
   /**
-   * gatherCountyParticipationData
-   *
    * Gather the participation data for a County, CD, or the total NLP program.
    *
    * @param string $type - the type of participation, either 'CD', 'County', or 'NLP'.
@@ -593,16 +566,15 @@ class NlpResultsSummary
         $numberOfTurfs = $nlpParticipation['numberOfTurfs'];
         break;
     }
-    
+
     $percentage = (!empty($participatingNls))?
       round($resultsReported/$participatingNls*100,1).'%':'0%';
-    // Create the data for a row with 4 columns
     $row = [];
     $row['participatingNls'] = "Number of participating NLs: $participatingNls";
     $row['resultsReported'] = "Number of NLs reporting results: $resultsReported";
     $row['percentage'] = "Percentage of NLs reporting results: $percentage";
     $row['numberOfTurfs'] = "Number of turfs: $numberOfTurfs";
-    
+
     if($type!='NLP') {
       $nlpParticipation['participatingNls'] += $participatingNls;
       $nlpParticipation['resultsReported'] += $resultsReported;
@@ -610,5 +582,5 @@ class NlpResultsSummary
     }
     return $row;
   }
-  
+
 }

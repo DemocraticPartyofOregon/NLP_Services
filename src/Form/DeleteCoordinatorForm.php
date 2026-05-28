@@ -245,8 +245,7 @@ to help NLs.</p>',
       '#prefix' => '<div class="coordinator-box" >',
     ];
     
-    $form['current']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex,
-      'coordinator','remove');
+    $form['current']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     
     $form['current']['nl-select-header'] = [
       '#markup' => '<b>Check one or more boxes to select coordinators to be removed.</b>',

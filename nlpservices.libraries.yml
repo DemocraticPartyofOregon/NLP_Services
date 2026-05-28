@@ -5,6 +5,13 @@ unsaved-changes:
   dependencies:
     - core/drupal
 
+hd-filter:
+  version: "1.0.0"
+  js:
+    js/hd-filter.js: {}
+  dependencies:
+    - core/drupal
+
 info-boxes:
   version: "1.0.0"
   css:
