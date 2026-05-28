@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -21,8 +22,7 @@ class NlpExportNlsStatus
   protected NlpNls $nls;
   protected NlpTurfs $turfsObj;
   protected DrupalUser $drupalUserObj;
-  
-  
+
   public function __construct( $fileSystem,$connection,$voters,$reports,
                                $nls, $turfsObj, $drupalUserObj ) {
     $this->fileSystem = $fileSystem;
@@ -46,26 +46,20 @@ class NlpExportNlsStatus
       $container->get('nlpservices.drupal_user'),
     );
   }
-  
+
   /**
    * createNlsStatusFile
-   * 
-   * Create a CSV file with the status of all the NLS in a county.
    *
-   * @param string $tempFileName
-   *   The name of the temporary file to create.
-   * @param string $county
-   *   The county to get the NLS for. If 'all', get all counties.
-   * @param int $hd
-   *   The house district to filter by, if applicable.
+   * Creates a CSV file containing the status of NLS users for a specified county and HD. The file is stored in a temporary directory and is intended for use in analyzing NLS participation and engagement.
    *
-   * @return bool
-   *   True if the file was created.
+   * @param string $tempFileName The name of the temporary file to be created.
+   * @param string $county The county for which to generate the NLS status report. Use 'all' to include all counties.
+   * @param int $hd (optional) The HD for which to generate the NLS status report. Default is 0, which includes all HDs.
+   * @return bool TRUE if the file was created successfully, FALSE otherwise.
    */
   public function createNlsStatusFile(string $tempFileName, string $county, int $hd=0): bool
   {
-   // nlp_debug_msg('createNlsStatusFile: $tempFileName, $county, $hd', [$tempFileName, $county, $hd]);
-    $hdr = [  // Column names for the CSV file.
+    $hdr = [
       'mcid',
       'county',
       'hd',
@@ -87,9 +81,14 @@ class NlpExportNlsStatus
       'Assigned Turf',
       'Email (formatted)'
     ];
-    $hdrCsv = implode(',', $hdr);
+    $hdrCsv = implode(',', $hdr) . "\n";
     $fileRepository = Drupal::service('file.repository');
-    $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileExists::Replace);
+    try {
+      $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileExists::Replace);
+    } catch (EntityStorageException $e) {
+      nlp_debug_msg('ExportNlsParticipationForm', $e->getMessage());
+      return FALSE;
+    }
     if ($file) {
       $fileUri = $file->getFileUri();
     } else {
@@ -97,26 +96,25 @@ class NlpExportNlsStatus
       return FALSE;
     }
     $fh = fopen($fileUri, "a");
-    fputcsv($fh, []);  // Add an empty line to separate the header from the data.
-    
-    if ($county=='all') {
+    if (!$fh) {
+      return FALSE;
+    }
+
+    if ($county === 'all') {
       $counties = $this->voters->getParticipatingCounties();
     } else {
       $counties = [$county];
     }
     nlp_debug_msg_safe('$counties',$counties);
-    foreach ($counties as $county) {
-      // Get the list of all the NLs in a county.
-      $nlList = $this->nls->getCountyNls($county,$hd);
+    foreach ($counties as $countyName) {
+      $nlList = $this->nls->getCountyNls($countyName,$hd);
       if (!$nlList) {
-        nlp_debug_msg('$county',$county);
+        nlp_debug_msg('$countyName',$countyName);
         continue;
       }
-      $counts = $this->reports->getCommitteeReportCounts($county);
+      $counts = $this->reports->getCommitteeReportCounts($countyName);
       foreach ($nlList as $mcid => $nl) {
-        // Count the number of voters assigned to this NL.
         $voterCount = $this->voters->getVoterCountByNl($mcid);
-        //  Now get the contact attempt count and the successful f2f count.
         if (!empty($counts[$mcid]['attempts'])) {
           $attempts = $counts[$mcid]['attempts'];
           $contacts = $counts[$mcid]['contacts'];
@@ -137,7 +135,7 @@ class NlpExportNlsStatus
         $currentStatus = $this->nls->getNlsStatus($mcid);
         $signupStatus = $currentStatus['asked'];
         $contactMethod = $currentStatus['contact'];
-        
+
         $turfs = $this->turfsObj->getTurfsById($mcid);
         $turfNames = '';
         foreach ($turfs as $turf) {
@@ -151,11 +149,11 @@ class NlpExportNlsStatus
           $doorCount = $this->voters->getDoorCount($vanidsInTurf);
           $doors += $doorCount;
         }
-        
-        $stamps = ($contactMethod == 'mail')?$doors:0;
+
+        $stamps = ($contactMethod === 'mail') ? $doors : 0;
         $user = $this->drupalUserObj->getUserByMcid($mcid);
-        $accessDate =(!empty($user['access']))?date('Y/n/j',$user['access']):'Never';
-        
+        $accessDate = (!empty($user['access'])) ? date('Y/n/j',$user['access']) : 'Never';
+
         $nlRecord = [
           $nl['mcid'],
           $nl['county'],

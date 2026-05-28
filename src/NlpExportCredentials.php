@@ -16,7 +16,7 @@ class NlpExportCredentials
   protected Connection $connection;
   protected MagicWord $magicWordObj;
   protected DatabaseFunctions $dbFunctionsObj;
-  
+
   public function __construct($fileSystem, $connection, $magicWordObj, $dbFunctionsObj )
   {
     $this->fileSystem = $fileSystem;
@@ -24,7 +24,7 @@ class NlpExportCredentials
     $this->magicWordObj = $magicWordObj;
     $this->dbFunctionsObj = $dbFunctionsObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpExportCredentials
   {
     return new static(
@@ -34,22 +34,18 @@ class NlpExportCredentials
       $container->get('nlpservices.database_functions'),
     );
   }
-  
+
   /**
    * createNlCredentialsFile
    *
-   * Create a file with the credentials for NL users.
-   * 1. Create a file in the public://temp directory.
-   * 2. Write the CSV file with the NL user credentials.
-   * 3. Return a link to the file.
-   * @return string - HTML with a link to a file with information to recreate user accounts.
+   * Creates a CSV file containing the credentials of NL users. The file is stored in a temporary directory and is intended for use in migrating user accounts and passwords to a new site.
+   *
+   * @return string A message containing a link to download the generated CSV file, or an error message if the file creation fails.
    */
   public function createNlCredentialsFile(): string
   {
-   
-    $output = '';
     $temp_dir = 'public://temp';
-    $contactDate = date('Y-m-d-H-i-s', time());
+    $contactDate = date('Y-m-d-H-i-s');
     $userUri = $temp_dir . '/' . 'nl_user_credentials' . '-' . $contactDate . '.csv';
     try {
       $file = Drupal::service('file.repository')->writeData('', $userUri, FileExists::Replace);
@@ -64,9 +60,12 @@ class NlpExportCredentials
       nlp_debug_msg('error', $e->getMessage());
       return '';
     }
-    
+
     $fh = fopen($userUri, "w");
-    
+    if (!$fh) {
+      return 'Oops!';
+    }
+
     $columns = $this->dbFunctionsObj->getColumnNames($this->magicWordObj::MAGIC_WORD_TBL);
     $key = array_search('magicWordEncrypted', $columns);
     if ($key !== false) {
@@ -78,19 +77,19 @@ class NlpExportCredentials
     foreach ($mcids as $mcid) {
       $credentials = $this->magicWordObj->getCredentials($mcid);
       if (empty($credentials)) {continue;}
+      $reordered = [];
       foreach ($columns as $column) {
-        $reordered[$column] = $credentials[$column];
+        $reordered[$column] = $credentials[$column] ?? '';
       }
       $reordered['roles'] = json_encode($credentials['roles']);
       fputcsv($fh, $reordered);
     }
     fclose($fh);
     $userUrl = Drupal::service('file_url_generator')->generateAbsoluteString($userUri);
-    $output .= "<p>The file is a list of credentials for NL users in CSV format.  It is used to move user accounts
+    $output = "<p>The file is a list of credentials for NL users in CSV format.  It is used to move user accounts
                 and passwords to a new site.</p>";
     $output .= '<p> <a href="' . $userUrl . '">Right-click to download the user accounts file. </a></p>';
     return $output;
   }
-  
-  
+
 }

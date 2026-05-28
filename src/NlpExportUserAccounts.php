@@ -39,9 +39,13 @@ class NlpExportUserAccounts
       $container->get('nlpservices.api_nls'),
     );
   }
-  
+
   /**
-   * @return string - HTML with a link to a file with information to recreate user accounts.
+   * getUserAccountsFile
+   *
+   * Create a file with the user accounts and passwords for the new site.
+   *
+   * @return string
    */
   public function getUserAccountsFile(): string
   {
@@ -105,13 +109,17 @@ to a new site.</p>";
   }
   
   /**
-   * @param $hdDrupal
-   * @param $hdNlp
-   * @param $mcid
-   * @param $uid
+   * resolveHd
+   *
+   * Resolve the HD for a user.
+   *
+   * @param string $hdDrupal
+   * @param string  $hdNlp
+   * @param int $mcid
+   * @param int $uid
    * @return string
    */
-  function resolveHd($hdDrupal,$hdNlp,$mcid,$uid): string
+  function resolveHd( string $hdDrupal, string $hdNlp, int $mcid, int $uid): string
   {
     $updateDrupal = FALSE;
     $hdNew = '';
