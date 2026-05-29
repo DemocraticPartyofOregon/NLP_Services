@@ -273,8 +273,8 @@ services:
 
   nlpservices.sync_turf_builder:
     class: Drupal\nlpservices\NlpSyncTurfBuilder
-    arguments: [ '@nlpservices.nls', '@nlpservices.turf_list_display_votebuilder',
-                 '@tempstore.private', '@nlpservices.nls_list_display', '@nlpservices.session_data' ]
+    arguments: [ '@nlpservices.turf_list_display_votebuilder',
+                 '@nlpservices.nls_list_display', '@nlpservices.session_data' ]
 
   nlpservices.turf_display:
     class:  Drupal\nlpservices\NlpTurfDisplay

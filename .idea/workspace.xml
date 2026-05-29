@@ -4,15 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review sendEmail and sessionData.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpReplies.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpReplies.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSendEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSendEmail.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpPaths.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpPaths.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfAddVoter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfAddVoter.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfDeliveryMessage.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfDeliveryMessage.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -95,23 +95,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0017032051813068" />
-      <entry key="MS500" value="1.3627385168409298" />
-      <entry key="S2" value="2.6427519884729325" />
-      <entry key="S5" value="4.361495615884811" />
-      <entry key="S10" value="6.699234700825645" />
-      <entry key="S30" value="11.358839758103802" />
-      <entry key="S60" value="13.690569024469326" />
-      <entry key="M2" value="15.195203807673185" />
-      <entry key="M5" value="16.237662340916636" />
-      <entry key="M10" value="16.61195782889724" />
-      <entry key="M15" value="16.748602623916547" />
-      <entry key="M30" value="17.20215960942504" />
-      <entry key="H1" value="19.50142985856297" />
-      <entry key="H2" value="30.16471406763081" />
-      <entry key="H4" value="69.11526469031426" />
-      <entry key="D1" value="317.66528706979136" />
-      <entry key="W1" value="571.5523976400104" />
+      <entry key="MS100" value="1.0000000000000007" />
+      <entry key="MS500" value="1.0011230566495144" />
+      <entry key="S2" value="1.3968646667928912" />
+      <entry key="S5" value="2.6691503391056854" />
+      <entry key="S10" value="3.8412149944909717" />
+      <entry key="S30" value="5.12530168918119" />
+      <entry key="S60" value="5.539384848508036" />
+      <entry key="M2" value="5.765299110183244" />
+      <entry key="M5" value="6.336974174326724" />
+      <entry key="M10" value="8.664660559784997" />
+      <entry key="M15" value="10.971861890975132" />
+      <entry key="M30" value="15.386653197487645" />
+      <entry key="H1" value="20.409875224739316" />
+      <entry key="H2" value="31.93284682134391" />
+      <entry key="H4" value="70.08695403580438" />
+      <entry key="D1" value="319.6925375273111" />
+      <entry key="W1" value="576.5257951121467" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -119,37 +119,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="2.8265E-320" />
-      <entry key="S60" value="1.681204451962213E-160" />
-      <entry key="M2" value="1.2966126838660091E-80" />
-      <entry key="M5" value="1.1094918241864671E-32" />
-      <entry key="M10" value="1.0533241781077979E-16" />
-      <entry key="M15" value="2.2303586358967462E-11" />
-      <entry key="M30" value="4.722667295503726E-6" />
-      <entry key="H1" value="0.0021732221946703513" />
-      <entry key="H2" value="0.046902765331313996" />
-      <entry key="H4" value="0.24877150726900762" />
-      <entry key="D1" value="5.14621271060964" />
-      <entry key="W1" value="14.030956126730002" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="2.2691782501170475E-168" />
+      <entry key="M2" value="1.5063791853703538E-84" />
+      <entry key="M5" value="2.95919593992574E-34" />
+      <entry key="M10" value="1.720231362324773E-17" />
+      <entry key="M15" value="6.663840201222083E-12" />
+      <entry key="M30" value="2.581441498215172E-6" />
+      <entry key="H1" value="0.001606725179699814" />
+      <entry key="H2" value="0.040328974891458064" />
+      <entry key="H4" value="0.23068003280487462" />
+      <entry key="D1" value="5.081859193902816" />
+      <entry key="W1" value="14.005755394534233" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9154095643055455" />
-      <entry key="MS500" value="1.3390262306390035" />
-      <entry key="S2" value="2.6307520301881664" />
-      <entry key="S5" value="4.353181458501545" />
-      <entry key="S10" value="6.692531596239184" />
-      <entry key="S30" value="11.354782894079214" />
-      <entry key="S60" value="13.688063159864619" />
-      <entry key="M2" value="15.193794130432384" />
-      <entry key="M5" value="16.237054608353464" />
-      <entry key="M10" value="16.611645946436546" />
-      <entry key="M15" value="16.748390889441282" />
-      <entry key="M30" value="17.20201696896061" />
-      <entry key="H1" value="19.503347191532757" />
-      <entry key="H2" value="30.210900143584738" />
-      <entry key="H4" value="69.36229184161208" />
-      <entry key="D1" value="322.8078742171811" />
-      <entry key="W1" value="585.581695968986" />
+      <entry key="MS100" value="0.9395227492140125" />
+      <entry key="MS500" value="0.9887041183778906" />
+      <entry key="S2" value="1.3918979560657647" />
+      <entry key="S5" value="2.664528107454907" />
+      <entry key="S10" value="3.837607757894058" />
+      <entry key="S30" value="5.123609250772078" />
+      <entry key="S60" value="5.538458265848718" />
+      <entry key="M2" value="5.764813788606327" />
+      <entry key="M5" value="6.336758409599254" />
+      <entry key="M10" value="8.664508910570321" />
+      <entry key="M15" value="10.971731276626553" />
+      <entry key="M30" value="15.386541447719653" />
+      <entry key="H1" value="20.411275846555533" />
+      <entry key="H2" value="31.97255109130977" />
+      <entry key="H4" value="70.31601233364134" />
+      <entry key="D1" value="324.77081578981415" />
+      <entry key="W1" value="590.5298955856116" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -259,15 +259,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
-      <workItem from="1779972293479" duration="24768000" />
-    </task>
-    <task id="LOCAL-00046" summary="Set a minimum size to the Notes column for the list of active NLs.">
-      <option name="closed" value="true" />
-      <created>1773967884521</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1773967884521</updated>
+      <workItem from="1779972293479" duration="27549000" />
     </task>
     <task id="LOCAL-00047" summary="Strngthen the detection of possible duplicate records from MyCampaign.">
       <option name="closed" value="true" />
@@ -653,7 +645,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780011743749</updated>
     </task>
-    <option name="localTasksCounter" value="95" />
+    <task id="LOCAL-00095" summary="Claude code review sendEmail and sessionData.">
+      <option name="closed" value="true" />
+      <created>1780013252534</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1780013252538</updated>
+    </task>
+    <option name="localTasksCounter" value="96" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -705,7 +705,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the loss of passwords with a sync of active NLs." />
     <MESSAGE value="Code review of ImprtCredentialsForm" />
     <MESSAGE value="Add warning to data entry pagw for unsaved changes." />
     <MESSAGE value="Code review loss of password hints." />
@@ -730,7 +729,8 @@
     <MESSAGE value="Claude code review minvan and NlpNls" />
     <MESSAGE value="Claude code review reports, lst display, paths, replies" />
     <MESSAGE value="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem." />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem." />
+    <MESSAGE value="Claude code review sendEmail and sessionData." />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review sendEmail and sessionData." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

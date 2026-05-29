@@ -17,7 +17,7 @@ class NlpSyncTurfAddVoter
     $this->activistCodesObj = $activistCodesObj;
     $this->configurationObj = $configurationObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpSyncTurfAddVoter
   {
     return new static(
@@ -28,9 +28,7 @@ class NlpSyncTurfAddVoter
     );
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * addVoter
-   *
+  /**
    * @param string $county
    * @param array $voter
    * @param int $turfIndex
@@ -49,42 +47,41 @@ class NlpSyncTurfAddVoter
       $voterStatus['cycle'] = $cycle;
     }
     // Check if the status is from a different election.  Clear a stale status.
-  
-    if(!empty($voterStatus) AND $voterStatus['cycle'] != $cycle) {
+    if($voterStatus['cycle'] != $cycle) {
       $voterStatus = $this->votersObj->nullVoterStatus();
       $voterStatus['vanid'] = $vanid;
       $voterStatus['cycle'] = $cycle;
     }
-    
+
     $voterStatus['hostile'] = (!empty($voter['activistCodes']['hostile']))?1:0;
-  
+
     // Set common fields for setting the AC.
-    $request = [
+    $acRequest = [
       'vanid' => $vanid,
       'codeName' => 'NLPVoterAC',
       'action' => 'Apply',
     ];
-    $this->activistCodesObj->setApiActivistCode($request);
-    
+    $this->activistCodesObj->setApiActivistCode($acRequest);
+
     // Add voter to turf.
     $voter['address']['turfIndex'] = $turfIndex;
     $voter['address']['moved'] = NULL;
-  
+
     $this->votersObj->createVoter($voter);
     $this->votersObj->setVoterStatus($vanid, $voterStatus);
-    $turfVoter['mcid'] = $mcid;
-    $turfVoter['county'] = $county;
-    $turfVoter['turfIndex'] = $turfIndex;
-    $turfVoter['vanid'] = $vanid;
+    $turfVoter = [
+      'mcid' => $mcid,
+      'county' => $county,
+      'turfIndex' => $turfIndex,
+      'vanid' => $vanid,
+    ];
     $this->votersObj->createTurfVoter($turfVoter);
-  
+
     // Restore the information we already know about this voter.
     $this->reloadVoterStatus($vanid,$voter,$mcid);
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * reloadVoterStatus
-   *
+  /**
    * Recover the information known about this voter and rebuild the status
    * information for the data entry display pages.
    *
@@ -92,7 +89,7 @@ class NlpSyncTurfAddVoter
    * @param array $voter
    * @param int $mcid
    */
-  function reloadVoterStatus(int $vanid, array $voter, int $mcid): void
+  private function reloadVoterStatus(int $vanid, array $voter, int $mcid): void
   {
     $surveyReports = $this->reportsObj->getNlpTypeReports($vanid,'Survey');
     $pledgedToVote = 0;
@@ -119,15 +116,18 @@ class NlpSyncTurfAddVoter
     $this->votersObj->updateTurfVoter($turfVoter);
     
     //  Get the moved report if it exists.
-    $request['vanid'] = $vanid;
-    $request['type'] = 'contact';
-    $request['value'] = 'moved';
-    $request['cycle'] = NULL;  // All cycles.
-    $movedReport = $this->reportsObj->getReport($request);
+    $movedRequest = [
+      'vanid' => $vanid,
+      'type' => 'contact',
+      'value' => 'moved',
+      'cycle' => NULL,  // All cycles.
+    ];
+    $movedReport = $this->reportsObj->getReport($movedRequest);
     // If the voter was marked as moved, check if there is a new address.
     if(!empty($movedReport['text'])) {
-      $existingAddressObj = json_decode($movedReport['text']);
-      $existingAddress =  (array) $existingAddressObj;
+      $existingAddressObj = json_decode($movedReport['text'], TRUE);
+      if(json_last_error() !== JSON_ERROR_NONE) { $existingAddressObj = []; }
+      $existingAddress = (array) $existingAddressObj;
       $moveStatus = 1;
       $address = $voter['address'];
       $match = $this->votersObj->addressCompare($address,$existingAddress);
@@ -138,8 +138,7 @@ class NlpSyncTurfAddVoter
     }
     
     //  Get the comment for this election cycle.
-    $req['vanid'] = $vanid;
-    $req['mcid'] = $mcid;
+    $req = ['vanid' => $vanid, 'mcid' => $mcid];
     $comment = $this->reportsObj->getComment($req);
     $note = (!empty($comment['text']))?$comment['text']:'';
     $reportIndex = (!empty($comment['reportIndex']))?$comment['reportIndex']:0;

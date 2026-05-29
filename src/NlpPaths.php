@@ -93,7 +93,6 @@ class NlpPaths {
    */
   public function createDir(string $type,string $county): void
   {
-    $dir = '';
     switch ($type) {
       case 'TEMP':
         $dir = 'public://temp';
