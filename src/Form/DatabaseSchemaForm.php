@@ -2,11 +2,15 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\DatabaseFunctions;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
+/**
+ * @noinspection PhpUnused
+ */
 class DatabaseSchemaForm extends FormBase
 {
 
@@ -50,7 +54,7 @@ class DatabaseSchemaForm extends FormBase
           : $this->t('No repairs were needed.');
         $markup = '<p>' . $text . '</p>';
       } else {
-        $items  = array_map(fn($r) => '<li>' . htmlspecialchars($r) . '</li>', $results);
+        $items  = array_map(fn($r) => '<li>' . Html::escape($r) . '</li>', $results);
         $markup = '<ul>' . implode('', $items) . '</ul>';
       }
       $form['results'] = [
@@ -83,14 +87,14 @@ class DatabaseSchemaForm extends FormBase
   {
     $form_state->set('results', $this->databaseFunctions->verifySchema());
     $form_state->set('action', 'verify');
-    $form_state->setRebuild(TRUE);
+    $form_state->setRebuild();
   }
 
   public function repairSubmit(array &$form, FormStateInterface $form_state): void
   {
     $form_state->set('results', $this->databaseFunctions->repairSchema());
     $form_state->set('action', 'repair');
-    $form_state->setRebuild(TRUE);
+    $form_state->setRebuild();
   }
 
 }

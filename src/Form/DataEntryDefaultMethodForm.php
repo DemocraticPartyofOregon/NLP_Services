@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -14,15 +13,15 @@ use Drupal\nlpservices\NlpConfiguration;
  */
 class DataEntryDefaultMethodForm extends FormBase
 {
-  
+
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  
+
   public function __construct($sessionDataObj, $nlpConfigurationObj) {
     $this->sessionDataObj = $sessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -33,7 +32,7 @@ class DataEntryDefaultMethodForm extends FormBase
       $container->get('nlpservices.configuration')
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -41,7 +40,7 @@ class DataEntryDefaultMethodForm extends FormBase
   {
     return 'nlpservices_default_method_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -49,42 +48,41 @@ class DataEntryDefaultMethodForm extends FormBase
   {
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
     $defaultVoterContactMethod = $this->sessionDataObj->get('defaultVoterContactMethod');
-    $default = false;
+    $default = FALSE;
     if(!empty($defaultVoterContactMethod)) {
       $default = array_search($defaultVoterContactMethod['name'],$contactMethods);
     }
-    if($default === false) {
+    if($default === FALSE) {
       $default = array_search('Walk', $contactMethods);
-      if($default === false) {
+      if($default === FALSE) {
         $default = array_key_first($contactMethods);
       }
     }
 
     $form['contact_title'] = [
-      '#markup' => t('Choose the most common contact method for your voter contacts'),
+      '#markup' => $this->t('Choose the most common contact method for your voter contacts'),
     ];
 
     $form["contact_method"] = [
       '#type' => 'select',
       '#options' => $contactMethods,
       '#default_value' => $default,
-      '#title' => t('Select default method'),
+      '#title' => $this->t('Select default method'),
     ];
 
     $form['save'] = [
       '#type' => 'submit',
-      '#value' => t('Save'),
+      '#value' => $this->t('Save'),
     ];
-    
+
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $messenger = Drupal::messenger();
     $selectedContactMethodIndex = $form_state->getValue('contact_method');
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
     $method = [
@@ -92,6 +90,6 @@ class DataEntryDefaultMethodForm extends FormBase
       'name' => $contactMethods[$selectedContactMethodIndex],
     ];
     $this->sessionDataObj->set('defaultVoterContactMethod', $method);
-    $messenger->addStatus(t('You selected the method: @name', ['@name' => $method['name']]));
+    $this->messenger()->addStatus($this->t('You selected the method: @name', ['@name' => $method['name']]));
   }
 }

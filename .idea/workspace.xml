@@ -4,16 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review users and voters">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms NlsDisplay, addAccount, to coordinators">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorEmail.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,23 +93,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000132658102448" />
-      <entry key="MS500" value="1.1783354892522957" />
-      <entry key="S2" value="2.391088793613834" />
-      <entry key="S5" value="4.505738129597695" />
-      <entry key="S10" value="6.569358121427538" />
-      <entry key="S30" value="9.129385167187523" />
-      <entry key="S60" value="10.33930797750258" />
-      <entry key="M2" value="11.817474971632492" />
-      <entry key="M5" value="14.09835594321685" />
-      <entry key="M10" value="16.493585718587504" />
-      <entry key="M15" value="18.365993476457028" />
-      <entry key="M30" value="21.92507330515729" />
-      <entry key="H1" value="25.642349146586973" />
-      <entry key="H2" value="32.73420862436854" />
-      <entry key="H4" value="57.67013984036822" />
-      <entry key="D1" value="305.9534643344117" />
-      <entry key="W1" value="594.5733708018716" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0000000002196778" />
+      <entry key="S30" value="1.0021456438314487" />
+      <entry key="S60" value="1.1357831656842943" />
+      <entry key="M2" value="2.099441416940907" />
+      <entry key="M5" value="4.876729213846522" />
+      <entry key="M10" value="6.905603398703105" />
+      <entry key="M15" value="7.795747263414072" />
+      <entry key="M30" value="8.820522162929453" />
+      <entry key="H1" value="9.445204452243885" />
+      <entry key="H2" value="11.215655239843668" />
+      <entry key="H4" value="22.296198335614587" />
+      <entry key="D1" value="246.95197929590853" />
+      <entry key="W1" value="583.2618726427118" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -121,36 +118,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="8.644133404306746E-260" />
-      <entry key="M2" value="2.9400907136186735E-130" />
-      <entry key="M5" value="1.5393745142442595E-52" />
-      <entry key="M10" value="1.2407153236114494E-26" />
-      <entry key="M15" value="5.359382626231774E-18" />
-      <entry key="M30" value="2.315034045592381E-9" />
-      <entry key="H1" value="4.811595912030521E-5" />
-      <entry key="H2" value="0.006978963977758617" />
-      <entry key="H4" value="0.09596146982700925" />
-      <entry key="D1" value="4.3907338114658865" />
-      <entry key="W1" value="13.71630638297321" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="3.8605549811771445E-210" />
+      <entry key="M5" value="1.7165635912271435E-84" />
+      <entry key="M10" value="1.3101769312681198E-42" />
+      <entry key="M15" value="1.1973468213469368E-28" />
+      <entry key="M30" value="1.094233440675199E-14" />
+      <entry key="H1" value="1.0460813216956997E-7" />
+      <entry key="H2" value="3.254086602960327E-4" />
+      <entry key="H4" value="0.020721250762639355" />
+      <entry key="D1" value="3.4008720112005615" />
+      <entry key="W1" value="13.22475489380455" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9593896215377364" />
-      <entry key="MS500" value="1.1680999271186703" />
-      <entry key="S2" value="2.3854120377126913" />
-      <entry key="S5" value="4.501308847093068" />
-      <entry key="S10" value="6.566040163875966" />
-      <entry key="S30" value="9.126545874619554" />
-      <entry key="S60" value="10.329865138803912" />
-      <entry key="M2" value="11.800666983088256" />
-      <entry key="M5" value="14.082775002420668" />
-      <entry key="M10" value="16.482967629487575" />
-      <entry key="M15" value="18.35809800102934" />
-      <entry key="M30" value="21.92065050869892" />
-      <entry key="H1" value="25.640044940198493" />
-      <entry key="H2" value="32.739870145587" />
-      <entry key="H4" value="57.76481256802652" />
-      <entry key="D1" value="310.3410005172883" />
-      <entry key="W1" value="608.2880416175316" />
+      <entry key="MS100" value="2.2180331825370368E-10" />
+      <entry key="MS500" value="0.01172718044933102" />
+      <entry key="S2" value="0.32907766112273695" />
+      <entry key="S5" value="0.6410905287007554" />
+      <entry key="S10" value="0.8006812904666211" />
+      <entry key="S30" value="0.9305570787000772" />
+      <entry key="S60" value="1.0952686879603524" />
+      <entry key="M2" value="2.066588392899729" />
+      <entry key="M5" value="4.850698188072662" />
+      <entry key="M10" value="6.888141435178759" />
+      <entry key="M15" value="7.78283243051991" />
+      <entry key="M30" value="8.813339764036897" />
+      <entry key="H1" value="9.441408595856307" />
+      <entry key="H2" value="11.213971400196009" />
+      <entry key="H4" value="22.315653973205485" />
+      <entry key="D1" value="250.35020811548745" />
+      <entry key="W1" value="596.4850267581844" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -171,35 +168,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
-    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__2__0&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;settings.php.frameworks&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
+    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
+    "WebServerToolWindowPanel.toolwindow.show.date": "false",
+    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
+    "WebServerToolWindowPanel.toolwindow.show.size": "false",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "NLP__Services__V7__2__0",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settings.ide.settings.spelling",
+    "to.speed.mode.migration.done": "true",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -260,15 +257,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
-      <workItem from="1779972293479" duration="34396000" />
-    </task>
-    <task id="LOCAL-00052" summary="Use county key when syncing saved lists.">
-      <option name="closed" value="true" />
-      <created>1776799318264</created>
-      <option name="number" value="00052" />
-      <option name="presentableId" value="LOCAL-00052" />
-      <option name="project" value="LOCAL" />
-      <updated>1776799318264</updated>
+      <workItem from="1779972293479" duration="36210000" />
     </task>
     <task id="LOCAL-00053" summary="Fix the version number.">
       <option name="closed" value="true" />
@@ -654,7 +643,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780031468409</updated>
     </task>
-    <option name="localTasksCounter" value="101" />
+    <task id="LOCAL-00101" summary="Claude code review forms NlsDisplay, addAccount, to coordinators">
+      <option name="closed" value="true" />
+      <created>1780062965112</created>
+      <option name="number" value="00101" />
+      <option name="presentableId" value="LOCAL-00101" />
+      <option name="project" value="LOCAL" />
+      <updated>1780062965112</updated>
+    </task>
+    <option name="localTasksCounter" value="102" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -706,7 +703,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add method to repair loss of NLP Voter AC and to compare list of VANIDs in CSV files from NLP and VoteBuilder." />
     <MESSAGE value="Ignore emails with missing subject." />
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
     <MESSAGE value="Phone number nnot needed for social media message." />
@@ -731,7 +727,8 @@
     <MESSAGE value="Claude code review turf stuff." />
     <MESSAGE value="Separate turf assignments from turfs." />
     <MESSAGE value="Claude code review users and voters" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review users and voters" />
+    <MESSAGE value="Claude code review forms NlsDisplay, addAccount, to coordinators" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms NlsDisplay, addAccount, to coordinators" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
@@ -746,7 +743,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/src/Form/DataEntryForm.php</url>
-          <line>336</line>
+          <line>331</line>
           <option name="timeStamp" value="3" />
         </line-breakpoint>
       </breakpoints>

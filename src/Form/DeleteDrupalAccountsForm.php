@@ -216,7 +216,7 @@ class DeleteDrupalAccountsForm extends FormBase
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * hdsWithUsers
    *
-   * Create a list of HDs that have users in them, sorted in assending order.
+   * Create a list of HDs that have users in them, sorted in ascending order.
    *
    * @param array $users
    * @return array
