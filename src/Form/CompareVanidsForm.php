@@ -5,7 +5,6 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-//use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -14,8 +13,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class CompareVanidsForm extends FormBase
 {
-  protected $requestStack;
-
   public function __construct($requestStack)
   {
     $this->requestStack = $requestStack;
@@ -50,7 +47,7 @@ class CompareVanidsForm extends FormBase
       if (!empty($outputUri)) {
         $url = Drupal::service('file_url_generator')->generateAbsoluteString($outputUri);
         $form['result'] = [
-          '#markup' => '<p>' . t("Found $missingCount VANIDs in the first file that are missing from the second file.") . '</p>'
+          '#markup' => '<p>' . t('Found @count VANIDs in the first file that are missing from the second file.', ['@count' => $missingCount]) . '</p>'
             . '<p><a href="' . $url . '">' . t('Right-click to download the results file.') . '</a></p>',
         ];
       } else {
@@ -136,6 +133,10 @@ class CompareVanidsForm extends FormBase
   /**
    * Reads the header row and returns the zero-based column index of the column
    * whose name matches $columnTitle (case-insensitive), or NULL if not found.
+   *
+   * @param resource $fh
+   * @param string $columnTitle
+   * @return int|null
    */
   private function findVanidColumn($fh, string $columnTitle): ?int
   {
@@ -182,7 +183,7 @@ class CompareVanidsForm extends FormBase
 
     // Create the output-managed file before streaming file 1 so we can write
     // results incrementally without buffering them all in memory.
-    $timestamp = date('Y-m-d-H-i-s', time());
+    $timestamp = date('Y-m-d-H-i-s');
     $outputUri = 'public://temp/missing_vanid-' . $timestamp . '.csv';
     try {
       $file = Drupal::service('file.repository')->writeData('', $outputUri, FileExists::Replace);
@@ -194,7 +195,7 @@ class CompareVanidsForm extends FormBase
       return;
     }
 
-    $fhOut = fopen($outputUri, 'w');
+    $fhOut = fopen($file->getFileUri(), 'w');
     if (!$fhOut) {
       Drupal::messenger()->addError(t('Failed to write the output file.'));
       return;
@@ -214,7 +215,7 @@ class CompareVanidsForm extends FormBase
     do {
       $row = fgetcsv($fh1);
       if ($row === FALSE) { break; }
-      if (empty($row[0])) { continue; } // skip blank lines
+      if (count($row) === 1 && $row[0] === NULL) { continue; } // skip blank lines
       $vanid = trim($row[$vanidPos1] ?? '');
       if ($vanid !== '' && !isset($file2Vanids[$vanid])) {
         fputcsv($fhOut, [$vanid]);

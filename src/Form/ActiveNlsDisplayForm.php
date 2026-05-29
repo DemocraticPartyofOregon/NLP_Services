@@ -36,7 +36,7 @@ class ActiveNlsDisplayForm extends FormBase
   protected ApiActivistCodes $apiActivistCodesObj;
   public function __construct( $votersObj, $reportsObj, $nlsObj, $turfsObj,
                                $searchBarObj, $nlsListDisplayObj, $awardsObj, $sessionDataObj,
-                               $nlpConfigurationObj, $apiSurveyQuestionObj ,$apiActivistCodesObj) {
+                               $nlpConfigurationObj, $apiSurveyQuestionObj, $apiActivistCodesObj) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->nlsObj = $nlsObj;
@@ -69,6 +69,7 @@ class ActiveNlsDisplayForm extends FormBase
       $container->get('nlpservices.activist_codes'),
     );
   }
+
   /**
    * {@inheritdoc}
    */
@@ -158,8 +159,6 @@ class ActiveNlsDisplayForm extends FormBase
           }
           
           $nlRecords[$mcid]['nlParticipationDisplay'] = $this->awardsObj->nlParticipationDisplay($mcid);
-          $awardRecord['preferredContactMethod'] = $contactMethod;
-          
         }
       }
       $nlsTable = $this->nlsListDisplayObj->createTableArray($nlRecords);
@@ -192,7 +191,6 @@ class ActiveNlsDisplayForm extends FormBase
     $county = $form_state->get('county');
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('$elementClicked',$elementClicked);
     switch ($elementClicked) {
       
       case 'hd-select':
@@ -205,11 +203,9 @@ class ActiveNlsDisplayForm extends FormBase
         break;
         
       default:
-        //$mcid = 0;
         $columnId = '';
         $parents = $triggeringElement['#parents'];
         if(!empty($parents) && $parents[0]=='contacts') {
-          //$mcid = $parents[1];
           $columnId  = $parents[2];
         }
 
@@ -275,38 +271,33 @@ class ActiveNlsDisplayForm extends FormBase
     $form_state->setRebuild();
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('submitForm',"Element clicked: $elementClicked");
     if($elementClicked=='search_submit') {
       $needle = $form_state->getValue('nl-search-needle');
       $form_state->set('nl-search-needle', $needle);
     }
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * processAsk
    *
    * @param int $mcid
    * @param string $askStatus
    * @return void
    */
-  function processAsk(int $mcid, string $askStatus): void
+  public function processAsk(int $mcid, string $askStatus): void
   {
     $currentStatus = $this->nlsObj->getNlsStatus($mcid);
     $status = $currentStatus;
     $status['asked'] = $askStatus;
     $this->nlsObj->setNlsStatus($status);
     $this->awardsObj->nlParticipation($mcid,$askStatus);
-    //$database = 1;
     $request = [
       'vanid' => $mcid,
-      //'contactTypeCode' => $contactMethodId,
       'codeName' => 'NLPDropoutAC',
-      //'action' => ($report['value'])?'Apply':'Remove',
     ];
     if ($askStatus == 'Dropout') {
       $request['action'] = 'Apply';
       $this->apiActivistCodesObj->setApiActivistCode($request);
-      //$this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC');
     } elseif($currentStatus['asked'] == 'Dropout') {
       $request['action'] = 'Remove';
       $this->apiActivistCodesObj->setApiActivistCode($request);
@@ -326,7 +317,7 @@ class ActiveNlsDisplayForm extends FormBase
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$committeeName);
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * getProgress
    *
    * Create an associate array with the progress of the NL to make contact with
@@ -336,21 +327,20 @@ class ActiveNlsDisplayForm extends FormBase
    * @param int $mcid
    * @return array
    */
-  function getProgress(int $mcid): array
+  public function getProgress(int $mcid): array
   {
-    $progress['attempts'] = $progress['contacts'] = $progress['voterCount'] = 0;
+    $progress = ['attempts' => 0, 'contacts' => 0, 'voterCount' => 0, 'doorCount' => 0];
     // Get the voters assigned to this NL for all the turfs.
-    $vanids= $this->votersObj->fetchVanIdsByNl($mcid);
+    $vanids = $this->votersObj->fetchVanIdsByNl($mcid);
     if(empty($vanids)) {return $progress;}
-    
+
     $turfs = $this->turfsObj->getTurfsById($mcid);
     $doorCount = 0;
     foreach ($turfs as $turf) {
       $doorCount += $turf['doorCount'];
     }
-    
+
     $voterCount = count($vanids);
-    if ($voterCount == 0) {return $progress;}
     // Now get all the reports from this NL for this cycle.
     $reports = $this->reportsObj->getNlReportsForVoters($vanids);
 
@@ -388,7 +378,7 @@ class ActiveNlsDisplayForm extends FormBase
     return $progress;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * checkboxCallback
    *
    * @param $form
@@ -397,12 +387,12 @@ class ActiveNlsDisplayForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function checkboxCallback($form, $unused): array
+  public function checkboxCallback($form, $unused): array
   {
     return $form['nlsForm'];
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  /**
    * textboxCallback
    *
    * @param $form
@@ -411,12 +401,12 @@ class ActiveNlsDisplayForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function textboxCallback($form, $unused): array
+  public function textboxCallback($form, $unused): array
   {
     return $form['nlsForm'];
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  /**
    * selectboxCallback
    *
    * @param $form
@@ -425,12 +415,12 @@ class ActiveNlsDisplayForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function selectboxCallback($form, $unused): array
+  public function selectboxCallback($form, $unused): array
   {
     return $form['nlsForm'];
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+
+  /**
    * nlsFormCallback
    *
    * @param $form
@@ -439,7 +429,7 @@ class ActiveNlsDisplayForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function nlsFormCallback($form, $unused): array
+  public function nlsFormCallback($form, $unused): array
   {
     return $form['nlsForm'];
   }

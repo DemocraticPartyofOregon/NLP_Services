@@ -104,11 +104,11 @@ class CoordinatorsForm extends FormBase
     
     $county = $form_state->get('county');
     
-    $sortRequest  = [];
-    $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
+    $sortRequest = [];
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $sort = $query->get('sort', '');
     if(!empty($sort)) {
-      $order = $_GET['order'];
-      $sortRequest = ['sort'=>$sort,'order'=>$order];
+      $sortRequest = ['sort' => $sort, 'order' => $query->get('order', '')];
     }
     
     $form['help'] = [
@@ -154,14 +154,11 @@ coordinator and not to the NLP Site admin.</p>"),
     $countyNLs = $this->nlsObj->getCountyNls($county,$currentHd);
     
     $availableNLs = $countyNLs;
-    $unassignedCoordinators = $countyNLs;
-    $form_state->set('unassignedCoordinators',$unassignedCoordinators);
     
     /* - - - assign a coordinator  - - - */
     
     // Search the list of available NLs for a match with the needle.
     $needle = $form_state->get('nl-search-needle-add');
-    //nlp_debug_msg('needle',$needle);
     if(!empty($needle)) {
       $allCountyNls = $this->nlsObj->getCountyNls($county);
       $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCountyNls);
@@ -182,23 +179,21 @@ coordinator and not to the NLP Site admin.</p>"),
   {
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('elementClicked',$elementClicked);
     $county = $form_state->get('county');
     switch ($elementClicked) {
       
       case 'hd-select-add':
         // The user changed the HD to display.
         $currentHdIndex = $form_state->getValue($elementClicked);
-        //nlp_debug_msg('currentHdIndex',$currentHdIndex);;
         $this->sessionDataObj->saveHdIndex($currentHdIndex);
         break;
       
       case 'add_coordinator_assignment':
         $contacts = $form_state->getValue('contacts');
         $selections = $this->coordinatorsListDisplayObj->validateCoordinatorSelection($contacts);
-        if(empty($selections) OR count($selections)!=1) {
+        if(empty($selections) || count($selections)!=1) {
           $form_state->setErrorByName('add_coordinator_assignment',
-            "You must select one and only one volunteer from the list.");
+            t('You must select one and only one volunteer from the list.'));
           return;
         }
         
@@ -207,7 +202,6 @@ coordinator and not to the NLP Site admin.</p>"),
         $allCountyCoordinators = $this->coordinatorsObj->getAllCoordinators($county);
         $countyCoordinators = (empty($allCountyCoordinators[$county]))?[]:$allCountyCoordinators[$county];
         $scope = $form_state->get('scope');
-        //nlp_debug_msg('scope',$scope);
         $assignmentRole = [
           'county' => $county,
           'scope' => $scope,
@@ -235,8 +229,8 @@ coordinator and not to the NLP Site admin.</p>"),
             $precincts = explode(',',$precinctList);
             foreach ($precincts as $precinct) {
               if($this->coordinatorsObj->duplicateScope('precinct',$precinct,$countyCoordinators)) {
-                $form_state->setErrorByName('scope',t('A contact coordinator for precinct '.
-                  $precinct.' is already assigned.'));
+                $form_state->setErrorByName('scope', t('A contact coordinator for precinct @precinct is already assigned.',
+                  ['@precinct' => $precinct]));
               }
             }
             $assignmentRole['precinctList'] = $precinctList;
@@ -249,7 +243,6 @@ coordinator and not to the NLP Site admin.</p>"),
             $hdOptions = $this->nlpConfigurationObj->getHDNames($county,FALSE);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
-            //nlp_debug_msg('$hd',$hd);
             if($this->coordinatorsObj->duplicateScope('hd',$hd,$countyCoordinators)) {
               $form_state->setErrorByName('scope',t('A contact coordinator for this HD is already assigned.'));
             }
@@ -264,10 +257,9 @@ coordinator and not to the NLP Site admin.</p>"),
             $assignmentRole['precinctList'] = NULL;
             break;
         }
-        //nlp_debug_msg('assignmentRole', $assignmentRole);
         $form_state->set('assignmentRole',$assignmentRole);
         $altEmail = $form_state->getValue('altEmail');
-        if(!empty($altEmail) AND !Drupal::service('email.validator')->isValid($altEmail)) {
+        if(!empty($altEmail) && !Drupal::service('email.validator')->isValid($altEmail)) {
           $form_state->setErrorByName('altEmail',t('Email format is invalid.'));
         }
         $form_state->set('altEmail',$altEmail);
@@ -278,7 +270,7 @@ coordinator and not to the NLP Site admin.</p>"),
         $selections = $this->coordinatorsListDisplayObj->validateCoordinatorSelection($contacts);
         if(empty($selections)) {
           $form_state->setErrorByName('remove_coordinator_assignment',
-            "You must select one volunteer from the list.");
+            t('You must select one volunteer from the list.'));
           return;
         }
         $form_state->set('removeCoordinators',$selections);
@@ -286,7 +278,6 @@ coordinator and not to the NLP Site admin.</p>"),
       
       case 'scope-select':
         $scopeSelect = $form_state->getValue('scope-select');
-        //nlp_debug_msg('scopeSelect',$scopeSelect);
         $form_state->set('scope',$scopeSelect);
         break;
       
@@ -305,8 +296,6 @@ coordinator and not to the NLP Site admin.</p>"),
     switch ($elementClicked) {
       
       case 'search_submit-add':
-        $form_state->set('reenter', TRUE);
-        $form_state->setRebuild();  // form_state will persist.
         $needle = $form_state->getValue('nl-search-needle-add');
         $form_state->set('nl-search-needle-add', $needle);
         return;
@@ -341,19 +330,16 @@ coordinator and not to the NLP Site admin.</p>"),
           'mcid' => $mcid,
           'firstName' => $firstName,
           'lastName' => $nlsRecord['lastName'],
-          'email' => $email,
+          'email' => $nlsRecord['email'],
           'phone' => $nlsRecord['phone'],
           'scope' => $assignmentRole['scope'],
-          'hd' => $assignmentRole['hd'],
+          'hd' => $nlsRecord['hd'],  // The hd is that of the Coordinator, not necessarily the assigned hd.
           'precinctList' => $assignmentRole['precinctList'],
         ];
-        $req['hd'] = $nlsRecord['hd'];  // The hd is that of the Coordinator and not necessarily the assigned hd.
-        $req['email'] = $nlsRecord['email'];
         $result = $this->createCoordinatorAccount($req);
         if(!$result) { return; }
 
         $req['hd'] = $assignmentRole['hd'];
-        $req['email'] = $nlsRecord['email'];
         $this->coordinatorsObj->createCoordinator($req);
 
         break;
@@ -361,21 +347,21 @@ coordinator and not to the NLP Site admin.</p>"),
     }
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * buildScope
    *
    * Build the form entries for selecting the role scope for the new
-   * coordinator.  This form uses and AJAX function to change the other entries
+   * coordinator.  This form uses an AJAX function to change the other entries
    * based on scope.
    *
    * @param string $scope
-   * @param $options
+   * @param array $options
    * @param array $hdArray
    * @return array
    */
-  function buildScope(string $scope,$options,array $hdArray): array
+  private function buildScope(string $scope, array $options, array $hdArray): array
   {
-    //Build a wrapper around the part that will change with input.
+    $form_element = [];
     $form_element['scope'] = [
       '#prefix' => '<div id="scope-wrapper">',
       '#suffix' => '</div>',
@@ -392,25 +378,26 @@ coordinator and not to the NLP Site admin.</p>"),
     ];
     $form_element['scope']['scope-description'] = [
       '#type' => 'markup',
-      '#markup' => '<p>You can have only one person identified for each unique scope.  
-If coordinators are sharing responsibility for a scope, use the HD or precinct scope to assign the second 
+      '#markup' => '<p>You can have only one person identified for each unique scope.
+If coordinators are sharing responsibility for a scope, use the HD or precinct scope to assign the second
 coordinator to groups of NLs.</p>',
     ];
 
-    $hdTitle = ($scope!='precinct')?'Select the HD to be managed by the new HD coordinator.':
-      'Select the HD that contains the precincts to be managed by the new coordinator.';
-    array_unshift($hdArray , 'Select an HD');
-    if($scope=='hd' OR $scope=='precinct') {
+    array_unshift($hdArray, 'Select an HD');
+    if($scope == 'hd' || $scope == 'precinct') {
+      $hdTitle = ($scope != 'precinct')
+        ? t('Select the HD to be managed by the new HD coordinator.')
+        : t('Select the HD that contains the precincts to be managed by the new coordinator.');
       $form_element['scope']['hd-assigned'] = [
         '#type' => 'select',
-        '#title' => t($hdTitle),
+        '#title' => $hdTitle,
         '#options' => $hdArray,
       ];
     }
 
-    if($scope=='precinct') {
+    if($scope == 'precinct') {
       $form_element['scope']['pct-list'] = [
-        '#title' => 'Enter a list of precincts, separated by commas',
+        '#title' => t('Enter a list of precincts, separated by commas'),
         '#size' => 30,
         '#maxlength' => 60,
         '#type' => 'textfield',
@@ -421,22 +408,22 @@ coordinator to groups of NLs.</p>',
     return $form_element;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * createCoordinatorAccount
    *
-   * @param $coordinator
+   * @param array $coordinator
+   * @return bool
    */
-  function createCoordinatorAccount($coordinator): bool
+  private function createCoordinatorAccount(array $coordinator): bool
   {
     $messenger = Drupal::messenger();
     $mcid = $coordinator['mcid'];
     $email = $coordinator['email'];
     if(empty($email)) {
-      $messenger->addWarning(t('This selection does not have an email.
-      An email is required to be a coordinator.'));
+      $messenger->addWarning(t('This selection does not have an email. An email is required to be a coordinator.'));
       return FALSE;
     }
-    
+
     $userAccount = $this->drupalUserObj->getUserByMcid($mcid);
     if(empty($userAccount)) {
       $userAccount = $this->drupalUserObj->getUserByEmail($email);
@@ -447,26 +434,23 @@ coordinator to groups of NLs.</p>',
       $userAccount = $this->drupalUserObj->getUserByName($userName);
     }
     if(!empty($userAccount)) {
-      if($mcid != $userAccount['mcid'] AND !empty($userAccount['mcid'])) {
-        $messenger->addWarning(t('The MCID of the Drupal account does not
-        match the MyCampaign record, please contact the NLP Administrator.'));
+      if($mcid != $userAccount['mcid'] && !empty($userAccount['mcid'])) {
+        $messenger->addWarning(t('The MCID of the Drupal account does not match the MyCampaign record, please contact the NLP Administrator.'));
         return FALSE;
       }
       $roles = $userAccount['roles'];
-      
-      if(!in_array(NLP_COORDINATOR_ROLE_ID,$roles)) {
+      if(!in_array(NLP_COORDINATOR_ROLE_ID, $roles)) {
         $messenger->addStatus(t('The coordinator role was added to the existing account.'));
         $uid = $userAccount['uid'];
         $update['uid'] = $uid;
-        $update['roles'] = [NLP_COORDINATOR_ROLE_ID=>NLP_COORDINATOR_ROLE_LABEL,];
+        $update['roles'] = [NLP_COORDINATOR_ROLE_ID => NLP_COORDINATOR_ROLE_LABEL];
         $update['mcid'] = $mcid;
         $this->drupalUserObj->updateUser($update);
       }
       return TRUE;
     }
-    
+
     $magicWord = $this->magicWordObj->createMagicWord();
-    
     $newAccount = [
       'userName' => $userName,
       'email' => $email,
@@ -477,38 +461,35 @@ coordinator to groups of NLs.</p>',
       'mcid' => $coordinator['mcid'],
       'hd' => $coordinator['hd'],
       'magicWord' => $magicWord,
-      //'sharedEmail' => NULL,
-      'roles' => [NLP_COORDINATOR_ROLE_ID => NLP_COORDINATOR_ROLE_LABEL,],
+      'roles' => [NLP_COORDINATOR_ROLE_ID => NLP_COORDINATOR_ROLE_LABEL],
     ];
     $newUser = $this->drupalUserObj->addUser($newAccount);
     switch ($newUser['status']) {
       case 'error':
-        $messenger->addError(t('Something went wrong with creating an
-        account.  Please contact NLP tech support'));
+        $messenger->addError(t('Something went wrong with creating an account. Please contact NLP tech support.'));
         return FALSE;
       case 'exists':
-        $messenger->addError(t("The NL's name is already in use.
-        Please contact NLP tech support"));
+        $messenger->addError(t("The NL's name is already in use. Please contact NLP tech support."));
         return FALSE;
       case 'complete':
-        $messenger->addStatus(t('An account was created for this Coordinator.'
+        $messenger->addStatus('An account was created for this Coordinator.'
           . '<br>Username: '.$newUser['userName']
-          . '<br>Password: '.$magicWord));
-        $this->magicWordObj->setMagicWord($mcid,$magicWord);
+          . '<br>Password: '.$magicWord);
+        $this->magicWordObj->setMagicWord($mcid, $magicWord);
         break;
     }
     return TRUE;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * buildCoordinatorSelect
    *
-   * @param $scope
-   * @param $availableNLs
-   * @param $sortRequest
+   * @param string $scope
+   * @param array $availableNLs
+   * @param array $sortRequest
    * @return array
    */
-  function buildCoordinatorSelect($scope,$availableNLs,$sortRequest): array
+  private function buildCoordinatorSelect(string $scope, array $availableNLs, array $sortRequest): array
   {
     $hdOptions = $this->sessionDataObj->getHdOptions();
     $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
@@ -528,7 +509,7 @@ coordinator to groups of NLs.</p>',
     $form['assignment']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     
     $form['assignment']['nl-select-header'] = [
-      '#markup' => '<b>Check the box for the NL to be assigned as a coordinator.</b>',
+      '#markup' => '<b>' . t('Check the box for the NL to be assigned as a coordinator.') . '</b>',
     ];
     
     $tableArray = $this->coordinatorsListDisplayObj->buildCoordinatorTableArray('add', $availableNLs);
@@ -547,25 +528,25 @@ coordinator to groups of NLs.</p>',
     
     $form['assignment']['add-coordinator'] = [
       '#type' => 'submit',
-      '#value' => 'Add this Coordinator.',
+      '#value' => t('Add this Coordinator.'),
       '#name' => 'add_coordinator_assignment',
     ];
     
     return $form;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * buildCoordinatorAssignment
    *
-   * @param $assignedCoordinators
-   * @param $sortRequest
+   * @param array $assignedCoordinators
+   * @param array $sortRequest
    * @return array
    */
-  function buildCoordinatorAssignment($assignedCoordinators,$sortRequest): array
+  private function buildCoordinatorAssignment(array $assignedCoordinators, array $sortRequest): array
   {
     $form['note2h'] = [
       '#type' => 'markup',
-      '#markup' => '<br><hr><h2>Current coordinator assignments.</h2>',
+      '#markup' => '<br><hr><h2>' . t('Current coordinator assignments.') . '</h2>',
       '#prefix' => '<div class="coordinator-box" >',
     ];
     
@@ -585,39 +566,39 @@ coordinator to groups of NLs.</p>',
     
     $form['current']['remove_coordinator'] = [
       '#type' => 'submit',
-      '#value' => 'Remove the selected Coordinator(s).',
+      '#value' => t('Remove the selected Coordinator(s).'),
       '#name' => 'remove_coordinator_assignment',
     ];
     
     return $form;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * scopeSelectedCallback
    *
-   * AJAX call back for the selection of the HD
+   * AJAX callback for the selection of the HD.
    *
-   * @param $form
+   * @param array $form
    * @param $unused
    * @return array
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function scopeSelectedCallback ($form,$unused): array
+  public function scopeSelectedCallback(array $form, $unused): array
   {
     return $form['manageCoordinators']['coordinatorSelect']['assignment']['scope_selection']['scope'];
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * coordinatorCallback
    *
-   * @param $form
+   * @param array $form
    * @param $unused
    * @return array
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function coordinatorCallback($form, $unused): array
+  public function coordinatorCallback(array $form, $unused): array
   {
     return $form['manageCoordinators'];
   }

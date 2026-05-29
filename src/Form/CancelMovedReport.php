@@ -17,7 +17,6 @@ use Drupal\nlpservices\NlpConfiguration;
 /**
  * @noinspection PhpUnused
  */
-
 class CancelMovedReport extends FormBase
 {
   
@@ -70,7 +69,6 @@ class CancelMovedReport extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-   
     if(empty($form_state->get('reenter'))) {
       $form_state->set('reenter',TRUE);
       $form_state->set('options',[]);
@@ -108,7 +106,7 @@ class CancelMovedReport extends FormBase
     if(!empty($voterArray)) {
       $form['chooseVoter'] = [
         '#type' => 'submit',
-        '#value' => 'Remove the moved status for selected voters.',
+        '#value' => t('Remove the moved status for selected voters.'),
         '#name' => 'chooseVoter',
       ];
     }
@@ -160,32 +158,29 @@ class CancelMovedReport extends FormBase
    * @param array $voter
    * @return void
    */
-  function correctMovedStatus(array $voter): void
+  private function correctMovedStatus(array $voter): void
   {
     $messenger = Drupal::messenger();
-
     $cycle = $this->nlpConfigurationObj->getCycle();
-    
     $vanid = $voter['vanid'];
     $request = [
-      'vanid'=>$vanid,
-      'type'=>'contact',
-      'value'=>'Moved',
-      'cycle'=>$cycle,
+      'vanid' => $vanid,
+      'type' => 'contact',
+      'value' => 'Moved',
+      'cycle' => $cycle,
     ];
-    $reports = $this->reportsObj->getReport($request,FALSE);  // Get all reports this cycle.
+    $reports = $this->reportsObj->getReport($request, FALSE);
 
-    if( empty($reports) && empty($voter['moved']) ) {
-      $messenger->addWarning("There is no report that ".$voter['firstName'].' '. $voter['lastName'] ." has moved.");
+    if(empty($reports) && empty($voter['moved'])) {
+      $messenger->addWarning(t('There is no report that @first @last has moved.',
+        ['@first' => $voter['firstName'], '@last' => $voter['lastName']]));
       return;
     }
 
-
     if(!empty($reports)) {
       foreach ($reports as $report) {
-        $existingRIndex = (!empty($report['reportIndex']))?$report['reportIndex']:0;  // Report exists.
-        if(!empty($existingRIndex)) {
-          $this->reportsObj->deletereport($existingRIndex);
+        if(!empty($report['reportIndex'])) {
+          $this->reportsObj->deletereport($report['reportIndex']);
         }
       }
     }
@@ -193,12 +188,13 @@ class CancelMovedReport extends FormBase
     if(!empty($voter['moved'])) {
       $turfIndex = $voter['turfIndex'];
       if(!empty($turfIndex)) {
-        $movedStatus = 0;   // This voter did not move,
-        $this->votersObj->setMovedStatus($turfIndex,$vanid,$movedStatus);
+        $this->votersObj->setMovedStatus($turfIndex, $vanid, FALSE);
       }
     }
 
-    $messenger->addMessage('The report that'.$voter['firstName'].' '. $voter['lastName'] .' moved has been removed.');
-    }
-  
+    $messenger->addMessage(t('The report that @first @last moved has been removed.',
+      ['@first' => $voter['firstName'], '@last' => $voter['lastName']]));
+  }
+
+
 }

@@ -5,6 +5,7 @@ namespace Drupal\nlpservices\Form;
 use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Mail\MailManagerInterface;
 use Drupal\nlpservices\HtmlText;
@@ -52,9 +53,10 @@ class CoordinatorEmail extends FormBase
       $form_state->set('reenter', TRUE);
     }
     $parameters = [];
-    $params= ['to','from','firstName','lastName'];
-    foreach ($params as $param) {
-      $parameters[$param] = filter_input(INPUT_GET, $param, FILTER_UNSAFE_RAW);
+    $paramNames = ['to', 'from', 'firstName', 'lastName'];
+    $request = $this->requestStack->getCurrentRequest();
+    foreach ($paramNames as $param) {
+      $parameters[$param] = $request->query->get($param, '');
     }
     $form_state->set('parameters',$parameters);
   
@@ -73,8 +75,9 @@ class CoordinatorEmail extends FormBase
    
     $form['send'] = [
       '#type' => 'submit',
-      '#value' => t('Send.'),
-      '#name' => 'send-email',];
+      '#value' => t('Send'),
+      '#name' => 'send-email',
+    ];
     
     return $form;
   }
@@ -82,43 +85,45 @@ class CoordinatorEmail extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function submitForm(array &$form, FormStateInterface $form_state): bool
+  public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $messenger = Drupal::messenger();
     $form_state->setRedirect('nlpservices.data_entry_help_route');
-  
+
     $subject = $form_state->getValue('subject');
     $message = $form_state->getValue('message');
     $parameters = $form_state->get('parameters');
-    
-    $message .= '<p><hr>This message is from: '.$parameters['firstName'].'&nbsp;'.$parameters['lastName'].
-      '<br>'.$parameters['from'].'<br>You can reply to the email, and it will be sent to the NL.</p>';
-    
+
+    $firstName = Html::escape($parameters['firstName']);
+    $lastName = Html::escape($parameters['lastName']);
+    $from = Html::escape($parameters['from']);
+
+    $message .= '<p><hr>This message is from: '.$firstName.'&nbsp;'.$lastName.
+      '<br>'.$from.'<br>You can reply to the email, and it will be sent to the NL.</p>';
+
     $this->htmlText->setHtml($message);
     $plainText = $this->htmlText->getText();
-  
-    $params['func'] = 'help_request';
-    $params['subject'] =  $subject;
-    
+
     $config = Drupal::config('nlpservices.configuration');
     $emailConfiguration = $config->get('nlpservices-email-configuration');
     $notificationEmail = $emailConfiguration['notifications']['email'];
-    
+
+    $params['func'] = 'help_request';
+    $params['subject'] = $subject;
     $params['List-Unsubscribe'] = "<mailto: ".$notificationEmail."?subject=unsubscribe>";
     $params['message'] = $message;
     $params['plainText'] = $plainText;
-  
+
     $to = $parameters['to'];
     $languageCode = $this->languageManager->getDefaultLanguage()->getId();
     $reply = $parameters['from'];
-  
+
     $result = $this->mailManager->mail(NLP_MODULE, 'deliver_turf', $to, $languageCode, $params, $reply);
-  
+
     if (!$result['result']) {
       $messenger->addError(t('There was a problem sending your message and it was not sent.'));
-      return FALSE;
+      return;
     }
     $messenger->addMessage(t('You successfully sent a message to your county coordinator.'));
-    return TRUE;
   }
 }

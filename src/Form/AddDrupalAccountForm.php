@@ -75,22 +75,22 @@ class AddDrupalAccountForm extends FormBase
         $form['county-name'] = [
           '#markup' => "<h1>".$county." County</h1>",
         ];
-        $form['needle'] = array(
+        $form['needle'] = [
           '#type' => 'textfield',
           '#title' => t('Search value'),
           '#size' => 32,
           '#maxlength' => 64,
           '#description' => t("Enter a first name, last name, email, or MCID to find the Active NL to get a login."),
           '#required' => TRUE,
-        );
+        ];
         $form['needle-note'] = [
           '#markup' => "<p>The search value need not be a full name, email, or MCID.  It can be an incomplete fragment.</p>",
         ];
-        $form['add_submit'] = array(
+        $form['add_submit'] = [
           '#type' => 'submit',
           '#name' => 'add-submit',
           '#value' => t('Search for the user'),
-        );
+        ];
         break;
 
       case 'userSelect':
@@ -123,24 +123,24 @@ want to participate as an NL.  This case is rare.</p>",
           $form_state->set('selectedMcid',NULL);
         }
         $form_state->set('loginExists',$loginExists);
-        $form['user_select'] = array(
+        $form['user_select'] = [
           '#title' => t('Select the user'),
           '#type' => 'radios',
           '#options' => $nlOptions,
-        );
+        ];
         $form['note'] = [
           '#markup' => "<p>*** - <i>indicates this NL already has a user account for the site.</i></p>",
         ];
-        $form['add_selected'] = array(
+        $form['add_selected'] = [
           '#type' => 'submit',
           '#name' => 'add-selected',
           '#value' => t('Select User'),
-        );
-        $form['go_back'] = array(
+        ];
+        $form['go_back'] = [
           '#type' => 'submit',
           '#name' => 'go-back',
           '#value' => t('Not found, go back'),
-        );
+        ];
         break;
       
       case 'displayUserAdd':
@@ -150,7 +150,7 @@ want to participate as an NL.  This case is rare.</p>",
         $userName = preg_replace('/-|\s+|&#0*39;|\'/', '', $lcUsrName);
 
         if(empty($nl['email'])) {
-          $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
+          $serverName = Drupal::request()->server->get('SERVER_NAME');
           $serverNameParts = explode('.',$serverName);
           if(empty($serverNameParts[2])) {
             $emailServer = $serverNameParts[0].'.'.$serverNameParts[1];
@@ -214,7 +214,7 @@ want to participate as an NL.  This case is rare.</p>",
         $needle = $form_state->getValue('needle');
         $nlList = $this->nls->searchNls($needle,$county);
         if(empty($nlList)) {
-          $messenger->addStatus('No NLs found.');
+          $messenger->addStatus(t('No NLs found.'));
           return;
         }
         $form_state->set('nlList', $nlList);
@@ -223,14 +223,14 @@ want to participate as an NL.  This case is rare.</p>",
 
       case 'go-back':
       case 'go-back2':
-      $form_state->set('page', 'addUser');
+        $form_state->set('page', 'addUser');
         break;
 
       case 'add-selected':
         $selectedMcid = $form_state->getValue('user_select');
         $loginExists = $form_state->get('loginExists');
         if($loginExists[$selectedMcid]) {
-          $messenger->addWarning('This NL already has an account.');
+          $messenger->addWarning(t('This NL already has an account.'));
           $form_state->set('selectedMcid',$selectedMcid);
           break;
         }
@@ -254,7 +254,7 @@ want to participate as an NL.  This case is rare.</p>",
             $roles[$role] = $allowedRoles[$role]; // Restore role name.
           }
         }
-        $account = array(
+        $account = [
           'userName' => $form_state->getValue('username'),
           'email' => $form_state->getValue('email'),
           'firstName' => $firstName,
@@ -265,8 +265,7 @@ want to participate as an NL.  This case is rare.</p>",
           'mcid' => $mcid,
           'magicWord' => $magicWord,
           'roles' => $roles,
-        );
-        //nlp_debug_msg('$account',$account);
+        ];
         $newUser = $this->drupalUser->addUser($account);
         switch ($newUser['status']) {
           case 'error':
@@ -278,7 +277,7 @@ want to participate as an NL.  This case is rare.</p>",
           case 'complete':
             $this->magicWord->setMagicWord($mcid, $magicWord);
             $msg = 'An account was created for this NL.<br>Username: '.$newUser['userName'].'<br>Password:'.$magicWord;
-            $messenger->addStatus(t($msg));
+            $messenger->addStatus($msg);
             break;
           case 'no email':
             $messenger->addError(t('The NL must have an email to create a login.'));
@@ -287,95 +286,93 @@ want to participate as an NL.  This case is rare.</p>",
         return;
     }
   }
-  
 
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * addUser
    *
-   * @param $user
+   * @param array $user
    * @return array
    */
-  function addUser($user): array
+  private function addUser(array $user): array
   {
+    $form_element = [];
     $form_element['county-name'] = [
       '#markup' => "<h1>".$user['county']." County</h1>",
     ];
-    
-    $form_element['add'] = array(
-      '#title' => 'Add a user account.',
+
+    $form_element['add'] = [
+      '#title' => t('Add a user account.'),
       '#type' => 'fieldset',
-    );
-    
+    ];
+
     $form_element['add']['mcid'] = [
       '#type' => 'hidden',
-      '#value' => $user['mcid']
+      '#value' => $user['mcid'],
     ];
-    
+
     $form_element['add']['hd'] = [
       '#type' => 'hidden',
-      '#value' => $user['hd']
+      '#value' => $user['hd'],
     ];
-    
+
     $firstName = str_replace("&#039;","'",$user['firstName']);
-    $form_element['add']['firstName'] = array(
+    $form_element['add']['firstName'] = [
       '#type' => 'textfield',
       '#title' => t('First Name'),
       '#default_value' => $firstName,
       '#size' => 28,
       '#maxlength' => 32,
-    );
-    
+    ];
+
     $lastName = str_replace("&#039;","'",$user['lastName']);
-    $form_element['add']['lastName'] = array(
+    $form_element['add']['lastName'] = [
       '#type' => 'textfield',
       '#title' => t('Last Name'),
       '#default_value' => $lastName,
       '#size' => 28,
       '#maxlength' => 32,
-    );
-    
-    $phoneNumber = $user['phone'];
-    $form_element['add']['phone'] = array(
+    ];
+
+    $form_element['add']['phone'] = [
       '#type' => 'textfield',
       '#title' => t('Phone Number'),
-      '#default_value' => $phoneNumber,
+      '#default_value' => $user['phone'],
       '#size' => 28,
       '#maxlength' => 32,
-    );
+    ];
 
-    $form_element['add']['username'] = array(
+    $form_element['add']['username'] = [
       '#type' => 'textfield',
       '#title' => t('Username'),
       '#default_value' => $user['userName'],
       '#size' => 28,
       '#maxlength' => 32,
-    );
-  
-    $form_element['add']['password'] = array(
+    ];
+
+    $form_element['add']['password'] = [
       '#type' => 'textfield',
       '#title' => t('Password'),
       '#default_value' => $user['password'],
       '#size' => 28,
       '#maxlength' => 32,
-    );
-    
-    $form_element['add']['email'] = array(
+    ];
+
+    $form_element['add']['email'] = [
       '#type' => 'textfield',
       '#title' => t('Email'),
       '#default_value' => $user['email'],
       '#size' => 60,
       '#maxlength' => 160,
-    );
-    
+    ];
+
     $allowedRoles = $this->drupalUser->getNlpRoles();
     unset($allowedRoles['nlp_admin']);
-    $form_element['add']['roles'] = array(
+    $form_element['add']['roles'] = [
       '#type' => 'checkboxes',
       '#title' => t('Roles'),
       '#options' => $allowedRoles,
-    );
-    
+    ];
+
     return $form_element;
   }
   

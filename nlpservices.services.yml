@@ -265,7 +265,7 @@ services:
 
   nlpservices.session_data:
     class: Drupal\nlpservices\NlpSessionData
-    arguments: [ '@tempstore.private' , '@nlpservices.drupal_user', '@nlpservices.configuration' ]
+    arguments: [ '@tempstore.private' , '@nlpservices.drupal_user', '@nlpservices.configuration', '@request_stack' ]
 
   nlpservices.sync_turf_add_voter:
     class: Drupal\nlpservices\NlpSyncTurfAddVoter

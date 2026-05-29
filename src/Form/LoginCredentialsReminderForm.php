@@ -14,7 +14,6 @@ use Drupal\nlpservices\NlpMcidRecovery;
 use Drupal\nlpservices\NlpUserDisplay;
 use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpSessionData;
-use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @noinspection PhpUnused
@@ -29,7 +28,6 @@ class LoginCredentialsReminderForm extends FormBase
   protected NlpSendEmail $sendEmailObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
-  protected RequestStack $requestStack;
 
   public function __construct($drupalUser, $nlsObj, $mcidRecovery, $searchBarObj,
                               $userDisplayObj, $sendEmailObj, $nlpConfigurationObj,
@@ -282,7 +280,6 @@ class LoginCredentialsReminderForm extends FormBase
    */
   function remindUserCredentials($user): bool
   {
-    $messenger = Drupal::messenger();
     $mcid = $user['mcid'];
 
     $key = $this->mcidRecovery->saveRecoveryKey($mcid);
