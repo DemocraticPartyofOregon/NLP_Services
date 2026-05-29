@@ -11,7 +11,6 @@ use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\MagicWord;
 use Drupal\nlpservices\ApiNls;
 
-//use Drupal\nlpservices\NlpExportCredentials;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ImportCredentialsForm extends FormBase
@@ -90,12 +89,12 @@ accounts before restoring any passwords.</p>',
 
     $form['table_file'] = [
       '#type' => 'file',
-      '#title' => "Credentials File",
+      '#title' => t('Credentials File'),
     ];
 
     $form['upload_file'] = [
       '#type' => 'submit',
-      '#value' => "Process Credentials File",
+      '#value' => t('Process Credentials File'),
     ];
 
     $form['button_link'] = [
@@ -111,16 +110,21 @@ accounts before restoring any passwords.</p>',
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
     // Verify we have a good export file with the necessary fields
-    $tempName = $_FILES['files']['tmp_name']['table_file'];
-    
+    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $tempName = ($files['table_file'] ?? NULL)?->getPathname() ?? NULL;
+    if (!$tempName) {
+      $form_state->setErrorByName('table_file', t('No file uploaded.'));
+      return;
+    }
+
     $fh = fopen($tempName, "r");
     if (!$fh) {
-      $form_state->setErrorByName('table_file', 'Failed to open table file.');
+      $form_state->setErrorByName('table_file', t('Failed to open table file.'));
       return;
     }
     $rawHeader = fgetcsv($fh);
     if (!$rawHeader) {
-      $form_state->setErrorByName('table_file', 'Failed to read header.');
+      $form_state->setErrorByName('table_file', t('Failed to read header.'));
       return;
     }
     $headerColumns = [];
@@ -143,11 +147,10 @@ accounts before restoring any passwords.</p>',
     $verify    = $form_state->getValue('verify');
     $tempName  = $form_state->get('tempName');
     $fieldPos  = $form_state->get('fieldPos');
-    nlp_debug_msg($fieldPos);
 
     $fh = fopen($tempName, "r");
-    if (empty($fh)) {
-      $messenger->addError('Failed to open table file.');
+    if (!$fh) {
+      $messenger->addError(t('Failed to open table file.'));
       return;
     }
     fgetcsv($fh);
@@ -161,7 +164,7 @@ accounts before restoring any passwords.</p>',
       }
 
       $credentials = array_map(function ($pos) use ($rawRecord) {
-        return $rawRecord[$pos];
+        return $rawRecord[$pos] ?? '';
       }, $fieldPos);
 
       if ($verify) {
@@ -196,7 +199,8 @@ accounts before restoring any passwords.</p>',
       if (empty($credentials['roles'])) {
         $credentials['roles'] = NULL;
       } else {
-        $credentials['roles'] = json_decode($credentials['roles']);
+        $decoded = json_decode($credentials['roles'], TRUE);
+        $credentials['roles'] = json_last_error() === JSON_ERROR_NONE ? $decoded : NULL;
       }
       $this->magicWordObj->updateCredentials($credentials);
 
@@ -205,7 +209,7 @@ accounts before restoring any passwords.</p>',
     if ($operation === 'restore') {
       $messenger->addStatus(t('@count password(s) restored.', ['@count' => $restored]));
     } else {
-      $messenger->addStatus('The table has been successfully uploaded.');
+      $messenger->addStatus(t('The table has been successfully uploaded.'));
     }
   }
 

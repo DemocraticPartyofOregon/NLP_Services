@@ -65,46 +65,19 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
   /**
    * decodeCrosstabsHeader
    *
-   * @param string $fileHdr
-   * @param string $fileHdr2
+   * @param array $fileHdr
+   * @param array $fileHdr2
    * @return array - array of column indexes for the crosstab ballot status counts.
    *
    * The header is represented by the first two rows. Also verifies we have the right file.
    */
-  public function decodeCrosstabsHeader( string $fileHdr, string $fileHdr2): array
+  public function decodeCrosstabsHeader( array $fileHdr, array $fileHdr2 ): array
   {
-    $hdrErr = $hdrPos = [];
-    foreach ($this->targetVoterVanHdr1 as $nlpKey => $vanField) {
-      $found = FALSE;
-      foreach ($fileHdr as $fileCol => $fileColName) {
-        $fileColName = preg_replace("/[^A-Za-z0-9 ]/", '', $fileColName);
-        if (trim($fileColName) == $vanField) {
-          $hdrPos[$nlpKey] = $fileCol;
-          $found = TRUE;
-          break;
-        }
-      }
-      if (!$found) {
-        $hdrErr[] = 'The crosstab export header "' . $vanField . '" is missing.';
-      }
-    }
-    foreach ($this->targetVoterVanHdr2 as $nlpKey => $vanField) {
-      $found = FALSE;
-      foreach ($fileHdr2 as $fileCol => $fileColName) {
-        if (trim($fileColName) == $vanField) {
-          $hdrPos[$nlpKey] = $fileCol;
-          $found = TRUE;
-          break;
-        }
-      }
-      if (!$found) {
-        $hdrErr[] = 'The crosstab export header "' . $vanField . '" is missing.';
-      }
-    }
-    $fieldPos['pos'] = $hdrPos;
-    $fieldPos['err'] = $hdrErr;
-    $fieldPos['ok'] = empty($hdrErr);
-    return $fieldPos;
+    ['pos' => $pos1, 'err' => $err1] = $this->matchHeaderColumns($this->targetVoterVanHdr1, $fileHdr);
+    ['pos' => $pos2, 'err' => $err2] = $this->matchHeaderColumns($this->targetVoterVanHdr2, $fileHdr2);
+    $hdrPos = array_merge($pos1, $pos2);
+    $hdrErr = array_merge($err1, $err2);
+    return ['pos' => $hdrPos, 'err' => $hdrErr, 'ok' => empty($hdrErr)];
   }
 
   /**
@@ -118,7 +91,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
    * @param string $tableName
    * @return bool
    */
-  public function updateCrosstabCounts( array $counts, string $tableName ): bool
+  public function updateCrosstabCounts( array $counts, string $tableName = self::TARGET_VOTER_CROSSTAB_TBL ): bool
   {
     try {
       $this->connection->merge($tableName)
@@ -154,7 +127,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
    * @param string $tableName
    * @return array - all crosstab counts from the given table.
    */
-  public function fetchCrosstabCounts( string $tableName ): array
+  public function fetchCrosstabCounts( string $tableName = self::TARGET_VOTER_CROSSTAB_TBL ): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -193,7 +166,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
    * @param string $tableName
    * @return array - counts summed by party for the given congressional district.
    */
-  public function getCountsByCd( int $cd, string $tableName): array
+  public function getCountsByCd( int $cd, string $tableName = self::TARGET_VOTER_CROSSTAB_TBL ): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -205,32 +178,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
       return [];
     }
 
-    $counts = [];
-    do {
-      $count = $result->fetchAssoc();
-      if (empty($count)) {break;}
-      $party = $count['party'];
-      if (empty($counts[$party])) {
-        $counts[$party] = [
-          'total'         => $count['totalPeople'],
-          'accepted'      => $count['accepted'],
-          'rejected'      => $count['rejected'],
-          'sent'          => $count['sent'],
-          'undeliverable' => $count['undeliverable'],
-          'void'          => $count['void'],
-          'unknown'       => $count['unknown'],
-        ];
-      } else {
-        $counts[$party]['total']         += $count['totalPeople'];
-        $counts[$party]['accepted']      += $count['accepted'];
-        $counts[$party]['rejected']      += $count['rejected'];
-        $counts[$party]['sent']          += $count['sent'];
-        $counts[$party]['undeliverable'] += $count['undeliverable'];
-        $counts[$party]['void']          += $count['void'];
-        $counts[$party]['unknown']       += $count['unknown'];
-      }
-    } while (TRUE);
-    return $counts;
+    return $this->aggregateTargetCountsByParty($result);
   }
 
   /**
@@ -244,7 +192,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
    * @param string $tableName
    * @return array - counts summed by party for the given county.
    */
-  public function getCountsByCounty( string $county, string $tableName ): array
+  public function getCountsByCounty( string $county, string $tableName = self::TARGET_VOTER_CROSSTAB_TBL ): array
   {
     $query = $this->connection->select($tableName, 'c');
     $query->fields('c');
@@ -255,11 +203,15 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
       nlp_debug_msg('getCountsByCounty', $e->getMessage());
       return [];
     }
+    return $this->aggregateTargetCountsByParty($result);
+  }
 
+  private function aggregateTargetCountsByParty($result): array
+  {
     $counts = [];
     do {
       $count = $result->fetchAssoc();
-      if (empty($count)) {break;}
+      if (empty($count)) { break; }
       $party = $count['party'];
       if (empty($counts[$party])) {
         $counts[$party] = [

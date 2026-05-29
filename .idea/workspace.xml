@@ -4,11 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms DeliverTurf to Documents">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms Croostab forms">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportNlsParticipationStatusForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/EnableDebugForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/EnableDebugForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCrosstabCounts.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTargetVoterCrosstabCounts.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -100,22 +102,22 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000001693585763" />
-      <entry key="S2" value="1.0326334726834643" />
-      <entry key="S5" value="1.6450917044661637" />
-      <entry key="S10" value="2.9214329622147517" />
-      <entry key="S30" value="5.0843424918610785" />
-      <entry key="S60" value="5.947505313405167" />
-      <entry key="M2" value="6.469231221219846" />
-      <entry key="M5" value="7.273758300916165" />
-      <entry key="M10" value="8.828445389773627" />
-      <entry key="M15" value="10.43028491255895" />
-      <entry key="M30" value="14.231739257701772" />
-      <entry key="H1" value="18.187685948736096" />
-      <entry key="H2" value="22.213609844542194" />
-      <entry key="H4" value="33.57565698239567" />
-      <entry key="D1" value="255.58439573526368" />
-      <entry key="W1" value="596.1075939571446" />
+      <entry key="MS500" value="1.000316391837264" />
+      <entry key="S2" value="1.1333694371135878" />
+      <entry key="S5" value="1.446983054931249" />
+      <entry key="S10" value="1.7011057392669842" />
+      <entry key="S30" value="2.6777051083452434" />
+      <entry key="S60" value="3.726968948120637" />
+      <entry key="M2" value="4.657232067717091" />
+      <entry key="M5" value="5.9319466556956435" />
+      <entry key="M10" value="8.294792606116534" />
+      <entry key="M15" value="10.718273204970034" />
+      <entry key="M30" value="16.572196954466733" />
+      <entry key="H1" value="23.138421112089667" />
+      <entry key="H2" value="29.36877031357998" />
+      <entry key="H4" value="41.71256154047263" />
+      <entry key="D1" value="263.17357945041965" />
+      <entry key="W1" value="605.9745358285568" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -125,35 +127,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="3.438488893083815E-218" />
-      <entry key="M5" value="1.0340631226206853E-87" />
-      <entry key="M10" value="3.215685187671033E-44" />
-      <entry key="M15" value="1.0112278380496074E-29" />
-      <entry key="M30" value="3.1799808791649867E-15" />
-      <entry key="H1" value="5.639267687974675E-8" />
-      <entry key="H2" value="2.389228784360136E-4" />
-      <entry key="H4" value="0.017755392701294843" />
-      <entry key="D1" value="3.3144337343634134" />
-      <entry key="W1" value="13.176205312406772" />
+      <entry key="M2" value="2.506493335805132E-222" />
+      <entry key="M5" value="2.2888989593825107E-89" />
+      <entry key="M10" value="4.784243889458937E-45" />
+      <entry key="M15" value="2.8392842536805495E-30" />
+      <entry key="M30" value="1.685017583549157E-15" />
+      <entry key="H1" value="4.1049953991043214E-8" />
+      <entry key="H2" value="2.0384624715884885E-4" />
+      <entry key="H4" value="0.016400337039884215" />
+      <entry key="D1" value="3.2708685355134124" />
+      <entry key="W1" value="13.151323486363946" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="4.2759330311932345E-33" />
-      <entry key="MS500" value="4.999782330892436E-7" />
-      <entry key="S2" value="0.05552206861055171" />
-      <entry key="S5" value="0.8524674392883105" />
-      <entry key="S10" value="2.365306130899824" />
-      <entry key="S30" value="4.840917489964315" />
-      <entry key="S60" value="5.816264039630489" />
-      <entry key="M2" value="6.400951072339879" />
-      <entry key="M5" value="7.244645867546061" />
-      <entry key="M10" value="8.810768254376153" />
-      <entry key="M15" value="10.415910398328725" />
-      <entry key="M30" value="14.221332407827497" />
-      <entry key="H1" value="18.18081045021722" />
-      <entry key="H2" value="22.20974643244623" />
-      <entry key="H4" value="33.59095443102271" />
-      <entry key="D1" value="258.89601558016005" />
-      <entry key="W1" value="609.2821701568257" />
+      <entry key="MS100" value="4.138996271260878E-10" />
+      <entry key="MS500" value="0.013292913483742426" />
+      <entry key="S2" value="0.3916245780962142" />
+      <entry key="S5" value="0.9561788100783276" />
+      <entry key="S10" value="1.3922647760638514" />
+      <entry key="S30" value="2.5548460203078536" />
+      <entry key="S60" value="3.662445315216839" />
+      <entry key="M2" value="4.62402751352704" />
+      <entry key="M5" value="5.916674878851112" />
+      <entry key="M10" value="8.28308361404389" />
+      <entry key="M15" value="10.707185407927316" />
+      <entry key="M30" value="16.562298298330386" />
+      <entry key="H1" value="23.13090168424121" />
+      <entry key="H2" value="29.364117458214526" />
+      <entry key="H4" value="41.72598558044974" />
+      <entry key="D1" value="266.44154933081757" />
+      <entry key="W1" value="619.1242157816631" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -265,15 +267,7 @@
       <workItem from="1779898494998" duration="443000" />
       <workItem from="1779972293479" duration="39841000" />
       <workItem from="1780076698998" duration="1026000" />
-      <workItem from="1780077960353" duration="901000" />
-    </task>
-    <task id="LOCAL-00055" summary="Code review">
-      <option name="closed" value="true" />
-      <created>1776998604732</created>
-      <option name="number" value="00055" />
-      <option name="presentableId" value="LOCAL-00055" />
-      <option name="project" value="LOCAL" />
-      <updated>1776998604732</updated>
+      <workItem from="1780077960353" duration="3166000" />
     </task>
     <task id="LOCAL-00056" summary="Protect initialization of cycle name.">
       <option name="closed" value="true" />
@@ -659,7 +653,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780066498997</updated>
     </task>
-    <option name="localTasksCounter" value="104" />
+    <task id="LOCAL-00104" summary="Claude code review forms Export">
+      <option name="closed" value="true" />
+      <created>1780080360041</created>
+      <option name="number" value="00104" />
+      <option name="presentableId" value="LOCAL-00104" />
+      <option name="project" value="LOCAL" />
+      <updated>1780080360042</updated>
+    </task>
+    <option name="localTasksCounter" value="105" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -711,8 +713,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Phone number nnot needed for social media message." />
-    <MESSAGE value="PHP errors from auto logout." />
     <MESSAGE value="Add key management" />
     <MESSAGE value="Site configuration Claude code review" />
     <MESSAGE value="API calls Claude review and key protection" />
@@ -736,7 +736,9 @@
     <MESSAGE value="Claude code review forms NlsDisplay, addAccount, to coordinators" />
     <MESSAGE value="Claude code review forms DatabaseSchema to DeleteDrupalAccounts" />
     <MESSAGE value="Claude code review forms DeliverTurf to Documents" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms DeliverTurf to Documents" />
+    <MESSAGE value="Claude code review forms Export" />
+    <MESSAGE value="Claude code review forms Croostab forms" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms Croostab forms" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

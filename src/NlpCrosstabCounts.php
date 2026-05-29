@@ -40,45 +40,39 @@ class NlpCrosstabCounts
    *
    * Decodes the header of the crosstab export file.
    *
-   * @param string $fileHdr
-   * @param string $fileHdr2
+   * @param array $fileHdr
+   * @param array $fileHdr2
    * @return array - array of column indexes for the ballot returned counts.
    *
    * The header is represented by the first two rows.  Also, it verifies we have the right file.
    */
-  public function decodeCrosstabsHeader( string $fileHdr, string $fileHdr2 ): array
+  public function decodeCrosstabsHeader( array $fileHdr, array $fileHdr2 ): array
+  {
+    ['pos' => $pos1, 'err' => $err1] = $this->matchHeaderColumns($this->crosstabCountVanHdr1, $fileHdr);
+    ['pos' => $pos2, 'err' => $err2] = $this->matchHeaderColumns($this->crosstabCountVanHdr2, $fileHdr2);
+    $hdrPos = array_merge($pos1, $pos2);
+    $hdrErr = array_merge($err1, $err2);
+    return ['pos' => $hdrPos, 'err' => $hdrErr, 'ok' => empty($hdrErr)];
+  }
+
+  protected function matchHeaderColumns(array $vanFields, array $fileHeader): array
   {
     $hdrErr = $hdrPos = [];
-    foreach ($this->crosstabCountVanHdr1 as $nlpKey => $vanField) {
+    foreach ($vanFields as $nlpKey => $vanField) {
       $found = FALSE;
-      foreach ($fileHdr as $fileCol=>$fileColName) {
-        $fileColName = preg_replace("/[^A-Za-z0-9 ]/", '', $fileColName);
-        if(trim($fileColName) == $vanField) {
-          $hdrPos[$nlpKey] = $fileCol;  // Identifies the column for county, party and total people.
+      foreach ($fileHeader as $fileCol => $fileColName) {
+        $clean = trim(preg_replace("/[^A-Za-z0-9 ]/", '', $fileColName));
+        if ($clean === $vanField) {
+          $hdrPos[$nlpKey] = $fileCol;
           $found = TRUE;
           break;
         }
       }
-      if(!$found) {
-        $hdrErr[] = 'The crosstab export header "'.$vanField.'" is missing.';
+      if (!$found) {
+        $hdrErr[] = 'The crosstab export header "' . $vanField . '" is missing.';
       }
     }
-    $name = $this->crosstabCountVanHdr2['balRet'];
-    $found = FALSE;
-    foreach ($fileHdr2 as $fileCol=>$fileColName) {
-      if($fileColName == $name) {
-        $hdrPos['balRet'] = $fileCol;  // The column with the ballot returned counts.
-        $found = TRUE;
-        break;
-      }
-    }
-    if(!$found) {
-      $hdrErr[] = 'The crosstab export header "'.$name.'" is missing.';
-    }
-    $fieldPos['pos'] = $hdrPos;
-    $fieldPos['err'] = $hdrErr;
-    $fieldPos['ok'] = empty($hdrErr);
-    return $fieldPos;
+    return ['pos' => $hdrPos, 'err' => $hdrErr];
   }
   
   /**
@@ -138,7 +132,7 @@ class NlpCrosstabCounts
     } while (TRUE);
     return $counts;
   }
-  
+
   /**
    * getCountsByCd
    *
@@ -158,23 +152,9 @@ class NlpCrosstabCounts
       nlp_debug_msg('getCdCounts',$e->getMessage());
       return [];
     }
-    
-    $counts = [];
-    do {
-      $count = $result->fetchAssoc();
-      if(empty($count)) {break;}
-      if(empty($counts[$count['party']])) {
-        $counts[$count['party']]['regVoted'] = $count['registeredVoted'];
-        $counts[$count['party']]['regVoters'] = $count['registeredVoters'];
-      } else {
-        $counts[$count['party']]['regVoted'] += $count['registeredVoted'];
-        $counts[$count['party']]['regVoters'] += $count['registeredVoters'];
-      }
-    } while (TRUE);
-    
-    return $counts;
+    return $this->aggregateCountsByParty($result);
   }
-  
+
   /**
    * getCountsByCounty
    *
@@ -194,20 +174,30 @@ class NlpCrosstabCounts
       nlp_debug_msg('getCdCountsByCounty',$e->getMessage());
       return [];
     }
-    
+    return $this->aggregateCountsByParty($result);
+  }
+
+  /**
+   * aggregateCountsByParty
+   * 1. Aggregates the counts by party.
+   * 2. The counts are grouped by party.
+   * @param $result
+   * @return array - array of counts by party.
+   */
+  private function aggregateCountsByParty($result): array
+  {
     $counts = [];
     do {
       $count = $result->fetchAssoc();
-      if(empty($count)) {break;}
-      if(empty($counts[$count['party']])) {
-        $counts[$count['party']]['regVoted'] = $count['registeredVoted'];
+      if (empty($count)) { break; }
+      if (empty($counts[$count['party']])) {
+        $counts[$count['party']]['regVoted']  = $count['registeredVoted'];
         $counts[$count['party']]['regVoters'] = $count['registeredVoters'];
       } else {
-        $counts[$count['party']]['regVoted'] += $count['registeredVoted'];
+        $counts[$count['party']]['regVoted']  += $count['registeredVoted'];
         $counts[$count['party']]['regVoters'] += $count['registeredVoters'];
       }
     } while (TRUE);
-    
     return $counts;
   }
   

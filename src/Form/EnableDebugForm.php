@@ -7,6 +7,9 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpConfiguration;
 
+/**
+ * @noinspection PhpUnused
+ */
 class EnableDebugForm extends FormBase
 {
   
@@ -50,7 +53,7 @@ class EnableDebugForm extends FormBase
     
     $form['form_test'] = [
       '#type' => 'submit',
-      '#value' => 'Change the debug setting',
+      '#value' => $this->t('Change the debug setting'),
     ];
     
     
@@ -63,7 +66,6 @@ class EnableDebugForm extends FormBase
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $values = $form_state->getValues();
-    //nlp_debug_msg('$values', $values);
     $debug = $values['enableDebug'];
     $this->nlpConfigurationObj->setDebug($debug);
   }
