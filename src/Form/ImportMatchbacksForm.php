@@ -50,25 +50,25 @@ class ImportMatchbacksForm extends FormBase
   {
     $tempDir = 'public://temp';
     // Ask for the ballot-received file to upload.
-    $form['hint'] = array(
+    $form['hint'] = [
       '#type' => 'markup',
-      '#markup' => 'Hint: The upload will be faster if the file is sorted by VANID.  ',
-    );
+      '#markup' => t('Hint: The upload will be faster if the file is sorted by VANID.'),
+    ];
     // Name of the matchback file to upload.
-    $form['matchback_file'] = array(
+    $form['matchback_file'] = [
       '#type' => 'managed_file',
       '#title' => t('Matchback file name'),
       '#description' => t('Select a Ballot Received file.<br>'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
-      '#upload_validators' => array('file_validate_extensions' => array('csv txt',),),
-    );
+      '#upload_validators' => ['file_validate_extensions' => ['csv txt']],
+    ];
     // A button for the upload of voting results.
-    $form['upload_file'] = array(
+    $form['upload_file'] = [
       '#type' => 'submit',
       '#id' => 'upload-file',
       '#value' => t('Process the uploaded Matchback File >>'),
-    );
+    ];
     return $form;
   }
 
@@ -83,7 +83,7 @@ class ImportMatchbacksForm extends FormBase
     if(empty($matchbacksFile)) {return;}
     $matchbacksLoad = File::load ($matchbacksFile[0]);
     $fileName = '';
-    if(gettype($matchbacksLoad) == 'object'){
+    if($matchbacksLoad instanceof File){
       try {
         $matchbacksLoad->save();
       } catch (Drupal\Core\Entity\EntityStorageException $e) {
@@ -99,28 +99,25 @@ class ImportMatchbacksForm extends FormBase
     $fileType = end($fileNameParts);
 
     $fh = fopen($fileUri, "r");
-    if (empty($fh)) {
-      $messenger->addError('Failed to open Matchback file');
+    if (!$fh) {
+      $messenger->addError(t('Failed to open Matchback file'));
       return;
     }
 
     if($fileType == 'csv') {
       $fieldPosHeader = fgetcsv($fh);
-      if (empty($fieldPosHeader)) {
-        $messenger->addError('Failed to read Matchback File Header');
+      if (!$fieldPosHeader) {
+        $messenger->addError(t('Failed to read Matchback File Header'));
         fclose($fh);
-        $fileObj = Drupal::getContainer()->get('file_system');
-        $fileObj->unlink($fileUri);
+        $this->fileObj->unlink($fileUri);
         return;
       }
     } else {
       $headerRecord = (string)fgets($fh);
-      //nlp_debug_msg('$headerRecord',strToHex($headerRecord));
       if (empty($headerRecord)) {
-        $messenger->addError('Failed to read Matchback File Header');
+        $messenger->addError(t('Failed to read Matchback File Header'));
         fclose($fh);
-        $fileObj = Drupal::getContainer()->get('file_system');
-        $fileObj->unlink($fileUri);
+        $this->fileObj->unlink($fileUri);
         return;
       }
       $fieldPosHeader = explode("\t", $headerRecord);
@@ -135,7 +132,7 @@ class ImportMatchbacksForm extends FormBase
       foreach ($fieldPos['err'] as $errMsg) {
         $messenger->addWarning($errMsg);
       }
-      $messenger->addError('Fix the problem before resubmit.');
+      $messenger->addError(t('Fix the problem before resubmit.'));
       return;
     }
     $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
@@ -146,23 +143,25 @@ class ImportMatchbacksForm extends FormBase
     $config->set('nlpservices-last-matchback-time',$createTime);
     $config->save();
     
+    fclose($fh);
+
     // Set up the call to start a batch operation.
-    $args = array (
+    $args = [
       'fileUri' => $fileUri,
       'fileType' => $fileType,
       'fieldPos' => $fieldPos['pos'],
-    );
-    $batch = array(
-      'operations' => array(
-        array('importMatchbacksBatch', array($args))
-      ),
+    ];
+    $batch = [
+      'operations' => [
+        ['importMatchbacksBatch', [$args]],
+      ],
       'file' => $modulePath.'/src/Form/ImportMatchbacksBatch.php',
       'finished' => 'importMatchbacksBatchFinished',
       'title' => t('Processing import_matchbacks upload.'),
       'init_message' => t('Matchback import is starting.'),
       'progress_message' => t('Processed @percentage % of ballots received file.'),
       'error_message' => t('Import matchbacks has encountered an error.'),
-    );
+    ];
     batch_set($batch);
   }
 

@@ -15,7 +15,7 @@ function importMinivanBatch($arg,&$context): void
   $subject = $arg['subject'];
   $month = $arg['month'];
   $day = $arg['day'];
-  $minivanObj = Drupal::getContainer()->get('nlpservices.minivan');
+  $minivanObj = Drupal::service('nlpservices.minivan');
   $counts = $minivanObj->processMinivanQueueReports($arg['records'],$fileType);
   $context['finished'] = 1;
   $context['results']['subject'] = $subject;
@@ -40,12 +40,30 @@ function importMinivanFinished($success, $results, $unused): void
   $messenger = Drupal::messenger();
   if ($success) {
     $counts = $results['counts'];
-    $msg = $counts['recordCnt'].' records processed from email, processed: '.
-      $counts['processedCnt'].', duplicates: '.$counts['duplicateCnt'].', rejected: '.$counts['rejectedCnt'].
-      ', Not an NLP Voter: '.$counts['notNlp'].' - subject: '.$results['subject'].'  Date: '.$results['month'].' '.
-      $results['day'];
-    $messenger->addStatus($msg, TRUE);
-    Drupal::logger('nlpservices')->notice('MiniVAN import: '.$msg);
+    $messenger->addStatus(t(
+      '@count records processed from email, processed: @processed, duplicates: @dupes, rejected: @rejected, Not an NLP Voter: @notNlp - subject: @subject  Date: @month @day',
+      [
+        '@count'     => $counts['recordCnt'],
+        '@processed' => $counts['processedCnt'],
+        '@dupes'     => $counts['duplicateCnt'],
+        '@rejected'  => $counts['rejectedCnt'],
+        '@notNlp'    => $counts['notNlp'],
+        '@subject'   => $results['subject'],
+        '@month'     => $results['month'],
+        '@day'       => $results['day'],
+      ]
+    ), TRUE);
+    Drupal::logger('nlpservices')->notice('MiniVAN import: @count records processed, processed: @processed, duplicates: @dupes, rejected: @rejected, not NLP: @notNlp, subject: @subject, date: @month @day',
+      [
+        '@count'     => $counts['recordCnt'],
+        '@processed' => $counts['processedCnt'],
+        '@dupes'     => $counts['duplicateCnt'],
+        '@rejected'  => $counts['rejectedCnt'],
+        '@notNlp'    => $counts['notNlp'],
+        '@subject'   => $results['subject'],
+        '@month'     => $results['month'],
+        '@day'       => $results['day'],
+      ]);
   }
   else {
     $messenger->addError(t('An error occurred.'));

@@ -1,7 +1,5 @@
 <?php
 
-const MAX_QUEUE_LIMIT = '100';
-
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * importReportsBatch
  *
@@ -13,17 +11,15 @@ const MAX_QUEUE_LIMIT = '100';
  */
 function importReportsBatch($arg,&$context): void
 {
-  
-  $context['finished'] = TRUE;
   $uri = $arg['uri'];
-  
+
   $fh = fopen($uri, "r");
-  if (empty($fh)) {
+  if (!$fh) {
     Drupal::logger('nlpservices')->notice('Failed to open reports file.');
     $context['finished'] = TRUE;
     return;
   }
-  
+
   $filesize = filesize($uri);
   $context['finished'] = 0;
   // Position the file at the start or where we left off for the previous batch.
@@ -39,34 +35,36 @@ function importReportsBatch($arg,&$context): void
     $csvColumnNames = $context['sandbox']['csvColumnNames'];
   }
   $recordCount = $context['sandbox']['recordCount'];
-  
-  $reports = Drupal::getContainer()->get('nlpservices.reports');
-  
+
+  $reports = Drupal::service('nlpservices.reports');
+
   $done = TRUE;
   do {
     $report = fgetcsv($fh);
-    if(empty($report)) {break;}
+    if (!$report) { break; }
     $recordCount++;
-    
-    $namedFields = (array) array_combine($csvColumnNames, $report);
-    
+
+    $combined = array_combine($csvColumnNames, $report);
+    if ($combined === FALSE) { continue; }
+    $namedFields = $combined;
+
     $namedFields['text'] = trim(strip_tags(htmlentities(stripslashes($namedFields['text']),ENT_QUOTES)));
     if(strlen($namedFields['text']) >= 1023) {
       $namedFields['text'] = substr($namedFields['text'],0,1022);
     }
-    
+
     $contactDate = $namedFields['contactDate'];
-    $contactTime = strtotime($contactDate);
-    $date = date('Y-m-d',$contactTime);
+    $contactTime = strtotime($contactDate) ?: 0;
+    $date = date('Y-m-d', $contactTime);
     $namedFields['contactDate'] = $date;
-    
+
     $value = str_replace("'","\'",$namedFields['value']);
     $namedFields['value'] = $value;
 
     unset($namedFields['reportIndex']);
-    
+
     $batchLimit = $reports->insertNlReports($namedFields);
-    
+
     if ($batchLimit) {
       $done = FALSE;
       $seek = ftell($fh);
@@ -80,9 +78,9 @@ function importReportsBatch($arg,&$context): void
       $context['sandbox']['recordCount'] = $recordCount;
       break;
     }
-    
+
   } while (TRUE);  // Keep looping to read records until the break at EOF.
-  
+
   // Finish the batch if we are done.
   if($done) {
     $reports->flushNlReports();
@@ -106,15 +104,13 @@ function importReportsBatch($arg,&$context): void
 function importReportsBatchFinished($success, $results, $operations): void
 {
   $messenger = Drupal::messenger();
-  $messenger->addStatus( t('Batch finished.'));
+  $messenger->addStatus(t('Batch finished.'));
   if ($success) {
     $recordCount = $results['recordCount'];
-    $messenger->addStatus( t('@count records processed.',
-      array('@count' => $recordCount)));
-    $messenger->addStatus( t('The reports file successfully updated.'));
+    $messenger->addStatus(t('@count records processed.', ['@count' => $recordCount]));
+    $messenger->addStatus(t('The reports file successfully updated.'));
   }
   else {
-    $messenger->addError( t('An error occurred.'));
+    $messenger->addError(t('An error occurred.'));
   }
-  
 }

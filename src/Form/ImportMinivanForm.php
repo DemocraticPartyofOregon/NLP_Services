@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ImportMinivanForm extends FormBase
 {
   protected NlpMinivan $minivanObj;
-  
+
   public function __construct($minivanObj)
   {
     $this->minivanObj = $minivanObj;
@@ -31,58 +31,49 @@ class ImportMinivanForm extends FormBase
   {
     return 'nlpservices_import_minivan_form';
   }
-  
+
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return array
+   * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $form['submit'] = array(
+    $form['submit'] = [
       '#type' => 'submit',
-      '#value' => 'Process the email inbox for new minivan reports.',
-    );
+      '#value' => t('Process the email inbox for new minivan reports.'),
+    ];
     return $form;
   }
-  
+
   /**
-   * @param array $form
-   * @param FormStateInterface $form_state
-   * @return void
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-  
-  do {
-    $queueItems = $this->minivanObj->minivanEmailCheck();  // Get the next email attachments.
-    if(empty($queueItems)) {break;}
-    foreach ($queueItems as $queueItem) {
-      if(empty($queueItem['reportCount'])) {continue;}  // An empty email.
-      $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-      // Set up the call to start a batch operation.
-      $args = [
-        'records' => $queueItem['reports'],
-        'fileType' => $queueItem['fileType'],
-        'subject' => $queueItem['subject'],
-        'month' => $queueItem['month'],
-        'day' => $queueItem['day'],
-      ];
-      
-      $batch_builder = (new BatchBuilder())
-        ->setTitle(t('Processing import_minivan upload.'))
-        ->setFile($modulePath . '/src/Form/ImportMinivanBatch.php')
-        ->setFinishCallback('importMinivanFinished')
-        ->setInitMessage(t('MiniVAN import is starting.'))
-        ->setProgressMessage('Processed @percentage % of minivan reports file.')
-        ->setErrorMessage('import_minivan has encountered an error.')
-        ->addOperation('importMinivanBatch', [$args,]);
-      batch_set($batch_builder->toArray());
-      
+    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+
+    do {
+      $queueItems = $this->minivanObj->minivanEmailCheck();
+      if (empty($queueItems)) { break; }
+      foreach ($queueItems as $queueItem) {
+        if (empty($queueItem['reportCount'])) { continue; }
+        $args = [
+          'records'  => $queueItem['reports'],
+          'fileType' => $queueItem['fileType'],
+          'subject'  => $queueItem['subject'],
+          'month'    => $queueItem['month'],
+          'day'      => $queueItem['day'],
+        ];
+        $batch_builder = (new BatchBuilder())
+          ->setTitle(t('Processing import_minivan upload.'))
+          ->setFile($modulePath . '/src/Form/ImportMinivanBatch.php')
+          ->setFinishCallback('importMinivanFinished')
+          ->setInitMessage(t('MiniVAN import is starting.'))
+          ->setProgressMessage(t('Processed @percentage % of minivan reports file.'))
+          ->setErrorMessage(t('import_minivan has encountered an error.'))
+          ->addOperation('importMinivanBatch', [$args]);
+        batch_set($batch_builder->toArray());
       }
     } while (TRUE);
-
   }
 
 }
-

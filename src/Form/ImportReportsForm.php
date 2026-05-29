@@ -55,7 +55,7 @@ class ImportReportsForm extends FormBase {
     $form['nl_reports_file'] = [
       '#type' => 'managed_file',
       '#title' => t('NL reports file name'),
-      '#description' => 'Select a file of historical results reported by NLs.',
+      '#description' => t('Select a file of historical results reported by NLs.'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
       '#upload_validators' => ['file_validate_extensions' => ['csv'],],
@@ -64,7 +64,7 @@ class ImportReportsForm extends FormBase {
     $form['upload_file'] = [
       '#type' => 'submit',
       '#id' => 'upload-file',
-      '#value' => 'Process the uploaded reports file >>',
+      '#value' => t('Process the uploaded reports file >>'),
     ];
     
     $form['button_link'] = [
@@ -80,20 +80,19 @@ class ImportReportsForm extends FormBase {
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $reportsFile = $form_state->getValue('nl_reports_file');
-    $reportsUpload = File::load ($reportsFile[0]);
+    if (empty($reportsFile)) { return; }
+    $reportsUpload = File::load($reportsFile[0]);
+    if (!($reportsUpload instanceof File)) { return; }
 
-    $fileName = '';
-    if(gettype($reportsUpload) == 'object'){
-      try{
-        $reportsUpload->save();
-      }
-      catch (EntityStorageException $e) {
-        nlp_debug_msg('File error.',$e->getMessage());
-        return;
-      }
-      $fileName = $reportsUpload->getFilename() ;
+    try {
+      $reportsUpload->save();
     }
-    $fileUri = 'public://temp/'.$fileName;
+    catch (EntityStorageException $e) {
+      nlp_debug_msg('File error.', $e->getMessage());
+      return;
+    }
+    $fileName = $reportsUpload->getFilename();
+    $fileUri = 'public://temp/' . $fileName;
   
     $emptyTable = $form_state->getValue('empty');
     if(!empty($emptyTable)) {
@@ -109,8 +108,8 @@ class ImportReportsForm extends FormBase {
       ->setFile($modulePath . '/src/Form/ImportReportsBatch.php')
       ->setFinishCallback('importReportsBatchFinished')
       ->setInitMessage(t('Reports import is starting.'))
-      ->setProgressMessage('Processed @percentage % of reports file.')
-      ->setErrorMessage('import reports has encountered an error.')
+      ->setProgressMessage(t('Processed @percentage % of reports file.'))
+      ->setErrorMessage(t('import reports has encountered an error.'))
       ->addOperation('importReportsBatch', [$args,]);
     
     batch_set($batch_builder->toArray());

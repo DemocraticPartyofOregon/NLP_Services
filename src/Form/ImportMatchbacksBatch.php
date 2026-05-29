@@ -1,7 +1,4 @@
-<?php /** @noinspection PhpUnusedAliasInspection */
-
-use Drupal\nlpservices\NlpMatchbacks;
-
+<?php
 
 const READ_COUNT_LIMIT = 12000;
 
@@ -16,13 +13,13 @@ const READ_COUNT_LIMIT = 12000;
  */
 function importMatchbacksBatch($arg,&$context): void
 {
-  $matchbacksObj = Drupal::getContainer()->get('nlpservices.matchbacks');
+  $matchbacksObj = Drupal::service('nlpservices.matchbacks');
   $fileUri = $arg['fileUri'];
   $fieldPos = $arg['fieldPos'];
   $fileType = $arg['fileType'];
   // Open the ballot received the file.
   $fh = fopen($fileUri, "r");
-  if (empty($fh)) {
+  if (!$fh) {
     nlp_debug_msg('File failed to open, arg', $arg);
     $context['finished'] = 1;
     $context['results']['fileUri'] = $fileUri;
@@ -56,7 +53,7 @@ function importMatchbacksBatch($arg,&$context): void
   do {
     if($fileType == 'csv') {
       $voterInfo = fgetcsv($fh);
-      if (empty($voterInfo)) {break;} //We've processed the last voter for this upload.
+      if (!$voterInfo) {break;} //We've processed the last voter for this upload.
       $recordCount++;
     } else {
       $voter_raw = fgets($fh);
@@ -67,13 +64,13 @@ function importMatchbacksBatch($arg,&$context): void
       $voterInfo = explode("\t", $voter_record);
     }
 
-    // Get the county name, party, and ballot received date (if set) for this voter.
-    // If we have a ballot received date for a Dem, schedule for the insert.
-    $br = !empty($voterInfo[$fieldPos['ballotReceived']]);
+    // Get the county name, party, and ballot-received date (if set) for this voter.
+    // If we have a ballot-received date for a Dem, schedule for the insert.
+    $br = !empty($voterInfo[$fieldPos['ballotReceived']] ?? '');
     $batchLimit = FALSE;
     if ($br) {
       $matchbackCount++;
-      $vanid = $voterInfo[$fieldPos['vanid']];
+      $vanid = $voterInfo[$fieldPos['vanid']] ?? '';
       if(empty($vanid)) {continue;}
       // Check for a duplicate.
       if(!empty($batchVanids[$vanid])) {continue;}
@@ -82,11 +79,11 @@ function importMatchbacksBatch($arg,&$context): void
       // If the record already exists, skip the insert.
       $exists = $matchbacksObj->matchbackExists($vanid);
       if($exists) {continue;}
-      
-      $ballotReceivedDate = $voterInfo[$fieldPos['ballotReceived']];
+
+      $ballotReceivedDate = $voterInfo[$fieldPos['ballotReceived']] ?? '';
       if(empty($ballotReceivedDate)) {continue;}
       $ballotReceivedTime = strtotime($ballotReceivedDate);  // Convert US date to time.
-      if($ballotReceivedTime === FALSE OR $ballotReceivedTime==0) {continue;}
+      if (!$ballotReceivedTime) {continue;}
       $convertedDate = date('Y-m-d',$ballotReceivedTime);  // Convert to ISO date.
       if($ballotReceivedTime > $latestMatchbackTime) {
         $latestMatchbackTime = $ballotReceivedTime;
@@ -100,7 +97,7 @@ function importMatchbacksBatch($arg,&$context): void
     // When we have completed the batch limit of records, return to the
     // queue to continue processing with a refreshed timer.   It also displays
     // progress to the user.
-    if ($batchLimit OR $recordCount>READ_COUNT_LIMIT) {
+    if ($batchLimit || $recordCount > READ_COUNT_LIMIT) {
       $done = FALSE;
       $matchbacksObj->flushMatchbacks();
       $matchbacksObj->setLatestMatchbackDate($latestMatchbackDate);
@@ -139,7 +136,7 @@ function importMatchbacksBatchFinished($success, $results, $unused): void
 {
   $messenger = Drupal::messenger();
 
-  $fileObj = Drupal::getContainer()->get('file_system');
+  $fileObj = Drupal::service('file_system');
   $fileUri = $results['fileUri'];
   $fileObj->unlink($fileUri);
   if ($success) {
