@@ -131,10 +131,7 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
       $forwardMsg = "<p>".$forwardText."<br />NLP Admin<br /><hr></p>";
       $message = $forwardMsg . $body;
 
-      $result = $this->sendEmailObj->sendEmail('forward_nl_reply',$to, $subject, $message);
-      if (!$result) {
-        $messenger->addError('There was a problem sending your message and it was not sent.');
-      }
+      $this->sendEmailObj->sendEmail('forward_nl_reply',$to, $subject, $message);
     }
     $messenger->addMessage("All emails processed.");
   }

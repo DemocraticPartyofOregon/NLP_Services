@@ -73,6 +73,9 @@ function nlpservices_mail($key, &$message, $params): void
       //  nlp_debug_msg('emailForward', $message);
       //}
       $message['headers']['Content-Type'] = 'multipart/alternative; boundary="'. $boundary.'"';
+      if(!empty($params['headers'])) {
+        $message['headers'] = array_merge($message['headers'], $params['headers']);
+      }
       $message['subject'] = $params['subject'];
       if(empty($params['from'])) {
         $message['from'] = Drupal::config('system.site')->get('mail');

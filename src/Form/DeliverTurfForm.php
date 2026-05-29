@@ -462,7 +462,6 @@ class DeliverTurfForm extends FormBase
     $message = (string) $message;
     $result = $this->sendMailObj->sendEmail('deliver_turf', $to, $subject, $message, $reply);
     if (!$result) {
-      $this->messenger()->addError(t('There was a problem sending your message and it was not sent.'));
       return FALSE;
     }
 

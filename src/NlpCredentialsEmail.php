@@ -130,12 +130,13 @@ class NlpCredentialsEmail
     ]);
 
     $subject = "Neighborhood Leader Materials - $county County";
-    $reply = $nlCoordinator['email'] ?? '';
+    $reply = $nlCoordinator['email'] ?? null;
 
     $message = (string)$message;
     $result = $this->sendMailObj->sendEmail('deliver_turf',$to, $subject, $message, $reply);
     if (!$result) {
-      Drupal::logger('nlpservices')->notice('There was a problem sending your message and it was not sent.');
+      Drupal::logger('nlpservices')->notice('sendCredentialsEmail failed for mcid: @mcid to: @to',
+        ['@mcid' => $mcid, '@to' => $to]);
       return FALSE;
     }
 

@@ -14,6 +14,7 @@ use Drupal\nlpservices\NlpMcidRecovery;
 use Drupal\nlpservices\NlpUserDisplay;
 use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpSessionData;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 /**
  * @noinspection PhpUnused
@@ -28,21 +29,23 @@ class LoginCredentialsReminderForm extends FormBase
   protected NlpSendEmail $sendEmailObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
-  
+  protected RequestStack $requestStack;
+
   public function __construct($drupalUser, $nlsObj, $mcidRecovery, $searchBarObj,
-                              $userDisplayObj, $sendEmailObj, $nlpConfigurationObj, $nlpSessionDataObj )
+                              $userDisplayObj, $sendEmailObj, $nlpConfigurationObj,
+                              $nlpSessionDataObj, $requestStack)
   {
     $this->drupalUser = $drupalUser;
     $this->nlsObj = $nlsObj;
     $this->mcidRecovery = $mcidRecovery;
     $this->searchBarObj = $searchBarObj;
-    
     $this->userDisplayObj = $userDisplayObj;
     $this->sendEmailObj = $sendEmailObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
+    $this->requestStack = $requestStack;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -57,6 +60,7 @@ class LoginCredentialsReminderForm extends FormBase
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
+      $container->get('request_stack'),
     );
   }
   
@@ -290,9 +294,9 @@ class LoginCredentialsReminderForm extends FormBase
     $message .= "<p>".'The following information provides the credentials you need to access NLP Services for '.
       $user['county'].' County'."</p>";
 
-    global $base_url;
-    $revealUrl = $base_url . '/nlp-mcid-recovery?key=' . $key;
-    $message .= '<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>';
+    $baseUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+    $revealUrl = $baseUrl . '/nlp-mcid-recovery?key=' . $key;
+    $message .= '<p><a href="' . $baseUrl . '" target="_blank">Neighborhood Leader Login</a></p>';
     $message .= '<p>Username: ' . $user['userName'] . '</p>';
     $message .= '<p><a href="' . $revealUrl . '">Click here to retrieve your password</a> '
       . '(this link can only be used once)</p>';
@@ -302,12 +306,11 @@ class LoginCredentialsReminderForm extends FormBase
     
     $thanks = '<p>Please contact me if you have any questions.<br>Thanks<br>'.$currentUser['firstName'].' '.
       $currentUser['lastName'].'<br>Phone: '.$currentUser['phone'].
-      '<br>Email: <a href="mailto:@email?subject=NL%20Help%20Request">'.$currentUserEmail.'</a></p>';
+      '<br>Email: <a href="mailto:'.$currentUserEmail.'?subject=NL%20Help%20Request">'.$currentUserEmail.'</a></p>';
     $message .= $thanks;
   
     $result = $this->sendEmailObj->sendEmail('account_reminder',$user['email'], $subject, $message, $currentUserEmail);
     if (!$result) {
-      $messenger->addError(t('There was a problem sending your message and it was not sent.'));
       return FALSE;
     }
     return TRUE;

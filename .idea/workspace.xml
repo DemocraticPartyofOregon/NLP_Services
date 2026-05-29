@@ -4,18 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review reports, lst display, paths, replies">
-      <change afterPath="$PROJECT_DIR$/js/hd-filter.js" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.libraries.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.libraries.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResultsSummary.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResultsSummary.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSearchBar.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSearchBar.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCredentialsEmail.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpReplies.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpReplies.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSendEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSendEmail.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -99,23 +95,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0000003175440535" />
-      <entry key="S60" value="1.0016869366571408" />
-      <entry key="M2" value="1.1231517866988503" />
-      <entry key="M5" value="2.6169048149139136" />
-      <entry key="M10" value="4.832747074484516" />
-      <entry key="M15" value="6.199014293992767" />
-      <entry key="M30" value="8.698016682454835" />
-      <entry key="H1" value="13.115821058901988" />
-      <entry key="H2" value="29.83092013066572" />
-      <entry key="H4" value="78.37678952722595" />
-      <entry key="D1" value="321.8114329739791" />
-      <entry key="W1" value="559.9628439183908" />
+      <entry key="MS100" value="1.0017032051813068" />
+      <entry key="MS500" value="1.3627385168409298" />
+      <entry key="S2" value="2.6427519884729325" />
+      <entry key="S5" value="4.361495615884811" />
+      <entry key="S10" value="6.699234700825645" />
+      <entry key="S30" value="11.358839758103802" />
+      <entry key="S60" value="13.690569024469326" />
+      <entry key="M2" value="15.195203807673185" />
+      <entry key="M5" value="16.237662340916636" />
+      <entry key="M10" value="16.61195782889724" />
+      <entry key="M15" value="16.748602623916547" />
+      <entry key="M30" value="17.20215960942504" />
+      <entry key="H1" value="19.50142985856297" />
+      <entry key="H2" value="30.16471406763081" />
+      <entry key="H4" value="69.11526469031426" />
+      <entry key="D1" value="317.66528706979136" />
+      <entry key="W1" value="571.5523976400104" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -123,37 +119,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="2.8324862746242556E-235" />
-      <entry key="S60" value="5.322110741636498E-118" />
-      <entry key="M2" value="2.3069700348371455E-59" />
-      <entry key="M5" value="3.5092699813333364E-24" />
-      <entry key="M10" value="1.8733045618193902E-12" />
-      <entry key="M15" value="1.5196337386990147E-8" />
-      <entry key="M30" value="1.2327342537651737E-4" />
-      <entry key="H1" value="0.011103123947603872" />
-      <entry key="H2" value="0.10601540507547592" />
-      <entry key="H4" value="0.3740123143378925" />
-      <entry key="D1" value="5.508101616996166" />
-      <entry key="W1" value="14.16783800371927" />
+      <entry key="S30" value="2.8265E-320" />
+      <entry key="S60" value="1.681204451962213E-160" />
+      <entry key="M2" value="1.2966126838660091E-80" />
+      <entry key="M5" value="1.1094918241864671E-32" />
+      <entry key="M10" value="1.0533241781077979E-16" />
+      <entry key="M15" value="2.2303586358967462E-11" />
+      <entry key="M30" value="4.722667295503726E-6" />
+      <entry key="H1" value="0.0021732221946703513" />
+      <entry key="H2" value="0.046902765331313996" />
+      <entry key="H4" value="0.24877150726900762" />
+      <entry key="D1" value="5.14621271060964" />
+      <entry key="W1" value="14.030956126730002" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.624100009847046E-5" />
-      <entry key="MS500" value="0.11018501973839627" />
-      <entry key="S2" value="0.5761434626858223" />
-      <entry key="S5" value="0.8020699681375862" />
-      <entry key="S10" value="0.8955835908152774" />
-      <entry key="S30" value="0.9639078539073023" />
-      <entry key="S60" value="0.9834745307043343" />
-      <entry key="M2" value="1.1139917590266457" />
-      <entry key="M5" value="2.6131717345014227" />
-      <entry key="M10" value="4.830806661107037" />
-      <entry key="M15" value="6.197596310861416" />
-      <entry key="M30" value="8.69705351388935" />
-      <entry key="H1" value="13.125888127472603" />
-      <entry key="H2" value="29.935375730438754" />
-      <entry key="H4" value="78.7481993361914" />
-      <entry key="D1" value="327.31565645113744" />
-      <entry key="W1" value="574.1290082719207" />
+      <entry key="MS100" value="0.9154095643055455" />
+      <entry key="MS500" value="1.3390262306390035" />
+      <entry key="S2" value="2.6307520301881664" />
+      <entry key="S5" value="4.353181458501545" />
+      <entry key="S10" value="6.692531596239184" />
+      <entry key="S30" value="11.354782894079214" />
+      <entry key="S60" value="13.688063159864619" />
+      <entry key="M2" value="15.193794130432384" />
+      <entry key="M5" value="16.237054608353464" />
+      <entry key="M10" value="16.611645946436546" />
+      <entry key="M15" value="16.748390889441282" />
+      <entry key="M30" value="17.20201696896061" />
+      <entry key="H1" value="19.503347191532757" />
+      <entry key="H2" value="30.210900143584738" />
+      <entry key="H4" value="69.36229184161208" />
+      <entry key="D1" value="322.8078742171811" />
+      <entry key="W1" value="585.581695968986" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -263,15 +259,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
-      <workItem from="1779972293479" duration="23169000" />
-    </task>
-    <task id="LOCAL-00045" summary="Eliminate the minivan penalty for deleting a turf.">
-      <option name="closed" value="true" />
-      <created>1773881942677</created>
-      <option name="number" value="00045" />
-      <option name="presentableId" value="LOCAL-00045" />
-      <option name="project" value="LOCAL" />
-      <updated>1773881942677</updated>
+      <workItem from="1779972293479" duration="24768000" />
     </task>
     <task id="LOCAL-00046" summary="Set a minimum size to the Notes column for the list of active NLs.">
       <option name="closed" value="true" />
@@ -657,7 +645,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780002467787</updated>
     </task>
-    <option name="localTasksCounter" value="94" />
+    <task id="LOCAL-00094" summary="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem.">
+      <option name="closed" value="true" />
+      <created>1780011743749</created>
+      <option name="number" value="00094" />
+      <option name="presentableId" value="LOCAL-00094" />
+      <option name="project" value="LOCAL" />
+      <updated>1780011743749</updated>
+    </task>
+    <option name="localTasksCounter" value="95" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -709,7 +705,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix summary report for counties that have more than one CD." />
     <MESSAGE value="Fix the loss of passwords with a sync of active NLs." />
     <MESSAGE value="Code review of ImprtCredentialsForm" />
     <MESSAGE value="Add warning to data entry pagw for unsaved changes." />
@@ -734,7 +729,8 @@
     <MESSAGE value="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery" />
     <MESSAGE value="Claude code review minvan and NlpNls" />
     <MESSAGE value="Claude code review reports, lst display, paths, replies" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review reports, lst display, paths, replies" />
+    <MESSAGE value="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem." />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review resultsSummary, resyncTurf and searchBar.   And fix the AJAX/Sort problem." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
