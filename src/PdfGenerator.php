@@ -2,8 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-require_once DRUPAL_ROOT . '/../vendor/autoload.php';
-
 use Drupal;
 use Drupal\Core\File\FileExists;
 use Mpdf\Mpdf;
@@ -42,7 +40,7 @@ class PdfGenerator {
       $file_uri = $file->getFileUri();
     }
     else {
-      nlp_debug_msg('ExportNlsParticipationForm','Failed to create temporary file: ');
+      nlp_debug_msg('PdfGenerator','Failed to create temporary file: ');
       return '';
     }
     $mpdf->Output($file_uri, Destination::FILE);

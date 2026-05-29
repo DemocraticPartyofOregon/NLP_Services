@@ -13,10 +13,10 @@ class NlpVoterListDisplay
    * array is the working structure for NLP, and the resulting array is organized for display
    * in a table form element.
    *
-   * @param $voters
+   * @param array $voters
    * @return array
    */
-  function buildVoterTableArray($voters): array
+  public function buildVoterTableArray(array $voters): array
   {
     $rows = [];
     foreach ($voters as $voter) {
@@ -24,7 +24,7 @@ class NlpVoterListDisplay
       $column['cb'] = ['type'=>'cd', 'vanid'=>$voter['vanid']];
       $column['vanid'] = $voter['vanid'];
       $column['lastName'] = $voter['lastName'];
-      $column['fistName'] = $voter['firstName'];
+      $column['firstName'] = $voter['firstName'];
       $column['age'] = $voter['age'];
       $column['sex'] = $voter['sex'];
       $column['party'] = $voter['party'];
@@ -36,16 +36,16 @@ class NlpVoterListDisplay
     return $rows;
   }
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * displayVoters
+  /**
+   * displayListOfVoters
    *
    * This method will convert an array of voters into a table form element.
    * The first element of each row is a checkbox for selecting the voters.
    *
-   * @param $rows
+   * @param array $rows
    * @return array
    */
-  function displayListOfVoters($rows): array
+  public function displayListOfVoters(array $rows): array
   {
     $this->headerBuild();
     $tableName = 'contacts';
@@ -60,7 +60,7 @@ class NlpVoterListDisplay
         if($columnName == 'cb') {
           $form_element[$tableName][$mcid][$columnName] = [
             '#type' => 'checkbox',
-            '#return_value' => 'CB_'.'checkbox'.'_'.$columnValue['vanid'],
+            '#return_value' => 'CB_checkbox_'.$columnValue['vanid'],
           ];
         } else {
           $form_element[$tableName][$mcid][$columnName] = [
@@ -85,10 +85,10 @@ class NlpVoterListDisplay
   {
     $this->header = [];
     $this->header[] = ['data' => t('cb'), 'field' => 't.cb', 'class' => ['nlp-th-color'] ];
-    $this->header[] =   ['data' => t('VANID'), 'field' => 'v.vanid', 'class' => ['nlp-th-color'] ];
-    $this->header[] =   ['data' => t('Last Name'), 'field' => 'v.lastName', 'class' => ['nlp-th-color'] ];
-    $this->header[] =   ['data' => t('First Name'), 'field' => 'v.firstName', 'class' => ['nlp-th-color'] ];
-    $this->header[] =   ['data' => t('Age'), 'field' => 'v.age', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('VANID'), 'field' => 'v.vanid', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Last Name'), 'field' => 'v.lastName', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('First Name'), 'field' => 'v.firstName', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Age'), 'field' => 'v.age', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Sex'), 'field' => 'v.sex', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Party'), 'field' => 'v.party', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Address'), 'field' => 'v.address', 'class' => ['nlp-th-color'] ];
@@ -100,10 +100,10 @@ class NlpVoterListDisplay
    *
    * This is a method to determine which voters were selected.
    *
-   * @param $contacts
+   * @param array $contacts
    * @return array
    */
-  public function validateVoterSelection($contacts):array
+  public function validateVoterSelection(array $contacts): array
   {
     $selections = [];
     foreach($contacts as $contact) {

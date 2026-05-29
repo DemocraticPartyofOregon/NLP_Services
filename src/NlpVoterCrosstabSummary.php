@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\Database\Connection;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -103,7 +102,7 @@ class NlpVoterCrosstabSummary
     $accepted    = $allVoters['accepted'];
     $pct = ($totalPeople > 0) ? round($accepted / $totalPeople * 100, 1) . '%' : '0%';
     $rows[] = [
-      'type'        => 'All voters',
+      'type'        => t('All voters'),
       'totalPeople' => number_format($totalPeople),
       'accepted'    => number_format($accepted),
       'pct'         => $pct,
@@ -113,7 +112,7 @@ class NlpVoterCrosstabSummary
     $accepted    = $targetVoters['accepted'];
     $pct = ($totalPeople > 0) ? round($accepted / $totalPeople * 100, 1) . '%' : '0%';
     $rows[] = [
-      'type'        => 'Target voters',
+      'type'        => t('Target voters'),
       'totalPeople' => number_format($totalPeople),
       'accepted'    => number_format($accepted),
       'pct'         => $pct,
@@ -123,7 +122,7 @@ class NlpVoterCrosstabSummary
       $total = $turfStats['total'];
       $pct = ($total > 0) ? round($turfStats['totalVoted'] / $total * 100, 1) . '%' : '0%';
       $rows[] = [
-        'type'        => 'NLP voters',
+        'type'        => t('NLP voters'),
         'totalPeople' => number_format($total),
         'accepted'    => number_format($turfStats['totalVoted']),
         'pct'         => $pct,
@@ -132,7 +131,7 @@ class NlpVoterCrosstabSummary
       $contacted = $turfStats['contacted'];
       $pct = ($contacted > 0) ? round($turfStats['contactedVoted'] / $contacted * 100, 1) . '%' : '0%';
       $rows[] = [
-        'type'        => 'Contact attempted',
+        'type'        => t('Contact attempted'),
         'totalPeople' => number_format($contacted),
         'accepted'    => number_format($turfStats['contactedVoted']),
         'pct'         => $pct,
@@ -141,7 +140,7 @@ class NlpVoterCrosstabSummary
       $surveyed = $turfStats['surveyed'];
       $pct = ($surveyed > 0) ? round($turfStats['surveyedVoted'] / $surveyed * 100, 1) . '%' : '0%';
       $rows[] = [
-        'type'        => 'Survey responded',
+        'type'        => t('Survey responded'),
         'totalPeople' => number_format($surveyed),
         'accepted'    => number_format($turfStats['surveyedVoted']),
         'pct'         => $pct,
@@ -153,9 +152,9 @@ class NlpVoterCrosstabSummary
       '#caption' => $county,
       '#header'  => [
         'type'        => '',
-        'totalPeople' => 'Total Voters',
-        'accepted'    => 'Voted',
-        'pct'         => 'Participation',
+        'totalPeople' => t('Total Voters'),
+        'accepted'    => t('Voted'),
+        'pct'         => t('Participation'),
       ],
       '#rows' => $rows,
     ];

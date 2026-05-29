@@ -6,19 +6,20 @@ class NlpUserDisplay
 {
   private array $header = [];
   
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+  /**
    * displayUsers
    *
    * Create the table elements for a list of login credentials for users of the site.
    * The table is slightly different for the list to reminder a user of their login
    * credentials.  This variation is just to keep the width of the table manageable.
    *
-   * @param $users - Array of user arrays.
+   * @param array $users - Array of user arrays.
    * @param bool $loginReminder - TRUE if the table is for a login reminder.
    * @return array
    */
-  function displayUsers($users, bool $loginReminder=FALSE): array
+  public function displayUsers(array $users, bool $loginReminder=FALSE): array
   {
+    $form_element = [];
     if(empty($users)) {
       $form_element['table-form']['no-users'] = ['#markup' => '<p>No users to display.</p>',];
       return $form_element;
@@ -39,8 +40,8 @@ class NlpUserDisplay
       if(!$loginReminder) {
         $createDate = date('Y/n/j',$user['created']);
         $accessDate = (!empty($user['access']))?date('Y/n/j',$user['access']):'Never';
-        $column['$createDate'] = $createDate;
-        $column['$accessDate'] = $accessDate;
+        $column['createDate'] = $createDate;
+        $column['accessDate'] = $accessDate;
       } else {
         $column['phone'] = $user['phone'];
         $column['email'] = $user['email'];
@@ -69,7 +70,7 @@ class NlpUserDisplay
     
     foreach ($rows as $rowNumber => $row) {
       foreach($row as $columnName => $columnValue) {
-        if(is_array($columnValue) AND $columnName == 'cb') {
+        if(is_array($columnValue) && $columnName == 'cb') {
           $form_element['contacts'][$rowNumber][$columnName] = [
             '#type' => 'checkbox',
             '#return_value' => 'CB_'.$columnValue['rowCount'].'_'.$columnValue['uid'],
@@ -123,10 +124,10 @@ class NlpUserDisplay
    *   The rowCount is the row number of the selected checkbox.
    *   The uid is the uid of the user.
    *
-   * @param $contacts
+   * @param array $contacts
    * @return array
    */
-  public function validateUserSelection($contacts):array
+  public function validateUserSelection(array $contacts): array
   {
     $selections = [];
     foreach($contacts as $contact) {
@@ -149,7 +150,7 @@ class NlpUserDisplay
   {
     $this->headerBuild($loginReminder);
     foreach ($this->header as $headerInfo) {
-      if($headerInfo['data'] == $data) {
+      if((string) $headerInfo['data'] == $data) {
         return $headerInfo['field'];
       }
     }

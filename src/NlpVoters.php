@@ -46,11 +46,11 @@ class NlpVoters {
    * 
    * Get the voter records for all voters associated with a given NL.
    * 
-   * @param $mcid
+   * @param int $mcid
    * @return array - Array of vanids for the voters in the NL.  The key and the
    * value are both the vanId from the VoterFile.
    */
-  public function fetchVanIdsByNl($mcid): array
+  public function fetchVanIdsByNl(int $mcid): array
   {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
@@ -60,9 +60,9 @@ class NlpVoters {
     }
     catch (Exception $e) {
       nlp_debug_msg('e', $e->getMessage() );
-      return array();
+      return [];
     }
-    $voters = array();
+    $voters = [];
     do {
       $dbVoter = $result->fetchAssoc();
       if(empty($dbVoter)) {break;}
@@ -76,10 +76,10 @@ class NlpVoters {
    * 
    * Get the number of voters in all turfs assigned to an NL.
    * 
-   * @param $mcid
+   * @param int $mcid
    * @return int - the number of voters assigned to the NL.
    */
-  public function getVoterCountByNl($mcid): int
+  public function getVoterCountByNl(int $mcid): int
   {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
@@ -91,7 +91,7 @@ class NlpVoters {
       nlp_debug_msg('getVoterCountByNl', $e->getMessage() );
       return 0;
     }
-    return $voterCount;
+    return (int) $voterCount;
   }
   
   
@@ -136,7 +136,7 @@ class NlpVoters {
    * @param $vanIds - array of vanids to fetch.
    * @return array - array of voter records keyed by vanid.
    */
-  public function getVotersInList($vanIds): array
+  public function getVotersInList(array $vanIds): array
   {
     try {
       $query = $this->connection->select(self::VOTER_TBL, 'v');
@@ -231,7 +231,7 @@ class NlpVoters {
     try {
       $fields['vanid'] = $vanid;
       $this->connection->merge(self::VOTER_STATUS_TBL)
-        ->keys(array('vanid' => $vanid,))
+        ->keys(['vanid' => $vanid])
         ->fields($fields)
         ->execute();
     }
@@ -251,7 +251,7 @@ class NlpVoters {
    * @param $voter - an array of voter fields to create.
    * @return bool - TRUE if the voter was created, FALSE otherwise.
    */
-  public function createVoter($voter): bool
+  public function createVoter(array $voter): bool
   {
     $vanid = $voter['vanid'];
     $dbAddress = $voter['address'];
@@ -282,13 +282,13 @@ class NlpVoters {
   /**
    * createTurfVoter
    *
-   * @param $turfVoter
+   * @param array $turfVoter
    * @return bool
    *
    * Create a new turf voter record in the database.  The turf voter record is created in the
    * nlp_voter_turf table.  The voter turf table is used to associate a voter with a turf.
    */
-  public function createTurfVoter($turfVoter): bool
+  public function createTurfVoter(array $turfVoter): bool
   {
     $turfVoter['cycle'] = $this->nlpConfigurationObj->getCycle();
     try {
@@ -306,13 +306,13 @@ class NlpVoters {
   /**
    * updateTurfVoter
    *
-   * @param $turfVoter
+   * @param array $turfVoter
    * @return bool
    *
    * Update an existing turf voter record in the database.  The turf voter record is updated in the
    * nlp_voter_turf table.  The voter turf table is used to associate a voter with a turf.
    */
-  public function updateTurfVoter($turfVoter): bool
+  public function updateTurfVoter(array $turfVoter): bool
   {
     try {
       $this->connection->merge(self::VOTER_TURF_TBL)
@@ -333,13 +333,13 @@ class NlpVoters {
   /**
    * getVotersInTurf
    *
-   * @param $turfIndex
+   * @param int $turfIndex
    * @return array
    *
    * Get the voters in a turf by turfIndex.  The turf index is the unique identifier for a turf.
    * The result is an array of vanids for the voters in the turf.
    */
-  public function getVotersInTurf($turfIndex): array
+  public function getVotersInTurf(int $turfIndex): array
   {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 't');
@@ -398,7 +398,7 @@ class NlpVoters {
       if(empty($voter)) {break;}
       $voter['turfVoter'] = $this->getTurfVoter($voter['vanid']);
       $voter['address'] = $this->fetchVoterAddress($voter['vanid']);
-      if(empty($voter['address']) OR empty($voter['turfVoter'])) {
+      if(empty($voter['address']) || empty($voter['turfVoter'])) {
         return []; // Database corruption.
       }
       $voters[$voter['vanid']] = $voter;
@@ -426,12 +426,8 @@ class NlpVoters {
       nlp_debug_msg('getTurfVoter', $e->getMessage() );
       return [];
     }
-    
-    $turfVoter = $result->fetchAssoc();
-    //nlp_debug_msg('getTurfVoter', $turfVoter);
-    return $turfVoter;
-    
-    
+
+    return $result->fetchAssoc();
   }
   
   /**
@@ -582,7 +578,7 @@ class NlpVoters {
    */
   public function addressCompare(array $address1,array $address2): bool
   {
-    if(empty($address2) OR empty($address1)) {return FALSE;}
+    if(empty($address2) || empty($address1)) {return FALSE;}
     foreach ($this->addressFields as $addressKey) {
       if($address1[$addressKey] != $address2[$addressKey]) {
         return FALSE;
@@ -624,8 +620,7 @@ class NlpVoters {
   {
     try {
       $this->connection->update(self::VOTER_ADDRESS_TBL)
-        ->fields(array(
-          'moved' => $value,))
+        ->fields(['moved' => $value])
         ->condition('turfIndex',$turfIndex)
         ->condition('vanid',$vanid)
         ->execute();
@@ -656,7 +651,7 @@ class NlpVoters {
   {
     try {
       $this->connection->merge(self::VOTER_TBL)
-        ->keys(array('vanid' => $vanid))
+        ->keys(['vanid' => $vanid])
         ->fields($phone)
         ->execute();
     }
@@ -720,7 +715,6 @@ class NlpVoters {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
       $query->addField('g','vanid');
-      //$query->distinct();
       $query->condition('county',$county);
       $result = $query->execute();
     }
@@ -748,7 +742,6 @@ class NlpVoters {
   {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
-      //$query->leftJoin(self::VOTER_TBL, 'v', 'g.vanid = v.vanid');
       $query->leftJoin(self::VOTER_ADDRESS_TBL, 'a', 'g.vanid = a.vanid' );
       $query->addField('g','vanid');
       $query->condition('a.cd',$cd);
@@ -818,7 +811,7 @@ class NlpVoters {
       nlp_debug_msg('getVoterAddresses', $e->getMessage() );
       return [];
     }
-    $addresses = array();
+    $addresses = [];
     do {
       $address = $result->fetchAssoc();
       if(empty($address)) {break;}
@@ -828,16 +821,14 @@ class NlpVoters {
   }
   
   /**
- * getTurfIndexByVanid
- *
- * Get the turfIndex for a given vanid.  The turfIndex is used to associate a voter with a turf.
- * The result is an array of mcids (turfIndex) keyed by mcid, and the value is the turfIndex.
- *
- * @param int $vanid - the vanid to fetch the turfIndex for.
- * @return int - the turfIndex for the voter, or 0 if not found.
- * Used in importMinivanBatch
- * @noinspection PhpUnused
- */
+   * getTurfIndexByVanid
+   *
+   * Get the turfIndex for a given vanid.  The turfIndex is used to associate a voter with a turf.
+   *
+   * @param int $vanid - the vanid to fetch the turfIndex for.
+   * @return int - the turfIndex for the voter, or 0 if not found.
+   * @noinspection PhpUnused
+   */
   public function getTurfIndexByVanid(int $vanid): int
   {
     try {
@@ -855,6 +846,14 @@ class NlpVoters {
     return (!empty($nl['turfIndex']))?$nl['turfIndex']:0;
   }
   
+  /**
+   * getMcidByVanid
+   *
+   * Get the mcid for a given vanid from the voter turf table.
+   *
+   * @param int $vanid - the vanid to fetch the mcid for.
+   * @return int - the mcid for the voter, or 0 if not found.
+   */
   public function getMcidByVanid(int $vanid): int
   {
     try {
@@ -906,7 +905,7 @@ class NlpVoters {
       $query->condition($orGroup);
       $query->orderBy('lastName');
       $query->orderBy('firstName');
-      $result =  $query->execute();
+      $result = $query->execute();
     }
     catch (Exception $e) {
       nlp_debug_msg('searchVoters', $e->getMessage() );
