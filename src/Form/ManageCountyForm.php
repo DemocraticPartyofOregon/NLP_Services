@@ -1,11 +1,11 @@
-<?php /** @noinspection PhpParamsInspection */
+<?php
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
+use Drupal\Core\TempStore\TempStoreException;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
@@ -56,9 +56,7 @@ class ManageCountyForm extends FormBase {
     $countyNames = $this->nlpConfigurationObj->getCountyNames();
     $county = $this->sessionDataObj->getCounty();
     if(empty($county)) {
-      $messenger = Drupal::messenger();
-      $messenger->addWarning(t('The county is not specified. Please set the County field in your user
-      login record.'));
+      $this->messenger()->addWarning($this->t('The county is not specified. Please set the County field in your user login record.'));
     }
     $form_state->set('county',$county);
     
@@ -75,13 +73,13 @@ class ManageCountyForm extends FormBase {
     
     
     $form['known_county']['county-name'] = [
-      '#markup' => "<h1>".$county." County</h1>",
+      '#markup' => '<h1>' . htmlspecialchars($county, ENT_QUOTES, 'UTF-8') . ' County</h1>',
     ];
     
     if($isAdmin) {
       
       $form['known_county']['count_change_note'] = [
-        '#markup' => 'As a site administrator, you can change the county to be managed.',
+        '#markup' => $this->t('As a site administrator, you can change the county to be managed.'),
       ];
       $countyNames[0] = "Select County";
       $form_state->set('countyNames',$countyNames);
@@ -111,7 +109,7 @@ class ManageCountyForm extends FormBase {
     
     
     
-    $output .= "<h1>>Correct moved status</h1>";
+    $output .= "<h1>Correct move status</h1>";
     
     $output .= "<p>An NL can mark a voter as moved, and this status is reported to VoteBuilder.  Unfortunately, there is
     no API function to correct an erroneous report of moved.   The NL has to ask for help.  First, use the function
@@ -136,29 +134,21 @@ class ManageCountyForm extends FormBase {
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
     $values = $form_state->getValues();
-    
+
     $selectedCountyIndex = $values['county_select'];
     $countyNames = $form_state->get('countyNames');
     $county = $countyNames[$selectedCountyIndex];
-    
-    $factory = Drupal::service('tempstore.private');
-    $store = $factory->get('nlpservices.session_data');
-    //$county = $store->get('County');
-    $store->set('County',$county);
-    
+
+    $store = $this->privateTempstoreObj->get('nlpservices.session_data');
+
     try {
+      $store->set('County', $county);
       $store->set('currentFolderId', 0);
-    } catch (Drupal\Core\TempStore\TempStoreException $e) {
-      nlp_debug_msg('Temp store save error',$e->getMessage());
-      $form_state->setErrorByName('county_select',t('Temp store save error'));
-    }
-    
-    try {
       $store->set('currentHd', 0);
       $store->set('currentPct', '');
-    } catch (Drupal\Core\TempStore\TempStoreException $e) {
-      nlp_debug_msg('Temp store save error',$e->getMessage());
-      $form_state->setErrorByName('county_select',t('Temp store save error'));
+    } catch (TempStoreException $e) {
+      nlp_debug_msg('Temp store save error', $e->getMessage());
+      $form_state->setErrorByName('county_select', $this->t('Temp store save error'));
     }
     
   }
@@ -183,7 +173,7 @@ class ManageCountyForm extends FormBase {
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function countySelectedCallback ($form,$unused): array
+  public function countySelectedCallback($form, $unused): array
   {
     return $form['known_county'];
   }

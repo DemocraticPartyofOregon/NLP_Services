@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -67,8 +66,6 @@ class ManageDrupalAccountsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $messenger = Drupal::messenger();
-    
     $form = [];
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
@@ -91,7 +88,7 @@ class ManageDrupalAccountsForm extends FormBase
     $hdOptions  = $this->sessionDataObj->getHdOptions();
     $county = $form_state->get('county');
     if(empty($county)) {
-      $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
+      $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
     }
     
@@ -126,10 +123,11 @@ class ManageDrupalAccountsForm extends FormBase
           $this->hdsWithUsers($users,$currentHd);
         }
         
-        $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
-        if(!empty($sort)) {
-          $order = $_GET['order'];
-          $this->userDisplayObj->sortUsers($users,$sort,$order,TRUE);
+        $request = $this->requestStack->getCurrentRequest();
+        $sort = $request->query->get('sort', '');
+        if (!empty($sort)) {
+          $order = $request->query->get('order', '');
+          $this->userDisplayObj->sortUsers($users, $sort, $order, TRUE);
         }
         
         $form_state->set('users',$users);
@@ -151,7 +149,7 @@ class ManageDrupalAccountsForm extends FormBase
         $form['submit'] = [
           '#type' => 'submit',
           '#name' => 'user_select',
-          '#value' => t('Edit the selected user accounts'),
+          '#value' => $this->t('Edit the selected user accounts'),
         ];
         break;
       
@@ -161,7 +159,7 @@ class ManageDrupalAccountsForm extends FormBase
         $uids = $form_state->get('editUsers');
         
         $form['user_login_title'] = [
-          '#markup' => "<h2>Selected user accounts to edit</h2>",
+          '#markup' => '<h2>' . $this->t('Selected user accounts to edit') . '</h2>',
         ];
         
         foreach ($uids as $uid) {
@@ -174,7 +172,7 @@ class ManageDrupalAccountsForm extends FormBase
         }
         
         $form['user_edit_title'] = [
-          '#markup' => "<h2>User account to edit</h2>",
+          '#markup' => '<h2>' . $this->t('User account to edit') . '</h2>',
         ];
         $currentEditIndex = $form_state->get('currentEditIndex');
         $uid = $uids[$currentEditIndex-1];
@@ -183,7 +181,7 @@ class ManageDrupalAccountsForm extends FormBase
         
         $mcid = $user['mcid'];
         $form_state->set('mcid',$mcid);
-        if($userIsNlpAdmin AND !$adminRole) {
+        if($userIsNlpAdmin && !$adminRole) {
           $password = '*******';
         } elseif(empty($mcid)) {
           $password = 'unknown';
@@ -197,32 +195,33 @@ class ManageDrupalAccountsForm extends FormBase
         $user['password'] = $password;
         $currentValue = [];
         $countyNames = $this->nlpConfigurationObj->getCountyNames();
+        $form_state->set('countyNames', $countyNames);
         $form['edit_user'] = $this->displayUser($user,$currentValue,$countyNames);
         $currentValue['uid'] = $uid;
         
         $form_state->set('currentValue', $currentValue);
         
-        if(!$userIsNlpAdmin OR $adminRole) {
+        if(!$userIsNlpAdmin || $adminRole) {
           $form['edit_done'] = [
             '#type' => 'submit',
             '#name' => 'edit_done',
-            '#value' => t('Done editing user accounts'),
+            '#value' => $this->t('Done editing user accounts'),
           ];
           $form['edit_submit'] = [
             '#type' => 'submit',
             '#name' => 'edit_submit',
-            '#value' => t('Save changes'),
-            '#description' => t('And advance to next account'),
+            '#value' => $this->t('Save changes'),
+            '#description' => $this->t('And advance to next account'),
           ];
           
         } else {
           $form['edit_warning'] = [
-            '#markup' => 'You are not permitted to edit this account.<br><br>',
+            '#markup' => $this->t('You are not permitted to edit this account.') . '<br><br>',
           ];
           $form['edit_done'] = [
             '#type' => 'submit',
             '#name' => 'edit_done',
-            '#value' => t('Skip this account'),
+            '#value' => $this->t('Skip this account'),
           ];
         }
         break;
@@ -261,7 +260,7 @@ class ManageDrupalAccountsForm extends FormBase
             case 'phone':
             case 'magic-word':
               if (empty($values[$key])) {
-                $form_state->setErrorByName($key, t($key . ' must not be empty.'));
+                $form_state->setErrorByName($key, $this->t('@field must not be empty.', ['@field' => $key]));
               } else {
                 $changed[$key] = $values[$key];
               }
@@ -269,35 +268,36 @@ class ManageDrupalAccountsForm extends FormBase
             case 'mcid':
               $userCheck = $this->drupalUserObj->getUserByMcid($values[$key]);
               if (!empty($userCheck)) {
-                $form_state->setErrorByName($key, t($values[$key] . ' is already assigned to another user account.'));
+                $form_state->setErrorByName($key, $this->t('@value is already assigned to another user account.', ['@value' => $values[$key]]));
                 break;
               }
               $nls = $this->nlsObj->getNlById($values[$key]);
               if (empty($nls)) {
-                $form_state->setErrorByName($key, t($values[$key] . ' is not in the list of NLs.'));
+                $form_state->setErrorByName($key, $this->t('@value is not in the list of NLs.', ['@value' => $values[$key]]));
                 break;
               }
               $changed[$key] = $values[$key];
               break;
             case 'mail':
               if (empty($values[$key])) {
-                $form_state->setErrorByName($key, t($key . ' must not be empty.'));
+                $form_state->setErrorByName($key, $this->t('@field must not be empty.', ['@field' => $key]));
                 break;
               }
               $userCheck = $this->drupalUserObj->getUserByEmail($values[$key]);
               if (!empty($userCheck)) {
-                $form_state->setErrorByName($key, t($key . ' is already assigned to another user account.'));
+                $form_state->setErrorByName($key, $this->t('@field is already assigned to another user account.', ['@field' => $key]));
                 break;
               }
               $changed[$key] = $values[$key];
               break;
             case 'uname':
               if (empty($values[$key])) {
-                $form_state->setErrorByName($key, t($key . ' must not be empty.'));
+                $form_state->setErrorByName($key, $this->t('@field must not be empty.', ['@field' => $key]));
+                break;
               }
               $userCheck = $this->drupalUserObj->getUserByName($values[$key]);
               if (!empty($userCheck)) {
-                $form_state->setErrorByName($key, t($key . ' is already assigned to another user account.'));
+                $form_state->setErrorByName($key, $this->t('@field is already assigned to another user account.', ['@field' => $key]));
                 break;
               }
               $changed[$key] = $values[$key];
@@ -310,15 +310,15 @@ class ManageDrupalAccountsForm extends FormBase
         
         $notLeader = empty($values['selected_roles']['nlp_leader']);
         $notCoordinator = empty($values['selected_roles']['nlp_coordinator']);
-        if($notLeader AND $notCoordinator) {
-          $form_state->setErrorByName('selected_roles', t('At least one role must be selected.'));
+        if($notLeader && $notCoordinator) {
+          $form_state->setErrorByName('selected_roles', $this->t('At least one role must be selected.'));
           return;
         }
-        
+
         $wasNotLeader = empty($currentValue['roles']['roleDefaults']['nlp_leader']);
         $wasNotCoordinator = empty($currentValue['roles']['roleDefaults']['nlp_coordinator']);
-        
-        if($notLeader != $wasNotLeader OR $notCoordinator != $wasNotCoordinator) {
+
+        if($notLeader != $wasNotLeader || $notCoordinator != $wasNotCoordinator) {
           $changed['roles'][NLP_LEADER_ROLE_ID] = ($notLeader)?0:NLP_LEADER_ROLE_LABEL;
           $changed['roles'][NLP_COORDINATOR_ROLE_ID] = ($notCoordinator)?0:NLP_COORDINATOR_ROLE_LABEL;
         }
@@ -330,7 +330,7 @@ class ManageDrupalAccountsForm extends FormBase
         $userSelections = $this->userDisplayObj->validateUserSelection($form_state->getValue('contacts'));
         $form_state->set('userSelections', $userSelections);
         if(empty($userSelections)) {
-          $form_state->setErrorByName('reminder_select','You must select at least one NL to send an email.');
+          $form_state->setErrorByName('reminder_select', $this->t('You must select at least one NL to send an email.'));
         }
         break;
     }
@@ -433,7 +433,7 @@ class ManageDrupalAccountsForm extends FormBase
    * @param $countyNames
    * @return array
    */
-  function displayUser($user,&$currentValue,$countyNames): array
+  public function displayUser($user, &$currentValue, $countyNames): array
   {
     $allowedRoles = $this->drupalUserObj->getNlpRoles();
     unset($allowedRoles['nlp_admin']);
@@ -443,11 +443,11 @@ class ManageDrupalAccountsForm extends FormBase
     $form_element['edit']['firstName'] = [
       '#type' => 'textfield',
       '#id' => 'firstname',
-      '#title' => 'First Name',
+      '#title' => $this->t('First Name'),
       '#default_value' => $firstName,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Edit the spelling of the user's chosen first name.",
+      '#description' => $this->t("Edit the spelling of the user's chosen first name."),
     ];
     
     $lastName = str_replace("&#039;","'",$user['lastName']);
@@ -455,11 +455,11 @@ class ManageDrupalAccountsForm extends FormBase
     $form_element['edit']['lastName'] = [
       '#type' => 'textfield',
       '#id' => 'lastname',
-      '#title' => 'Last Name',
+      '#title' => $this->t('Last Name'),
       '#default_value' => $lastName,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Edit the spelling of the user's last name.",
+      '#description' => $this->t("Edit the spelling of the user's last name."),
       '#prefix' => "<br>",
     ];
     
@@ -468,11 +468,11 @@ class ManageDrupalAccountsForm extends FormBase
     $form_element['edit']['mcid'] = [
       '#type' => 'textfield',
       '#id' => 'mcid',
-      '#title' => 'MCID',
+      '#title' => $this->t('MCID'),
       '#default_value' => $mcid,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Edit (or add) the MyCampaign ID number.",
+      '#description' => $this->t('Edit (or add) the MyCampaign ID number.'),
       '#prefix' => "<br>",
     ];
     
@@ -482,10 +482,10 @@ class ManageDrupalAccountsForm extends FormBase
     
     $form_element['edit']['county'] = [
       '#type' => 'select',
-      '#title' => t('County'),
+      '#title' => $this->t('County'),
       '#options' => $countyNames,
       '#default_value' => $countyIndex,
-      '#description' => 'Select a county.',
+      '#description' => $this->t('Select a county.'),
       '#prefix' => "<br>",
     ];
     
@@ -494,11 +494,11 @@ class ManageDrupalAccountsForm extends FormBase
     
     $form_element['edit']['hd'] = [
       '#type' => 'textfield',
-      '#title' => t('House District'),
+      '#title' => $this->t('House District'),
       '#default_value' => $hd,
       '#size' => 4,
       '#maxlength' => 4,
-      '#description' => 'Select a State House District.',
+      '#description' => $this->t('Select a State House District.'),
       '#prefix' => "<br>",
     ];
     
@@ -507,19 +507,16 @@ class ManageDrupalAccountsForm extends FormBase
     $form_element['edit']['phone'] = [
       '#type' => 'textfield',
       '#id' => 'phone',
-      '#title' => 'Phone Number',
+      '#title' => $this->t('Phone Number'),
       '#default_value' => $phoneNumber,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Edit (or add) a phone number.",
+      '#description' => $this->t('Edit (or add) a phone number.'),
       '#prefix' => "<br>",
     ];
     
     $form_element['edit']['name_hint'] = [
-      '#markup' => "<p><br>
-The username is typically assigned by NLP Services when the first turf is synced.  The username is constructed </br>
-of the first and last name of the NL with a dot between the two names.  Since NL's recognize this pattern, you </br>
-should use it here.  Of course, the NL can ask for anything they want as long as it is unique.</p>",
+      '#markup' => '<p><br>' . $this->t("The username is typically assigned by NLP Services when the first turf is synced. The username is constructed of the first and last name of the NL with a dot between the two names. Since NL's recognize this pattern, you should use it here. Of course, the NL can ask for anything they want as long as it is unique.") . '</p>',
     ];
     
     $username = $user['userName'];
@@ -527,11 +524,11 @@ should use it here.  Of course, the NL can ask for anything they want as long as
     $form_element['edit']['uname'] = [
       '#type' => 'textfield',
       '#id' => 'uname',
-      '#title' => 'Username',
+      '#title' => $this->t('Username'),
       '#default_value' => $username,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Change the Username for this user.",
+      '#description' => $this->t('Change the Username for this user.'),
     ];
     
     $password = $user['password'];
@@ -539,11 +536,11 @@ should use it here.  Of course, the NL can ask for anything they want as long as
     $form_element['edit']['magic-word'] = [
       '#type' => 'textfield',
       '#id' => 'magic-word',
-      '#title' => 'Password',
+      '#title' => $this->t('Password'),
       '#default_value' => $password,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Change the password.",
+      '#description' => $this->t('Change the password.'),
       '#prefix' => "<br>",
     ];
     
@@ -552,11 +549,11 @@ should use it here.  Of course, the NL can ask for anything they want as long as
     $form_element['edit']['mail'] = [
       '#type' => 'textfield',
       '#id' => 'email',
-      '#title' => 'Email',
+      '#title' => $this->t('Email'),
       '#default_value' => $email,
       '#size' => 60,
       '#maxlength' => 160,
-      '#description' => "Edit the user's email.",
+      '#description' => $this->t("Edit the user's email."),
     ];
    
     
@@ -577,10 +574,10 @@ should use it here.  Of course, the NL can ask for anything they want as long as
     
     $form_element['edit']['selected_roles'] = [
       '#type' => 'checkboxes',
-      '#title' => 'Roles',
+      '#title' => $this->t('Roles'),
       '#options' => $allowedRoles,
       '#default_value' => $roleDefaults,
-      '#description' => 'Select roles for this user.',
+      '#description' => $this->t('Select roles for this user.'),
       '#prefix' => "<br>",
     ];
     
@@ -596,13 +593,13 @@ should use it here.  Of course, the NL can ask for anything they want as long as
    * @param string $selectedHd
    * @return array
    */
-  function hdsWithUsers(&$users, string $selectedHd): array
+  public function hdsWithUsers(&$users, string $selectedHd): array
   {
     $hdOptions = $hdUsers = [];
     foreach ($users as $uid => $user) {
       $hd = $user['hd'];
-      if($hd=='Unknown' OR empty($hd)) {continue;}
-      if($selectedHd=='All' OR $selectedHd==$hd) {
+      if($hd=='Unknown' || empty($hd)) {continue;}
+      if($selectedHd=='All' || $selectedHd==$hd) {
         $hdOptions[$hd] = $hd;
         $hdUsers[$uid] = $user;
       }
@@ -621,7 +618,7 @@ should use it here.  Of course, the NL can ask for anything they want as long as
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function selectboxCallback($form, $unused): array
+  public function selectboxCallback($form, $unused): array
   {
     return $form['user-form'];
   }

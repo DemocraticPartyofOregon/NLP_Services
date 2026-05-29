@@ -53,12 +53,12 @@ class ResyncTurfsForm extends FormBase
   {
     
     $form['button_link'] = [
-      '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
+      '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">' . $this->t('Go back') . '</a>',
     ];
-    
+
     $form['resyncTurfs'] = [
       '#type' => 'submit',
-      '#value' => 'Do it.',
+      '#value' => $this->t('Do it.'),
     ];
     
     return $form;
@@ -72,13 +72,11 @@ class ResyncTurfsForm extends FormBase
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();
   
-    $messenger = Drupal::messenger();
-  
     $nlpConfig = $this->config->get('nlpservices.configuration');
     $votebuilderUpdateDate = $nlpConfig->get('nlpservices-votebuilder-update-date');
     $staleTurfs = $this->turfsObj->getStaleTurfs();
     if(empty($staleTurfs)) {
-      $messenger->addWarning('There are no updatable turfs.');
+      $this->messenger()->addWarning($this->t('There are no updatable turfs.'));
       return;
     }
     
@@ -94,12 +92,11 @@ class ResyncTurfsForm extends FormBase
       ],
       'file' => $modulePath . '/src/Form/ResyncTurfsBatch.php',
       'finished' => 'resyncTurfsBatchFinished',
-      'title' => 'Resync existing turfs with new registration data.',
-      'init_message' => 'Resync is starting.',
-      'progress_message' => 'Processed @percentage % of reports turfs.',
-      'error_message' => 'resync of turfs has encountered an error.',
+      'title' => $this->t('Resync existing turfs with new registration data.'),
+      'init_message' => $this->t('Resync is starting.'),
+      'progress_message' => $this->t('Processed @percentage % of reported turfs.'),
+      'error_message' => $this->t('Resync of turfs has encountered an error.'),
     ];
-    nlp_debug_msg('$batch',$batch);
     batch_set($batch);
   
   }

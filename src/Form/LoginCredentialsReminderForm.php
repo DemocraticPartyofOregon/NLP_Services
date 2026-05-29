@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -75,18 +74,15 @@ class LoginCredentialsReminderForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $messenger = Drupal::messenger();
-    
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
       $form_state->set('page', 'displayUsers');
       $form_state->set('hd', 0);
-      
+
       $county = $this->nlpSessionDataObj->getCounty();
       $form_state->set('county',$county);
       if(empty($county)) {
-        $messenger = Drupal::messenger();
-        $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab
+        $this->messenger()->addWarning(t('The county is not specified. Use the "Manage County" tab
         to select a county.'));
         return [];
       }
@@ -119,15 +115,15 @@ class LoginCredentialsReminderForm extends FormBase
       $users = $this->searchBarObj->searchInfoArray($needle,$users);
     }
     
-    // The user click a column to sort.
-    $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
+    // The user clicked a column to sort.
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $sort = $query->get('sort', '');
     if(!empty($sort)) {
-      $order = $_GET['order'];
+      $order = $query->get('order');
       $this->userDisplayObj->sortUsers($users,$sort,$order);
     }
-    
+
     $this->hdsWithUsers($users,$currentHd);  // Populate the HD field.
-    $form_state->set('$users', $users);
     
     switch ($page) {
       case 'displayUsers':
@@ -135,7 +131,7 @@ class LoginCredentialsReminderForm extends FormBase
         $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
         
         if(empty($users)) {
-          $messenger->addError(t('No users selected'));
+          $this->messenger()->addError(t('No users selected'));
           break;
         }
         
@@ -189,12 +185,9 @@ class LoginCredentialsReminderForm extends FormBase
         $userSelections = $this->userDisplayObj->validateUserSelection($form_state->getValue('contacts'));
         $form_state->set('userSelections', $userSelections);
         if(empty($userSelections)) {
-          $form_state->setErrorByName('reminder_select','You must select at least one NL to send an email.');
+          $form_state->setErrorByName('reminder_select', t('You must select at least one NL to send an email.'));
         }
     }
-    
-    
-   
   }
   
   /**
@@ -202,7 +195,6 @@ class LoginCredentialsReminderForm extends FormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $messenger = Drupal::messenger();
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();
     $triggeringElement = $form_state->getTriggeringElement();
@@ -214,31 +206,28 @@ class LoginCredentialsReminderForm extends FormBase
         $needle = $form_state->getValue('nl-search-needle');
         $form_state->set('nl-search-needle', $needle);
         return;
-        
+
       case 'reminder_select':
         $userSelections = $form_state->get('userSelections');
         foreach($userSelections as $userSelection) {
           $uid = $userSelection['uid'];
           $user = $this->drupalUser->getUserByUid($uid);
+          $name = $user['firstName'].' '.$user['lastName'];
           if(empty($user['email'])) {
-            $messenger->addError($user['firstName'].' '.$user['lastName'].
-              ' does not have an email address.');
+            $this->messenger()->addError(t('@name does not have an email address.', ['@name' => $name]));
             continue;
           }
           $mcid = $user['mcid'];
           if(empty($mcid)) {
-            $messenger->addError($user['firstName'].' '.$user['lastName'].
-              ' does not have the MCID field set and may not be a valid NL.');
+            $this->messenger()->addError(t('@name does not have the MCID field set and may not be a valid NL.', ['@name' => $name]));
             continue;
           }
-          
+
           $result = $this->remindUserCredentials($user);
           if($result) {
-            $messenger->addStatus(t('A reminder email was sent to '
-              .$user['firstName'].' '.$user['lastName'].'.'));
+            $this->messenger()->addStatus(t('A reminder email was sent to @name.', ['@name' => $name]));
           } else {
-            $messenger->addStatus(t('The reminder email to '
-              .$user['firstName'].' '.$user['lastName'].' failed.'));
+            $this->messenger()->addStatus(t('The reminder email to @name failed.', ['@name' => $name]));
           }
         }
     }
@@ -249,16 +238,16 @@ class LoginCredentialsReminderForm extends FormBase
    *
    * Return an array of HDs that have users in them, sorted in ascending order.
    *
-   * @param $users - Array of Drupal users.
-   * @param $selectedHd - Array of HDs to display.
+   * @param array $users - Array of Drupal users.
+   * @param string|array $selectedHd - Array of HDs to display.
    * @return array
    */
-  function hdsWithUsers(&$users,$selectedHd): array
+  private function hdsWithUsers( array &$users, string|array $selectedHd ): array
   {
     $hdOptions = $hdUsers = [];
     foreach ($users as $uid => $user) {
       if(!empty($user['hd'])) {
-        if($selectedHd=='All' OR $selectedHd==$user['hd']) {
+        if($selectedHd=='All' || $selectedHd==$user['hd']) {
           $hdOptions[$user['hd']] = $user['hd'];
           $hdUsers[$uid] = $user;
         }
@@ -271,14 +260,14 @@ class LoginCredentialsReminderForm extends FormBase
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * nlp_remindUserCredentials
+   * remindUserCredentials
    *
-   * Send an email to the specified user with their login credentials.
+   * Sends an email to the specified user with their login credentials.
    *
-   * @param $user - The Drupal user array.
+   * @param array $user - The Drupal user array.
    * @return bool
    */
-  function remindUserCredentials($user): bool
+  private function remindUserCredentials( array $user ): bool
   {
     $mcid = $user['mcid'];
 
@@ -322,7 +311,7 @@ class LoginCredentialsReminderForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function selectboxCallback($form, $unused): array
+  public function selectboxCallback($form, $unused): array
   {
     return $form['user-form'];
   }

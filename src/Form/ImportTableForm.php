@@ -58,15 +58,14 @@ class ImportTableForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state, string $tableName=NULL): array
   {
     $form_state->set('tableName',$tableName);
-    //nlp_debug_msg('$tableName',$tableName);
     $tableInfo = [
       'nlp_awards' => [
-        'title' => 'Awards file',
-        'value' => 'Import the NL awards file',
+        'title' => t('Awards file'),
+        'value' => t('Import the NL awards file'),
       ],
       'nlp_turf_assignment' => [
-        'title' => 'Turf assignment file',
-        'value' => 'Import the turf assignments file',
+        'title' => t('Turf assignment file'),
+        'value' => t('Import the turf assignments file'),
       ]
     ];
 
@@ -80,12 +79,12 @@ class ImportTableForm extends FormBase
     
     $form['table_file'] = [
       '#type' => 'file',
-      '#title' => t($tableInfo[$tableName]['title']),
+      '#title' => $tableInfo[$tableName]['title'],
     ];
     
     $form['upload_file'] = [
       '#type' => 'submit',
-      '#value' => t($tableInfo[$tableName]['value']),
+      '#value' => $tableInfo[$tableName]['value'],
     ];
     
     $form['button_link'] = [
@@ -103,16 +102,21 @@ class ImportTableForm extends FormBase
     $messenger = Drupal::messenger();
     $tableName = $form_state->get('tableName');
     // Verify we have a good export file with the necessary fields
-    $tempName = $_FILES['files']['tmp_name']['table_file'];
-    
+    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $tempName = ($files['table_file'] ?? NULL)?->getPathname() ?? NULL;
+    if (!$tempName) {
+      $form_state->setErrorByName('table_file', t('No file uploaded.'));
+      return;
+    }
+
     $fh = fopen($tempName, "r");
     if (!$fh) {
-      $form_state->setErrorByName('table_file', 'Failed to open table file.');
+      $form_state->setErrorByName('table_file', t('Failed to open table file.'));
       return;
     }
     $rawHeader = fgetcsv($fh);
     if (!$rawHeader) {
-      $form_state->setErrorByName('table_file', 'Failed to read header.');
+      $form_state->setErrorByName('table_file', t('Failed to read header.'));
       return;
     }
     $headerColumns = [];
@@ -133,7 +137,7 @@ class ImportTableForm extends FormBase
       foreach($pos['err'] as $err) {
         $messenger->addError($err);
       }
-      $form_state->setErrorByName('table_file', 'Fix the problem before resubmit.');
+      $form_state->setErrorByName('table_file', t('Fix the problem before resubmit.'));
       return;
     }
     $form_state->set('tempName', $tempName);
@@ -152,8 +156,8 @@ class ImportTableForm extends FormBase
     $tempName = $form_state->get('tempName');
     $fieldPos = $form_state->get('fieldPos');
     $fh = fopen($tempName, "r");
-    if (empty($fh)) {
-      $messenger->addError('Failed to open table file.');
+    if (!$fh) {
+      $messenger->addError(t('Failed to open table file.'));
       return;
     }
     fgetcsv($fh);
@@ -164,7 +168,7 @@ class ImportTableForm extends FormBase
       $keys = [];
       $update = FALSE;
       $tableRecord = array_map(function ($pos) use ($rawRecord) {
-        return $rawRecord[$pos];
+        return $rawRecord[$pos] ?? '';
       }, $fieldPos);
       
       switch ($tableName) {
@@ -173,8 +177,8 @@ class ImportTableForm extends FormBase
           $update = TRUE;
           $keys = ['mcid' => $tableRecord['mcid']];
           if($merge) {
-            //$participation = $rawRecord[$fieldPos['participation']];
-            $participation = (array) json_decode($tableRecord['participation']);
+            $decoded = json_decode($tableRecord['participation'], TRUE);
+            $participation = (json_last_error() === JSON_ERROR_NONE && is_array($decoded)) ? $decoded : [];
             $awardKeys = array_keys($participation);
             $elections = [];
             foreach ($awardKeys as $key) {
@@ -184,7 +188,7 @@ class ImportTableForm extends FormBase
             $existingAwards = $this->nlpAwardsObj->getAward($tableRecord['mcid']);
             $existingKeys = [];
             if(!empty($existingAwards['participation'])) {
-              $existingParticipation = $existingAwards['participation'];
+              $existingParticipation = (array) $existingAwards['participation'];
               $existingKeys = array_keys($existingParticipation);
             }
     
@@ -198,7 +202,6 @@ class ImportTableForm extends FormBase
               $newElections = array_merge($existingElections,$elections);
               ksort($newElections);
               $tableRecord['electionCount'] = count($newElections);
-              //$tableRecord['participation'] = $newElections;
               $tableRecord['participation'] = json_encode($newElections);
               
               $keys = ['mcid' => $tableRecord['mcid'],];
@@ -222,13 +225,13 @@ class ImportTableForm extends FormBase
         $success = $this->databaseFunctionsObj->mergeRecord($tableName,$keys,$tableRecord);
         if(!$success) {
           nlp_debug_msg('Failing update record',$tableRecord);
-          $messenger->addError("The update of the $tableName table has failed, seek help.");
+          $messenger->addError(t('The update of the @table table has failed, seek help.', ['@table' => $tableName]));
           return;
         }
       }
       
     } while (TRUE);
     
-    $messenger->addStatus('The table has been successfully uploaded.');
+    $messenger->addStatus(t('The table has been successfully uploaded.'));
   }
 }

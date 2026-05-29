@@ -1,13 +1,11 @@
 <?php
 
-const loopMax = 10;
+const LOOP_MAX = 10;
 
 /** @noinspection PhpUnused */
 function resyncTurfsBatch($arg, &$context): void
 {
-  $context['finished'] = TRUE;
   $turfs = $arg['turfs'];
- 
   $context['finished'] = 0;
   // Position the file at the start or where we left off for the previous batch.
   if(empty($context['sandbox']['currentTurf'])) {
@@ -21,9 +19,9 @@ function resyncTurfsBatch($arg, &$context): void
   $changedTurfCount = $context['sandbox']['changedTurfCount'];
   
   
-  $resyncTurfObj = Drupal::getContainer()->get('nlpservices.resync_turf');
+  $resyncTurfObj = Drupal::service('nlpservices.resync_turf');
   
-  $lastTurf = $currentTurf+loopMax;
+  $lastTurf = $currentTurf + LOOP_MAX;
   if($lastTurf > $countOfTurfs) {
     $lastTurf = $countOfTurfs;
   }
@@ -31,7 +29,6 @@ function resyncTurfsBatch($arg, &$context): void
   for ($turfNumber=$currentTurf; $turfNumber<$lastTurf; $turfNumber++) {
     $turfIndex = $turfs[$turfNumber];
     $result = $resyncTurfObj->resyncTurf($turfIndex);
-    nlp_debug_msg('$result',$result);
     if($result == 'changed') {
       $changedTurfCount++;
     }
@@ -65,12 +62,14 @@ function resyncTurfsBatch($arg, &$context): void
 function resyncTurfsBatchFinished($success, $results, $operations): void
 {
   $messenger = Drupal::messenger();
-  $messenger->addStatus( t('Batch finished.'));
+  $messenger->addStatus(t('Batch finished.'));
   if ($success) {
-    $messenger->addStatus( t('Of the '.$results['countOfTurfs'].' older turfs, '.$results['changedTurfCount']
-      .' required changes.'));
+    $messenger->addStatus(t('Of the @count older turfs, @changed required changes.', [
+      '@count' => $results['countOfTurfs'],
+      '@changed' => $results['changedTurfCount'],
+    ]));
   }
   else {
-    $messenger->addError( t('An error occurred.'));
+    $messenger->addError(t('An error occurred.'));
   }
 }
