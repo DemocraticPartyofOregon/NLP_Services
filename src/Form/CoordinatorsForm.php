@@ -29,7 +29,7 @@ class CoordinatorsForm extends FormBase
   protected NlpSessionData $sessionDataObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  
+
   private array $scopeOptions = [
     'choose'=>'Select scope',
     'none' => 'None',
@@ -39,7 +39,8 @@ class CoordinatorsForm extends FormBase
   ];
   
   public function __construct( $coordinatorsObj,$nlsObj,$drupalUserObj,$magicWordObj,
-                               $coordinatorsListDisplayObj, $sessionDataObj, $searchBarObj, $nlpConfigurationObj )
+                               $coordinatorsListDisplayObj, $sessionDataObj, $searchBarObj, $nlpConfigurationObj,
+                               $requestStack )
   {
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;
@@ -49,6 +50,7 @@ class CoordinatorsForm extends FormBase
     $this->sessionDataObj = $sessionDataObj;
     $this->searchBarObj = $searchBarObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
+    $this->requestStack = $requestStack;
   }
   
   /**
@@ -65,6 +67,7 @@ class CoordinatorsForm extends FormBase
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.configuration'),
+      $container->get('request_stack')
     );
   }
   

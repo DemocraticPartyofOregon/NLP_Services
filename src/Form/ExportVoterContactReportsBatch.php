@@ -12,23 +12,21 @@
  */
 function exportVoterContactReportsBatch($arg,&$context): void
 {
-  $messenger = Drupal::messenger();
-  
   $factory = Drupal::service('tempstore.private');
   $store = $factory->get('nlpservices.session_data');
   $votersExist = $store->get('votersExist');
   if(empty($votersExist)) {$votersExist=[];}
-  
+
   $reportsUri = $arg['uri'];
   $startCycle = $arg['startCycle'];
   $endCycle = $arg['endCycle'];
   $currentCycleOnly = $arg['currentCycleOnly'];
   $cycleOptions = $arg['cycleOptions'];
   $countOfRecords = $arg['countOfRecords'];
-  
+
   $removeInactive = $arg['removeInactive'];
-  
-  $nlpEncrypt = Drupal::getContainer()->get('nlpservices.encryption');
+
+  $nlpEncrypt = Drupal::service('nlpservices.encryption');
   $config = Drupal::service('config.factory')->get('nlpservices.configuration');
   $apiKeys = $config->get('nlpservices-api-keys');
   $committeeKey = $apiKeys['State Committee'];
@@ -36,8 +34,8 @@ function exportVoterContactReportsBatch($arg,&$context): void
 
   // Open the input file and position for writing at the end.
   $fh = fopen($reportsUri, "a");
-  if (empty($fh)) {
-    $messenger->addStatus('File open error: @'.$reportsUri);
+  if (!$fh) {
+    Drupal::messenger()->addStatus(t('File open error: @uri', ['@uri' => $reportsUri]));
     $context['finished'] = TRUE;
     return;
   }
@@ -54,10 +52,10 @@ function exportVoterContactReportsBatch($arg,&$context): void
     $workingCycle = $context['sandbox']['workingCycle'];
     $votersNotFound = $context['sandbox']['votersNotFound'];
   }
-  $reportsObj = Drupal::getContainer()->get('nlpservices.reports');
-  $voterObj = Drupal::getContainer()->get('nlpservices.voters');
-  $apiVoterObj = Drupal::getContainer()->get('nlpservices.api_voter');
-  
+  $reportsObj = Drupal::service('nlpservices.reports');
+  $voterObj = Drupal::service('nlpservices.voters');
+  $apiVoterObj = Drupal::service('nlpservices.api_voter');
+
   $selectedCycle = $cycleOptions[$workingCycle];
   $result = $reportsObj->selectAllReports($nextCycleRecord,$selectedCycle);
   // Get record one at a time.
@@ -69,7 +67,7 @@ function exportVoterContactReportsBatch($arg,&$context): void
     }  // The last record processed.
     $cycleRecordCount++;
     $record = $reportsObj->prepareExportRecord($rawRecord);
-    
+
     $vanid = $rawRecord['vanid'];
     $voterExists = TRUE;
     if($removeInactive) {
@@ -81,10 +79,10 @@ function exportVoterContactReportsBatch($arg,&$context): void
         $votersExist[$vanid] = $voterExists;
       }
     }
-    
+
     if($voterExists) {
       // Get the cd of the voter if we have it.
-      if($currentCycleOnly AND empty($record['cd'])) {
+      if($currentCycleOnly && empty($record['cd'])) {
         $record['cd'] = $voterObj->getVoterCd($vanid);
       }
       fputcsv($fh, $record);
@@ -92,15 +90,15 @@ function exportVoterContactReportsBatch($arg,&$context): void
 
   } while (TRUE);
   fclose($fh);
-  
+
   $store->set('votersExist',$votersExist);
-  
+
   // Finish the batch if we are done.
   if($cycleRecordCount !=  $reportsObj::BATCH_LIMIT) {
     // We're done with the last record.
     $recordCount += $cycleRecordCount;
     $context['sandbox']['recordCount'] = $recordCount;
-    
+
     if($workingCycle == $endCycle) {
       // Done with the last cycle.
       $context['finished'] = 1;
@@ -108,30 +106,30 @@ function exportVoterContactReportsBatch($arg,&$context): void
       $context['results']['uri'] = $reportsUri;
       $context['results']['votersExistCount'] = count($votersExist);
       $context['results']['votersNotFound'] = $votersNotFound;
-      
+
     } else {
       $context['sandbox']['workingCycle'] = ++$workingCycle;
       $context['sandbox']['nextCycleRecord'] = 0;
       $context['sandbox']['votersNotFound'] = $votersNotFound;
       $percent = $recordCount/$countOfRecords;
       if($percent == 1) {
-        $percent = .999;
+        $percent = 0.999;
       }
       $context['finished'] = $percent;
     }
-    
+
   } else {
     // Not done with cycle.
     $nextCycleRecord += $reportsObj::BATCH_LIMIT;
     $context['sandbox']['nextCycleRecord'] = $nextCycleRecord;
-    
+
     $recordCount += $reportsObj::BATCH_LIMIT;
     $context['sandbox']['recordCount'] = $recordCount;
     $context['sandbox']['votersNotFound'] = $votersNotFound;
-    
+
     $percent = $recordCount/$countOfRecords;
     if($percent == 1) {
-      $percent = .999;
+      $percent = 0.999;
     }
     $context['finished'] = $percent;
   }
@@ -154,12 +152,12 @@ function exportVoterContactReportsBatchFinished($success, $results, $unused): vo
     $votersExistCount = $results['votersExistCount'];
     $votersNotFound = $results['votersNotFound'];
     $records = $results['records'];
-    $messenger->addStatus($records.' reports exported. ');
-    $messenger->addStatus(' VotersExist count: '.$votersExistCount);
-    $messenger->addStatus(' New lookups: '.$votersNotFound);
-    $messenger->addStatus('NL reports successfully exported.');
+    $messenger->addStatus(t('@count reports exported.', ['@count' => $records]));
+    $messenger->addStatus(t('VotersExist count: @count', ['@count' => $votersExistCount]));
+    $messenger->addStatus(t('New lookups: @count', ['@count' => $votersNotFound]));
+    $messenger->addStatus(t('NL reports successfully exported.'));
   }
   else {
-    $messenger->addStatus('An error occurred.');
+    $messenger->addStatus(t('An error occurred.'));
   }
 }
