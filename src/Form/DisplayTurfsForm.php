@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -21,7 +20,6 @@ class DisplayTurfsForm extends FormBase
 {
 
   protected NlpTurfs $turfsObj;
-
   protected NlpAwards $awardsObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpTurfDisplay $turfDisplayObj;
@@ -29,9 +27,8 @@ class DisplayTurfsForm extends FormBase
   protected ApiFolders $foldersObj;
   protected ApiMapRegions $apiMapRegionObj;
 
-
-  public function __construct(   $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
-                                 $sessionDataObj, $foldersObj, $apiMapRegionObj ) {
+  public function __construct( $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
+                               $sessionDataObj, $foldersObj, $apiMapRegionObj ) {
     $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
@@ -70,12 +67,10 @@ class DisplayTurfsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-
     if (empty($form_state->get('reenter'))) {
       $county = $this->sessionDataObj->getCounty();
       if(empty($county)) {
-        $messenger = Drupal::messenger();
-        $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
+        $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
       $form_state->set('county',$county);
@@ -88,8 +83,6 @@ class DisplayTurfsForm extends FormBase
     }
 
     $county = $form_state->get('county');
-
-    $hdOptions = $this->sessionDataObj->getHdOptions();
     $currentHd = $this->sessionDataObj->getSavedHd();
 
     $needle = $form_state->get('search-needle');
@@ -108,25 +101,23 @@ class DisplayTurfsForm extends FormBase
     $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray,'display');
 
     // If there is a sort request, sort the turf array.
-    $sort = Drupal::request()->query->get('sort', '');
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $sort = $query->get('sort', '');
     if(!empty($sort)) {
-      $order = Drupal::request()->query->get('order', '');
-      $this->turfDisplayObj->sortTurfTable($turfTableArray,$sort,$order);
+      $this->turfDisplayObj->sortTurfTable($turfTableArray,$sort,$query->get('order', ''));
     }
-    $form_state->set('turfArray',$turfArray);
 
-    $turfCount = count($turfTableArray);
-    if(empty($turfCount)) {
+    if(empty($turfTableArray)) {
       $form['turf-table']['turf-form'] = [
-          '#markup' => '<p>There is no turf to display.</p>',
+        '#markup' => '<p>There is no turf to display.</p>',
       ];
       return $form;
     }
 
     $form['hd-change'] = [
-        '#prefix' => '<div id="selectbox-div">',
-        '#suffix' => '</div>',
-        '#type' => 'fieldset',
+      '#prefix' => '<div id="selectbox-div">',
+      '#suffix' => '</div>',
+      '#type' => 'fieldset',
     ];
 
     $hdOptions = $this->sessionDataObj->getHdOptions();
@@ -157,7 +148,6 @@ class DisplayTurfsForm extends FormBase
 
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
-        //nlp_debug_msg('$needle',$needle);
         $form_state->set('search-needle', $needle);
         return;
 

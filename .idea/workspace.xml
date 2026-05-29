@@ -4,13 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms NlsDisplay, addAccount, to coordinators">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryDefaultMethodForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DatabaseSchemaForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms DatabaseSchema to DeleteDrupalAccounts">
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DocumentsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DocumentsForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -96,20 +94,20 @@
       <entry key="MS100" value="1.0" />
       <entry key="MS500" value="1.0" />
       <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0000000002196778" />
-      <entry key="S30" value="1.0021456438314487" />
-      <entry key="S60" value="1.1357831656842943" />
-      <entry key="M2" value="2.099441416940907" />
-      <entry key="M5" value="4.876729213846522" />
-      <entry key="M10" value="6.905603398703105" />
-      <entry key="M15" value="7.795747263414072" />
-      <entry key="M30" value="8.820522162929453" />
-      <entry key="H1" value="9.445204452243885" />
-      <entry key="H2" value="11.215655239843668" />
-      <entry key="H4" value="22.296198335614587" />
-      <entry key="D1" value="246.95197929590853" />
-      <entry key="W1" value="583.2618726427118" />
+      <entry key="S5" value="1.0000000081079419" />
+      <entry key="S10" value="1.000125661656241" />
+      <entry key="S30" value="1.0792696511141415" />
+      <entry key="S60" value="1.3980907153900213" />
+      <entry key="M2" value="1.911109444612177" />
+      <entry key="M5" value="3.0034671541547175" />
+      <entry key="M10" value="4.756421586020794" />
+      <entry key="M15" value="6.36946080256019" />
+      <entry key="M30" value="9.79773161722647" />
+      <entry key="H1" value="13.00995403710945" />
+      <entry key="H2" value="16.402168017234203" />
+      <entry key="H4" value="27.59050016130947" />
+      <entry key="D1" value="250.13513327655767" />
+      <entry key="W1" value="589.6310398947982" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -119,35 +117,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="3.8605549811771445E-210" />
-      <entry key="M5" value="1.7165635912271435E-84" />
-      <entry key="M10" value="1.3101769312681198E-42" />
-      <entry key="M15" value="1.1973468213469368E-28" />
-      <entry key="M30" value="1.094233440675199E-14" />
-      <entry key="H1" value="1.0460813216956997E-7" />
-      <entry key="H2" value="3.254086602960327E-4" />
-      <entry key="H4" value="0.020721250762639355" />
-      <entry key="D1" value="3.4008720112005615" />
-      <entry key="W1" value="13.22475489380455" />
+      <entry key="M2" value="3.01962311592415E-216" />
+      <entry key="M5" value="6.194141133535421E-87" />
+      <entry key="M10" value="7.870286610750233E-44" />
+      <entry key="M15" value="1.8365116973072966E-29" />
+      <entry key="M30" value="4.285454117558838E-15" />
+      <entry key="H1" value="6.546495609267514E-8" />
+      <entry key="H2" value="2.574250605409234E-4" />
+      <entry key="H4" value="0.018430063212631395" />
+      <entry key="D1" value="3.3350992624776516" />
+      <entry key="W1" value="13.187910325406945" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.2180331825370368E-10" />
-      <entry key="MS500" value="0.01172718044933102" />
-      <entry key="S2" value="0.32907766112273695" />
-      <entry key="S5" value="0.6410905287007554" />
-      <entry key="S10" value="0.8006812904666211" />
-      <entry key="S30" value="0.9305570787000772" />
-      <entry key="S60" value="1.0952686879603524" />
-      <entry key="M2" value="2.066588392899729" />
-      <entry key="M5" value="4.850698188072662" />
-      <entry key="M10" value="6.888141435178759" />
-      <entry key="M15" value="7.78283243051991" />
-      <entry key="M30" value="8.813339764036897" />
-      <entry key="H1" value="9.441408595856307" />
-      <entry key="H2" value="11.213971400196009" />
-      <entry key="H4" value="22.315653973205485" />
-      <entry key="D1" value="250.35020811548745" />
-      <entry key="W1" value="596.4850267581844" />
+      <entry key="MS100" value="0.668963777393056" />
+      <entry key="MS500" value="0.9227424926537983" />
+      <entry key="S2" value="0.9800994153418706" />
+      <entry key="S5" value="0.9919917383221252" />
+      <entry key="S10" value="0.9961063308918009" />
+      <entry key="S30" value="1.0764128401669961" />
+      <entry key="S60" value="1.3935991121623759" />
+      <entry key="M2" value="1.9061335169604074" />
+      <entry key="M5" value="2.9964750343904183" />
+      <entry key="M10" value="4.747628913050578" />
+      <entry key="M15" value="6.360453384250915" />
+      <entry key="M30" value="9.790067824094002" />
+      <entry key="H1" value="13.004715769350804" />
+      <entry key="H2" value="16.399279357290116" />
+      <entry key="H4" value="27.606992738619343" />
+      <entry key="D1" value="253.46750031113322" />
+      <entry key="W1" value="602.8173337579483" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -257,15 +255,7 @@
       <workItem from="1779850901047" duration="4641000" />
       <workItem from="1779891125188" duration="3812000" />
       <workItem from="1779898494998" duration="443000" />
-      <workItem from="1779972293479" duration="36210000" />
-    </task>
-    <task id="LOCAL-00053" summary="Fix the version number.">
-      <option name="closed" value="true" />
-      <created>1776799459243</created>
-      <option name="number" value="00053" />
-      <option name="presentableId" value="LOCAL-00053" />
-      <option name="project" value="LOCAL" />
-      <updated>1776799459243</updated>
+      <workItem from="1779972293479" duration="37979000" />
     </task>
     <task id="LOCAL-00054" summary="Use the county committee key when reporting participation survey question for Montana.">
       <option name="closed" value="true" />
@@ -651,7 +641,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780062965112</updated>
     </task>
-    <option name="localTasksCounter" value="102" />
+    <task id="LOCAL-00102" summary="Claude code review forms DatabaseSchema to DeleteDrupalAccounts">
+      <option name="closed" value="true" />
+      <created>1780064771747</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1780064771747</updated>
+    </task>
+    <option name="localTasksCounter" value="103" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -703,7 +701,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Ignore emails with missing subject." />
     <MESSAGE value="Ignore turf change request if current turf is deleted." />
     <MESSAGE value="Phone number nnot needed for social media message." />
     <MESSAGE value="PHP errors from auto logout." />
@@ -728,7 +725,8 @@
     <MESSAGE value="Separate turf assignments from turfs." />
     <MESSAGE value="Claude code review users and voters" />
     <MESSAGE value="Claude code review forms NlsDisplay, addAccount, to coordinators" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms NlsDisplay, addAccount, to coordinators" />
+    <MESSAGE value="Claude code review forms DatabaseSchema to DeleteDrupalAccounts" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms DatabaseSchema to DeleteDrupalAccounts" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
