@@ -9,12 +9,11 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpTurfs
 {
-  
   const string TURF_TBL = 'nlp_turf';
   const string TURF_ASSIGNMENT_TBL = 'nlp_turf_assignment';
   const int TURF_ALL_MAX = 200;  // Maximum turfs to display before restricting display to house districts.
   const int TURF_RESYNC_MAX = 100;
-  
+
   protected Connection $connection;
   protected FileSystemInterface $fileSystem;
   protected NlpNls $nlsObj;
@@ -26,7 +25,7 @@ class NlpTurfs
   protected NlpMatchbacks $nlpMatchbacksObj;
   protected ApiFolders $apiFoldersObj;
   protected ApiMapRegions $apiMapRegionsObj;
-  
+
   public function __construct( $connection, $fileSystem, $nlsObj, $pathsObj,
                                $votersObj, $apiActivistCodesObj, $nlpConfigurationObj, $nlpReportsObj,
                                $nlpMatchbacksObj, $apiFoldersObj, $apiMapRegionsObj )
@@ -43,7 +42,7 @@ class NlpTurfs
     $this->apiFoldersObj = $apiFoldersObj;
     $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpTurfs
   {
     return new static(
@@ -60,7 +59,7 @@ class NlpTurfs
       $container->get('nlpservices.api_map_regions')
     );
   }
-  
+
   /**
    * setAllTurfsDelivered
    *
@@ -68,11 +67,11 @@ class NlpTurfs
    * the case where the NL has more than one turf, all the turfs are set as
    * delivered since the NL can see all turfs on the data entry page.
    *
-   * @param $mcid
-   * @param $county
+   * @param int $mcid
+   * @param string $county
    * @return void
    */
-  public function setAllTurfsDelivered($mcid, $county): void
+  public function setAllTurfsDelivered(int $mcid, string $county): void
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -92,7 +91,7 @@ class NlpTurfs
       $this->setTurfDelivered($turf['turfIndex']);
     } while (TRUE);
   }
-  
+
   /**
    * setTurfDelivered
    *
@@ -100,33 +99,32 @@ class NlpTurfs
    * either when an email is sent to the NL or the coordinator checks the box
    * in the list of active NLs.
    *
-   * @param $turfIndex
+   * @param int $turfIndex
    * @return void
    */
-  public function setTurfDelivered($turfIndex): void
+  public function setTurfDelivered(int $turfIndex): void
   {
     $isoDate = explode('T', date('c'));  // date/time in ISO format.
     try {
       $this->connection->merge(self::TURF_TBL)
-        ->keys(['turfIndex' => $turfIndex,])
-        ->fields(['delivered' => $isoDate[0],])
+        ->keys(['turfIndex' => $turfIndex])
+        ->fields(['delivered' => $isoDate[0]])
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('setTurfDelivered', $e->getMessage());
-      return;
     }
   }
-  
+
   /**
    * getCountyTurfs
    *
    * Returns an array of turfs for a specific county.  If the county is 'all', then
    * all NLP turfs are returned.
    *
-   * @param $county - Name of the specific county or 'all' for all counties.
+   * @param string $county - Name of the specific county or 'all' for all counties.
    * @return array
    */
-  public function getCountyTurfs($county): array
+  public function getCountyTurfs(string $county): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -144,15 +142,13 @@ class NlpTurfs
     $turfArray = [];
     do {
       $turfRecord = $result->fetchAssoc();
-      if (empty($turfRecord)) {
-        break;
-      }
+      if (empty($turfRecord)) { break; }
       $turfIndex = $turfRecord['turfIndex'];
       $turfArray[$turfIndex] = $turfRecord;
     } while (TRUE);
     return $turfArray;
   }
-  
+
   /**
    * getCountyTurfIndexes
    *
@@ -160,17 +156,17 @@ class NlpTurfs
    * of the voter registrations or the map region was refreshed.  The latter happens if the region
    * was viewed or the refresh link was clicked.
    *
-   * @param $county - Name of the specific county.
+   * @param string $county - Name of the specific county.
    * @return array
    */
-  public function getCountyTurfIndexes($county): array
+  public function getCountyTurfIndexes(string $county): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
-      $query->addField('i','turfIndex');
-      $query->addField('i','mapRegionId');
-      $query->addField('i','folderId');
-      $query->addField('i','syncDate');
+      $query->addField('i', 'turfIndex');
+      $query->addField('i', 'mapRegionId');
+      $query->addField('i', 'folderId');
+      $query->addField('i', 'syncDate');
       $query->orderBy('mapRegionId');
       $query->condition('county', $county);
       $result = $query->execute();
@@ -178,57 +174,48 @@ class NlpTurfs
       nlp_debug_msg('getCountyTurfIndexes', $e->getMessage());
       return [];
     }
-    
+
     $turfIndexArray = [];
     do {
       $turfRecord = $result->fetchAssoc();
-      if (empty($turfRecord)) {
-        break;
-      }
+      if (empty($turfRecord)) { break; }
       $turfIndex = $turfRecord['turfIndex'];
       $turfIndexArray[$turfIndex] = $turfRecord;
     } while (TRUE);
-    
-    
+
     $voterBuilderUpdateDate = $this->nlpConfigurationObj->getVoterBuilderUpdateDate();
-    //nlp_debug_msg('voterBuilderUpdateDate', $voterBuilderUpdateDate);
-    $voterBuilderUpdateTime = (!empty($voterBuilderUpdateDate))?strtotime($voterBuilderUpdateDate):0;
-    
+    $voterBuilderUpdateTime = (!empty($voterBuilderUpdateDate)) ? strtotime($voterBuilderUpdateDate) : 0;
+
     // Identify the unique map regions in the county and get the IDs.
     $mapRegionInfo = [];
     foreach ($turfIndexArray as $turfRecord) {
       $mapRegionInfo[$turfRecord['mapRegionId']]['mapRegionId'] = $turfRecord['mapRegionId'];
       $mapRegionInfo[$turfRecord['mapRegionId']]['folderId'] = $turfRecord['folderId'];
     }
-    //nlp_debug_msg('mapRegionInfo', $mapRegionInfo);
     // For each of the mapRegions, get the refresh date.
     $mapRegionRefreshTimes = [];
     foreach ($mapRegionInfo as $mapRegionItem) {
       $folderId = $mapRegionItem['folderId'];
       $mapRegionId = $mapRegionItem['mapRegionId'];
-      $mapRegionInfo = $this->apiMapRegionsObj->getMapRegionInfo($county, $folderId, $mapRegionId );
-      
-      $mapRegionRefreshDate = $mapRegionInfo['dateRefreshed'];
-      $mapRegionRefreshTime = strtotime($mapRegionRefreshDate);
+      $mapRegionDetail = $this->apiMapRegionsObj->getMapRegionInfo($county, $folderId, $mapRegionId);
+      $mapRegionRefreshTime = strtotime($mapRegionDetail['dateRefreshed']);
       $mapRegionRefreshTimes[$mapRegionId] = $mapRegionRefreshTime;
     }
-    //nlp_debug_msg('$mapRegionRefreshTimes', $mapRegionRefreshTimes);
     // Now identify the turfs that may be stale and need to be checked for by resyncing.
     $resyncTurfIndexes = [];
     foreach ($turfIndexArray as $turfIndex => $turfRecord) {
       $mapRegionId = $turfRecord['mapRegionId'];
-      $mapRegionRefreshTime = (!empty($mapRegionRefreshTimes[$mapRegionId]))?
-        $mapRegionRefreshTimes[$mapRegionId]:time();
-      $syncTime = (!empty($turfRecord['syncDate']))?strtotime($turfRecord['syncDate']):0;
-      
-      if($syncTime < $voterBuilderUpdateTime OR $syncTime < $mapRegionRefreshTime) {
+      $mapRegionRefreshTime = (!empty($mapRegionRefreshTimes[$mapRegionId])) ?
+        $mapRegionRefreshTimes[$mapRegionId] : time();
+      $syncTime = (!empty($turfRecord['syncDate'])) ? strtotime($turfRecord['syncDate']) : 0;
+
+      if($syncTime < $voterBuilderUpdateTime || $syncTime < $mapRegionRefreshTime) {
         $resyncTurfIndexes[] = $turfIndex;
       }
     }
-    //nlp_debug_msg('resyncTurfIndexes', $resyncTurfIndexes);;
     return $resyncTurfIndexes;
   }
-  
+
   /**
    * getNlsWithTurfs
    *
@@ -236,12 +223,12 @@ class NlpTurfs
    * If a house district or precinct is specified, then only those NLs with
    * turfs in that HD or precinct are returned.
    *
-   * @param $county
-   * @param null $hd
-   * @param null $precinct
+   * @param string $county
+   * @param string|null $hd
+   * @param string|null $precinct
    * @return array
    */
-  public function getNlsWithTurfs($county,$hd=NULL,$precinct=NULL): array
+  public function getNlsWithTurfs(string $county, ?string $hd = NULL, ?string $precinct = NULL): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -249,7 +236,6 @@ class NlpTurfs
       $query->addField('t', 'mcid');
       $query->addField('n', 'precinct');
       $query->addField('n', 'hd');
-      
       $query->distinct();
       $query->condition('t.county', $county);
       if(!empty($precinct)) {
@@ -262,16 +248,16 @@ class NlpTurfs
       nlp_debug_msg('getNlsWithTurfs', $e->getMessage());
       return [];
     }
-    
+
     $mcids = [];
     do {
       $mcidRecord = $result->fetchAssoc();
-      if (empty($mcidRecord)) {break;}
+      if (empty($mcidRecord)) { break; }
       $mcids[] = $mcidRecord['mcid'];
     } while (TRUE);
     return $mcids;
   }
-  
+
   /**
    * getCountyTurfCount
    *
@@ -282,7 +268,7 @@ class NlpTurfs
    * @param string $pct - The precinct.  If not specified, then all turfs in the county or house district are counted.
    * @return int
    */
-  public function getCountyTurfCount(string $county, int $hd=0, string $pct='' ): int
+  public function getCountyTurfCount(string $county, int $hd = 0, string $pct = ''): int
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -299,18 +285,18 @@ class NlpTurfs
       nlp_debug_msg('getCountyTurfCount', $e->getMessage());
       return 0;
     }
-    return $turfCount;
+    return (int) $turfCount;
   }
-  
+
   /**
    * getCdTurfCount
    *
    * Returns the number of turfs in a specific congressional district.
    *
-   * @param $cd
+   * @param int $cd
    * @return int
    */
-  public function getCdTurfCount($cd): int
+  public function getCdTurfCount(int $cd): int
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -318,12 +304,12 @@ class NlpTurfs
       $query->addField('i', 'turfIndex');
       $turfCount = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyTurfCount', $e->getMessage());
+      nlp_debug_msg('getCdTurfCount', $e->getMessage());
       return 0;
     }
-    return $turfCount;
+    return (int) $turfCount;
   }
-  
+
   /**
    * getTurf
    *
@@ -344,9 +330,9 @@ class NlpTurfs
       nlp_debug_msg('getTurf', $e->getMessage());
       return [];
     }
-    return (empty($dbTurf))?[]:$dbTurf;
+    return (empty($dbTurf)) ? [] : $dbTurf;
   }
-  
+
   /**
    * getListId
    *
@@ -362,7 +348,7 @@ class NlpTurfs
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
-      $query->addField('i','listId');
+      $query->addField('i', 'listId');
       $query->condition('turfIndex', $turfIndex);
       $result = $query->execute();
       $dbTurf = $result->fetchAssoc();
@@ -370,18 +356,18 @@ class NlpTurfs
       nlp_debug_msg('getListId', $e->getMessage());
       return 0;
     }
-    return (empty($dbTurf))?0:$dbTurf['listId'];
+    return (empty($dbTurf)) ? 0 : $dbTurf['listId'];
   }
-  
+
   /**
    * getTurfByListId
    *
    * Returns a turf record for a specific listId.  The listId is the ID of the turf in VoteBuilder.
    *
-   * @param $listId
+   * @param int $listId
    * @return array
    */
-  public function getTurfByListId($listId): array
+  public function getTurfByListId(int $listId): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -393,19 +379,19 @@ class NlpTurfs
       nlp_debug_msg('getTurfByListId', $e->getMessage());
       return [];
     }
-    if (empty($dbTurf)) {return [];}
+    if (empty($dbTurf)) { return []; }
     return $dbTurf;
   }
-  
+
   /**
    * getTurfsById
    *
    * Returns an array of turfs for a specific MCID.
    *
-   * @param $mcid
+   * @param int $mcid
    * @return array
    */
-  public function getTurfsById($mcid): array
+  public function getTurfsById(int $mcid): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 'i');
@@ -419,51 +405,49 @@ class NlpTurfs
       nlp_debug_msg('getTurfById', $e->getMessage());
       return [];
     }
-    if (empty($result)) {return [];}
-    
+    if (empty($result)) { return []; }
+
     $dbTurfs = [];
     do {
       $dbTurf = $result->fetchAssoc();
-      if (empty($dbTurf)) {break;}
+      if (empty($dbTurf)) { break; }
       $dbTurfs[] = $dbTurf;
     } while (TRUE);
     return $dbTurfs;
   }
-  
+
   /**
    * updateTurf
    *
    * Updates a specific field in a turf record.
    *
-   * @param $turfIndex
-   * @param $field
-   * @param $value
+   * @param int $turfIndex
+   * @param string $field
+   * @param mixed $value
    * @return void
    */
-  public function updateTurf($turfIndex, $field, $value): void
+  public function updateTurf(int $turfIndex, string $field, mixed $value): void
   {
     try {
       $this->connection->update(self::TURF_TBL)
-        ->fields([
-          $field => $value,
-        ])
+        ->fields([$field => $value])
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('updateTurf', $e->getMessage());
     }
   }
-  
+
   /**
    * updateTurfFields
    *
    * Updates multiple fields in a turf record.
    *
-   * @param $turfIndex
-   * @param $fields
+   * @param int $turfIndex
+   * @param array $fields
    * @return void
    */
-  public function updateTurfFields($turfIndex, $fields): void
+  public function updateTurfFields(int $turfIndex, array $fields): void
   {
     try {
       $this->connection->update(self::TURF_TBL)
@@ -474,7 +458,7 @@ class NlpTurfs
       nlp_debug_msg('updateTurfFields', $e->getMessage());
     }
   }
-  
+
   /**
    * createTurf
    *
@@ -498,11 +482,11 @@ class NlpTurfs
     }
     return $turfIndex;
   }
-  
+
   /**
    * getTurfHD
    *
-   * Returns an array of unique house districts with assigned turf
+   * Returns an indexed array of unique house districts with assigned turf
    * for a specific county.
    *
    * @param string $county
@@ -517,7 +501,7 @@ class NlpTurfs
   /**
    * getTurfHdNames
    *
-   * Returns an array of unique house districts with assigned turf
+   * Returns an associative array of unique house districts with assigned turf
    * for a specific county.
    *
    * @param string $county
@@ -531,17 +515,17 @@ class NlpTurfs
       $query->condition('t.county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfHD', $e->getMessage());
+      nlp_debug_msg('getTurfHdNames', $e->getMessage());
       return [];
     }
     $hdNameList = [];
     do {
       $hdRecord = $result->fetchAssoc();
-      if (empty($hdRecord)) {break;}
+      if (empty($hdRecord)) { break; }
       $hd = $hdRecord['turfHd'];
       $hdNameList[$hd] = $hd;
     } while (TRUE);
-    if (empty($hdNameList)) {return [];}
+    if (empty($hdNameList)) { return []; }
     ksort($hdNameList);
     return $hdNameList;
   }
@@ -549,14 +533,14 @@ class NlpTurfs
   /**
    * getTurfPrecinctNames
    *
-   * Returns an array of unique house districts with assigned turf
-   * for a specific county.
+   * Returns an associative array of unique precinct names for a specific county,
+   * optionally filtered by house district.
    *
    * @param string $county
    * @param int $hd - The house district.
    * @return array - An associative array of unique precinct names.
    */
-  public function getTurfPrecinctNames(string $county, int $hd=0 ): array
+  public function getTurfPrecinctNames(string $county, int $hd = 0): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -567,21 +551,21 @@ class NlpTurfs
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfHD', $e->getMessage());
+      nlp_debug_msg('getTurfPrecinctNames', $e->getMessage());
       return [];
     }
     $precinctList = [];
     do {
       $precinctRecord = $result->fetchAssoc();
-      if (empty($precinctRecord)) {break;}
+      if (empty($precinctRecord)) { break; }
       $precinctName = $precinctRecord['turfPrecinct'];
       $precinctList[$precinctName] = $precinctName;
     } while (TRUE);
-    if (empty($precinctList)) {return [];}
+    if (empty($precinctList)) { return []; }
     ksort($precinctList);
     return $precinctList;
   }
-  
+
   /**
    * getTurfs
    *
@@ -597,7 +581,7 @@ class NlpTurfs
    * @param array|null $orderBy - Optional sorting parameters.
    * @return array - An associative array of turf records.
    */
-  public function getTurfs(string $county, mixed $hd, array $orderBy=NULL): array
+  public function getTurfs(string $county, mixed $hd, array $orderBy = NULL): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -609,25 +593,25 @@ class NlpTurfs
         $query->condition('t.turfHd', $hd);
       }
       if(!empty($orderBy) && !empty($orderBy['field'])) {
-        $sortOrder = ($orderBy['sort']=='desc')?'DESC':'ASC';
-        $query->orderBy($orderBy['field'],$sortOrder);
+        $sortOrder = ($orderBy['sort'] == 'desc') ? 'DESC' : 'ASC';
+        $query->orderBy($orderBy['field'], $sortOrder);
       }
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getTurfs', $e->getMessage());
       return [];
     }
-    
+
     $turfArray = [];
     do {
       $turf = $result->fetchAssoc();
-      if (empty($turf)) {break;}
+      if (empty($turf)) { break; }
       $turfIndex = $turf['turfIndex'];
       $turfArray[$turfIndex] = $turf;
     } while (TRUE);
     return $turfArray;
   }
-  
+
   /**
    * getTurfIndexes
    *
@@ -642,7 +626,7 @@ class NlpTurfs
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
-      $query->addField('t','turfIndex');
+      $query->addField('t', 'turfIndex');
       $query->condition('t.county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
@@ -652,12 +636,12 @@ class NlpTurfs
     $turfIndexes = [];
     do {
       $turf = $result->fetchAssoc();
-      if (empty($turf)) {break;}
+      if (empty($turf)) { break; }
       $turfIndexes[] = $turf['turfIndex'];
     } while (TRUE);
     return $turfIndexes;
   }
-  
+
   /**
    * getCountyNames
    *
@@ -673,19 +657,19 @@ class NlpTurfs
       $query->distinct();
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfs', $e->getMessage());
+      nlp_debug_msg('getCountyNames', $e->getMessage());
       return [];
     }
-    
+
     $countyNames = [];
     do {
       $countyName = $result->fetchAssoc();
-      if (empty($countyName)) {break;}
+      if (empty($countyName)) { break; }
       $countyNames[] = $countyName['county'];
     } while (TRUE);
     return $countyNames;
   }
-  
+
   /**
    * getSyncedCountyNames
    *
@@ -710,7 +694,7 @@ class NlpTurfs
     $countyNames = [];
     do {
       $countyName = $result->fetchAssoc();
-      if (empty($countyName)) {break;}
+      if (empty($countyName)) { break; }
       $countyNames[] = $countyName['county'];
     } while (TRUE);
     return $countyNames;
@@ -734,7 +718,7 @@ class NlpTurfs
       }
     }
   }
-  
+
   /**
    * removeTurf
    *
@@ -764,7 +748,7 @@ class NlpTurfs
       $path = $this->pathsObj->getPath('PDF', $county);
       $this->unlinkFile($fileName, $path);
     }
-    
+
     // Delete the turf info in the turf table.
     try {
       $this->connection->delete(self::TURF_TBL)
@@ -776,7 +760,7 @@ class NlpTurfs
     }
     return TRUE;
   }
-  
+
   /**
    * deleteTurf
    *
@@ -790,10 +774,10 @@ class NlpTurfs
     $county = $turf['county'];
     $turfIndex = $turf['turfIndex'];
     $mcid = $turf['mcid'];
-    
+
     $status = $this->removeTurf($turf);
-    if (!$status) {return FALSE;}
-    
+    if (!$status) { return FALSE; }
+
     $voters = $this->votersObj->fetchVotersByTurf($turfIndex);
     $vanids = array_keys($voters);
     // Delete the NLP Voter AC.
@@ -805,7 +789,7 @@ class NlpTurfs
       $request['vanid'] = $vanid;
       $this->apiActivistCodesObj->setApiActivistCode($request);
     }
-    
+
     // remove the list of voters.
     $this->votersObj->deleteVotersInTurf($turfIndex);
     $this->votersObj->deleteAddressesInTurf($turfIndex);
@@ -815,7 +799,7 @@ class NlpTurfs
     $this->nlsObj->setNlsStatus($nlsStatus);
     return TRUE;
   }
-  
+
   /**
    * turfExists
    *
@@ -827,11 +811,11 @@ class NlpTurfs
    * - 'turfCnt': The count of turfs found.
    * - 'turfIndex': The index of the first turf found.
    *
-   * @param $mcid
-   * @param $county
+   * @param int $mcid
+   * @param string $county
    * @return array - An associative array containing turf information if it exists, otherwise an empty array.
    */
-  public function turfExists($mcid, $county): array
+  public function turfExists(int $mcid, string $county): array
   {
     $query = $this->connection->select(self::TURF_TBL, 'i');
     $query->fields('i');
@@ -846,27 +830,27 @@ class NlpTurfs
     $turfs = [];
     do {
       $dbTurf = $result->fetchAssoc();
-      if (empty($dbTurf)) {break;}
+      if (empty($dbTurf)) { break; }
       $turfIndex = $dbTurf['turfIndex'];
       $turfs[$turfIndex] = $dbTurf;
     } while (TRUE);
-    if (empty($turfs)) {return [];}
+    if (empty($turfs)) { return []; }
     $turfArray['turfs'] = $turfs;
     $turfArray['turfCnt'] = count($turfs);
     $turfArray['turfIndex'] = key($turfs);
     return $turfArray;
   }
-  
+
   /**
    * getTurfByTurfName
    *
    * Returns a turf record for a specific folderId and turfName.
    *
-   * @param $folderId
-   * @param $turfName
+   * @param int $folderId
+   * @param string $turfName
    * @return array - An associative array containing turf information if it exists, otherwise an empty array.
    */
-  public function getTurfByTurfName($folderId, $turfName): array
+  public function getTurfByTurfName(int $folderId, string $turfName): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -879,27 +863,25 @@ class NlpTurfs
       return [];
     }
     $assignment = $result->fetchAssoc();
-    if (empty($assignment)) {
-      return [];
-    }
+    if (empty($assignment)) { return []; }
     return $assignment;
   }
-  
+
   /**
    * createTurfNames
    *
    * Creates an indexed array of turf names in the provided array of turfs.
    *
-   * @param $turfArray - An associative array containing turfs.
+   * @param array $turfArray - An associative array containing turfs.
    * @return array - An indexed array of turf names.
    */
-  public function createTurfNames($turfArray): array
+  public function createTurfNames(array $turfArray): array
   {
     return array_map(function ($turf) {
       return $turf['turfName'];
     }, $turfArray['turfs']);
   }
-  
+
   /**
    * getStaleTurfs
    *
@@ -911,17 +893,16 @@ class NlpTurfs
   public function getStaleTurfs(): array
   {
     $votebuilderUpdateDate = $this->nlpConfigurationObj->getVoterBuilderUpdateDate();
-    nlp_debug_msg('votebuilderUpdateDate', $votebuilderUpdateDate);
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
       $query->addField('t', 'turfIndex');
       $query->addField('t', 'county');
-      
+
       $Group1 = $query->orConditionGroup()
         ->condition('t.syncDate', $votebuilderUpdateDate, '<')
         ->condition('t.syncDate', NULL, 'IS NULL');
       $query->condition($Group1);
-      
+
       $query->isNotNull('t.listId');
       $result = $query->execute();
     } catch (Exception $e) {
@@ -932,49 +913,52 @@ class NlpTurfs
     $batch = [];
     do {
       $turf = $result->fetchAssoc();
-      if (empty($turf)) {break;}
+      if (empty($turf)) { break; }
       $batch[] = $turf;
       if(count($batch) >= self::TURF_RESYNC_MAX) {
         $turfIndexes[] = $batch;
         $batch = [];
       }
     } while (TRUE);
-    
+
     if(!empty($batch)) {
       $turfIndexes[] = $batch;
     }
     return $turfIndexes;
   }
-  
+
   /**
    * setTurfAssignment
    *
    * Sets or updates a turf assignment in the database.
    *
-   * @param $assignment - An associative array containing turf assignment information.
+   * @param array $assignment - An associative array containing turf assignment information.
    * @return void
    */
-  public function setTurfAssignment($assignment): void
+  public function setTurfAssignment(array $assignment): void
   {
+    $keyFields = ['turfId' => $assignment['turfId']];
+    $dataFields = $assignment;
+    unset($dataFields['turfId']);
     try {
       $this->connection->merge(self::TURF_ASSIGNMENT_TBL)
-        ->fields($assignment)
-        ->condition('turfId', $assignment['turfId'])
+        ->keys($keyFields)
+        ->fields($dataFields)
         ->execute();
     } catch (Exception $e) {
       nlp_debug_msg('setTurfAssignment', $e->getMessage());
     }
   }
-  
+
   /**
    * getTurfAssignment
    *
    * Returns a turf assignment record for a specific turfId.
    *
-   * @param $turfId
+   * @param int $turfId
    * @return array - An associative array containing turf assignment information if it exists, otherwise an empty array.
    */
-  public function getTurfAssignment($turfId): array
+  public function getTurfAssignment(int $turfId): array
   {
     try {
       $query = $this->connection->select(self::TURF_ASSIGNMENT_TBL, 't');
@@ -986,21 +970,19 @@ class NlpTurfs
       return [];
     }
     $assignment = $result->fetchAssoc();
-    if (empty($assignment)) {
-      return [];
-    }
+    if (empty($assignment)) { return []; }
     return $assignment;
   }
-  
+
   /**
    * getTurfAssignmentsById
    *
    * Returns an array of turf assignments for a specific MCID.
    *
-   * @param $mcid
+   * @param int $mcid
    * @return array - An indexed array of turf assignments.
    */
-  public function getTurfAssignmentsById($mcid): array
+  public function getTurfAssignmentsById(int $mcid): array
   {
     try {
       $query = $this->connection->select(self::TURF_ASSIGNMENT_TBL, 't');
@@ -1011,22 +993,16 @@ class NlpTurfs
       nlp_debug_msg('getTurfAssignment', $e->getMessage());
       return [];
     }
-    if (empty($assignment)) {
-      return [];
-    }
-    
+
     $assignments = [];
     do {
       $assignment = $result->fetchAssoc();
+      if (empty($assignment)) { break; }
       $assignments[] = $assignment;
-      if (empty($assignments)) {
-        break;
-      }
     } while (TRUE);
-    
     return $assignments;
   }
-  
+
   /**
    * getTurfAssignmentByTurfName
    *
@@ -1043,28 +1019,25 @@ class NlpTurfs
       $query->fields('t');
       $query->condition('t.folderId', $folderId);
       $query->condition('t.turfName', $turfName);
-      
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getTurfAssignmentByTurfName', $e->getMessage());
       return [];
     }
     $assignment = $result->fetchAssoc();
-    if (empty($assignment)) {
-      return [];
-    }
+    if (empty($assignment)) { return []; }
     return $assignment;
   }
-  
+
   /**
    * deleteTurfAssignment
    *
    * Deletes a turf assignment record for a specific turfId.
    *
-   * @param $turfId
+   * @param int $turfId
    * @return void
    */
-  public function deleteTurfAssignment($turfId): void
+  public function deleteTurfAssignment(int $turfId): void
   {
     try {
       $this->connection->delete(self::TURF_ASSIGNMENT_TBL)
@@ -1074,16 +1047,16 @@ class NlpTurfs
       nlp_debug_msg('deleteTurfAssignment', $e->getMessage());
     }
   }
-  
+
   /**
    * decodeTurfAssignmentHeader
    *
    * Decodes the header of a turf assignment file and checks for required columns.
    *
-   * @param $fileHdr - An array of column names from the file header.
+   * @param array $fileHdr - An array of column names from the file header.
    * @return array - An associative array containing header positions, errors, and status.
    */
-  public function decodeTurfAssignmentHeader($fileHdr): array
+  public function decodeTurfAssignmentHeader(array $fileHdr): array
   {
     $hdrErr = $hdrPos = [];
     $awardHeader = $this->getAssignmentColumnNames();
@@ -1105,7 +1078,7 @@ class NlpTurfs
     $fieldPos['ok'] = empty($hdrErr);
     return $fieldPos;
   }
-  
+
   /**
    * getAssignmentColumnNames
    *
@@ -1120,19 +1093,17 @@ class NlpTurfs
       $result = $this->connection->query($select);
     } catch (Exception $e) {
       nlp_debug_msg('getAssignmentColumnNames', $e->getMessage());
-      return array();
+      return [];
     }
     $colNames = [];
     do {
       $name = $result->fetchAssoc();
-      if (empty($name)) {
-        break;
-      }
+      if (empty($name)) { break; }
       $colNames[] = $name['Field'];
     } while (TRUE);
     return $colNames;
   }
-  
+
   /**
    * fixTurfAssignment
    *
@@ -1149,7 +1120,7 @@ class NlpTurfs
     $turfAssignment['turfId'] = $newTurfId;
     $this->setTurfAssignment($turfAssignment);
   }
-  
+
   /**
    * checkTurfIdChange
    *
@@ -1172,11 +1143,11 @@ class NlpTurfs
       }
     }
     $alteredTurf = $this->getTurfByTurfName($folderId, $turfName);
-    if (!empty($alteredTurf) and $alteredTurf['listId'] != $turfId) {
+    if (!empty($alteredTurf) && $alteredTurf['listId'] != $turfId) {
       $this->updateTurf($alteredTurf['turfIndex'], 'listId', $turfId);
     }
   }
-  
+
   /**
    * turfInUse
    *
@@ -1187,32 +1158,30 @@ class NlpTurfs
    * @param string $turfName - The name of the turf.
    * @return array - An associative array containing information about the turf in use.
    */
-  public function turfInUse(int $folderId,int $turfId,string $turfName): array
+  public function turfInUse(int $folderId, int $turfId, string $turfName): array
   {
     $turfInUse = [
       'nl' => '',
       'mcid' => '',
-      'turfAssigned'=> '',
-      ];
+      'turfAssigned' => '',
+    ];
     $turf = $this->getTurfByListId($turfId);
     if(!empty($turf)) {
       $turfInUse = [
-        'nl' => $turf['nlFirstName'].' '.$turf['nlLastName'],
+        'nl' => $turf['nlFirstName'] . ' ' . $turf['nlLastName'],
         'mcid' => $turf['mcid'],
-        'turfAssigned'=> 'X',
+        'turfAssigned' => 'X',
       ];
-     
     } else {
       $turf = $this->getTurfByTurfName($folderId, $turfName);
       if(!empty($turf)) {
         $turfInUse = [
-          'nl' => $turf['nlFirstName'].' '.$turf['nlLastName'],
+          'nl' => $turf['nlFirstName'] . ' ' . $turf['nlLastName'],
           'mcid' => $turf['mcid'],
-          'turfAssigned'=> 'X',
+          'turfAssigned' => 'X',
         ];
-       
       } else {
-        // The turf known to VoteBuilder has not yet been assigned to and NL.   So, check if the turfID known
+        // The turf known to VoteBuilder has not yet been assigned to an NL.   So, check if the turfID known
         // to VoteBuilder matches a turf previously assigned to an NL.
         $previousTurfAssignment = $this->getTurfAssignment($turfId);
         if(empty($previousTurfAssignment)) {
@@ -1224,23 +1193,23 @@ class NlpTurfs
             $this->setTurfAssignment($previousTurfAssignment);
           }
         }
-        
+
         if(!empty($previousTurfAssignment)) {
           $nls = $this->nlsObj->getNlById($previousTurfAssignment['mcid']);
-          $footnote = (!empty($nls))?'*':'**';
-          $footnote = '<span class="nlp-footnote-warning">'.$footnote.'</span>';
+          $footnote = (!empty($nls)) ? '*' : '**';
+          $footnote = '<span class="nlp-footnote-warning">' . $footnote . '</span>';
           $turfInUse = [
-            'nl' => $previousTurfAssignment['firstName'].' '.$previousTurfAssignment['lastName'],
-            'mcid' => $previousTurfAssignment['mcid'].$footnote,
-            'hintPrevious'=> $previousTurfAssignment['mcid'],
-            'turfAssigned'=> '',
+            'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'],
+            'mcid' => $previousTurfAssignment['mcid'] . $footnote,
+            'hintPrevious' => $previousTurfAssignment['mcid'],
+            'turfAssigned' => '',
           ];
         }
       }
     }
     return $turfInUse;
   }
-  
+
   /**
    * unreportedChanges
    *
@@ -1262,13 +1231,12 @@ class NlpTurfs
       nlp_debug_msg('unreportedChanges', $e->getMessage());
       return FALSE;
     }
-    
+
     $dbTurf = $result->fetchAssoc();
-    if (empty($dbTurf)) {return FALSE;}
-   
-    return (!empty($dbTurf['unreportedChanges']))?$dbTurf['unreportedChanges']:FALSE;
+    if (empty($dbTurf)) { return FALSE; }
+    return (!empty($dbTurf['unreportedChanges'])) ? $dbTurf['unreportedChanges'] : FALSE;
   }
-  
+
   /**
    * getChangeHistory
    *
@@ -1288,13 +1256,16 @@ class NlpTurfs
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getUnreportedChanges', $e->getMessage());
+      nlp_debug_msg('getChangeHistory', $e->getMessage());
       return [];
     }
     $dbTurf = $result->fetchAssoc();
-    return (!empty($dbTurf['changeHistory']))?json_decode($dbTurf['changeHistory'],TRUE):[];
+    if(empty($dbTurf['changeHistory'])) { return []; }
+    $changeHistory = json_decode($dbTurf['changeHistory'], TRUE);
+    if(json_last_error() !== JSON_ERROR_NONE) { return []; }
+    return $changeHistory;
   }
-  
+
   /**
    * getMinivanInfo
    *
@@ -1316,10 +1287,10 @@ class NlpTurfs
       return [];
     }
     $dbTurf = $result->fetchAssoc();
-    if(empty($dbTurf)) {return [];}
+    if(empty($dbTurf)) { return []; }
     return $dbTurf;
   }
-  
+
   /**
    * getVoterCounts
    *
@@ -1331,7 +1302,7 @@ class NlpTurfs
    * @param bool $voted - If TRUE, only return the count of voters who have turned in a ballot.
    * @return int - A count of the voters meeting the criteria.
    */
-  public function getVoterCounts(string $type, mixed $value, string $scope, bool $voted=FALSE): int
+  public function getVoterCounts(string $type, mixed $value, string $scope, bool $voted = FALSE): int
   {
     try {
       $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
@@ -1344,8 +1315,8 @@ class NlpTurfs
       if($scope != 'All') {
         $query->leftJoin($this->nlpReportsObj::NLP_RESULTS_TBL, 'r', 'r.vanid = g.vanid');
         $cycle = $this->nlpConfigurationObj->getCycle();
-        $query->condition('r.cycle',$cycle);
-        
+        $query->condition('r.cycle', $cycle);
+
         switch ($scope) {
           case 'Attempted':
             $group = $query->orConditionGroup()
@@ -1368,7 +1339,7 @@ class NlpTurfs
             break;
         }
       }
-      $query->addField('g','vanid');
+      $query->addField('g', 'vanid');
       switch ($type) {
         case 'CD':
           $query->condition('a.cd', (int) $value);
@@ -1388,15 +1359,13 @@ class NlpTurfs
         $query->isNotNull('m.date');
       }
       $voterCount = $query->countQuery()->execute()->fetchField();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getVotersInCounty', $e->getMessage() );
+    } catch (Exception $e) {
+      nlp_debug_msg('getVotersInCounty', $e->getMessage());
       return 0;
     }
-    
-    return $voterCount;
+    return (int) $voterCount;
   }
-  
+
   /**
    * getCountyTurfVoterStats
    *
@@ -1404,12 +1373,12 @@ class NlpTurfs
    * down by voted status, contact attempts, and survey responses.
    *
    * Returns an array with keys:
-   *   total          - all voters in county turfs
-   *   totalVoted     - of those, how many have turned in a ballot
-   *   contacted      - voters who had at least one contact attempt (contact or survey)
-   *   contactedVoted - of those, how many voted
-   *   surveyed       - voters who answered the survey question
-   *   surveyedVoted  - of those, how many voted
+   *   `total`          - all voters in county turfs
+   *   `totalVoted`     - of those, how many have turned in a ballot
+   *   `contacted`      - voters who had at least one contact attempt (contact or survey)
+   *   `contactedVoted` - of those, how many voted
+   *   `surveyed`       - voters who answered the survey question
+   *   `surveyedVoted`  - of those, how many voted
    *
    * @param string $county - The county name.
    * @return array<string,int>
@@ -1491,8 +1460,7 @@ class NlpTurfs
       $query->isNotNull('m.date');
       $query->distinct();
       $stats['surveyedVoted'] = (int) $query->countQuery()->execute()->fetchField();
-    }
-    catch (Exception $e) {
+    } catch (Exception $e) {
       nlp_debug_msg('getCountyTurfVoterStats', $e->getMessage());
     }
     return $stats;
@@ -1503,16 +1471,16 @@ class NlpTurfs
    *
    * Get the number of NLs in a CD with turfs.
    *
-   * @param $cd - The CD to check.
+   * @param int $cd - The CD to check.
    * @return int - The number of NLS in the CD that have turfs.
    */
-  public function countOfNlsWithTurfsInCd($cd): int
+  public function countOfNlsWithTurfsInCd(int $cd): int
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
       $query->join($this->nlsObj::NLS_TBL, 'n', 'n.mcid = t.mcid');
       $query->addField('n', 'mcid');
-      $query->condition('t.turfCd', (int) $cd);
+      $query->condition('t.turfCd', $cd);
       $query->distinct();
       $count = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
@@ -1521,22 +1489,22 @@ class NlpTurfs
     }
     return (int) $count;
   }
-  
+
   /**
    * countOfNlsInCdThatReportedResults
    *
    * Get the number of NLs in a CD that have reported results.
    *
-   * @param $cd - The CD to check.
+   * @param int $cd - The CD to check.
    * @return int - The number of NLS in the CD that have reported results.
    */
-  public function countOfNlsInCdThatReportedResults($cd): int
+  public function countOfNlsInCdThatReportedResults(int $cd): int
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
       $query->join($this->nlsObj::NLS_STATUS_TBL, 'n', 'n.mcid = t.mcid');
       $query->addField('n', 'mcid');
-      $query->condition('t.turfCd', (int) $cd);
+      $query->condition('t.turfCd', $cd);
       $query->condition('n.resultsReported', 'Y');
       $query->distinct();
       $count = $query->countQuery()->execute()->fetchField();
@@ -1544,9 +1512,7 @@ class NlpTurfs
       nlp_debug_msg('countOfNlsInCdThatReportedResults', $e->getMessage());
       return 0;
     }
-    return (int)$count;
+    return (int) $count;
   }
-  
+
 }
-
-
