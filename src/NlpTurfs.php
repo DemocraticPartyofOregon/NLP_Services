@@ -10,7 +10,6 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class NlpTurfs
 {
   const string TURF_TBL = 'nlp_turf';
-  const string TURF_ASSIGNMENT_TBL = 'nlp_turf_assignment';
   const int TURF_ALL_MAX = 200;  // Maximum turfs to display before restricting display to house districts.
   const int TURF_RESYNC_MAX = 100;
 
@@ -25,10 +24,11 @@ class NlpTurfs
   protected NlpMatchbacks $nlpMatchbacksObj;
   protected ApiFolders $apiFoldersObj;
   protected ApiMapRegions $apiMapRegionsObj;
+  protected NlpTurfAssignments $turfAssignmentsObj;
 
   public function __construct( $connection, $fileSystem, $nlsObj, $pathsObj,
                                $votersObj, $apiActivistCodesObj, $nlpConfigurationObj, $nlpReportsObj,
-                               $nlpMatchbacksObj, $apiFoldersObj, $apiMapRegionsObj )
+                               $nlpMatchbacksObj, $apiFoldersObj, $apiMapRegionsObj, $turfAssignmentsObj )
   {
     $this->connection = $connection;
     $this->fileSystem = $fileSystem;
@@ -41,6 +41,7 @@ class NlpTurfs
     $this->nlpMatchbacksObj = $nlpMatchbacksObj;
     $this->apiFoldersObj = $apiFoldersObj;
     $this->apiMapRegionsObj = $apiMapRegionsObj;
+    $this->turfAssignmentsObj = $turfAssignmentsObj;
   }
 
   public static function create(ContainerInterface $container): NlpTurfs
@@ -56,7 +57,8 @@ class NlpTurfs
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.matchbacks'),
       $container->get('nlpservices.api_folders'),
-      $container->get('nlpservices.api_map_regions')
+      $container->get('nlpservices.api_map_regions'),
+      $container->get('nlpservices.turf_assignments'),
     );
   }
 
@@ -928,202 +930,6 @@ class NlpTurfs
   }
 
   /**
-   * setTurfAssignment
-   *
-   * Sets or updates a turf assignment in the database.
-   *
-   * @param array $assignment - An associative array containing turf assignment information.
-   * @return void
-   */
-  public function setTurfAssignment(array $assignment): void
-  {
-    $keyFields = ['turfId' => $assignment['turfId']];
-    $dataFields = $assignment;
-    unset($dataFields['turfId']);
-    try {
-      $this->connection->merge(self::TURF_ASSIGNMENT_TBL)
-        ->keys($keyFields)
-        ->fields($dataFields)
-        ->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('setTurfAssignment', $e->getMessage());
-    }
-  }
-
-  /**
-   * getTurfAssignment
-   *
-   * Returns a turf assignment record for a specific turfId.
-   *
-   * @param int $turfId
-   * @return array - An associative array containing turf assignment information if it exists, otherwise an empty array.
-   */
-  public function getTurfAssignment(int $turfId): array
-  {
-    try {
-      $query = $this->connection->select(self::TURF_ASSIGNMENT_TBL, 't');
-      $query->fields('t');
-      $query->condition('t.turfId', $turfId);
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignment', $e->getMessage());
-      return [];
-    }
-    $assignment = $result->fetchAssoc();
-    if (empty($assignment)) { return []; }
-    return $assignment;
-  }
-
-  /**
-   * getTurfAssignmentsById
-   *
-   * Returns an array of turf assignments for a specific MCID.
-   *
-   * @param int $mcid
-   * @return array - An indexed array of turf assignments.
-   */
-  public function getTurfAssignmentsById(int $mcid): array
-  {
-    try {
-      $query = $this->connection->select(self::TURF_ASSIGNMENT_TBL, 't');
-      $query->fields('t');
-      $query->condition('t.mcid', $mcid);
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignment', $e->getMessage());
-      return [];
-    }
-
-    $assignments = [];
-    do {
-      $assignment = $result->fetchAssoc();
-      if (empty($assignment)) { break; }
-      $assignments[] = $assignment;
-    } while (TRUE);
-    return $assignments;
-  }
-
-  /**
-   * getTurfAssignmentByTurfName
-   *
-   * Returns a turf assignment record for a specific folderId and turfName.
-   *
-   * @param int $folderId
-   * @param string $turfName
-   * @return array - An associative array containing turf assignment information if it exists, otherwise an empty array.
-   */
-  public function getTurfAssignmentByTurfName(int $folderId, string $turfName): array
-  {
-    try {
-      $query = $this->connection->select(self::TURF_ASSIGNMENT_TBL, 't');
-      $query->fields('t');
-      $query->condition('t.folderId', $folderId);
-      $query->condition('t.turfName', $turfName);
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignmentByTurfName', $e->getMessage());
-      return [];
-    }
-    $assignment = $result->fetchAssoc();
-    if (empty($assignment)) { return []; }
-    return $assignment;
-  }
-
-  /**
-   * deleteTurfAssignment
-   *
-   * Deletes a turf assignment record for a specific turfId.
-   *
-   * @param int $turfId
-   * @return void
-   */
-  public function deleteTurfAssignment(int $turfId): void
-  {
-    try {
-      $this->connection->delete(self::TURF_ASSIGNMENT_TBL)
-        ->condition('turfId', $turfId)
-        ->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('deleteTurfAssignment', $e->getMessage());
-    }
-  }
-
-  /**
-   * decodeTurfAssignmentHeader
-   *
-   * Decodes the header of a turf assignment file and checks for required columns.
-   *
-   * @param array $fileHdr - An array of column names from the file header.
-   * @return array - An associative array containing header positions, errors, and status.
-   */
-  public function decodeTurfAssignmentHeader(array $fileHdr): array
-  {
-    $hdrErr = $hdrPos = [];
-    $awardHeader = $this->getAssignmentColumnNames();
-    foreach ($awardHeader as $columnName) {
-      $found = FALSE;
-      foreach ($fileHdr as $fileCol => $fileColName) {
-        if (trim($fileColName) == $columnName) {
-          $hdrPos[$columnName] = $fileCol;
-          $found = TRUE;
-          break;
-        }
-      }
-      if (!$found) {
-        $hdrErr[] = 'The awards column "' . $columnName . '" is missing.';
-      }
-    }
-    $fieldPos['pos'] = $hdrPos;
-    $fieldPos['err'] = $hdrErr;
-    $fieldPos['ok'] = empty($hdrErr);
-    return $fieldPos;
-  }
-
-  /**
-   * getAssignmentColumnNames
-   *
-   * Returns an array of column names from the turf assignment table.
-   *
-   * @return array - An indexed array of column names.
-   */
-  public function getAssignmentColumnNames(): array
-  {
-    try {
-      $select = "SHOW COLUMNS FROM  {" . self::TURF_ASSIGNMENT_TBL . '}';
-      $result = $this->connection->query($select);
-    } catch (Exception $e) {
-      nlp_debug_msg('getAssignmentColumnNames', $e->getMessage());
-      return [];
-    }
-    $colNames = [];
-    do {
-      $name = $result->fetchAssoc();
-      if (empty($name)) { break; }
-      $colNames[] = $name['Field'];
-    } while (TRUE);
-    return $colNames;
-  }
-
-  /**
-   * fixTurfAssignment
-   *
-   * Fixes a turf assignment by changing the turfId to a new turfId.
-   *
-   * @param int $turfId - The current turfId to be fixed.
-   * @param int $newTurfId - The new turfId to assign.
-   * @return void
-   */
-  public function fixTurfAssignment(int $turfId, int $newTurfId): void
-  {
-    $turfAssignment = $this->getTurfAssignment($turfId);
-    $this->deleteTurfAssignment($turfId);
-    $turfAssignment['turfId'] = $newTurfId;
-    $this->setTurfAssignment($turfAssignment);
-  }
-
-  /**
-   * checkTurfIdChange
-   *
    * Checks if the turfId has changed for a given turf and updates the assignment if necessary.
    *
    * @param int $folderId - The folder ID where the turf is assigned.
@@ -1132,14 +938,14 @@ class NlpTurfs
    */
   public function checkTurfIdChange(int $folderId, array $turf): void
   {
-    $previousTurfAssignment = $this->getTurfAssignmentByTurfName($folderId, $turf['turfName']);
+    $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignmentByTurfName($folderId, $turf['turfName']);
     $turfId = $turf['turfId'];
     $turfName = $turf['turfName'];
     // Detect if the turf is in use or if the Map Region was altered.   Fix the turfId in NLP Services if
     // there is a new turfID assigned to the turf.
     if (!empty($previousTurfAssignment)) {
       if ($previousTurfAssignment['turfId'] != $turfId) {
-        $this->fixTurfAssignment($previousTurfAssignment['turfId'], $turfId);
+        $this->turfAssignmentsObj->fixTurfAssignment($previousTurfAssignment['turfId'], $turfId);
       }
     }
     $alteredTurf = $this->getTurfByTurfName($folderId, $turfName);
@@ -1149,8 +955,6 @@ class NlpTurfs
   }
 
   /**
-   * turfInUse
-   *
    * Checks if a turf is currently assigned to an NL or has been previously assigned.
    *
    * @param int $folderId - The folder ID where the turf is assigned.
@@ -1183,14 +987,14 @@ class NlpTurfs
       } else {
         // The turf known to VoteBuilder has not yet been assigned to an NL.   So, check if the turfID known
         // to VoteBuilder matches a turf previously assigned to an NL.
-        $previousTurfAssignment = $this->getTurfAssignment($turfId);
+        $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignment($turfId);
         if(empty($previousTurfAssignment)) {
-          $previousTurfAssignment = $this->getTurfAssignmentByTurfName($folderId, $turfName);
+          $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignmentByTurfName($folderId, $turfName);
           if(!empty($previousTurfAssignment)) {
             // Update the assignment record.
             $previousTurfAssignment['turfId'] = $turfId;
-            $this->deleteTurfAssignment($turfId);
-            $this->setTurfAssignment($previousTurfAssignment);
+            $this->turfAssignmentsObj->deleteTurfAssignment($turfId);
+            $this->turfAssignmentsObj->setTurfAssignment($previousTurfAssignment);
           }
         }
 

@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\nlpservices\NlpTurfAssignments;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpResyncTurf
@@ -10,6 +11,7 @@ class NlpResyncTurf
   const int TURF_SYNC_BATCH_SIZE = 10;
 
   protected NlpVoters $votersObj;
+  protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
   protected ApiExportJobs $exportJobsObj;
   protected ApiSavedLists $savedListsObj;
@@ -29,9 +31,10 @@ class NlpResyncTurf
                               $syncTurfAddVoterObj, $apiVoterObj, $nlpConfigurationObj,
                               $apiFoldersObj, $activistCodesObj, $coordinatorsObj,
                               $databaseFunctionsObj, $nlsObj, $sendEmailObj, $turfMapRegionsObj,
-                              $sessionDataObj ) {
+                              $sessionDataObj, $turfAssignmentsObj ) {
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
+    $this->turfAssignmentsObj = $turfAssignmentsObj;
     $this->exportJobsObj = $exportJobsObj;
     $this->savedListsObj = $savedListsObj;
     $this->syncTurfAddVoterObj = $syncTurfAddVoterObj;
@@ -65,6 +68,7 @@ class NlpResyncTurf
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.turf_map_regions'),
       $container->get('nlpservices.session_data'),
+      $container->get('nlpservices.turf_assignments'),
     );
   }
 
@@ -103,7 +107,7 @@ class NlpResyncTurf
     // If the turfId was changed by VoteBuilder, update the NLP turf with the new turfId.
     if(!empty($newTurfId) && $newTurfId != $previousTurfId) {
       $this->turfsObj->updateTurf($turfIndex, 'listId', $resyncCheckResult['newTurfId']);
-      $this->turfsObj->fixTurfAssignment($resyncCheckResult['previousTurfId'], $resyncCheckResult['newTurfId']);
+      $this->turfAssignmentsObj->fixTurfAssignment($resyncCheckResult['previousTurfId'], $resyncCheckResult['newTurfId']);
       $this->turfsObj->updateTurfFields($turfIndex, ['listId' => $newTurfId,]);
     }
 

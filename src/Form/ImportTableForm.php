@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\NlpNls;
+use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\DatabaseFunctions;
 
@@ -19,12 +20,14 @@ class ImportTableForm extends FormBase
   protected NlpAwards $nlpAwardsObj;
   protected NlpNls $nlpNlsObj;
   protected NlpTurfs $turfsObj;
-  
-  public function __construct( $databaseFunctionsObj, $nlpAwardsObj, $nlpNlsObj, $turfsObj) {
+  protected NlpTurfAssignments $turfAssignmentsObj;
+
+  public function __construct( $databaseFunctionsObj, $nlpAwardsObj, $nlpNlsObj, $turfsObj, $turfAssignmentsObj) {
     $this->databaseFunctionsObj = $databaseFunctionsObj;
     $this->nlpAwardsObj = $nlpAwardsObj;
     $this->nlpNlsObj = $nlpNlsObj;
     $this->turfsObj = $turfsObj;
+    $this->turfAssignmentsObj = $turfAssignmentsObj;
   }
   
   /**
@@ -37,6 +40,7 @@ class ImportTableForm extends FormBase
       $container->get('nlpservices.awards'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.turfs'),
+      $container->get('nlpservices.turf_assignments'),
     );
   }
   
@@ -121,7 +125,7 @@ class ImportTableForm extends FormBase
         $pos = $this->nlpAwardsObj->decodeAwardHeader($headerColumns);
         break;
       case 'nlp_turf_assignment':
-        $pos = $this->turfsObj->decodeTurfAssignmentHeader($headerColumns);
+        $pos = $this->turfAssignmentsObj->decodeTurfAssignmentHeader($headerColumns);
         break;
     }
     $fieldPos = $pos['pos'];

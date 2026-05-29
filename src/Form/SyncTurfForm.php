@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\ApiSavedLists;
 use Drupal\nlpservices\ApiFolders;
 use Drupal\nlpservices\NlpNls;
+use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpSyncTurfBuilder;
 use Drupal\nlpservices\NlpSessionData;
@@ -21,6 +22,7 @@ class SyncTurfForm extends FormBase {
   protected ApiSavedLists $savedListsObj;
   protected ApiFolders $foldersObj;
   protected NlpNls $nlsObj;
+  protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
   protected NlpSyncTurfBuilder $syncTurfBuilderObj;
   protected NlpNlsListDisplay $nlsListDisplayObj;
@@ -35,7 +37,7 @@ class SyncTurfForm extends FormBase {
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
                                 $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
-                                $apiMapRegionsObj ) {
+                                $apiMapRegionsObj, $turfAssignmentsObj ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -46,6 +48,7 @@ class SyncTurfForm extends FormBase {
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
     $this->apiMapRegionsObj = $apiMapRegionsObj;
+    $this->turfAssignmentsObj = $turfAssignmentsObj;
   }
 
   /**
@@ -64,6 +67,7 @@ class SyncTurfForm extends FormBase {
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_list_display_votebuilder'),
       $container->get('nlpservices.api_map_regions'),
+      $container->get('nlpservices.turf_assignments'),
     );
   }
 
@@ -667,7 +671,7 @@ class SyncTurfForm extends FormBase {
   function previouslyAssignedNl(int $turfId, int &$mcid): array
   {
     $form = [];
-    $turfAssignment = $this->turfsObj->getTurfAssignment($turfId);
+    $turfAssignment = $this->turfAssignmentsObj->getTurfAssignment($turfId);
     if(!empty($turfAssignment)) {
       $form['previously_assigned_title'] = [
           '#markup' => '<div class="big-ts-select-box" id="turf-sync-previous-title"><hr>

@@ -252,7 +252,8 @@ services:
                  '@nlpservices.sync_turf_add_voter', '@nlpservices.api_voter', '@nlpservices.configuration',
                  '@nlpservices.api_folders', '@nlpservices.activist_codes', '@nlpservices.coordinators',
                  '@nlpservices.database_functions', '@nlpservices.nls', '@nlpservices.send_email',
-                 '@nlpservices.turf_map_regions', '@nlpservices.session_data' ]
+                 '@nlpservices.turf_map_regions', '@nlpservices.session_data',
+                 '@nlpservices.turf_assignments' ]
 
   nlpservices.search_bar:
     class: Drupal\nlpservices\NlpSearchBar
@@ -282,13 +283,17 @@ services:
   nlpservices.turf_list_display_votebuilder:
     class: Drupal\nlpservices\NlpTurfListDisplayVoteBuilder
 
+  nlpservices.turf_assignments:
+    class: Drupal\nlpservices\NlpTurfAssignments
+    arguments: [ '@database' ]
+
   nlpservices.turfs:
     class: Drupal\nlpservices\NlpTurfs
     arguments: [ '@database' , '@file_system', '@nlpservices.nls',
                  '@nlpservices.paths', '@nlpservices.voters',
                  '@nlpservices.activist_codes', '@nlpservices.configuration',
                  '@nlpservices.reports', '@nlpservices.matchbacks', '@nlpservices.api_folders',
-                 '@nlpservices.api_map_regions']
+                 '@nlpservices.api_map_regions', '@nlpservices.turf_assignments']
 
   nlpservices.turf_map_regions:
     class: Drupal\nlpservices\NlpTurfMapRegions

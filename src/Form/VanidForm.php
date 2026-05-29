@@ -13,6 +13,7 @@ use Drupal\nlpservices\NlpCoordinators;
 use Drupal\nlpservices\NlpEncryption;
 use Drupal\nlpservices\NlpLegislativeFixes;
 use Drupal\nlpservices\NlpReports;
+use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpNls;
@@ -27,6 +28,7 @@ class VanidForm extends FormBase
   protected NlpCoordinators $coordinatorObj;
   protected NlpLegislativeFixes $legFixesObj;
   protected NlpReports $reportsObj;
+  protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
   protected NlpVoters $votersObj;
   
@@ -36,7 +38,7 @@ class VanidForm extends FormBase
   
   public function __construct( $drupalUserObj, $apiNlsObj, $nlpEncryptObj, $awardsObj,
                                $coordinatorObj, $legFixesObj, $reportsObj, $turfsObj,
-                               $votersObj, $nlsObj, $magicWordObj)
+                               $votersObj, $nlsObj, $magicWordObj, $turfAssignmentsObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->apiNlsObj = $apiNlsObj;
@@ -49,6 +51,7 @@ class VanidForm extends FormBase
     $this->votersObj = $votersObj;
     $this->nlsObj = $nlsObj;
     $this->magicWordObj = $magicWordObj;
+    $this->turfAssignmentsObj = $turfAssignmentsObj;
   }
   
   public static function create(ContainerInterface $container): VanidForm
@@ -65,6 +68,7 @@ class VanidForm extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.turf_assignments'),
     );
   }
   /**
@@ -228,7 +232,7 @@ then be sure to identify the VANID in use by NLP Services as the primary.  If yo
     }
     
     // Fix the turf assignments.
-    $turfAssignments = $this->turfsObj->getTurfAssignmentsById($previousId);
+    $turfAssignments = $this->turfAssignmentsObj->getTurfAssignmentsById($previousId);
     if(!empty($turfAssignments)) {
       foreach ($turfAssignments as $turfAssignment) {
         $this->turfsObj->updateTurf($turfAssignment['turfId'],'mcid',$newId);

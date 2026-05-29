@@ -20,6 +20,7 @@ function awakeBatch($arg, &$context): void
   $stateCommitteeKey = $arg['stateCommitteeKey'];
   
   $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
+  $turfAssignmentsObj = Drupal::getContainer()->get('nlpservices.turf_assignments');
   $saveListsObj = Drupal::getContainer()->get('nlpservices.saved_lists');
   
   //nlp_debug_msg('$context',$context);
@@ -95,7 +96,7 @@ function awakeBatch($arg, &$context): void
       //nlp_debug_msg('Resync needed', $turf['listId'] . ' ' . $turf['turfName']);
       $turfsObj->updateTurf($turf['turfIndex'], 'listId', $currentTurfId);
       $turf['listId'] = $currentTurfId;
-      $turfsObj->fixTurfAssignment($previousTurfId, $currentTurfId);
+      $turfAssignmentsObj->fixTurfAssignment($previousTurfId, $currentTurfId);
     }
     
     $votersObj = Drupal::getContainer()->get('nlpservices.voters');

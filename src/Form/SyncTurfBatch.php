@@ -329,6 +329,7 @@ const MAX_QUEUE_LIMIT = '17';
   function finalizeTurf($arg,$sandbox): void
   {
     $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
+    $turfAssignmentsObj = Drupal::getContainer()->get('nlpservices.turf_assignments');
     $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
     $pathsObj = Drupal::getContainer()->get('nlpservices.paths');
 
@@ -373,14 +374,14 @@ const MAX_QUEUE_LIMIT = '17';
 
     // Get rid of any prior assignments of a turf of the same name.
     do {
-      $priorAssignment = $turfsObj->getTurfAssignmentByTurfName( $folderId,  $turfName);
+      $priorAssignment = $turfAssignmentsObj->getTurfAssignmentByTurfName( $folderId,  $turfName);
       if(empty($priorAssignment)) {break;}
       $priorTurfId = $priorAssignment['turfId'];
-      $turfsObj->deleteTurfAssignment($priorTurfId);
+      $turfAssignmentsObj->deleteTurfAssignment($priorTurfId);
     } while (true);
 
 
-    $turfsObj->setTurfAssignment($assignment);
+    $turfAssignmentsObj->setTurfAssignment($assignment);
 
     $legislativeDistricts = $sandbox['legislativeDistricts'];
 
