@@ -36,8 +36,8 @@ function setVoterAcBatch($arg, &$context): void
 
   $turfIndex = $turfIndexes[$currentTurf];
 
-  $votersObj = Drupal::getContainer()->get('nlpservices.voters');
-  $activistCodesObj = Drupal::getContainer()->get('nlpservices.activist_codes');
+  $votersObj = Drupal::service('nlpservices.voters');
+  $activistCodesObj = Drupal::service('nlpservices.activist_codes');
 
   $voters = $votersObj->getVotersInTurf($turfIndex);
   $missingVanids = [];
@@ -86,10 +86,14 @@ function setVoterAcBatchFinished($success, $results, $operations): void
   $messenger = Drupal::messenger();
   $messenger->addStatus(t('Batch finished.'));
   if ($success) {
-    $turfsProcessed = empty($results['turfsProcessed'])?0:$results['turfsProcessed'];
-    $votersChecked = empty($results['votersChecked'])?0:$results['votersChecked'];
-    $votersMissingAc = empty($results['votersMissingAc'])?0:$results['votersMissingAc'];
-    $messenger->addStatus(t("Checked $votersChecked voters across $turfsProcessed turfs. NLP Voter AC was missing and set for $votersMissingAc voters."));
+    $turfsProcessed = $results['turfsProcessed'] ?? 0;
+    $votersChecked = $results['votersChecked'] ?? 0;
+    $votersMissingAc = $results['votersMissingAc'] ?? 0;
+    $messenger->addStatus(t("Checked @votersChecked voters across @turfsProcessed turfs. NLP Voter AC was missing and set for @votersMissingAc voters.", [
+      '@votersChecked' => $votersChecked,
+      '@turfsProcessed' => $turfsProcessed,
+      '@votersMissingAc' => $votersMissingAc,
+    ]));
   }
   else {
     $messenger->addError(t('An error occurred.'));

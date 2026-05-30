@@ -127,7 +127,7 @@ the NLP Services Admin.</p>',
     // Add a button to submit the form.
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => 'Synchronize',
+      '#value' => t('Synchronize'),
     ];
     return $form;
   }
@@ -145,8 +145,8 @@ the NLP Services Admin.</p>',
     $database = 1;
     $activistCodes = ['NLPNotRegisteredAC', 'NLPDropoutAC', ];
     $exportJob = $this->exportJobs->getExportJobs( $county, $database, $listId, $activistCodes );
-    if (empty($exportJob) or $exportJob['result'] != 'ok' OR empty($exportJob['downloadUrl'])) {
-      $messenger->addError('NL database build failed.');
+    if (empty($exportJob) || $exportJob['result'] != 'ok' || empty($exportJob['downloadUrl'])) {
+      $messenger->addError(t('NL database build failed.'));
       return;
     }
     
@@ -161,14 +161,14 @@ the NLP Services Admin.</p>',
       $file = Drupal::service('file.repository')->writeData('', $localFileUrl,
         FileExists::Replace);
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('File create failed.', $e->getMessage());
+      $messenger->addError(t('File create failed: @msg', ['@msg' => $e->getMessage()]));
       return;
     }
     $file->setTemporary();
     try {
       $file->save();
     } catch (Exception $e) {
-      nlp_debug_msg('error', $e->getMessage());
+      $messenger->addError(t('File save failed: @msg', ['@msg' => $e->getMessage()]));
       return;
     }
     copy($remoteUrl, $localFileUrl);

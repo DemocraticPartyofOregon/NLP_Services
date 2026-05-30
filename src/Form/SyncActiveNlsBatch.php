@@ -18,12 +18,12 @@ function syncActiveNlsBatch(array $arg, array &$context): void
   // Get the fixes for missing legislative districts, if any.
   $uri = $arg['uri'];
   $county = $arg['county'];
-  $legislativeFixesObj = Drupal::getContainer()->get('nlpservices.legislative_fixes');
+  $legislativeFixesObj = Drupal::service('nlpservices.legislative_fixes');
   $legislativeFixes = $legislativeFixesObj->getLegFixes($county);
   // Open the temp file with the list of NLs to sync.
   $fh = fopen($uri, "r");
-  if (empty($fh)) {
-    $messenger->addWarning("Unable to open $uri");
+  if (!$fh) {
+    $messenger->addWarning(t('Unable to open @uri', ['@uri' => $uri]));
     $context['finished'] = TRUE;
     return;
   }
@@ -38,7 +38,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     $hdr = fgetcsv($fh);
     $fieldPos = array_flip($hdr);
     
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     $notRegisteredAC = $nlpConfigurationObj->getActivistCode('NLPNotRegisteredAC');
     $dropoutAC = $nlpConfigurationObj->getActivistCode('NLPDropoutAC');
     $activistCodeTitle = 'ActivistCode_'.$notRegisteredAC;
@@ -64,7 +64,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
   }
   $recordCount = $context['sandbox']['recordCount'];
 
-  $apiNlsObj = Drupal::getContainer()->get('nlpservices.api_nls');
+  $apiNlsObj = Drupal::service('nlpservices.api_nls');
 
   $queCnt = 0;
   do {
@@ -88,9 +88,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     if($dropout) {
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $message = "NL rejected. This volunteer has been marked as a Dropout.<br>
-           .. MCID:$mcid $firstName $lastName";
-      $messenger->addError($message);
+      $messenger->addError(t('NL rejected. This volunteer has been marked as a Dropout.<br>.. MCID:@mcid @firstName @lastName', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
       continue;
     }
     
@@ -98,9 +96,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     if(empty($nlRecord['email'])) {
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $message = "NL rejected. This volunteer does not have an email address and can't be an active NL.<br>
-           .. MCID:$mcid $firstName $lastName";
-      $messenger->addError($message);
+      $messenger->addError(t("NL rejected. This volunteer does not have an email address and can't be an active NL.<br>.. MCID:@mcid @firstName @lastName", ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
       continue;
     }
     
@@ -146,13 +142,7 @@ function syncActiveNlsBatch(array $arg, array &$context): void
     if(empty($drupalUser['userName'])) {
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $message = "NL rejected. Unable to create or verify a Drupal account for this NL.<br>
-           .. MCID:$mcid $firstName $lastName";
-      $messenger->addError($message);
-
-      nlp_debug_msg('$drupalUser',$drupalUser);
-      nlp_debug_msg('$magicWord',$magicWord);
-      nlp_debug_msg('$nlRecord',$nlRecord);
+      $messenger->addError(t('NL rejected. Unable to create or verify a Drupal account for this NL.<br>.. MCID:@mcid @firstName @lastName', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
       continue;
     }
 
@@ -238,13 +228,13 @@ function checkDistricts(array &$nlRecord, array $legislativeFix): bool
       // Use the fixes for HD and Pct.
       $nlHd = $legislativeFix['hd'];
       $pct = trim($legislativeFix['precinct']);
-      $messenger->addWarning( "MCID:$mcid $firstName $lastName, HD and Pct repaired.");
+      $messenger->addWarning(t('MCID:@mcid @firstName @lastName, HD and Pct repaired.', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
     } else {
-      $messenger->addError( "NL rejected: MCID:$mcid $firstName $lastName, HD or Pct is missing.");
+      $messenger->addError(t('NL rejected: MCID:@mcid @firstName @lastName, HD or Pct is missing.', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
       return FALSE;
     }
   } else {
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     $state = $nlpConfigurationObj->getStateName();
     if($state == 'Oregon') {
       $pctParts = explode('-',$pct);
@@ -270,7 +260,7 @@ function checkDistricts(array &$nlRecord, array $legislativeFix): bool
  */
 function updateDrupalAccount(array $nlRecord, array $drupalUser): array
 {
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
   
   $nlFieldsToUpdate = ['county','firstName','lastName','phone','hd',];
 
@@ -313,14 +303,14 @@ function updateDrupalAccount(array $nlRecord, array $drupalUser): array
 function createNlsRecord( array $nlRecord): bool
 {
   unset($nlRecord['userName']);
-  $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
+  $nlsObj = Drupal::service('nlpservices.nls');
   $insertOk = $nlsObj->createNl($nlRecord);
   // INSERT this NL into the list for this group.
   if(!$insertOk) {return FALSE;}
-  // The function get an NL status (it creates a status record if on does not already exist).
+  // The function gets an NL status (it creates a status record if on does not already exist).
   $nlStatus = $nlsObj->getNlsStatus($nlRecord['mcid'],$nlRecord['county']);
   if (!empty($nlStatus)) {
-    // Save this status just in case a new one was created by the get.
+    // Save this status just in case the get created a new one.
     $nlsObj->setNlsStatus($nlStatus);
   }
   return TRUE;
@@ -352,15 +342,13 @@ function checkVoterId(int $vfid, int $savedVfid, array $nl): void
     $mcid = $nl['mcid'];
     $firstName = $nl['firstName'];
     $lastName = $nl['lastName'];
-    $messenger->addWarning( "MCID:$mcid $firstName $lastName,
-    The VoterFile VANID is missing for this NL.  Check if the MyCampaign
-    record is a duplicate.");
+    $messenger->addWarning(t('MCID:@mcid @firstName @lastName, The VoterFile VANID is missing for this NL. Check if the MyCampaign record is a duplicate.', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName]));
     return;
   }
   // Update the saved vfid if it was unknown.  This probably means the NLs
   // record in MyCampaign was linked to the state voter record.
   if(empty($savedVfid)) {
-    $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+    $magicWordObj = Drupal::service('nlpservices.magic_word');
     $newCredentials = [
       'mcid' => $nl['mcid'],
       'vfid' => $nl['vfid'],
@@ -376,10 +364,7 @@ function checkVoterId(int $vfid, int $savedVfid, array $nl): void
     $mcid = $nl['mcid'];
     $firstName = $nl['firstName'];
     $lastName = $nl['lastName'];
-    $messenger->addWarning("MCID:$mcid $firstName $lastName,
-    new VoterID: $vfid, Old voterId: $savedVfid,
-    The VoterFile VANID does not match a previous usage.  The MyCampaign
-    record may point to the wrong voter.");
+    $messenger->addWarning(t('MCID:@mcid @firstName @lastName, new VoterID: @vfid, Old voterId: @savedVfid, The VoterFile VANID does not match a previous usage. The MyCampaign record may point to the wrong voter.', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName, '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
   }
 }
 
@@ -392,8 +377,8 @@ function checkVoterId(int $vfid, int $savedVfid, array $nl): void
  */
 function verifyUniqueEmail(array $nlRecord): array
 {
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
 
   $nlEmail = $nlRecord['email'];
   $mcid = $nlRecord['mcid'];
@@ -417,20 +402,19 @@ function verifyUniqueEmail(array $nlRecord): array
           // New email already in use by another Drupal account.
           $otherMcid = $otherDrupal['mcid'];
           $otherUserName = $otherDrupal['userName'];
-          $drupalMessage = "<br>.. In Drupal login, MCID:$otherMcid userName:$otherUserName";
+          $drupalMessage = t('<br>.. In Drupal login, MCID:@mcid userName:@userName', ['@mcid' => $otherMcid, '@userName' => $otherUserName]);
         }
         if(!empty($otherCredentials)) {
           // The email is associated with another NL.
           $otherMcid = $otherCredentials['mcid'];
           $otherUserName = $otherCredentials['userName'];
-          $nlMessage = "<br>.&nbsp; In active NLs, MCID:$otherMcid userName:$otherUserName";
+          $nlMessage = t('<br>.&nbsp; In active NLs, MCID:@mcid userName:@userName', ['@mcid' => $otherMcid, '@userName' => $otherUserName]);
         }
         $firstName = $nlRecord['firstName'];
         $lastName = $nlRecord['lastName'];
-        $message = "NL rejected. The volunteer's email is in use by another NL.<br>
-                     .&nbsp; MCID: $mcid firstName:$firstName lastName:$lastName email:$nlEmail";
-        $message .= (!empty($nlMessage))?$nlMessage:'';
-        $message .= (!empty($drupalMessage))?$drupalMessage:'';
+        $message = t("NL rejected. The volunteer's email is in use by another NL.<br>.&nbsp; MCID:@mcid firstName:@firstName lastName:@lastName email:@email", ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName, '@email' => $nlEmail]);
+        $message .= $nlMessage;
+        $message .= $drupalMessage;
         return['uniqueEmail' => FALSE, 'message' => $message];
       }
     }
@@ -446,9 +430,7 @@ function verifyUniqueEmail(array $nlRecord): array
       $otherUserName = $otherCredentials['userName'];
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $message = "NL rejected. The volunteer's email is in use by another NL.<br>
-           .&nbsp; MCID:$mcid $firstName $lastName email:$nlEmail<br>
-           .&nbsp; The existing NL. MCID:$otherMcid userName:$otherUserName";
+      $message = t("NL rejected. The volunteer's email is in use by another NL.<br>.&nbsp; MCID:@mcid @firstName @lastName email:@email<br>.&nbsp; The existing NL. MCID:@otherMcid userName:@otherUserName", ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName, '@email' => $nlEmail, '@otherMcid' => $otherMcid, '@otherUserName' => $otherUserName]);
       return['uniqueEmail' => FALSE, 'message' => $message];
     }
     $otherDrupal = $drupalUserObj->getUserByEmail($nlEmail);
@@ -459,9 +441,7 @@ function verifyUniqueEmail(array $nlRecord): array
       $otherUserName = $otherDrupal['userName'];
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $message = "NL rejected. The volunteer's email is in use by another NL.<br>
-           .&nbsp; MCID:$mcid $firstName $lastName email:$nlEmail<br>
-           .&nbsp; In Drupal login, MCID:$otherMcid userName:$otherUserName";
+      $message = t("NL rejected. The volunteer's email is in use by another NL.<br>.&nbsp; MCID:@mcid @firstName @lastName email:@email<br>.&nbsp; In Drupal login, MCID:@otherMcid userName:@otherUserName", ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName, '@email' => $nlEmail, '@otherMcid' => $otherMcid, '@otherUserName' => $otherUserName]);
       return['uniqueEmail' => FALSE, 'message' => $message];
     }
 
@@ -490,7 +470,7 @@ function verifyCredentials(array $nlRecord, array $drupalUser, array $credential
   }
   //nlp_debug_msg('$credentials:',$credentials);
   /*
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
   $nlEmail = $nlRecord['email'];
   $existingCredentials = $magicWordObj->getCredentialsByEmail($nlEmail);
 
@@ -531,7 +511,7 @@ function verifyCredentials(array $nlRecord, array $drupalUser, array $credential
 
 function createNewCredentials(array $nlRecord, array $drupalUser, string $magicWord): array
 {
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
 
   $credentials = $magicWordObj->createNewCredentials( $nlRecord['mcid'], $drupalUser['userName'], $nlRecord['email']);
   $credentials['vfid'] = empty($nlRecord['vfid'])?0:$nlRecord['vfid'];
@@ -558,7 +538,7 @@ function createNewCredentials(array $nlRecord, array $drupalUser, string $magicW
 
 function updateCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord = ''): array
 {
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
   $vfid = empty($nlRecord['vfid'])?0:$nlRecord['vfid'];
   if($vfid != $credentials['vfid']) {
     $credentials['vfid'] = $vfid;
@@ -597,7 +577,7 @@ function updateCredentials(array $nlRecord, array $drupalUser, array $credential
  */
 function verifyDrupalAccount(array $nlRecord, array $credentials): array
 {
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
 
   $nlEmail = $nlRecord['email'];
   $drupalEmailUser = $drupalUserObj->getUserByEmail($nlEmail);
@@ -628,30 +608,23 @@ function verifyDrupalAccount(array $nlRecord, array $credentials): array
 
     case 'updateBoth':
     case 'newEmail':
-      $updateDrupalAccount = updateDrupalAccount($nlRecord, $drupalMcidUser);
-      //if ( !$updateDrupalAccount['accountOk'] ) {
-      //  return $updateDrupalAccount;
-      //}
-      return $updateDrupalAccount;
+      return updateDrupalAccount($nlRecord, $drupalMcidUser);
 
     default:
       $firstName = $nlRecord['firstName'];
       $lastName = $nlRecord['lastName'];
-      $mcidMessage = (!empty($drupalMcidUser)) ? " In Drupal login by MCID, MCID:" . $drupalMcidUser['mcid'] .
-        " userName:" . $drupalMcidUser['userName'] . " email:" . $drupalMcidUser['email'] . "<br>" : '';
-      $emailMessage = (!empty($drupalEmailUser)) ? " In Drupal login by email, MCID:" . $drupalEmailUser['mcid'] .
-        " userName:" . $drupalEmailUser['userName'] . " email:" . $drupalEmailUser['email'] . "<br>" : '';
+      $mcidMessage = (!empty($drupalMcidUser)) ? t(' In Drupal login by MCID, MCID:@mcid userName:@userName email:@email<br>', ['@mcid' => $drupalMcidUser['mcid'], '@userName' => $drupalMcidUser['userName'], '@email' => $drupalMcidUser['email']]) : '';
+      $emailMessage = (!empty($drupalEmailUser)) ? t(' In Drupal login by email, MCID:@mcid userName:@userName email:@email<br>', ['@mcid' => $drupalEmailUser['mcid'], '@userName' => $drupalEmailUser['userName'], '@email' => $drupalEmailUser['email']]) : '';
 
       $mcid = $nlRecord['mcid'];
-      $message = "NL rejected. Unable to determine the Drupal account for this NL
-           &nbsp; MCID:$mcid $firstName $lastName email:$nlEmail<br>";
+      $message = t('NL rejected. Unable to determine the Drupal account for this NL &nbsp; MCID:@mcid @firstName @lastName email:@email<br>', ['@mcid' => $mcid, '@firstName' => $firstName, '@lastName' => $lastName, '@email' => $nlEmail]);
       $message .= $mcidMessage;
       $message .= $emailMessage;
 
-      $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
-      $awardsObj = Drupal::getContainer()->get('nlpservices.awards');
-      $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
-      $apiNlsObj = Drupal::getContainer()->get('nlpservices.api_nls');
+      $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+      $awardsObj = Drupal::service('nlpservices.awards');
+      $magicWordObj = Drupal::service('nlpservices.magic_word');
+      $apiNlsObj = Drupal::service('nlpservices.api_nls');
 
       $debug = $nlpConfigurationObj->getDebug();
       if($debug) {
@@ -704,8 +677,8 @@ function verifyDrupalAccount(array $nlRecord, array $credentials): array
  */
 function createDrupalLogin(array $nlRecord): array
 {
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
 
   $userInfo = [
     'mcid' => $nlRecord['mcid'],
@@ -730,7 +703,7 @@ function createDrupalLogin(array $nlRecord): array
   $newAccount = $drupalUserObj->createDrupalAccount($userInfo);
   if (empty($newAccount)) {
     nlp_debug_msg('NL rejected. Unable to create Drupal account.',$userInfo);
-    return ['accountOk' => FALSE, 'message' => "NL rejected. System rejected the account."];
+    return ['accountOk' => FALSE, 'message' => t('NL rejected. System rejected the account.')];
   }
   return ['accountOk' => TRUE, 'drupalUser' => $newAccount, 'magicWord' => $userInfo['magicWord']];
 }
@@ -748,8 +721,8 @@ function createDrupalLogin(array $nlRecord): array
  */
 function getUniqueUsername(array $nlRecord): array
 {
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
   // Assign a unique userName for this new NL.  Several different ones are tried before
   // the attempt is abandoned.
   $namesTried = [];
@@ -771,8 +744,7 @@ function getUniqueUsername(array $nlRecord): array
     $mcid = $nlRecord['mcid'];
     $firstName = $nlRecord['firstName'];
     $lastName = $nlRecord['lastName'];
-    $message = "NL rejected. Unable to find a unique userName.<br>
-         .. MCID:$mcid email:$nlEmail $firstName $lastName";
+    $message = t('NL rejected. Unable to find a unique userName.<br>.. MCID:@mcid email:@email @firstName @lastName', ['@mcid' => $mcid, '@email' => $nlEmail, '@firstName' => $firstName, '@lastName' => $lastName]);
     return ['uniqueUsername' => '', 'message' => $message];
   }
   return ['uniqueUsername' => $uniqueUsernameName,];

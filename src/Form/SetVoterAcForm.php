@@ -23,7 +23,7 @@ class SetVoterAcForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
+    $votersObj = Drupal::service('nlpservices.voters');
     $counties = $votersObj->getParticipatingCounties();
     array_unshift($counties, 'Select counties');
     unset($counties[0]);
@@ -62,7 +62,7 @@ class SetVoterAcForm extends FormBase
       return;
     }
 
-    $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
+    $turfsObj = Drupal::service('nlpservices.turfs');
     $turfIndexes = [];
     foreach ($selectedCounties as $county) {
       $turfs = $turfsObj->getCountyTurfs($county);

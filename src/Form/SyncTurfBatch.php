@@ -1,6 +1,6 @@
 <?php /** @noinspection PhpUnused */
 
-const MAX_QUEUE_LIMIT = '17';
+const MAX_QUEUE_LIMIT = 17;
 
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -19,15 +19,15 @@ const MAX_QUEUE_LIMIT = '17';
     $turfName = $arg['turfName'];
     $mcid = $arg['mcid'];
     
-    $exportJobsObj = Drupal::getContainer()->get('nlpservices.export_jobs');
-    $savedListsObj = Drupal::getContainer()->get('nlpservices.saved_lists');
-    $apiVoterObj = Drupal::getContainer()->get('nlpservices.api_voter');
-    $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
-    $activistCodesObj = Drupal::getContainer()->get('nlpservices.activist_codes');
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
-    $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
-    $configurationObj = Drupal::getContainer()->get('nlpservices.configuration');
-    $awardsObj = Drupal::getContainer()->get('nlpservices.awards');
+    $exportJobsObj = Drupal::service('nlpservices.export_jobs');
+    $savedListsObj = Drupal::service('nlpservices.saved_lists');
+    $apiVoterObj = Drupal::service('nlpservices.api_voter');
+    $nlsObj = Drupal::service('nlpservices.nls');
+    $activistCodesObj = Drupal::service('nlpservices.activist_codes');
+    $votersObj = Drupal::service('nlpservices.voters');
+    $turfsObj = Drupal::service('nlpservices.turfs');
+    $configurationObj = Drupal::service('nlpservices.configuration');
+    $awardsObj = Drupal::service('nlpservices.awards');
     
     if(empty($context['sandbox']['currentBatch'])) {
       $database = 0;  // VoterFile.
@@ -44,7 +44,7 @@ const MAX_QUEUE_LIMIT = '17';
         $exportJob = $exportJobsObj->getExportJobs($county,$database,$result['turfId']);
         if(empty($exportJob['downloadUrl'])) {
           $context['finished'] = 1;
-          $context['results']['message'] = [0=>'The turf is not accessible by ID.',];
+          $context['results']['message'] = [0=>t('The turf is not accessible by ID.'),];
           $context['results']['result'] = 'error';
           return;
         }
@@ -103,8 +103,7 @@ const MAX_QUEUE_LIMIT = '17';
     
     if (!$onePrecinct) {
       $context['finished'] = 1;
-      $context['results']['message'] = [0=>'The turf must be for one precinct. This error likely means
-      the saved list is old and the map region should be refreshed.',];
+      $context['results']['message'] = [0=>t('The turf must be for one precinct. This error likely means the saved list is old and the map region should be refreshed.'),];
       $context['results']['result'] = 'error';
       $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
       $context['results']['mcid'] = $context['sandbox']['mcid'];
@@ -116,21 +115,19 @@ const MAX_QUEUE_LIMIT = '17';
     // Check if any of the voters in this new list to be synced are already assigned to another turf.
     $duplicates = getDuplicates($voters);
     if(!empty($duplicates)) {
-      $message = 'The following voters are already assigned to another turf: ';
+      $message = t('The following voters are already assigned to another turf: ');
       foreach ($duplicates as $duplicate) {
         //nlp_debug_msg_safe('Duplicate:', $duplicate);
-        $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
         $turfWithDuplicate = $turfsObj->getTurf($duplicate['turfIndex']);
 
         $otherTurfName = $turfWithDuplicate['turfName'];
         $otherCounty = $turfWithDuplicate['county'];
         $otherNL = $turfWithDuplicate['nlFirstName'].' '.$turfWithDuplicate['nlLastName'];
-        $otherNlMessage = ' is already assigned to turf '.$otherTurfName.', '.$otherCounty.' County, NL:'.$otherNL;
+        $otherNlMessage = t(' is already assigned to turf @turf, @county County, NL:@nl', ['@turf' => $otherTurfName, '@county' => $otherCounty, '@nl' => $otherNL]);
         //$otherNlMessage = ' is already assigned to turf ';
-        $votersObj = Drupal::getContainer()->get('nlpservices.voters');
         $otherVoter = $votersObj->getVoterById($duplicate['vanid']);
         $voterName  = $otherVoter['firstName'].' '.$otherVoter['lastName'];
-        $otherVoterMessage = 'Voter VANID: '.$duplicate['vanid'].' '.$voterName;
+        $otherVoterMessage = t('Voter VANID: @vanid @name', ['@vanid' => $duplicate['vanid'], '@name' => $voterName]);
 
         $message .= $otherVoterMessage.$otherNlMessage.'<br>';
       }
@@ -236,7 +233,7 @@ const MAX_QUEUE_LIMIT = '17';
     
     $count = $count + count($voters);
     foreach ($voters as $voter) {
-      if(($precinct != $voter['address']['precinct']) OR ($hd != $voter['address']['hd'])) {
+      if(($precinct != $voter['address']['precinct']) || ($hd != $voter['address']['hd'])) {
         return FALSE;
       }
     }
@@ -261,7 +258,7 @@ const MAX_QUEUE_LIMIT = '17';
    */
   function getDuplicates(array $voters): array
   {
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
+    $votersObj = Drupal::service('nlpservices.voters');
     $vanids = array_keys($voters);
     // Get of voters already assigned to a turf.
     $dupVoterTurfs = $votersObj->duplicateVoters($vanids);
@@ -288,8 +285,8 @@ const MAX_QUEUE_LIMIT = '17';
    */
   function updateMovedStatus(int $vanid, array $voter): void
   {
-    $reportsObj = Drupal::getContainer()->get('nlpservices.reports');
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
+    $reportsObj = Drupal::service('nlpservices.reports');
+    $votersObj = Drupal::service('nlpservices.voters');
     //  Get the moved report if it exists.
     $request['vanid'] = $vanid;
     $request['type'] = 'contact';
@@ -309,7 +306,6 @@ const MAX_QUEUE_LIMIT = '17';
       }
     }
     
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
     $voterStatus = $votersObj->getVoterStatus($vanid);
     if(!empty($voterStatus)) {
       $voterStatus['moved'] = $voter['address']['moved'];
@@ -328,10 +324,10 @@ const MAX_QUEUE_LIMIT = '17';
    */
   function finalizeTurf($arg,$sandbox): void
   {
-    $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
-    $turfAssignmentsObj = Drupal::getContainer()->get('nlpservices.turf_assignments');
-    $nlsObj = Drupal::getContainer()->get('nlpservices.nls');
-    $pathsObj = Drupal::getContainer()->get('nlpservices.paths');
+    $turfsObj = Drupal::service('nlpservices.turfs');
+    $turfAssignmentsObj = Drupal::service('nlpservices.turf_assignments');
+    $nlsObj = Drupal::service('nlpservices.nls');
+    $pathsObj = Drupal::service('nlpservices.paths');
 
     $county = $arg['county'];
     $folderId = $arg['folderId'];
@@ -427,8 +423,8 @@ const MAX_QUEUE_LIMIT = '17';
  */
   function reloadVoterStatus(array $voter, int $turfIndex, int $mcid): void
   {
-    $reportsObj = Drupal::getContainer()->get('nlpservices.reports');
-    $votersObj = Drupal::getContainer()->get('nlpservices.voters');
+    $reportsObj = Drupal::service('nlpservices.reports');
+    $votersObj = Drupal::service('nlpservices.voters');
     
     $vanid = $voter['vanid'];
     $surveyReports = $reportsObj->getNlpTypeReports($vanid,'Survey');
@@ -499,10 +495,9 @@ const MAX_QUEUE_LIMIT = '17';
    */
   function syncTurfFinished(bool $success, array $results, array $operations): void
   {
-    $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
-    $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
-    $mcidRecoveryObj = Drupal::getContainer()->get('nlpservices.mcid_recovery');
-    $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+    $turfsObj = Drupal::service('nlpservices.turfs');
+    $drupalUserObj = Drupal::service('nlpservices.drupal_user');
+    $magicWordObj = Drupal::service('nlpservices.magic_word');
     $messenger = Drupal::messenger();
     if($success) {
       if($results['result'] == 'error') {
@@ -519,34 +514,34 @@ const MAX_QUEUE_LIMIT = '17';
         return;
       }
       $turfName = $results['turfName'];
-      $messages[] = "$turfName has been successfully checked in.";
-      
+      $messages[] = t('@turfName has been successfully checked in.', ['@turfName' => $turfName]);
+
       $mcid = $results['mcid'];
       $county = $results['county'];
       $turfs = $turfsObj->turfExists($mcid,$county);
       $turfCount = $turfs['turfCnt'];
       $nickname = $results['nickname'];
-      $messages[] = "$nickname has $turfCount turf(s) assigned.";
-      
+      $messages[] = t('@nickname has @count turf(s) assigned.', ['@nickname' => $nickname, '@count' => $turfCount]);
+
       foreach ($turfs['turfs'] as $turf) {
         $turfIndex = $turf['turfIndex'];
         $turfName = $turf['turfName'];
         $syncDate = $turf['syncDate'];
-        $messages[] = "($turfIndex) $syncDate $turfName";
+        $messages[] = t('(@turfIndex) @syncDate @turfName', ['@turfIndex' => $turfIndex, '@syncDate' => $syncDate, '@turfName' => $turfName]);
       }
-      
+
       $drupalUser = $drupalUserObj->getUserByMcid($mcid);
       if(!empty($drupalUser)) {
         $userName = $drupalUser['userName'];
         $mcid = $drupalUser['mcid'];
         $magicWord = $magicWordObj->getMagicWord($mcid);
-        $messages[] = 'User credentials: Username: ' . $userName . ' Password: ' . $magicWord;
+        $messages[] = t('User credentials: Username: @userName Password: @magicWord', ['@userName' => $userName, '@magicWord' => $magicWord]);
         $messageDisplay = implode('<br>',$messages);
         $messenger->addStatus($messageDisplay);
       }
-      
+
     } else {
-      $messenger->addError('An error occurred.');
+      $messenger->addError(t('An error occurred.'));
     }
     
   }
