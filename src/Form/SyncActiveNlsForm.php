@@ -4,7 +4,7 @@ namespace Drupal\nlpservices\Form;
 
 use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\File\FileExists;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Exception;
@@ -51,7 +51,7 @@ class SyncActiveNlsForm extends FormBase
     return new static(
       $container->get('nlpservices.export_jobs'),
       $container->get('nlpservices.saved_lists'),
-      $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.folders'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.encryption'),
       $container->get('nlpservices.session_data'),
@@ -71,6 +71,11 @@ class SyncActiveNlsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    $form['#attached']['library'][] = 'nlpservices/info-boxes';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    $form['#attached']['library'][] = 'nlpservices/button';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+
     $county = $this->nlpSessionObj->getCounty();
     if (empty($county)) {
       $messenger = Drupal::messenger();
@@ -127,11 +132,11 @@ the NLP Services Admin.</p>',
     // Add a button to submit the form.
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => t('Synchronize'),
+      '#value' => 'Synchronize',
     ];
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -145,8 +150,8 @@ the NLP Services Admin.</p>',
     $database = 1;
     $activistCodes = ['NLPNotRegisteredAC', 'NLPDropoutAC', ];
     $exportJob = $this->exportJobs->getExportJobs( $county, $database, $listId, $activistCodes );
-    if (empty($exportJob) || $exportJob['result'] != 'ok' || empty($exportJob['downloadUrl'])) {
-      $messenger->addError(t('NL database build failed.'));
+    if (empty($exportJob) or $exportJob['result'] != 'ok' OR empty($exportJob['downloadUrl'])) {
+      $messenger->addError('NL database build failed.');
       return;
     }
     
@@ -159,16 +164,16 @@ the NLP Services Admin.</p>',
     $localFileUrl = $temp_dir . '/nls_list_' . $createDate . '.csv';
     try {
       $file = Drupal::service('file.repository')->writeData('', $localFileUrl,
-        FileExists::Replace);
+        FileSystemInterface::EXISTS_REPLACE);
     } catch (EntityStorageException $e) {
-      $messenger->addError(t('File create failed: @msg', ['@msg' => $e->getMessage()]));
+      nlp_debug_msg('File create failed.', $e->getMessage());
       return;
     }
     $file->setTemporary();
     try {
       $file->save();
     } catch (Exception $e) {
-      $messenger->addError(t('File save failed: @msg', ['@msg' => $e->getMessage()]));
+      nlp_debug_msg('error', $e->getMessage());
       return;
     }
     copy($remoteUrl, $localFileUrl);

@@ -33,13 +33,6 @@ function nlpservices_install(): void
 
   if(!empty($nodes)) {
     foreach ($nodes as $node) {
-      $nid = $node->nid->value;
-      try {
-        $node_storage = Drupal::entityTypeManager()->getStorage('node');
-      } catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-        nlp_debug_msg('nlpservices_install', $e->getMessage());
-      }
-      $node = $node_storage->load($nid);
       try {
         $node->delete();
       } catch (EntityStorageException $e) {
@@ -57,10 +50,10 @@ function nlpservices_install(): void
     'sticky' => 1,
     'status' => 1,
   ]);
-  $node->set('body', array(
+  $node->set('body', [
     'value' => '<p><span style="font-size:16px;">The Neighborhood Leader Program website.</span></p><!--break-->',
     'format' => 'full_html',
-  ));
+  ]);
 
   try {
     $node->save();
@@ -80,10 +73,10 @@ function nlpservices_uninstall($is_syncing): void
   $fields = [
     'county',
     'first_name',
-    'last_name' ,
+    'last_name',
     'mcid',
     'hd',
-    'phone' ,
+    'phone',
     //'shared_email',
     //'turf_access',
   ];
@@ -95,7 +88,7 @@ function nlpservices_uninstall($is_syncing): void
       try {
         $fieldStorage->delete();
       }
-      catch (Drupal\Core\Entity\EntityStorageException $e) {
+      catch (EntityStorageException $e) {
         nlp_debug_msg('nlpservices_uninstall',$e->getMessage());
       }
     }
@@ -205,7 +198,7 @@ function nlpservices_schema(): array
     'description' => 'Keeps track of the NLP documentation.',
     'fields' => [
       'name' => [ 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ],
-      'weight' => [ 'type' => 'int', 'length' => 32,  'unsigned' => TRUE, 'not null' => TRUE, ],
+      'weight' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ],
       'pdfFileName' => [ 'type' => 'varchar', 'length' => 160,  ],
       'docFileName' => [ 'type' => 'varchar', 'length' => 160,  ],
       'description' => [ 'type' => 'varchar', 'length' => 256, ],

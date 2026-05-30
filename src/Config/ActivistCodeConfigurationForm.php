@@ -106,7 +106,8 @@ class ActivistCodeConfigurationForm extends ConfigFormBase {
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
-    
+    $form['#attached']['library'][] = 'nlpservices/form-helper';
+    $form['#attached']['library'][] = 'nlpservices/info-boxes';
     return parent::buildForm($form, $form_state);
   }
   

@@ -5,39 +5,44 @@ namespace Drupal\nlpservices\Form;
 use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\nlpservices\NlpSearchBar;
+//use Drupal\nlpservices\NlpTurfDisplay;
+//use Drupal\nlpservices\NlpVoterDisplay;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpVoters;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpVoterListDisplay;
-use Drupal\nlpservices\NlpConfiguration;
+
 
 /**
  * @noinspection PhpUnused
  */
+
 class CancelMovedReport extends FormBase
 {
   
   protected NlpVoters $votersObj;
   protected NlpReports $reportsObj;
   protected NlpSessionData $sessionObj;
+  protected PrivateTempStoreFactory $privateTempstoreObj;
   protected NlpTurfs $turfsObj;
   protected NlpSearchBar $searchBarObj;
+  //protected NlpVoterDisplay $voterDisplayObj;
   protected NlpVoterListDisplay $voterListDisplayObj;
-  protected NlpConfiguration $nlpConfigurationObj;
   
-  public function __construct($votersObj, $reportsObj, $sessionObj,
-                              $turfsObj, $searchBarObj, $voterListDisplayObj, $nlpConfigurationObj )
+  public function __construct($votersObj, $reportsObj, $sessionObj, $privateTempstoreObj,
+                              $turfsObj, $searchBarObj, $voterListDisplayObj )
   {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->sessionObj = $sessionObj;
+    $this->privateTempstoreObj = $privateTempstoreObj;
     $this->turfsObj = $turfsObj;
     $this->searchBarObj = $searchBarObj;
     $this->voterListDisplayObj = $voterListDisplayObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
   
   /**
@@ -49,10 +54,10 @@ class CancelMovedReport extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.session_data'),
+      $container->get('tempstore.private'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.voter_list_display'),
-      $container->get('nlpservices.configuration'),
     );
   }
   
@@ -69,13 +74,18 @@ class CancelMovedReport extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+   
     if(empty($form_state->get('reenter'))) {
       $form_state->set('reenter',TRUE);
       $form_state->set('options',[]);
-      $form_state->set('search-needle', '');
+      
+      $factory = Drupal::service('tempstore.private');
+      $store = $factory->get('nlpservices.session_data');
+      $county = $store->get('County');
+      $form_state->set('county', $county);
     }
     
-    $county = $this->sessionObj->getCounty();
+    $county = $form_state->get('county');
     if(empty($county)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
@@ -86,7 +96,7 @@ class CancelMovedReport extends FormBase
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
       $voterArray = $this->votersObj->searchVoters($county,$needle);
-      $form_state->set('search-needle', '');
+      $form_state->set('search-needle', NULL);
     }
     
     $form['options_display'] = $this->searchBarObj->searchBar();
@@ -106,14 +116,18 @@ class CancelMovedReport extends FormBase
     if(!empty($voterArray)) {
       $form['chooseVoter'] = [
         '#type' => 'submit',
-        '#value' => t('Remove the moved status for selected voters.'),
+        '#value' => 'Remove the moved status for selected voters.',
         '#name' => 'chooseVoter',
       ];
     }
-    
+    $form['#attached']['library'][] = 'nlpservices/search-boxes';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
     return $form;
   }
-
+  
+  
   /**
    * {@inheritdoc}
    */
@@ -125,7 +139,7 @@ class CancelMovedReport extends FormBase
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
       case 'search_submit':
-        $needle = $form_state->getValue('search-needle');
+        $needle = $form_state->getValue('nl-search-needle');
         $form_state->set('search-needle', $needle);
         break;
       case 'chooseVoter':
@@ -138,10 +152,15 @@ class CancelMovedReport extends FormBase
         }
        
         $voterArray = $form_state->get('voterArray');
+        
         foreach ($selections as $selection) {
           $vanid = $selection['vanid'];
           $voter = $voterArray[$vanid];
-          $this->correctMovedStatus($voter);
+          if(!$voter['moved']) {
+            $messenger->addError(t('This voter was not marked as having moved.'));
+          } else {
+            $this->correctMovedStatus($voter);
+          }
         }
         break;
     }
@@ -149,52 +168,39 @@ class CancelMovedReport extends FormBase
   }
   
   /**
-   * correctMovedStatus
-   *
-   * This function will remove the moved status for a voter if the voter has moved.
-   * If the voter has not moved, the moved status will be set to 0.
-   * If the voter has a report, the report will be removed.
-   *
-   * @param array $voter
+   * @param $voter
    * @return void
    */
-  private function correctMovedStatus(array $voter): void
+  function correctMovedStatus($voter): void
   {
     $messenger = Drupal::messenger();
-    $cycle = $this->nlpConfigurationObj->getCycle();
-    $vanid = $voter['vanid'];
-    $request = [
-      'vanid' => $vanid,
-      'type' => 'contact',
-      'value' => 'Moved',
-      'cycle' => $cycle,
-    ];
-    $reports = $this->reportsObj->getReport($request, FALSE);
-
-    if(empty($reports) && empty($voter['moved'])) {
-      $messenger->addWarning(t('There is no report that @first @last has moved.',
-        ['@first' => $voter['firstName'], '@last' => $voter['lastName']]));
+    
+    if(empty($voter['moved'])) {
+      $messenger->addWarning("There is no report that ".$voter['firstName'].' '. $voter['lastName'] ."has moved.");
       return;
     }
-
-    if(!empty($reports)) {
-      foreach ($reports as $report) {
-        if(!empty($report['reportIndex'])) {
-          $this->reportsObj->deletereport($report['reportIndex']);
-        }
-      }
+    
+    $config = Drupal::config('nlpservices.configuration');
+    $electionDates = $config->get('nlpservices-election-configuration');
+    $cycle = $electionDates['nlp_election_cycle'];
+    
+    $vanid = $voter['vanid'];
+      $request['vanid'] = $vanid;
+      $request['type'] = 'contact';
+      $request['value'] = 'Moved';
+      $request['cycle'] = $cycle;
+      $report = $this->reportsObj->getReport($request);
+      $existingRIndex = (!empty($report['reportIndex']))?$report['reportIndex']:NULL;  // Report exists.
+    
+    if(!empty($existingRIndex)) {
+      $this->reportsObj->deletereport($existingRIndex);
     }
-
-    if(!empty($voter['moved'])) {
-      $turfIndex = $voter['turfIndex'];
-      if(!empty($turfIndex)) {
-        $this->votersObj->setMovedStatus($turfIndex, $vanid, FALSE);
-      }
+    $turfIndex = $voter['turfIndex'];
+    if(!empty($turfIndex)) {
+      $movedStatus = 0;   // This voter did not move,
+      $this->votersObj->setMovedStatus($turfIndex,$vanid,$movedStatus);
     }
-
-    $messenger->addMessage(t('The report that @first @last moved has been removed.',
-      ['@first' => $voter['firstName'], '@last' => $voter['lastName']]));
-  }
-
-
+    $messenger->addMessage('The report that'.$voter['firstName'].' '. $voter['lastName'] .' moved has been removed.');
+    }
+  
 }

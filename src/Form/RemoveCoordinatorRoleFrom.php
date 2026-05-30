@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -77,7 +78,8 @@ class RemoveCoordinatorRoleFrom extends FormBase
       $form_state->set('scope','unknown');
       $county = $this->sessionDataObj->getCounty();
       if(empty($county)) {
-        $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
+        $messenger = Drupal::messenger();
+        $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
       $form_state->set('county',$county);
@@ -100,10 +102,14 @@ class RemoveCoordinatorRoleFrom extends FormBase
       '#suffix' => '</div>',
     ];
     
+    //$currentHd = $this->sessionDataObj->getSavedHd();
+    
     /* --- Remove coordinator assignment --- */
     
     // Get all the coordinators assigned for this county.
     $allAssignedCoordinators = $this->coordinatorsObj->getCoordinators($county);
+    //nlp_debug_msg('$assignedCoordinators',$assignedCoordinators);
+    //$mcidsOfCoordinators = array_keys($assignedCoordinators);
     $assignedCoordinators = [];
     foreach ($allAssignedCoordinators as $assignedCoordinator) {
       $mcid = $assignedCoordinator['mcid'];
@@ -116,11 +122,13 @@ class RemoveCoordinatorRoleFrom extends FormBase
         $assignedCoordinators[$mcid]['uid'] = $coordinator['uid'];
       }
     }
+    //nlp_debug_msg('$assignedCoordinators',$assignedCoordinators);
+    
     $coordinators = $this->drupalUserObj->getCoordinators($county);
     
     $hd = $this->sessionDataObj->getSavedHd();
     //nlp_debug_msg('$hd',$hd);
-    if(!empty($hd) && $hd != 'All') {
+    if(!empty($hd) AND $hd != 'All') {
       foreach ($coordinators as $mcid => $coordinator) {
         if($coordinator['hd'] != $hd) {
           unset($coordinators[$mcid]);
@@ -132,6 +140,9 @@ class RemoveCoordinatorRoleFrom extends FormBase
     $unassignedCoordinators = array_filter($coordinators, function ($mcid) use ($assignedCoordinators) {
       return !isset($assignedCoordinators[$mcid]);
     }, ARRAY_FILTER_USE_KEY);
+    //nlp_debug_msg('$unassignedCoordinators',$unassignedCoordinators);
+    
+    //$assignedCoordinators = $coordinators;
     $needle = $form_state->get('nl-search-needle-remove');
     if(!empty($needle)) {
       $form_state->set('nl-search-needle-remove', NULL);
@@ -140,11 +151,12 @@ class RemoveCoordinatorRoleFrom extends FormBase
     }
     
     $tableArray = $this->coordinatorsListDisplayObj->buildCoordinatorTableArray('remove', $unassignedCoordinators);
-    $request = $this->requestStack->getCurrentRequest();
-    $sort = $request->query->get('sort', '');
+    //nlp_debug_msg('$tableArray',$tableArray);
+    
+    $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
     if(!empty($sort)) {
-      $order = $request->query->get('order', '');
-      $this->coordinatorsListDisplayObj->sortNlsTable($tableArray, $sort, $order, 'remove');
+      $order = $_GET['order'];
+      $this->coordinatorsListDisplayObj->sortNlsTable($tableArray,$sort,$order,'remove');
     }
     $form['manageCoordinators']['assignmentRemoval'] =
                   $this->coordinatorsListDisplayObj->buildCoordinatorsTable('remove',$tableArray);
@@ -152,10 +164,14 @@ class RemoveCoordinatorRoleFrom extends FormBase
     $form['submit'] = [
       '#type' => 'submit',
       '#name' => 'user_select',
-      '#value' => $this->t('Remove the coordinator role from the selected user accounts'),
+      '#value' => t('Remove the coordinator role from the selected user accounts'),
     ];
-    
-    
+    $form['#attached']['library'][] = 'nlpservices/info-boxes';
+    $form['#attached']['library'][] = 'nlpservices/search-boxes';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
   
@@ -166,23 +182,30 @@ class RemoveCoordinatorRoleFrom extends FormBase
   {
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
+    //nlp_debug_msg('elementClicked',$elementClicked);
+    //$county = $form_state->get('county');
     switch ($elementClicked) {
       
       case 'hd-select':
         $currentHdIndex = $form_state->getValue($elementClicked);
+        //nlp_debug_msg('$currentHdIndex',$currentHdIndex);
         // The user changed the HD to display.
         $this->sessionDataObj->saveHdIndex($currentHdIndex);
         break;
       
       case 'user_select':
         $contacts = $form_state->getValue('contacts');
+        //nlp_debug_msg('$contacts',$contacts);
         $selections = $this->coordinatorsListDisplayObj->validateCoordinatorSelection($contacts);
-        $form_state->set('selections', $selections);
+        //nlp_debug_msg('$selections',$selections);
+        $form_state->set('selections',$selections);
         if(empty($selections)) {
-          $form_state->setErrorByName('user_select', $this->t('You must select at least one volunteer from the list.'));
+          $form_state->setErrorByName('user_select',
+            "You must select at least one volunteer from the list.");
           return;
         }
-        break;
+        
+       
     }
   }
   
@@ -209,10 +232,13 @@ class RemoveCoordinatorRoleFrom extends FormBase
       
       case 'user_select':
         $selections = $form_state->get('selections');
+        //nlp_debug_msg('$selections',$selections);
+        
         foreach($selections as $selection) {
           $mcid = $selection['mcid'];
           $coordinator = $this->drupalUserObj->getUserByMcid($mcid);
           $uid = $coordinator['uid'];
+          //nlp_debug_msg('$uid',$uid);
           
           $this->magicWordObj->removeCoordinatorRole($mcid);
           $this->drupalUserObj->removeNlpRoles($uid,[NLP_COORDINATOR_ROLE_ID,]);
@@ -234,8 +260,9 @@ class RemoveCoordinatorRoleFrom extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  public function selectboxCallback($form, $unused): array
+  function selectboxCallback($form, $unused): array
   {
+    //nlp_debug_msg('coordinatorCallback');
     return $form['manageCoordinators'];
   }
   

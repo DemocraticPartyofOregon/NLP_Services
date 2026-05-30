@@ -45,40 +45,61 @@ class AwakeForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
-    //$encryptionObj = Drupal::getContainer()->get('nlpservices.encryption');
-    $clientObj = Drupal::getContainer()->get('http_client');
-
-    $stateName = $nlpConfigurationObj->getStateName();
-    nlp_debug_msg('$stateName', $stateName);
-
-    $stateCommitteeKey = $nlpConfigurationObj->getStateKey();
-    nlp_debug_msg('$stateCommitteeKey', $stateCommitteeKey);
-
-    $key = $nlpConfigurationObj->getCountyKey('Yellowstone');
-    nlp_debug_msg('$key', $key);
-    $apiKey = $key['API Key'];
-    nlp_debug_msg('$apiKey', $apiKey);
-
-    $postUrl = "https://MT.000003.565:$apiKey|1@api.securevan.com/v4/people/100335562/canvassResponses";
-
-    $dataJson = '{"canvassContext":{"dateCanvassed":"2026-04-22T21:31:45-07:00","contactTypeId":"2","inputTypeId":11},"resultCodeId":null,"responses":[{"type":"SurveyResponse","surveyQuestionId":734451,"surveyResponseId":2946227}]}';
-
-    $headers = ['Content-Type' => 'application/json', "Accept: application/json, Expect:"];
-    try {
-      $clientObj->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiSurveyResponse', $e->getMessage());
-      nlp_debug_msg('setApiSurveyResponse', "postUrl: $postUrl");
-      nlp_debug_msg('setApiSurveyResponse', "dataJson: $dataJson");
+    $pathsObj = Drupal::getContainer()->get('nlpservices.paths');
+    //$path = $pathsObj->getPath('DOCS', '',  TRUE);
+    //nlp_debug_msg('$path',$path);
+    $path = $pathsObj->getPath('DEFAULT_DOCS', '',  TRUE);
+    //nlp_debug_msg('$path',$path);
+    
+    $fileFunctionsObj = Drupal::getContainer()->get('nlpservices.file_functions');
+    
+    // Example usage:
+    $files = $fileFunctionsObj->getFilesInDirectory($path);
+    
+    $documentsObj = Drupal::getContainer()->get('nlpservices.documents');
+    
+    $availableDocuments = $documentsObj->buildDefaultFilesInfo($files);
+    //nlp_debug_msg('availableDocuments',$availableDocuments);
+    
+    $path = $pathsObj->getPath('DEFAULT_DOCS', '',  TRUE);
+    
+    foreach ($availableDocuments as $key => $document) {
+      $createDate = $fileFunctionsObj->getFileCreateDate($path.$document['docFileName']);
+      //nlp_debug_msg('createDate: '.$document['docFileName'],$createDate);
+      $availableDocuments[$key]['createDate'] = $createDate;
     }
-
-
-
+    nlp_debug_msg('availableDocuments',$availableDocuments);
+    
+    $destinationPath = $pathsObj->getPath('DOCS');
+    nlp_debug_msg('$destinationPath',$destinationPath);
+    foreach ($availableDocuments as $document) {
+      $docFileName = $document['docFileName'];
+      if (!@copy($path.$docFileName, $destinationPath.$docFileName)) {
+        nlp_debug_msg('oops 1!');
+      }
+      
+      $pdfFileName = $document['pdfFileName'];
+      if (!@copy($path.$pdfFileName, $destinationPath.$pdfFileName)) {
+        nlp_debug_msg('oops 2!');
+      }
+      
+      $req = $document;
+      //$req['docFileName'] = $docDestinationFileName;
+      //$req['pdfFileName'] = $pdfDestinationFileName;
+      $documentsObj->createDocument($req);
+      
+    }
+    
+    
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
     ];
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/turf-sync';
+    $form['#attached']['library'][] = 'nlpservices/walksheet-form';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
     return $form;
   }
   

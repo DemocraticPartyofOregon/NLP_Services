@@ -35,14 +35,14 @@ function nlpservices_mail_alter(&$message): void
     case 'user':
       
       if ($message['key'] == 'status_activated') {
-        $userObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+        $userObj = Drupal::service('nlpservices.drupal_user');
         $currentUser = $userObj->getCurrentUser();
         $firstName = $currentUser['firstName'];
         $lastName = $currentUser['lastName'];
         $fullName = $firstName . " " . $lastName;
         $email = $currentUser['email'];
-        $messageAddition = "This email was sent to you by: " . $fullName .
-          ".  If you do not know your password, contact your county NLP coordinator.  <br>Email:$email";
+        $messageAddition = t("This email was sent to you by: @name.  If you do not know your password, contact your county NLP coordinator.  <br>Email:@email",
+          ['@name' => $fullName, '@email' => $email]);
         
         $message['body'][] = $messageAddition;
         $message['reply-to'] = $email;
@@ -78,7 +78,7 @@ function nlpservices_mail($key, &$message, $params): void
       }
       $message['subject'] = $params['subject'];
       if(empty($params['from'])) {
-        $message['from'] = Drupal::config('system.site')->get('mail');
+        $message['from'] = Drupal::service('config.factory')->get('system.site')->get('mail');
       } else {
         $message['from'] = $params['from'];
       }
@@ -104,8 +104,7 @@ function nlpservices_mail($key, &$message, $params): void
  */
 function nlpservices_user_login(Drupal\user\Entity\User $account): void
 {
-  $userObj = $account::load(Drupal::currentUser()->id());
-  $countyValue = $userObj->get('field_county')->getValue();
+  $countyValue = $account->get('field_county')->getValue();
   if(empty($countyValue)) {return;}
   $county = $countyValue[0]['value'];
   if(empty($county)) {return;}
@@ -153,7 +152,7 @@ function nlp_debug_msg($msg, mixed $values='EMPTY'): void
       $msg = t($location.'@values', ['@values' => 'empty','@mod'=>$caller,'@line'=>$line]);
     }
   } elseif (is_object($values)) {
-    $huh = print_r(json_encode($values),TRUE);
+    $huh = json_encode($values);
     $msg = t($location."<br><pre>$huh</pre>",
       ['@mod'=>$caller,'@line'=>$line]);
   } else {
@@ -166,9 +165,9 @@ function nlp_debug_msg($msg, mixed $values='EMPTY'): void
 
 function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
 {
-  $drupalUserObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $drupalUserObj = Drupal::service('nlpservices.drupal_user');
   $admin = $drupalUserObj->isNlpAdminUser();
-  $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+  $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
   $debug = $nlpConfigurationObj->getDebug();
   if($admin AND $debug) {
     nlp_debug_msg($msg,  $values);
@@ -194,127 +193,15 @@ function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
 function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id): void
 {
   //nlp_debug_msg('$form_id',$form_id);
-  /* @var Drupal\Core\Entity\FieldableEntityInterface $entity */
   switch ($form_id) {
-    
-    case 'awake_form':
-      //nlp_debug_msg('$form',$form);
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/data-entry-table';
-      break;
-    
-    case 'nlpservices_manage_drupal_accounts_form':
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/edit-user';
-      break;
-    
-    case 'nlpservices_cancel_moved_report_form':
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      break;
-    
-    case 'nlpservices_login_credentials_reminder_form':
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      break;
-      
-    case 'nlpservices_coordinators_form':
-    case 'nlpservices_delete_coordinator_form':
-    case 'nlpservices_delete_drupal_user_form':
-    case 'nlpservices_remove_coordinator_role_form':
-    case 'data_entry_postcard_form':
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/form-helper';
-      break;
-    
-    case 'nlpservices_delete_turf_form':
-    case 'nlpservices_deliver_turf_form':
-    case 'nlpservices_display_turfs_form':
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-    break;
-    
-    case 'nlpservices_data_entry_form':
-      $form['#attached']['library'][] = 'nlpservices/data-entry-table';
-      $form['#attached']['library'][] = 'nlpservices/button';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      break;
-    
     case 'user_form':
       $form['actions']['submit']['#submit'][] = 'nlpservices_user_submit';
       break;
-    
-    case 'activist_code_configuration_form':
-    case 'nlpservices_upload_instructions_form':
-    case 'nlpservices_legislative_fixes_form':
-      $form['#attached']['library'][] = 'nlpservices/form-helper';
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      break;
-    
-    case 'nlpservices_sync_new_turf_form':
-    case 'nlpservices_turf_sync_form':
-    case 'nlpservices_sync_turf_form':
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/turf-sync';
-      $form['#attached']['library'][] = 'nlpservices/walksheet-form';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      break;
-    
-    case 'nlpservices_update_pdf_assignment_form':
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/walksheet-form';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/update-pdf-assignment';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      break;
 
-    case 'nlpservices_active_nls_display_form':
-      //nlp_debug_msg('$form',$form['nls-form']['nls_table']['contacts'][101871830]);
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/search-boxes';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      break;
-    
-    case 'nlpservices_sync_active_nls_form':
-      $form['#attached']['library'][] = 'nlpservices/info-boxes';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      $form['#attached']['library'][] = 'nlpservices/button';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      break;
-    
-    case 'nlpservices_turf_delivery_message_form':
-      $form['#attached']['library'][] = 'nlpservices/turf-delivery-message';
-      break;
-    
-    case 'canvass_response_code_configuration_form':
-      $form['#attached']['library'][] = 'nlpservices/canvass-response-code';
-      break;
-    
-    case 'user_login_form' :
+    case 'user_login_form':
       $form['actions']['submit']['#value'] = t('Login to Account');
       $form['#validate'][] = 'nlpservices_login_validate';
       break;
-    
   }
 }
 
@@ -338,7 +225,7 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
   $userName = $values['name'];
   //nlp_debug_msg('user',$userName.' '.$pass);
   
-  $userObj = Drupal::getContainer()->get('nlpservices.drupal_user');
+  $userObj = Drupal::service('nlpservices.drupal_user');
   $user = $userObj->getUserByName($userName);
   //nlp_debug_msg('$user',$user);
   if(empty($user)) {
@@ -346,15 +233,15 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
     ///nlp_debug_msg('$values',$values);
     if(filter_var($userName, FILTER_VALIDATE_EMAIL)) {
       $messenger = Drupal::messenger();
-      $messenger->addWarning('An email address is not a valid Username.');
+      $messenger->addWarning(t('An email address is not a valid Username.'));
     }
     return;
   }
   $mcid = $user['mcid'];
-  $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+  $magicWordObj = Drupal::service('nlpservices.magic_word');
   $magicWord = $magicWordObj->getMagicWord($mcid);
   $admin = (in_array('administrator',$user['roles']) OR in_array('nlp_admin',$user['roles']));
-  if($pass != $magicWord AND !$admin) {
+  if($pass !== $magicWord && !$admin) {
     Drupal::logger('nlpservices')->notice('Login attempt: '.$userName.' miss matched pass: '
       .$pass.' ['.$magicWord.']');
   }
@@ -380,9 +267,9 @@ function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
     $mcid = $mcidValue[0]['value'];
     $pass = $form_state->getValue('pass');
     if(!empty($pass)) {
-      $magicWordObj = Drupal::getContainer()->get('nlpservices.magic_word');
+      $magicWordObj = Drupal::service('nlpservices.magic_word');
       $magicWord = $magicWordObj->getMagicWord($mcid);
-      if($magicWord != $pass) {
+      if($magicWord !== $pass) {
         $magicWordObj->setMagicWord($mcid,$pass);
       }
     }
@@ -422,13 +309,13 @@ function nlpservices_cron (): void
   $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
   
   // Check for emails with MiniVAN reports.
-  $enableMinivan = empty($cronConfiguration['enableMinivan']) ? FALSE : $cronConfiguration['enableMinivan'];
+  $enableMinivan = !empty($cronConfiguration['enableMinivan']);
   if($enableMinivan) {
     $queue = Drupal::queue('nlpservices_minivan_canvass');
     $startTime = time();
     $queueEmpty = TRUE;
     do {
-      $minivanObj = Drupal::getContainer()->get('nlpservices.minivan');
+      $minivanObj = Drupal::service('nlpservices.minivan');
       $queueItems = $minivanObj->minivanEmailCheck();  // Get the next email attachments.
       //nlp_debug_msg('$queueItems',$queueItems);
       if (empty($queueItems)) {break;}
@@ -457,10 +344,10 @@ function nlpservices_cron (): void
   }
   
   // Check for emails with matchback reports.
-  $enableMatchback = empty($cronConfiguration['enableMatchback']) ? FALSE : $cronConfiguration['enableMatchback'];
+  $enableMatchback = !empty($cronConfiguration['enableMatchback']);
   if($enableMatchback) {
     $queue = Drupal::queue('nlpservices_matchback_queue');
-    $matchbackObj = Drupal::getContainer()->get('nlpservices.matchbacks');
+    $matchbackObj = Drupal::service('nlpservices.matchbacks');
     $startTime = time();
     $queueEmpty = TRUE;
     do {
@@ -493,32 +380,32 @@ function nlpservices_cron (): void
   }
   
   // Check for emails sent to notifications that should have been sent to the coordinator.
-  $enableEmailRedirect = empty($cronConfiguration['enableEmailRedirect']) ? FALSE : $cronConfiguration['enableEmailRedirect'];
+  $enableEmailRedirect = !empty($cronConfiguration['enableEmailRedirect']);
   if($enableEmailRedirect) {
     //nlp_debug_msg('email redirect check');
-    $notificationRepliesObj = Drupal::getContainer()->get('nlpservices.email_replies');
+    $notificationRepliesObj = Drupal::service('nlpservices.email_replies');
     $notificationRepliesObj->emailForward();
   }
   
   // Check if turf resync is enabled but run the check only at night, assumes standard 3-hour cron frequency.
-  $enableTurfResync = empty($cronConfiguration['enableTurfResync']) ? FALSE : $cronConfiguration['enableTurfResync'];
+  $enableTurfResync = !empty($cronConfiguration['enableTurfResync']);
   if($enableTurfResync) {
-    $nlpConfigurationObj = Drupal::getContainer()->get('nlpservices.configuration');
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     
     $debug = $nlpConfigurationObj->getDebug();
     $hour = (int)date('G'); // 0-23, midnight is 0
-    if (!($hour >= 0 && $hour < 3) AND !$debug) {
+    if (!($hour >= 0 && $hour < 3) && !$debug) {
       // The time is not between midnight and 3am, so skip the resyncing.
       Drupal::logger('nlpservices')->notice("Turf resync skipped, current hour: $hour");
       return;
     }
-    $resyncTurfObj = Drupal::getContainer()->get('nlpservices.resync_turf');
-    $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
+    $resyncTurfObj = Drupal::service('nlpservices.resync_turf');
+    $turfsObj = Drupal::service('nlpservices.turfs');
     $countiesWithTurfs = $turfsObj->getCountyNames();
     $queue = Drupal::queue('nlpservices_resync_turfs_queue');
     
     $startTime = time();
-    $queueStart = true;
+    $queueStart = TRUE;
     foreach ($countiesWithTurfs as $county) {
       $queueItems = $resyncTurfObj->turfsToResyncCheck($county);
       if(empty($queueItems)) { continue; }
@@ -527,7 +414,7 @@ function nlpservices_cron (): void
       if($queueStart) {
         // Mark the first turf to start the timing the resyncing process.
         $queueItems[0]['queueStart'] = 'start';
-        $queueStart = false;
+        $queueStart = FALSE;
       }
       
       foreach ($queueItems as $queueItem) {
@@ -579,12 +466,12 @@ function nlpservices_form_user_form_alter(&$form, FormStateInterface $form_state
 function nlpservices_custom_validation($form, FormStateInterface $form_state): void
 {
   $countyValue = $form_state->getValue('field_county');
-  $county = $countyValue[0]['value'];
+  $county = $countyValue[0]['value'] ?? '';
   $config = Drupal::service('config.factory')->get('nlpservices.configuration');
   $counties = $config->get('nlpservices-county-names');
   if(empty($county)) {return;}
   if($county == 'State' OR empty($counties[$county])) {
-    $form_state->setErrorByName('field_county', 'Invalid county name.');
+    $form_state->setErrorByName('field_county', t('Invalid county name.'));
   }
 }
 
@@ -598,7 +485,8 @@ function nlpservices_custom_validation($form, FormStateInterface $form_state): v
 function strToHex($string): string
 {
   $hex = '';
-  for ($i = 0; $i < strlen($string); $i++) {
+  $len = strlen($string);
+  for ($i = 0; $i < $len; $i++) {
     $so = ord($string[$i]);
     $sh = dechex($so);
     $shp = str_pad($sh, 2, '0',STR_PAD_LEFT);

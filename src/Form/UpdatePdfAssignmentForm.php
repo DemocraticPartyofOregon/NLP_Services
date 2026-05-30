@@ -62,7 +62,7 @@ class UpdatePdfAssignmentForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.saved_lists'),
-      $container->get('nlpservices.api_folders'),
+      $container->get('nlpservices.folders'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.nls_list_display'),
@@ -107,6 +107,7 @@ class UpdatePdfAssignmentForm extends FormBase
       $precinctArray = $this->nlsObj->getDistinctHdPrecinctArrayByMcids($mcids);
       $form_state->set('precinctArray',$precinctArray);
       $form_state->set('hdList',$hdList);
+      $form_state->set('hdList',$hdList);
       $form_state->set('pctList',$pctList);
       $form_state->set('currentHd',0);
       $form_state->set('currentPct','');
@@ -115,7 +116,7 @@ class UpdatePdfAssignmentForm extends FormBase
     
     $county = $form_state->get('county');
     $form['county-name'] = [
-      '#markup' => t('<h2>@county County</h2>', ['@county' => $county]),
+      '#markup' => "<h2>" . $county . " County</h2>",
     ];
     
     // If NL has more than one turf, ask which one to use.
@@ -139,7 +140,7 @@ class UpdatePdfAssignmentForm extends FormBase
       $form['turf_select']['replacement-walksheet'] = [
         '#type' => 'submit',
         '#name' => 'turf-replacement-walksheet',
-        '#value' => t('Use the selected turf'),
+        '#value' => 'Use the selected turf',
         '#attributes' => ['class' => ['upa_submit_font_size']],
       ];
       return $form;
@@ -148,7 +149,7 @@ class UpdatePdfAssignmentForm extends FormBase
     $needle = $form_state->get('needle');
     if(!empty($needle)) {
       $mcids = $this->turfsObj->getNlsWithTurfs($county);
-      $nls = $this->nlsObj->searchNls($needle, '', $mcids);
+      $nls = $this->nlsObj->searchNlsByIds($mcids,$needle);
       $hdList = $this->nlpSessionDataObj->getHdOptions();
       array_unshift($hdList, 'Choose...');
       $selectedHdIndex = 0;
@@ -264,9 +265,14 @@ class UpdatePdfAssignmentForm extends FormBase
     $form['replacement-walksheet'] = [
       '#type' => 'submit',
       '#name' => 'replacement-walksheet',
-      '#value' => t('Use the selected NL'),
+      '#value' => 'Use the selected NL',
       '#attributes' => ['class' => ['upa_submit_font_size, form-item']],
     ];
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/walksheet-form';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    $form['#attached']['library'][] = 'nlpservices/update-pdf-assignment';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
     return $form;
   }
   
@@ -324,11 +330,13 @@ class UpdatePdfAssignmentForm extends FormBase
         $nlSelection = reset($selections);
         $form_state->set('mcid',$nlSelection['mcid']);
         if(count($selections)!=1) {
-          $form_state->setErrorByName('turf_submit', t("You must select only one NL."));
+          $form_state->setErrorByName('turf_submit',"You must select only one NL.");
         }
         
+        $form_state->set('walksheetInfo',[]);
         $result = $this->validateWalksheet();
-        if($result['result'] == 'ok') {
+        if($result['result'] != 'ok') {
+          //Save the walksheet file info so we can use it later.
           $form_state->set('walksheetInfo',$result['walksheetInfo']);
         }
         
@@ -357,6 +365,7 @@ class UpdatePdfAssignmentForm extends FormBase
     
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
+    nlp_debug_msg('$elementClicked',$elementClicked);
     if($elementClicked == 'replacement-walksheet') {
       if($form_state->get('page') == 'turfSelect') {
         return;
@@ -382,8 +391,7 @@ class UpdatePdfAssignmentForm extends FormBase
   
   function validateWalksheet($type=''): array
   {
-    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
-    if (empty($files)) {
+    if (empty($_FILES['files'])) {
       return ['result' => 'ok', 'walksheetInfo' => [
         'fileName' => '',
         'tempName' => '',
@@ -391,18 +399,18 @@ class UpdatePdfAssignmentForm extends FormBase
         'fileType' => '',
       ],];
     }
-
+    
     $typeName = (empty($type)) ? 'turf_pdf' : 'turf_pdf_' . $type;
-    $uploadedFile = $files[$typeName] ?? NULL;
-
-    if ($uploadedFile === NULL) {
+    
+    // Now check that we have the PDF for the turf.
+    if (empty($_FILES['files']['name'][$typeName])) {
       $fileName = $tempName = '';
       Drupal::logger('nlpservices')->notice('Turf name is missing: ');
     } else {
-      $fileName = $uploadedFile->getClientOriginalName();
-      $tempName = $uploadedFile->getRealPath();
+      $fileName = $_FILES['files']['name'][$typeName];
+      $tempName = $_FILES['files']['tmp_name'][$typeName];
     }
-
+    
     $fileType = $fileNameBase = '';
     if (!empty($fileName)) {
       $lcFileName = strtolower($fileName);
@@ -410,11 +418,11 @@ class UpdatePdfAssignmentForm extends FormBase
       $fileType = end($lcFileNameParts);
       $allowed = ['pdf','xls','xlsx'];
       if (!in_array($fileType, $allowed)) {
-        return ['result' => 'error', 'message' => t('The walksheet must be a PDF, XLS, or XLSX type.')];
+        return ['result'=>'error', 'message'=>'turf_pdf','The walksheet must be a PDF, XLS, or XLSX type.'];
       }
       $fileNameBase = $lcFileNameParts[0];
     }
-    return ['result' => 'ok', 'walksheetInfo' => [
+    return ['result'=>'ok', 'walksheetInfo'=>[
       'fileName' => $fileName,
       'tempName' => $tempName,
       'fileNameBase' => $fileNameBase,

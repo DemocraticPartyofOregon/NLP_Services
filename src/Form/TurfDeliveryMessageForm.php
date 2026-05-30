@@ -86,17 +86,17 @@ class TurfDeliveryMessageForm extends FormBase
     
       case 'county_select':
         
-        $form['county_select'] = [
+        $form['county_select'] = array(
           '#type' => 'select',
           '#title' => t('State/County'),
           '#options' => $countyNames,
           '#description' => t('Select either the state or a specify county.'),
-        ];
-        $form['county_select_submit'] = [
+        );
+        $form['county_select_submit'] = array(
           '#type' => 'submit',
           '#name' => 'county-submit',
           '#value' => t('Create the email message. >>'),
-        ];
+        );
         break;
     
       case 'edit_state':
@@ -108,14 +108,14 @@ class TurfDeliveryMessageForm extends FormBase
         ];
 
         $form['edit-box']['state-name'] = [
-          '#markup' => t('<h1>Default email message for @state</h1>', ['@state' => $state]),
+          '#markup' => "<h1>Default email message for ".$state."</h1>",
         ];
         
         $form['edit-box']['help'] = $this->editHelp();
         
         $form['edit-box']['body'] = [
           '#type' => 'text_format',
-          '#title' => t('@state Email Template', ['@state' => $state]),
+          '#title' => $state.' Email Template',
           '#default_value' => $form_state->get('stateMsg'),
           '#format' => 'full_html',
           '#rows' => 25,
@@ -139,7 +139,7 @@ class TurfDeliveryMessageForm extends FormBase
         ];
         
         $form['edit-box']['county-name'] = [
-          '#markup' => t('<h1>Edit the turf-delivery message for @county County.</h1>', ['@county' => $county]),
+          '#markup' => "<h1>Edit the turf-delivery message for ".$county." County.</h1>",
         ];
         
         $form['edit-box']['help'] = $this->editHelp();
@@ -147,7 +147,7 @@ class TurfDeliveryMessageForm extends FormBase
         $countySelected = $form_state->get('county_selected');
         $form['edit-box']['body'] = [
           '#type' => 'text_format',
-          '#title' => t('@county County Email Template', ['@county' => $countySelected]),
+          '#title' => $countySelected.' County Email Template',
           '#default_value' => $form_state->get('countyMsg'),
           '#format' => 'full_html',
           '#rows' => 25,
@@ -157,15 +157,15 @@ class TurfDeliveryMessageForm extends FormBase
         $form['edit-box']['county_edit'] = [
           '#type' => 'submit',
           '#name' => 'county-edit',
-          '#value' => t('Create or update the @county County email message. >>', ['@county' => $countySelected]),
+          '#value' => t('Create or update the '.$countySelected.' County email message. >>'),
         ];
         
         break;
     }
-    
+    $form['#attached']['library'][] = 'nlpservices/turf-delivery-message';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -200,8 +200,9 @@ class TurfDeliveryMessageForm extends FormBase
       case 'edit_state':
         $stateMsg = $form_state->getValue('body')['value'];
         $tagExists = strpos($stateMsg,'@coordinatorContactInfo');
-        if($tagExists === FALSE) {
-          $messenger->addError(t('The @tag tag is missing. This tag must be somewhere in the body of the email message.', ['@tag' => '@coordinatorContactInfo']));
+        if(!$tagExists) {
+          $messenger->addError('The @coordinatorContactInfo tag is missing.  This tag must be somewhere
+          in the body of the email message. ');
           return;
         }
         $this->turfMsg->putTurfMsg(NULL,$stateMsg);
@@ -212,8 +213,9 @@ class TurfDeliveryMessageForm extends FormBase
         $countySelected = $form_state->get('county_selected');
         $countyMsg = $form_state->getValue('body')['value'];
         $tagExists = strpos($countyMsg,'@coordinatorContactInfo');
-        if($tagExists === FALSE) {
-          $messenger->addError(t('The @tag tag is missing. This tag must be somewhere in the body of the email message.', ['@tag' => '@coordinatorContactInfo']));
+        if(!$tagExists) {
+          $messenger->addError('The @coordinatorContactInfo tag is missing.  This tag must be somewhere
+          in the body of the email message. ');
           return;
         }
         $this->turfMsg->putTurfMsg($countySelected,$countyMsg);

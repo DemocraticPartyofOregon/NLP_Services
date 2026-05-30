@@ -142,6 +142,12 @@ class DeleteDrupalAccountsForm extends FormBase
         '#value' => t('Delete the selected user accounts'),
       ];
     }
+    $form['#attached']['library'][] = 'nlpservices/info-boxes';
+    $form['#attached']['library'][] = 'nlpservices/search-boxes';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
   
@@ -216,7 +222,7 @@ class DeleteDrupalAccountsForm extends FormBase
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * hdsWithUsers
    *
-   * Create a list of HDs that have users in them, sorted in ascending order.
+   * Create a list of HDs that have users in them, sorted in assending order.
    *
    * @param array $users
    * @return array

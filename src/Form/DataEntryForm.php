@@ -1,9 +1,9 @@
-<?php
+<?php /** @noinspection PhpMissingFieldTypeInspection */
 
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-use Drupal\Component\Utility\Html;
+//use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -19,7 +19,6 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpDataEntryReports;
 use Drupal\nlpservices\ApiFolders;
-use Drupal\nlpservices\ApiMapRegions;
 
 /**
  * @noinspection PhpUnused
@@ -38,30 +37,27 @@ class DataEntryForm extends FormBase
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
   protected ApiFolders $foldersObj;
-  protected ApiMapRegions $apiMapRegionsObj;
-
+  
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
                                 $dataEntryDateBarObj, $nlpConfigurationObj,
-                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj, $foldersObj,
-                                $apiMapRegionsObj ) {
+                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj, $foldersObj) {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
     $this->sessionDataObj = $sessionDataObj;
-
+    
     $this->reportsObj = $reportsObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->dataEntryVotersObj = $dataEntryVotersObj;
-
+    
     $this->dataEntryDateBarObj = $dataEntryDateBarObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->dataEntryVoterListDisplayObj = $dataEntryVoterListDisplayObj;
     $this->dataEntryReportsObj = $dataEntryReportsObj;
     $this->foldersObj = $foldersObj;
-    $this->apiMapRegionsObj = $apiMapRegionsObj;
   }
-
+  
   /**
    * {@inheritdoc}
    */
@@ -72,20 +68,19 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.session_data'),
-
+      
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.data_entry_voters'),
-
+      
       $container->get('nlpservices.data_entry_date_bar'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
-      $container->get('nlpservices.api_folders'),
-      $container->get('nlpservices.api_map_regions')
+      $container->get('nlpservices.folders'),
     );
   }
-
+  
   /**
    * {@inheritdoc}
    */
@@ -93,21 +88,26 @@ class DataEntryForm extends FormBase
   {
     return 'nlpservices_data_entry_form';
   }
-
+  
   const int DE_PAGE_SIZE = 10;
-
+  
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    $form['#attached']['library'][] = 'nlpservices/data-entry-table';
+    $form['#attached']['library'][] = 'nlpservices/button';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+
     if(!$form_state->get('reenter')) {
       $this->sessionDataObj->set('currentPage', 0);
       $canvassDate = date('Y-m-d',time());  // Today.
       $this->sessionDataObj->set('canvassDate', $canvassDate);
       $form_state->set('page','voters');
     }
-
+    
     if(!$this->initializeDataReporting($form_state)) {
       return $form;
     }
@@ -116,34 +116,34 @@ class DataEntryForm extends FormBase
     if(!$form_state->get('reenter')) {
       $this->updateMinivanInfo($turfIndex);
     }
-
+    
     $page = $form_state->get('page');
     switch ($page) {
       case 'unreportedChanges':
         $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
         return $form;
       case 'postcardsSent':
-        $form['postcardsList'] = $this->displayPostcardReportingList($turfIndex);
+        $form['postcardsList'] = $this->displayVoterList($turfIndex);
         return $form;
     }
-
+    
     if($form_state->get('unreportedChanges')) {
       $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
       return $form;
     }
-
+    
     $canvassDate = $this->sessionDataObj->get('canvassDate');
     $canvassDate   = (empty($canvassDate))?'':$canvassDate;
     $mcid = $form_state->get('mcid');
-
+    
     $form_state->set('defaultValues',NULL);
-
+    
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
-
+    
     $pageCount = (int) ceil(count($voters)/$this::DE_PAGE_SIZE);
-
+    
     $currentPage = $this->sessionDataObj->get('currentPage');
-
+    
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
     $defaultVoterContactMethod = $this->sessionDataObj->get('defaultVoterContactMethod');
     $preferredContactMethod = 0;
@@ -151,73 +151,71 @@ class DataEntryForm extends FormBase
       $preferredContactMethod = array_search($defaultVoterContactMethod, $contactMethods);
     }
     $this->sessionDataObj->set('preferredContactMethod',$preferredContactMethod);
-
+    
     $form['dateBar'] = $this->dataEntryDateBarObj->createDateBar(
              $canvassDate, $turfIndex, $mcid, $currentPage, $pageCount);
-
+    
     $vanidKeys = array_keys($voters);
     $start = $currentPage * $this::DE_PAGE_SIZE;
     $end = min(($start + $this::DE_PAGE_SIZE), count($vanidKeys));
-
+    
     $voterArrays = [];
     for ($vanidKey = $start; $vanidKey < $end; $vanidKey++) {
       $voter = $voters[$vanidKeys[$vanidKey]];
       $voterArray = $this->dataEntryVoterListDisplayObj->buildDataEntryVoterArray($voter);
       $voterArrays[$voter['vanid']] = $voterArray;
     }
-
+    
     $form['dataEntryTable'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="data-entry-div">',
       '#suffix' => '</div>',
     ];
-    $form['#attached']['library'][] = 'nlpservices/unsaved-changes';
-    $form['#attributes']['class'][] = 'js-form-changed';
-
+    
     $form_state->set('voterArrays', $voterArrays);
     $form_state->setValue('dataEntry', NULL);
     $user_input = $form_state->getUserInput();
     unset($user_input['dataEntry']);
     $form_state->setUserInput($user_input);
-
+    
     $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable($voterArrays);
 
     $form['navigate'] = $this->dataEntryDateBarObj->navigate($pageCount,$currentPage);
-
     return $form;
   }
-
+  
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
+    
     $triggeringElement = $form_state->getTriggeringElement();
-    if (empty($triggeringElement)) { return; }
     $elementClicked = $triggeringElement['#name'];
-
+    
     if(str_contains($elementClicked, 'line_2_2_2')) {
-
+      
       $form_state->setRebuild();
       $form_state->set('reenter',TRUE);
-
+      
       $rowPos = strpos($elementClicked,'row_2_');
       $vanidEnd = strpos($elementClicked,']',$rowPos+6);
       $vanid = substr($elementClicked,$rowPos+6,$vanidEnd-$rowPos-6);
-
+      
       $chosenMethodCode = $triggeringElement['#value'];
       $contactMethods = $this->nlpConfigurationObj->getContactMethods();
-
-      $values = [
-        'vanid' => $vanid,
-        'name' => $contactMethods[$chosenMethodCode],
-        'code' => $chosenMethodCode,
-      ];
+      
+      $values =
+        array (
+          'vanid' => $vanid,
+          'name' => $contactMethods[$chosenMethodCode],
+          'code' => $chosenMethodCode,
+        );
       $this->sessionDataObj->setVoterContactMethod($values);
-
+      
     }
   }
-
+  
   /**
    * {@inheritdoc}
    */
@@ -225,15 +223,17 @@ class DataEntryForm extends FormBase
   {
     $form_state->setRebuild();
     $form_state->set('reenter',TRUE);
-
+    $messenger = Drupal::messenger();
+    
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-
+    
     $values = $form_state->getValues();
+    //nlp_debug_msg('$values',$values);
     $newCanvassDate = (!empty($values['canvassDate']))?$values['canvassDate']:'';
-
+    
     $canvassDate = $this->sessionDataObj->get('canvassDate');
-    if(!empty($newCanvassDate) && $canvassDate != $newCanvassDate) {
+    if(!empty($newCanvassDate) AND $canvassDate != $newCanvassDate) {
       $this->sessionDataObj->set('canvassDate',$newCanvassDate);
     }
     switch ($elementClicked) {
@@ -244,36 +244,37 @@ class DataEntryForm extends FormBase
           'unreportedChanges' => 0,
         ];
         $this->turfsObj->updateTurfFields($turfIndex, $newTurf);
-        $this->messenger()->addStatus($this->t('Thanks for acknowledging the changes to your turf.  Now click the My turf tab to see your turf.'));
+        $messenger->addStatus('Thanks for acknowledging the changes to your turf.  Now click the
+        My turf tab to see your turf.');
         return;
-
+      
       case 'postcardSubmit':
         $form_state->set('page','postcardsSent');
         return;
-
+        
       case 'postcardSelect':
         $form_state->set('page','voters');
         $postcardsSent = $form_state->getValue('postcardsSentList');
         $this->processPostcardsSent($form_state->get('turfIndex'),$postcardsSent,$form_state->get('mcid'),$canvassDate);
         return;
     }
-
+    
+    $triggeringElement = $form_state->getTriggeringElement();
+    $elementClicked = $triggeringElement['#name'];
     $navButtonParts = explode('-',$elementClicked);
     switch ($navButtonParts[0]) {
-
+      
       case 'save_reports':
         break;
       case 'pageSelect':
-        $newPage = $navButtonParts[1]-1;
-        $this->sessionDataObj->set('currentPage', $newPage);
+        $NewPage = $navButtonParts[1]-1;
+        $this->sessionDataObj->set('currentPage', $NewPage);
         break;
       case 'next':
-        $currentPage = $this->sessionDataObj->get('currentPage');
-        $this->sessionDataObj->set('currentPage', $currentPage + 1);
+        $this->sessionDataObj->set('currentPage', 6);
         break;
       case 'previous':
-        $currentPage = $this->sessionDataObj->get('currentPage');
-        $this->sessionDataObj->set('currentPage', max(0, $currentPage - 1));
+        $this->sessionDataObj->set('currentPage', 5);
         break;
       case 'last_name_search':
         $turfIndex = $form_state->get('turfIndex');
@@ -284,20 +285,19 @@ class DataEntryForm extends FormBase
         }
         break;
     }
-
+    
     $voterArrays = $form_state->get('voterArrays' );
     $dataEntry = $form_state->getValue('dataEntry');
     $selections = $this->dataEntryVoterListDisplayObj->validateDataEntrySelection($dataEntry);
     $actions = $this->dataEntryVoterListDisplayObj->whatChanged($selections,$voterArrays);
-
+    
     $mcid = $form_state->get('mcid');
     $nlsInfo = $this->nlsObj->getNlById($mcid);
-
+    
     $county = $this->sessionDataObj->getCounty();
-    $canvassDate = $this->sessionDataObj->get('canvassDate');
-
+    $canvassDate = date('Y-m-d');
     $voterArrays = $form_state->get('voterArrays');
-
+    
     foreach ($actions as $vanid => $actionSet) {
       foreach ($actionSet as $action) {
         $report = [
@@ -313,7 +313,7 @@ class DataEntryForm extends FormBase
           'contactId' => 0,
         ];
         $contactMethods = $this->nlpConfigurationObj->getContactMethods();
-
+        
         $type = $action['type'];
         switch ($type) {
           case 'surveyResponse':
@@ -322,7 +322,8 @@ class DataEntryForm extends FormBase
             $report['contactMethod'] = $contactMethod;
             if ($contactMethod == 'Postcard') {
               $voterName = $voterArrays[$vanid]['firstName'] . ' ' . $voterArrays[$vanid]['lastName'];
-              $this->messenger()->addWarning($this->t('If you received an answer from @name please change the contact method to something other than postcard.', ['@name' => $voterName]));
+              $messenger->addWarning('If you received an answer from ' . $voterName
+                . ' please change the contact method to something other than postcard.');
               break;
             }
             $action['turfIndex'] = $form_state->get('turfIndex');
@@ -347,7 +348,7 @@ class DataEntryForm extends FormBase
           case 'updateContact':
             $action['firstName'] = $voterArrays[$vanid]['firstName'];
             $action['lastName'] = $voterArrays[$vanid]['lastName'];
-
+            
             $updateContact = $action['updateContact']['contactChange'];
             switch ($updateContact) {
               case 'BC':  // Bad cell number.
@@ -377,14 +378,15 @@ class DataEntryForm extends FormBase
                 $this->reportsObj->setNlReport($report);
                 break;
               case 'NC': // New cell number.
+                $messenger = Drupal::messenger();
                 $voterName = $action['firstName'] . ' ' . $action['lastName'];
                 $cellPhone = $action['updateContact']['newContact'];
                 if(empty($cellPhone))  {
-                  $this->messenger()->addWarning($this->t('You must enter a new cell phone, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a new cell phone, Voter is '.$voterName);
                   break;
                 }
                 if(!$this->validatePhoneNumber($cellPhone)) {
-                  $this->messenger()->addWarning($this->t('You must enter a valid cell phone number, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a valid cell phone number , Voter is '.$voterName);
                   break;
                 }
                 $report['value'] = 'New cell number';
@@ -392,7 +394,7 @@ class DataEntryForm extends FormBase
                 $report['cycle'] = $this->nlpConfigurationObj->getCycle();
                 $report['type'] = 'Change';
                 $this->reportsObj->setNlReport($report);
-
+                
                 $newPhoneNumber = [
                   'cellPhone' => $cellPhone,
                   'cellPhoneId' => NULL
@@ -400,42 +402,46 @@ class DataEntryForm extends FormBase
                 $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
                 break;
               case 'NH': // New home number.
+                $messenger = Drupal::messenger();
                 $voterName = $action['firstName'] . ' ' . $action['lastName'];
                 $homePhone = $action['updateContact']['newContact'];
                 if(empty($homePhone))  {
-                  $this->messenger()->addWarning($this->t('You must enter a new home phone, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a new home phone, Voter is '.$voterName);
                   break;
                 }
                 if(!$this->validatePhoneNumber($homePhone)) {
-                  $this->messenger()->addWarning($this->t('You must enter a valid home phone number, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a valid home phone number , Voter is '.$voterName);
                   break;
                 }
                 $report['value'] = 'New home number';
                 $report['text'] = $homePhone;
                 $report['cycle'] = $this->nlpConfigurationObj->getCycle();
                 $report['type'] = 'Change';
+                //nlp_debug_msg('result',$report);
                 $this->reportsObj->setNlReport($report);
-
+                
                 $newPhoneNumber = [
                   'homePhone' => $homePhone,
                   'homePhoneId' => NULL
                 ];
                 $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
-
+                
                 break;
-
+              
               case 'NE': // New email.
-                $email = $action['updateContact']['newContact'];
-                $voterName = $action['firstName'] . ' ' . $action['lastName'];
+                $messenger = Drupal::messenger();
+                $email = $action['updateContact']['newContact'];                $voterName = $action['firstName'] . ' ' . $action['lastName'];
+                
+                //nlp_debug_msg('$email',$email);
                 if(empty($email))  {
-                  $this->messenger()->addWarning($this->t('You must enter a new email, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a new email, Voter is '.$voterName);
                   break;
                 }
                 if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                  $this->messenger()->addWarning($this->t('You must enter a valid email address, Voter is @name', ['@name' => $voterName]));
+                  $messenger->addWarning('You must enter a valid email address , Voter is '.$voterName);
                   break;
                 }
-
+                
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'New email';
                 $report['text'] = $email;
@@ -453,7 +459,7 @@ class DataEntryForm extends FormBase
       }
     }
   }
-
+  
   /**
    * unreportedChangesDisplay
    *
@@ -465,54 +471,54 @@ class DataEntryForm extends FormBase
    * @param int $turfIndex
    * @return array
    */
-  private function unreportedChangesDisplay(int $turfIndex): array
+  public function unreportedChangesDisplay(int $turfIndex): array
   {
     $changeHistory = $this->turfsObj->getChangeHistory($turfIndex);
-
+    
     $form['changesTitle'] = [
       '#type' => 'markup',
-      '#markup' => $this->t('<p>
+      '#markup' => "<p>
 The list below reveals the voters added to or deleted from your turf since it was created </br>
 for you.   If you were provided a PDF walksheet or are using the MiniVAN app, those lists will be </br>
-different.  Please review the changes before you attempt voter contact.</p>'),
+different.  Please review the changes before you attempt voter contact.</p>",
     ];
-
+    
     $changeDisplay = '';
     foreach ($changeHistory as $date=>$change) {
-      $changeDisplay .= '<h4><b>Date changes were made: ' . Html::escape($date) . '</b></h4>';
+      $changeDisplay .= "<h4><b>Date changes were made: $date</b></h4>";
       foreach ($change as $changeType=>$changes) {
         if($changeType == 'date') {continue;}
         if(empty($changes)) {continue;}
-        $changeDisplay .= '<h4><u>' . Html::escape($changeType) . '</u></h4>';
-        $changeDisplay .= '<ul>';
+        $changeDisplay .= "<h4><u>$changeType</u></h4>";
+        $changeDisplay .= "<ul>";
         foreach ($changes as $vanid=>$voterName) {
-          $changeDisplay .= '<li>vanid:' . Html::escape($vanid) . ', Voter name: ' . Html::escape($voterName) . '</li>';
+          $changeDisplay .= "<li>vanid:$vanid, Voter name: $voterName</li>";
         }
-        $changeDisplay .= '</ul>';
+        $changeDisplay .= "</ul>";
       }
     }
-
+    
     $form['changesDisplay'] = [
       '#type' => 'markup',
       '#markup' => $changeDisplay,
     ];
-
+    
     $form['changesAcknowledgementRequest'] = [
       '#type' => 'markup',
-      '#markup' => $this->t('<p>
-Please acknowledge that you have reviewed these changes.</p>'),
+      '#markup' => '<p>
+Please acknowledge that you have reviewed these changes.</p>',
     ];
-
+    
     $form['acknowledgeUnreportedChanges'] = [
       '#type' => 'submit',
       '#name' => 'acknowledgeUnreportedChanges',
-      '#value' => $this->t('Acknowledged'),
+      '#value' => 'Acknowledged',
     ];
     return $form;
   }
-
+  
   /**
-   * displayPostcardReportingList
+   * displayVoterList
    *
    * Returns form elements for displaying the voters in the turf for reporting
    * that a postcard was sent to them.
@@ -523,77 +529,42 @@ Please acknowledge that you have reviewed these changes.</p>'),
    * @param int $turfIndex
    * @return array
    */
-  private function displayPostcardReportingList(int $turfIndex): array
+  private function displayVoterList(int $turfIndex): array
   {
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
-    $voterDisplay = array_map(function ($voter) {
-      return $voter['lastName'] . ', ' . $voter['firstName'];
-    }, $voters);
-
-    $pendingDisplay = [];
-    $sentVanids = [];
-    foreach (array_keys($voterDisplay) as $vanid) {
-      if($this->reportsObj->voterSentPostcard($vanid)) {
-        $sentVanids[] = $vanid;
-      } else {
-        $pendingDisplay[$vanid] = $voterDisplay[$vanid];
+    $voterDisplay = $postcardsSent = [];
+    foreach ($voters as $vanid => $voter) {
+      $postcardSent = $this->reportsObj->voterSentPostcard($vanid);
+      if(!$postcardSent) {
+        $postcardsSent[] = $vanid;
       }
+      $voterDisplay[$vanid] = $voter['lastName'].', '.$voter['firstName'];
     }
-
-    $form = [];
-
-    if(!empty($pendingDisplay)) {
-      $form['pendingTitle'] = [
-        '#markup' => '<h1>' . $this->t('Report that a postcard was sent') . '</h1>' .
-          '<h3>' . $this->t('The list of voters with check boxes are those for whom postcards not yet sent.') . '</h3>',
-      ];
-      $form['pendingNote'] = [
-        '#markup' => '<p>' . $this->t('Check each voter you have sent a postcard to, then click Submit.') . '</p>',
-      ];
-      $form['selectAllPostcards'] = [
-        '#type' => 'inline_template',
-        '#template' => '<div class="postcards-select-all-wrapper"><label><input type="checkbox" id="postcards-select-all"> {{ label }}</label></div>',
-        '#context' => ['label' => $this->t('Select all')],
-        '#attached' => ['library' => ['nlpservices/select-all-postcards']],
-      ];
-      $form['postcardsSentList'] = [
-        '#type' => 'checkboxes',
-        '#options' => $pendingDisplay,
-        '#default_value' => [],
-        '#title' => $this->t('Check each voter that you want to report that you sent a postcard.'),
-      ];
-    } else {
-      $form['allSentNote'] = [
-        '#markup' => '<p>' . $this->t('All voters in your turf have already been reported as sent.') . '</p>',
-      ];
-      $form['postcardsSentList'] = [
-        '#type' => 'value',
-        '#value' => [],
-      ];
-    }
-
-    if(!empty($sentVanids)) {
-      $form['sentTitle'] = [
-        '#markup' => '<h3>' . $this->t('Already reported sent') . '</h3>',
-      ];
-      $sentItems = '';
-      foreach ($sentVanids as $vanid) {
-        $sentItems .= '<li>' . $voterDisplay[$vanid] . '</li>';
-      }
-      $form['sentList'] = [
-        '#markup' => '<ul>' . $sentItems . '</ul>',
-      ];
-    }
-
+    
+    $form['postcardNote'] = [
+      '#markup' => '<div class="form-box-medium">
+<h2>Report the mailing of postcards</h2>
+<p>The list of the voters below can be selected to indicate that a postcard
+was sent to them.  Check the box for those that you mailed the postcard.  If
+the voter has not already received a postcard, the box will be checked.   Those
+not checked have already received a postcard for this election.</p></div>',
+    ];
+    $form['postcardsSentList'] = [
+      '#type' => 'checkboxes',
+      '#options' => $voterDisplay,
+      '#default_value' => $postcardsSent,
+      '#title' => t('Check each voter that you want to report that you sent a postcard.'),
+    ];
+  
     $form['postcardSelect'] = [
       '#type' => 'submit',
       '#name' => 'postcardSelect',
-      '#value' => $this->t('Submit'),
+      '#value' => 'Submit',
     ];
-
+    
     return $form;
   }
-
+  
   /**
    * processPostcardsSent
    *
@@ -612,15 +583,15 @@ Please acknowledge that you have reviewed these changes.</p>'),
     $nls = $this->nlsObj->getNlById($mcid);
     $county = $this->sessionDataObj->getCounty();
     $contactMethodName = 'Postcard';
-
-    $rid = $this->nlpConfigurationObj->getResponseId('Postcard','Mailed');
+    
+    $rid =$this->nlpConfigurationObj->getResponseId('Postcard','Mailed');
     $cid = $this->nlpConfigurationObj->getContactId('Postcard');
     $action = [
       'contactMethod' => $cid,
       'notContacted' => $rid,
       'turfIndex' => $turfIndex,
     ];
-
+    
     $report  = [
       'mcid' => $mcid,
       'county' => $county,
@@ -638,42 +609,44 @@ Please acknowledge that you have reviewed these changes.</p>'),
       $report['vanid'] = $vanid;
       $this->dataEntryReportsObj->noContactResponse($report,$action);
     }
-
+    
   }
-
-  /**
+  
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * initializeDataReporting
    *
    * @param FormStateInterface $form_state
    * @return bool
    */
-  private function initializeDataReporting(FormStateInterface $form_state): bool
+  function initializeDataReporting(FormStateInterface $form_state): bool
   {
+    $messenger = Drupal::messenger();
+    
     $county = $this->sessionDataObj->getCounty();
     $form_state->set('county',$county);
-
+    
     $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
     $this->sessionDataObj->setNewDistricts($hdOptions);
-
+    
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];
     if(empty($mcid)) {
-      $this->messenger()->addWarning($this->t('The MCID is missing from your user login, contact your coordinator.'));
+      $messenger->addWarning('The MCID is missing from your user login, contact your coordinator.');
       return FALSE;
     }
     $form_state->set('mcid', $mcid);
     $turfIndex = $this->sessionDataObj->get('turfIndex');
-
+    
     //Do we have a turf?
     $turfArray = $this->turfsObj->turfExists($mcid,$county);
     $form_state->set('turfArray', $turfArray);
     if (empty($turfArray)) {
-      $this->messenger()->addWarning($this->t('You do not have a turf assigned'));
+      $messenger->addWarning("You do not have a turf assigned");
       return FALSE;
     }
     // Select a turf.
     $turfs = $turfArray['turfs'];
-    if(empty($turfIndex) || empty($turfs[$turfIndex])) {
+    if(empty($turfIndex) OR empty($turfs[$turfIndex])) {
       reset($turfs);
       $turfIndex = key($turfs);
       $this->sessionDataObj->set('turfIndex',$turfIndex);
@@ -682,15 +655,16 @@ Please acknowledge that you have reviewed these changes.</p>'),
     // flag if turf has changes from an update of VoteBuilder with new voter
     // registrations and the user has not yet acknowledged the changes.
     $form_state->set('unreportedChanges',$this->turfsObj->unreportedChanges($turfIndex));
-
+  
     // Verify we know this NL.
     $nlsInfo = $this->nlsObj->getNlById($mcid);
     // Stop if we don't have this person in the database.
     if (empty($nlsInfo)) {
-      $this->messenger()->addWarning($this->t('You are not in the list of active Neighborhood Leaders, contact your coordinator.'));
+      $messenger->addWarning('You are not in the list of active Neighborhood
+                   Leaders, contact your coordinator.');
       return FALSE;
     }
-
+    
     // For the display of voters for the contact report, what page are we on?
     $currentPage = $this->sessionDataObj->get('currentPage');
     if(empty($currentPage)) {
@@ -699,7 +673,7 @@ Please acknowledge that you have reviewed these changes.</p>'),
     $this->sessionDataObj->set('changePage', FALSE);
     return TRUE;
   }
-
+  
   /**
    * validatePhoneNumber
    *
@@ -708,12 +682,12 @@ Please acknowledge that you have reviewed these changes.</p>'),
    * @param string $phone
    * @return false|int
    */
-  private function validatePhoneNumber(string $phone): false|int
+  function validatePhoneNumber(string $phone): false|int
   {
     // Comprehensive phone number validation
     return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
   }
-
+  
   /**
    * updateMinivanInfo
    *
@@ -725,18 +699,18 @@ Please acknowledge that you have reviewed these changes.</p>'),
    * @param int $turfIndex
    * @return void
    */
-  private function updateMinivanInfo(int $turfIndex): void
+  function updateMinivanInfo(int $turfIndex): void
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->sessionDataObj->getCounty();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->apiMapRegionsObj->updateMinivanInfo($county, $turfArray);
-
+    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {
       $minivanNumber = $turf['minivanNumber'];
       $minivanCreateDate = $turf['minivanCreateDate'];
-      $createDate = empty($minivanCreateDate)?'':date('Y-m-d',strtotime($minivanCreateDate));
+      $createDate = date('Y-m-d',strtotime($minivanCreateDate));
       $fields = [
         'minivanNumber' => $minivanNumber,
         'minivanCreateDate' => $createDate,
@@ -744,21 +718,25 @@ Please acknowledge that you have reviewed these changes.</p>'),
       $this->turfsObj->updateTurfFields($turfIndex, $fields);
     }
   }
-
-  /**
+  
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * formCallback
+   *
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  public function formCallback($form, FormStateInterface $form_state) {
+  function formCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
-
-  /**
+  
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * formCallback
+   *
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  public function selectionCallback($form, FormStateInterface $form_state) {
+  function selectionCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
-
+  
 }
