@@ -88,6 +88,10 @@ class NlpResyncTurf
   public function resyncTurf($county, $turfIndex, $fixAC): void
   {
     $resyncCheckResult = $this->turfResyncCheck($county,$turfIndex);
+    if($resyncCheckResult['result'] == 'transient_error') {
+      Drupal::logger('nlpservices')->warning('resyncTurf skipped due to transient error for turfIndex @idx: @msg', ['@idx' => $turfIndex, '@msg' => $resyncCheckResult['message']]);
+      return;
+    }
     if($resyncCheckResult['result'] == 'error') {
       $turf = $this->turfsObj->getTurf($turfIndex);
       if(empty($turf['turfName'])) {  // Debug code to help with identifying corrupted turfs.
@@ -263,12 +267,12 @@ class NlpResyncTurf
         nlp_debug_msg('turfResyncCheckError',$msg);
       }
       Drupal::logger('nlpservices')->notice($msg);
-      return ['result' => 'error', 'message' => 'Export job failed'];
+      return ['result' => 'transient_error', 'message' => 'Export job failed'];
     }
 
     $fh = fopen($exportJob['downloadUrl'], "r");
     if(!$fh) {
-      return ['result' => 'error', 'message' => 'Unable to open export job download URL'];
+      return ['result' => 'transient_error', 'message' => 'Unable to open export job download URL'];
     }
     $hdr = fgetcsv($fh);
     // The third column in the header is the name of the NLP Voter AC.
@@ -278,10 +282,17 @@ class NlpResyncTurf
     $votersInVbTurf = [];
     do {
       $listRecord = fgetcsv($fh);
-      if (empty($listRecord)) {break;}
+      if($listRecord === FALSE) {break;}
+      if(empty($listRecord)) {continue;}
       $associativeRecord = array_combine($hdr, $listRecord);
       $votersInVbTurf[$associativeRecord['VanID']] = $associativeRecord;
     } while (TRUE);
+    if(!feof($fh)) {
+      fclose($fh);
+      Drupal::logger('nlpservices')->warning('turfResyncCheck: download interrupted for listId @id in @county', ['@id' => $listId, '@county' => $county]);
+      return ['result' => 'transient_error', 'message' => 'Download was interrupted'];
+    }
+    fclose($fh);
 
     // Create the list of voters in the NLP turf that are not in the VoteBuilder turf.
     $deletedVoterIds = [];

@@ -4,9 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the rebuild of the table when the HD is changed.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Change the title of the CO and NL columns">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpVoters.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpVoters.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -97,23 +100,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000000004689003" />
-      <entry key="MS500" value="1.0136853809992745" />
-      <entry key="S2" value="1.4328824372601114" />
-      <entry key="S5" value="2.1557220131581953" />
-      <entry key="S10" value="2.998645451165498" />
-      <entry key="S30" value="4.4839209733558425" />
-      <entry key="S60" value="5.141981397841839" />
-      <entry key="M2" value="5.542018770796088" />
-      <entry key="M5" value="5.809267271187612" />
-      <entry key="M10" value="5.907459863218565" />
-      <entry key="M15" value="6.009413264930881" />
-      <entry key="M30" value="7.373042913477404" />
-      <entry key="H1" value="12.390806590894263" />
-      <entry key="H2" value="20.010168850402255" />
-      <entry key="H4" value="28.746548564517937" />
-      <entry key="D1" value="191.5780251937848" />
-      <entry key="W1" value="616.5852014915674" />
+      <entry key="MS100" value="1.0000565578751917" />
+      <entry key="MS500" value="1.1645949858336484" />
+      <entry key="S2" value="2.5664437771413278" />
+      <entry key="S5" value="4.818094488261078" />
+      <entry key="S10" value="6.674096756057558" />
+      <entry key="S30" value="8.658277469604318" />
+      <entry key="S60" value="9.305140027514652" />
+      <entry key="M2" value="9.896135240651752" />
+      <entry key="M5" value="11.557378017340469" />
+      <entry key="M10" value="13.126021136631428" />
+      <entry key="M15" value="13.94389607115968" />
+      <entry key="M30" value="15.985569029462487" />
+      <entry key="H1" value="21.174910087635908" />
+      <entry key="H2" value="29.00737003003682" />
+      <entry key="H4" value="38.01844969364834" />
+      <entry key="D1" value="200.76363479681473" />
+      <entry key="W1" value="626.2102423496772" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -123,35 +126,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="2.715174084869856E-176" />
-      <entry key="M5" value="5.936344169322676E-71" />
-      <entry key="M10" value="7.704767465227413E-36" />
-      <entry key="M15" value="3.9009737146460126E-24" />
-      <entry key="M30" value="1.9750882802158532E-12" />
-      <entry key="H1" value="1.4053783524288189E-6" />
-      <entry key="H2" value="0.0011855959861956623" />
-      <entry key="H4" value="0.03481090806188026" />
-      <entry key="D1" value="2.316813204005081" />
-      <entry key="W1" value="12.946663381163079" />
+      <entry key="M2" value="1.2663982161405841E-177" />
+      <entry key="M5" value="1.74191964088385E-71" />
+      <entry key="M10" value="4.173631082024203E-36" />
+      <entry key="M15" value="2.5922449594740667E-24" />
+      <entry key="M30" value="1.6100450178408273E-12" />
+      <entry key="H1" value="1.2688755041190347E-6" />
+      <entry key="H2" value="0.001126547730986522" />
+      <entry key="H4" value="0.03393296355519238" />
+      <entry key="D1" value="2.306970774316485" />
+      <entry key="W1" value="12.938791777963086" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9138314506433001" />
-      <entry key="MS500" value="0.9954877931749164" />
-      <entry key="S2" value="1.4257272947972772" />
-      <entry key="S5" value="2.1510715498119035" />
-      <entry key="S10" value="2.995081976538465" />
-      <entry key="S30" value="4.48181792400069" />
-      <entry key="S60" value="5.140701409689675" />
-      <entry key="M2" value="5.541306548115706" />
-      <entry key="M5" value="5.808962673239385" />
-      <entry key="M10" value="5.907304006197155" />
-      <entry key="M15" value="6.009307185226434" />
-      <entry key="M30" value="7.372945103573456" />
-      <entry key="H1" value="12.39058488888109" />
-      <entry key="H2" value="20.011038923697306" />
-      <entry key="H4" value="28.78094163520241" />
-      <entry key="D1" value="193.89298458312265" />
-      <entry key="W1" value="629.5302969289149" />
+      <entry key="MS100" value="0.926641568945951" />
+      <entry key="MS500" value="1.1477088155758022" />
+      <entry key="S2" value="2.558810176203761" />
+      <entry key="S5" value="4.812783093785133" />
+      <entry key="S10" value="6.670457377612323" />
+      <entry key="S30" value="8.656702117227693" />
+      <entry key="S60" value="9.304290579720753" />
+      <entry key="M2" value="9.895662659509888" />
+      <entry key="M5" value="11.557108869196025" />
+      <entry key="M10" value="13.12584613918325" />
+      <entry key="M15" value="13.943765045929768" />
+      <entry key="M30" value="15.985458953079238" />
+      <entry key="H1" value="21.174694727929364" />
+      <entry key="H2" value="29.008189169068924" />
+      <entry key="H4" value="38.05197155637436" />
+      <entry key="D1" value="203.06875899820778" />
+      <entry key="W1" value="639.1474670465992" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -263,15 +266,7 @@
       <workItem from="1779898494998" duration="443000" />
       <workItem from="1779972293479" duration="39841000" />
       <workItem from="1780076698998" duration="1026000" />
-      <workItem from="1780077960353" duration="19982000" />
-    </task>
-    <task id="LOCAL-00063" summary="Debug code">
-      <option name="closed" value="true" />
-      <created>1777240940842</created>
-      <option name="number" value="00063" />
-      <option name="presentableId" value="LOCAL-00063" />
-      <option name="project" value="LOCAL" />
-      <updated>1777240940842</updated>
+      <workItem from="1780077960353" duration="21077000" />
     </task>
     <task id="LOCAL-00064" summary="Add better error message when a turf can't be synced with a voter already in an NLP turf elsewhere.">
       <option name="closed" value="true" />
@@ -657,7 +652,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780152937747</updated>
     </task>
-    <option name="localTasksCounter" value="112" />
+    <task id="LOCAL-00112" summary="Change the title of the CO and NL columns">
+      <option name="closed" value="true" />
+      <created>1780160763345</created>
+      <option name="number" value="00112" />
+      <option name="presentableId" value="LOCAL-00112" />
+      <option name="project" value="LOCAL" />
+      <updated>1780160763346</updated>
+    </task>
+    <option name="localTasksCounter" value="113" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -709,7 +712,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude review of coordinator setup" />
     <MESSAGE value="Claude review of credentials email" />
     <MESSAGE value="Claude review of counts and crosstabs" />
     <MESSAGE value="Improve usability of postcard reporting" />
@@ -734,7 +736,8 @@
     <MESSAGE value="Claude code review forms voter ac to vanid forms" />
     <MESSAGE value="Claude code review install, module and lots of forms" />
     <MESSAGE value="Fix the rebuild of the table when the HD is changed." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the rebuild of the table when the HD is changed." />
+    <MESSAGE value="Change the title of the CO and NL columns" />
+    <option name="LAST_COMMIT_MESSAGE" value="Change the title of the CO and NL columns" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

@@ -399,7 +399,8 @@ class NlpVoters {
       $voter['turfVoter'] = $this->getTurfVoter($voter['vanid']);
       $voter['address'] = $this->fetchVoterAddress($voter['vanid']);
       if(empty($voter['address']) || empty($voter['turfVoter'])) {
-        return []; // Database corruption.
+        \Drupal::logger('nlpservices')->warning('fetchVotersByTurf: skipping vanid @vanid due to missing address or turf-voter record', ['@vanid' => $voter['vanid']]);
+        continue;
       }
       $voters[$voter['vanid']] = $voter;
     } while (TRUE);

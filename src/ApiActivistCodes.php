@@ -141,16 +141,16 @@ class ApiActivistCodes
    *   - action - default is 'Apply'; another option is 'Remove'
    *
    * @param array $request
-   * @return void
+   * @return bool - TRUE on success, FALSE if the activist code ID is unknown or the API call fails.
    */
-  public function setApiActivistCode(array $request): void
+  public function setApiActivistCode(array $request): bool
   {
     $activistCodeName = $request['codeName'];
     $rid = $this->nlpConfigurationObj->getActivistCode($activistCodeName);
-    if(empty($rid)) {return;}
+    if(empty($rid)) {return FALSE;}
     $vanid = $request['vanid'];
     $database = $this->supportedActivistCodes[$activistCodeName];
-    
+
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
     $canvassResponseObj = new stdClass();
@@ -160,19 +160,19 @@ class ApiActivistCodes
     $apiURL = $stateCommitteeKey['Url'];
     $user = $stateCommitteeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
-    
+
     $responseObj->type = self::ACTIVIST_CODE;
     $responseObj->activistCodeId = $rid;
     $responseObj->action = $request['action'];
-    
+
     $canvassContextObj->dateCanvassed = NULL;
     $canvassContextObj->contactTypeId = NULL;
     $canvassContextObj->inputTypeId = 11;
-    
+
     $canvassResponseObj->canvassContext = $canvassContextObj;
     $canvassResponseObj->resultCodeId = NULL;
     $canvassResponseObj->responses = [ $responseObj,];
-    
+
     $dataJson = json_encode( $canvassResponseObj );
     $headers = [
       'Content-Type' => 'application/json',
@@ -181,10 +181,13 @@ class ApiActivistCodes
     ];
     try {
       $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+      return TRUE;
     } catch (Exception $e) {
       nlp_debug_msg('setApiActivistCode', $e->getMessage());
+      return FALSE;
     } catch (GuzzleException $e) {
       nlp_debug_msg('setApiActivistCode', $e->getMessage());
+      return FALSE;
     }
   }
   

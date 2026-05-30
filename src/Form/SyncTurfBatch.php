@@ -50,13 +50,20 @@ const MAX_QUEUE_LIMIT = 17;
         }
       }
       $fh = fopen($exportJob['downloadUrl'] , "r");
+      if(!$fh) {
+        $context['finished'] = 1;
+        $context['results']['message'] = [0=>t('Unable to download the turf voter list.'),];
+        $context['results']['result'] = 'error';
+        return;
+      }
       fgetcsv($fh);
       $turfVoters = [];
       $voterCount = 0;
       $voterBatch = 0;
       do {
         $listRecord = fgetcsv($fh);
-        if(empty($listRecord)) {break; }
+        if($listRecord === FALSE) {break; }
+        if(empty($listRecord)) {continue; }
         $turfVoters[$voterBatch][] = $listRecord[1];
         $voterCount++;
         if($voterCount == MAX_QUEUE_LIMIT) {
@@ -64,6 +71,13 @@ const MAX_QUEUE_LIMIT = 17;
           $voterBatch++;
         }
       } while (TRUE);
+      if(!feof($fh)) {
+        fclose($fh);
+        $context['finished'] = 1;
+        $context['results']['message'] = [0=>t('The turf voter download was interrupted. Please try again.'),];
+        $context['results']['result'] = 'error';
+        return;
+      }
       fclose($fh);
       $context['sandbox']['batchCount'] = count($turfVoters);
       $context['sandbox']['currentBatch'] = 0;
@@ -149,8 +163,10 @@ const MAX_QUEUE_LIMIT = 17;
         'codeName' => 'NLPVoterAC',
         'action' => 'Apply',
       ];
-      $activistCodesObj->setApiActivistCode($request);
-      
+      if(!$activistCodesObj->setApiActivistCode($request)) {
+        Drupal::logger('nlpservices')->warning('Failed to set NLPVoterAC for vanid @vanid during turf sync', ['@vanid' => $vanid]);
+      }
+
       // Add voter to turf.
       $voter['address']['turfIndex'] = $turfIndex;
       $voter['address']['moved'] = NULL;
