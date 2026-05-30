@@ -85,31 +85,23 @@ class VanidForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $form['previousNote'] = [
-      '#markup' => "<p>Duplicate records for an NL can be removed by merging them in VoteBuilder.   The merge
-will retain one record as the primary and destroy the other.  If the destroyed VANID is the one known to
-NLP Services, the remaining record appears to be a new NL.  To transfer the known information about the NL,
-this function can be used to update the NLP database.   The Previous VANID below must be non-existent, i.e., destroyed
-for this function to work correctly.</p>
-
-<p>It is highly recommended that merging duplicate records be avoided during an election.   If a merge must be done,
-then be sure to identify the VANID in use by NLP Services as the primary.  If you do a merge and fail to correctly
- identify, then use this function. </p>",
+      '#markup' => t('<p>Duplicate records for an NL can be removed by merging them in VoteBuilder. The merge will retain one record as the primary and destroy the other. If the destroyed VANID is the one known to NLP Services, the remaining record appears to be a new NL. To transfer the known information about the NL, this function can be used to update the NLP database. The Previous VANID below must be non-existent, i.e., destroyed for this function to work correctly.</p><p>It is highly recommended that merging duplicate records be avoided during an election. If a merge must be done, then be sure to identify the VANID in use by NLP Services as the primary. If you do a merge and fail to correctly identify, then use this function.</p>'),
     ];
     
     $form['previousId'] = [
       '#type' => 'number',
-      '#title' => 'Previous VANID for the NL.',
+      '#title' => t('Previous VANID for the NL.'),
       '#maxlength' => 12,
       '#required' => TRUE,
     ];
     
     $form['newNote'] = [
-      '#markup' => "<p>The new VANID must be a valid number for a volunteer in the VoteBuilder database.</p>",
+      '#markup' => t('<p>The new VANID must be a valid number for a volunteer in the VoteBuilder database.</p>'),
     ];
     
     $form['newId'] = [
       '#type' => 'number',
-      '#title' => 'New VANID for the NL.',
+      '#title' => t('New VANID for the NL.'),
       '#maxlength' => 12,
       '#required' => TRUE,
     ];
@@ -117,7 +109,7 @@ then be sure to identify the VANID in use by NLP Services as the primary.  If yo
     
     $form['repairVanid'] = [
       '#type' => 'submit',
-      '#value' => 'Repair VANID.',
+      '#value' => t('Repair VANID.'),
       '#name' => 'repair-vanid',];
     
     
@@ -136,17 +128,17 @@ then be sure to identify the VANID in use by NLP Services as the primary.  If yo
     
     $previousIdLen = strlen($previousId);
     if( $previousIdLen != 9 ) {
-      $form_state->setErrorByName('previousId', "A VANID is 9 digits but the previous ID entered only has $previousIdLen.");
+      $form_state->setErrorByName('previousId', t('A VANID is 9 digits but the previous ID entered only has @count.', ['@count' => $previousIdLen]));
       return;
     }
     
     $newIdLen = strlen($newVanid);
     if( $newIdLen != 9 ) {
-      $form_state->setErrorByName('newId', "A VANID is 9 digits but the new ID entered only has $newIdLen.");
+      $form_state->setErrorByName('newId', t('A VANID is 9 digits but the new ID entered only has @count.', ['@count' => $newIdLen]));
     } else {
       $newNl = $this->apiNlsObj->getApiNls('',$newVanid);
       if(empty($newNl)) {
-        $form_state->setErrorByName('newId', "The newId must exist.");
+        $form_state->setErrorByName('newId', t('The new VANID must exist in VoteBuilder.'));
       }
     }
   }

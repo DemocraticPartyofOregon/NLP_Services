@@ -67,10 +67,8 @@ class UploadInstructionsForm extends FormBase
     $form_state->set('current',$current);
     // Create the form to display of all the NLs
     
-    $currentCanvassFile = (!empty($current['canvass']['originalFileName']))?$current['canvass']['originalFileName']:
-      '<i>Not yet uploaded</u>';
-    $currentPostcardFile = (!empty($current['postcard']['originalFileName']))?$current['postcard']['originalFileName']:
-      '<i>Not yet uploaded</u>';
+    $currentCanvassFile = (!empty($current['canvass']['originalFileName'])) ? $current['canvass']['originalFileName'] : t('Not yet uploaded');
+    $currentPostcardFile = (!empty($current['postcard']['originalFileName'])) ? $current['postcard']['originalFileName'] : t('Not yet uploaded');
     $form['form-box'] = [
       '#markup' => '<div class="form-box-medium">
 <p>To send a turf to an NL, the county must upload at least one of these instructions.  Normally, the
@@ -80,8 +78,10 @@ the postcard instructions with their turf.</p>'
     ];
     $form['legend'] = [
       '#type' => 'markup',
-      '#markup' => t('<p><b>Current instruction file name:</b><br>&nbsp; <span class="file-name">'.$currentCanvassFile.
-        '</span></p><p><b>Current postcard file name:</b><br>&nbsp; <span class="file-name">'.$currentPostcardFile.'</span></p>'),
+      '#markup' => t('<p><b>Current instruction file name:</b><br>&nbsp; <span class="file-name">@canvass</span></p><p><b>Current postcard file name:</b><br>&nbsp; <span class="file-name">@postcard</span></p>', [
+        '@canvass' => $currentCanvassFile,
+        '@postcard' => $currentPostcardFile,
+      ]),
     ];
     $form['instruction_form'] = [
       '#title' => t('Select the file(s) to upload'),
@@ -106,7 +106,7 @@ the postcard instructions with their turf.</p>'
     // A button to update the NL recruitment goals.
     $form['submit'] = [
       '#type' => 'submit',
-      '#value' => 'Upload Instructions',
+      '#value' => t('Upload Instructions'),
       '#description' => t('Upload the instructions file(s)'),
       '#suffix' => '</div>',
     ];
@@ -119,7 +119,9 @@ the postcard instructions with their turf.</p>'
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
-    $canvass = $_FILES['files']['name']['canvass'];
+    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $canvassFile = $files['canvass'] ?? NULL;
+    $canvass = $canvassFile ? $canvassFile->getClientOriginalName() : '';
     if ($canvass != '') {
       $cName = strtolower($canvass);
       $cNameArray = explode('.', $cName);
@@ -136,8 +138,9 @@ the postcard instructions with their turf.</p>'
         return;
       }
     }
-  
-    $postcard = $_FILES['files']['name']['card'];
+
+    $postcardFile = $files['card'] ?? NULL;
+    $postcard = $postcardFile ? $postcardFile->getClientOriginalName() : '';
     if ($postcard != '') {
       $pdf = strtolower($postcard);
       $pdfArray = explode('.', $pdf);
@@ -164,16 +167,19 @@ the postcard instructions with their turf.</p>'
     $county = $form_state->get('county');
     $current = $form_state->get('current');
   
-    $canvass = $_FILES['files']['name']['canvass'];
-    if (!empty($canvass)) {
-      $canvassTemp = $_FILES['files']['tmp_name']['canvass'];
-      $this->updateInstructionsFile($county,'canvass',$canvass,$canvassTemp,$current);
+    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $canvassFile = $files['canvass'] ?? NULL;
+    if ($canvassFile !== NULL) {
+      $canvass = $canvassFile->getClientOriginalName();
+      $canvassTemp = $canvassFile->getRealPath();
+      $this->updateInstructionsFile($county, 'canvass', $canvass, $canvassTemp, $current);
     }
-  
-    $postcard = $_FILES['files']['name']['card'];
-    if (!empty($postcard)) {
-      $postcardTemp = $_FILES['files']['tmp_name']['card'];
-      $this->updateInstructionsFile($county,'postcard',$postcard,$postcardTemp,$current);
+
+    $postcardFile = $files['card'] ?? NULL;
+    if ($postcardFile !== NULL) {
+      $postcard = $postcardFile->getClientOriginalName();
+      $postcardTemp = $postcardFile->getRealPath();
+      $this->updateInstructionsFile($county, 'postcard', $postcard, $postcardTemp, $current);
     }
     
   }
@@ -203,12 +209,12 @@ the postcard instructions with their turf.</p>'
     }
     $this->fileSystem->moveUploadedFile($temp, $fullName);
     
-    $req = array(
+    $req = [
       'county' => $county,
       'type' => $type,
       'fileName' => $filename,
       'originalFileName' => $newFilename,
-    );
+    ];
     $this->instructions->createInstructions($req);
   }
 
