@@ -267,10 +267,10 @@ class NlpNlsListDisplay
     $this->header[] = ['data' => t('Email<br>Phone'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     if(!$brief) {
       $this->header[] = ['data' => t('Notes'), 'field' => 'notes', 'class' => ['nlp-th-color', 'nl-notes-col'] ];
-      $this->header[] = ['data' => t('NL'),  'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('NLP<br>Participation'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('TC'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('TD'),  'class' => ['nlp-th-color'] ];
-      $this->header[] = ['data' => t('CO'),  'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Contacct<br>Method'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Last access'), 'field' => 'lastAccess', 'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Vtrs<br>Drs'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Att<br>P2V'),  'class' => ['nlp-th-color'] ];
