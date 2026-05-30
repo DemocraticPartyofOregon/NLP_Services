@@ -12,7 +12,6 @@ use Drupal\node\Entity\Node;
  * Install a home page for welcoming NLs to the site.  If a home page already exists,
  * it's deleted before creating a new home page.
  *
- * @noinspection PhpUndefinedFieldInspection
  * @noinspection PhpUnused
  */
 function nlpservices_install(): void

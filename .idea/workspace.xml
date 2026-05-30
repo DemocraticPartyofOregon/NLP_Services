@@ -4,30 +4,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review forms voter ac to vanid forms">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude code review install, module and lots of forms">
       <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ActivistCodeConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ActivistCodeConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryPostcardsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryPostcardsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeliverTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LegislativeFixesForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LegislativeFixesForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DisplayTurfsForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ManageDrupalAccountsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/RemoveCoordinatorRoleFrom.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/RemoveCoordinatorRoleFrom.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/UploadInstructionsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/UploadInstructionsForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -118,23 +101,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000009941572514" />
-      <entry key="S2" value="1.053472418976613" />
-      <entry key="S5" value="1.67384610510679" />
-      <entry key="S10" value="2.7530355606841987" />
-      <entry key="S30" value="4.485585147426747" />
-      <entry key="S60" value="5.168482902049416" />
-      <entry key="M2" value="5.563641307556549" />
-      <entry key="M5" value="5.820226613463559" />
-      <entry key="M10" value="5.909216606463289" />
-      <entry key="M15" value="5.939276569811384" />
-      <entry key="M30" value="5.969537252991168" />
-      <entry key="H1" value="5.98549886148914" />
-      <entry key="H2" value="6.163891387928843" />
-      <entry key="H4" value="9.47574782789796" />
-      <entry key="D1" value="177.7232689543458" />
-      <entry key="W1" value="593.5719472957682" />
+      <entry key="MS100" value="1.001061264514204" />
+      <entry key="MS500" value="1.2560098929565304" />
+      <entry key="S2" value="2.0406138147988266" />
+      <entry key="S5" value="3.4446443406311102" />
+      <entry key="S10" value="5.065620599817161" />
+      <entry key="S30" value="7.261599401377179" />
+      <entry key="S60" value="8.060691553528532" />
+      <entry key="M2" value="8.511221640401622" />
+      <entry key="M5" value="8.80311434354065" />
+      <entry key="M10" value="9.042628287127979" />
+      <entry key="M15" value="9.430811229347796" />
+      <entry key="M30" value="10.695281346343483" />
+      <entry key="H1" value="12.204445046507374" />
+      <entry key="H2" value="13.51347917019912" />
+      <entry key="H4" value="17.11189419069005" />
+      <entry key="D1" value="182.19359002452234" />
+      <entry key="W1" value="600.3869871652192" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -143,36 +126,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="3.457253911597563E-294" />
-      <entry key="M2" value="1.8593692241181052E-147" />
-      <entry key="M5" value="2.0311699151986672E-59" />
-      <entry key="M10" value="4.506850247344224E-30" />
-      <entry key="M15" value="2.7284463491375256E-20" />
-      <entry key="M30" value="1.6518009411359246E-10" />
-      <entry key="H1" value="1.2852240928925912E-5" />
-      <entry key="H2" value="0.00358533317500543" />
-      <entry key="H4" value="0.06053572553467308" />
-      <entry key="D1" value="2.540624136116769" />
-      <entry key="W1" value="13.118349558259593" />
+      <entry key="S60" value="2.4849372396339E-310" />
+      <entry key="M2" value="1.5763683705384228E-155" />
+      <entry key="M5" value="1.1996735531102327E-62" />
+      <entry key="M10" value="1.0952961029375728E-31" />
+      <entry key="M15" value="2.2892208616093236E-21" />
+      <entry key="M30" value="4.7845802967546934E-11" />
+      <entry key="H1" value="6.917066124683998E-6" />
+      <entry key="H2" value="0.002630274376690148" />
+      <entry key="H4" value="0.051849851773552516" />
+      <entry key="D1" value="2.4758806984138966" />
+      <entry key="W1" value="13.070062664189956" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.9898044860146337E-27" />
-      <entry key="MS500" value="5.5484198125222555E-6" />
-      <entry key="S2" value="0.09949830586949555" />
-      <entry key="S5" value="0.9651540460116346" />
-      <entry key="S10" value="2.2923331344298137" />
-      <entry key="S30" value="4.299318071019715" />
-      <entry key="S60" value="5.070511045176338" />
-      <entry key="M2" value="5.51338051306653" />
-      <entry key="M5" value="5.799807538350844" />
-      <entry key="M10" value="5.898953857963524" />
-      <entry key="M15" value="5.932422856473589" />
-      <entry key="M30" value="5.966104441824363" />
-      <entry key="H1" value="5.983793645659657" />
-      <entry key="H2" value="6.166590411354224" />
-      <entry key="H4" value="9.535580035595382" />
-      <entry key="D1" value="180.26186305976617" />
-      <entry key="W1" value="606.6887085081164" />
+      <entry key="MS100" value="0.9276131758392386" />
+      <entry key="MS500" value="1.2390930246038603" />
+      <entry key="S2" value="2.034413021299998" />
+      <entry key="S5" value="3.440433725299374" />
+      <entry key="S10" value="5.062477487595218" />
+      <entry key="S30" value="7.2600700703358285" />
+      <entry key="S60" value="8.059837949040014" />
+      <entry key="M2" value="8.510769641304172" />
+      <entry key="M5" value="8.802915013668391" />
+      <entry key="M10" value="9.042284121896655" />
+      <entry key="M15" value="9.430172771384438" />
+      <entry key="M30" value="10.694255168756662" />
+      <entry key="H1" value="12.203511351522744" />
+      <entry key="H2" value="13.515451246956586" />
+      <entry key="H4" value="17.1631374745444" />
+      <entry key="D1" value="184.6674917582662" />
+      <entry key="W1" value="613.455467234864" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration">
@@ -284,15 +267,7 @@
       <workItem from="1779898494998" duration="443000" />
       <workItem from="1779972293479" duration="39841000" />
       <workItem from="1780076698998" duration="1026000" />
-      <workItem from="1780077960353" duration="16087000" />
-    </task>
-    <task id="LOCAL-00061" summary="Change notification emails to provide password as a one time link.">
-      <option name="closed" value="true" />
-      <created>1777229449705</created>
-      <option name="number" value="00061" />
-      <option name="presentableId" value="LOCAL-00061" />
-      <option name="project" value="LOCAL" />
-      <updated>1777229449705</updated>
+      <workItem from="1780077960353" duration="17176000" />
     </task>
     <task id="LOCAL-00062" summary="Change notification emails to provide password as a one time link.">
       <option name="closed" value="true" />
@@ -678,7 +653,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780148739850</updated>
     </task>
-    <option name="localTasksCounter" value="110" />
+    <task id="LOCAL-00110" summary="Claude code review install, module and lots of forms">
+      <option name="closed" value="true" />
+      <created>1780151969064</created>
+      <option name="number" value="00110" />
+      <option name="presentableId" value="LOCAL-00110" />
+      <option name="project" value="LOCAL" />
+      <updated>1780151969064</updated>
+    </task>
+    <option name="localTasksCounter" value="111" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -730,7 +713,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix polymorphic errors in DrupalUser" />
     <MESSAGE value="Claude review of awards and remove the database function" />
     <MESSAGE value="Claude review of coordinator setup" />
     <MESSAGE value="Claude review of credentials email" />
@@ -755,7 +737,8 @@
     <MESSAGE value="Claude code review forms import matchback, minivan, reports forms" />
     <MESSAGE value="Claude code review forms import table to resync turfs forms" />
     <MESSAGE value="Claude code review forms voter ac to vanid forms" />
-    <option name="LAST_COMMIT_MESSAGE" value="Claude code review forms voter ac to vanid forms" />
+    <MESSAGE value="Claude code review install, module and lots of forms" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude code review install, module and lots of forms" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

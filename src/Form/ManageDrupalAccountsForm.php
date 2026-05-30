@@ -113,8 +113,8 @@ class ManageDrupalAccountsForm extends FormBase
       
       case 'displayUsers':
        
-        $currentHd = $this->sessionDataObj->getSavedHd();
         $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
+        $currentHd = $this->sessionDataObj->getSavedHd();
         $hdOptions = $this->sessionDataObj->getHdOptions();
        
         $needle = $form_state->get('nl-search-needle');

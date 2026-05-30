@@ -136,8 +136,8 @@ class DeliverTurfForm extends FormBase
     
     $county = $form_state->get('county');
     
-    $currentHd = $this->nlpSessionDataObj->getSavedHd();
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
+    $currentHd = $this->nlpSessionDataObj->getSavedHd();
     $hdOptions = $this->nlpSessionDataObj->getHdOptions();
     
     if (empty($hdOptions)) {

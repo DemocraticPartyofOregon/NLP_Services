@@ -83,6 +83,7 @@ class DisplayTurfsForm extends FormBase
     }
 
     $county = $form_state->get('county');
+    $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
 
     $needle = $form_state->get('search-needle');

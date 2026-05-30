@@ -92,7 +92,8 @@ class DeleteTurfForm extends FormBase
     }
     
     $county = $form_state->get('county');
-    
+
+    $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
     //nlp_debug_msg('$currentHd',$currentHd);
     $needle = $form_state->get('search-needle');

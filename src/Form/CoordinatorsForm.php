@@ -150,6 +150,7 @@ coordinator and not to the NLP Site admin.</p>"),
       '#suffix' => '</div>',
     ];
     
+    $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
     $countyNLs = $this->nlsObj->getCountyNls($county,$currentHd);
     
