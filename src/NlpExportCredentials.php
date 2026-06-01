@@ -80,7 +80,7 @@ class NlpExportCredentials
       foreach ($columns as $column) {
         $reordered[$column] = $credentials[$column];
       }
-      $reordered['roles'] = json_encode($credentials['roles']);
+      $reordered['roles'] = '"' . addslashes(json_encode($credentials['roles'])) . '"';
       fputcsv($fh, $reordered);
     }
     fclose($fh);
