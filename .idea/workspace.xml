@@ -4,11 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Close possible causes of the lost NLP Voter activist code.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude Unit test of DataEntry">
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/ActiveNlsDisplayFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/DeleteTurfFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/DrupalUserTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/MagicWordTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/NlpSearchBarTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsBatchTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncTurfFormTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMatchbacks.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMatchbacks.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,7 +68,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="246" />
+    <option name="cachedIndexableFilesCount" value="254" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -267,15 +273,7 @@
       <workItem from="1780076698998" duration="1026000" />
       <workItem from="1780077960353" duration="29259000" />
       <workItem from="1780202968733" duration="19116000" />
-      <workItem from="1780286148197" duration="2324000" />
-    </task>
-    <task id="LOCAL-00065" summary="increase lifetime of password recovery">
-      <option name="closed" value="true" />
-      <created>1778217310546</created>
-      <option name="number" value="00065" />
-      <option name="presentableId" value="LOCAL-00065" />
-      <option name="project" value="LOCAL" />
-      <updated>1778217310548</updated>
+      <workItem from="1780286148197" duration="10930000" />
     </task>
     <task id="LOCAL-00066" summary="Fix summary report for counties that have more than one CD.">
       <option name="closed" value="true" />
@@ -661,7 +659,15 @@
       <option name="project" value="LOCAL" />
       <updated>1780166811105</updated>
     </task>
-    <option name="localTasksCounter" value="114" />
+    <task id="LOCAL-00114" summary="Claude Unit test of DataEntry">
+      <option name="closed" value="true" />
+      <created>1780288739861</created>
+      <option name="number" value="00114" />
+      <option name="presentableId" value="LOCAL-00114" />
+      <option name="project" value="LOCAL" />
+      <updated>1780288739862</updated>
+    </task>
+    <option name="localTasksCounter" value="115" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -713,7 +719,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude review of counts and crosstabs" />
     <MESSAGE value="Improve usability of postcard reporting" />
     <MESSAGE value="Claude code review of documents, email config and exports" />
     <MESSAGE value="Dulicate code resolution in export methods" />
@@ -738,7 +743,8 @@
     <MESSAGE value="Fix the rebuild of the table when the HD is changed." />
     <MESSAGE value="Change the title of the CO and NL columns" />
     <MESSAGE value="Close possible causes of the lost NLP Voter activist code." />
-    <option name="LAST_COMMIT_MESSAGE" value="Close possible causes of the lost NLP Voter activist code." />
+    <MESSAGE value="Claude Unit test of DataEntry" />
+    <option name="LAST_COMMIT_MESSAGE" value="Claude Unit test of DataEntry" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
