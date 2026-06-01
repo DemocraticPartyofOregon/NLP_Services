@@ -18,7 +18,7 @@ use Drupal\nlpservices\NlpDataEntryDateBar;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpDataEntryReports;
-use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\ApiMapRegions;
 
 /**
  * @noinspection PhpUnused
@@ -36,26 +36,27 @@ class DataEntryForm extends FormBase
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
-  protected ApiFolders $foldersObj;
-  
+  protected ApiMapRegions $mapRegionsObj;
+
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
                                 $dataEntryDateBarObj, $nlpConfigurationObj,
-                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj, $foldersObj) {
+                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj,
+                                $mapRegionsObj ) {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
     $this->sessionDataObj = $sessionDataObj;
-    
+
     $this->reportsObj = $reportsObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->dataEntryVotersObj = $dataEntryVotersObj;
-    
+
     $this->dataEntryDateBarObj = $dataEntryDateBarObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->dataEntryVoterListDisplayObj = $dataEntryVoterListDisplayObj;
     $this->dataEntryReportsObj = $dataEntryReportsObj;
-    $this->foldersObj = $foldersObj;
+    $this->mapRegionsObj = $mapRegionsObj;
   }
   
   /**
@@ -77,7 +78,7 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_map_regions')
     );
   }
   
@@ -174,7 +175,7 @@ class DataEntryForm extends FormBase
     
     $form_state->set('voterArrays', $voterArrays);
     $form_state->setValue('dataEntry', NULL);
-    $user_input = $form_state->getUserInput();
+    $user_input = $form_state->getUserInput() ?? [];
     unset($user_input['dataEntry']);
     $form_state->setUserInput($user_input);
     
@@ -232,7 +233,7 @@ class DataEntryForm extends FormBase
     //nlp_debug_msg('$values',$values);
     $newCanvassDate = (!empty($values['canvassDate']))?$values['canvassDate']:'';
     
-    $canvassDate = $this->sessionDataObj->get('canvassDate');
+    $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
     if(!empty($newCanvassDate) AND $canvassDate != $newCanvassDate) {
       $this->sessionDataObj->set('canvassDate',$newCanvassDate);
     }
@@ -287,7 +288,7 @@ class DataEntryForm extends FormBase
     }
     
     $voterArrays = $form_state->get('voterArrays' );
-    $dataEntry = $form_state->getValue('dataEntry');
+    $dataEntry = $form_state->getValue('dataEntry') ?? [];
     $selections = $this->dataEntryVoterListDisplayObj->validateDataEntrySelection($dataEntry);
     $actions = $this->dataEntryVoterListDisplayObj->whatChanged($selections,$voterArrays);
     
@@ -704,7 +705,7 @@ not checked have already received a postcard for this election.</p></div>',
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->sessionDataObj->getCounty();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->mapRegionsObj->updateMinivanInfo($county, $turfArray);
     
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {

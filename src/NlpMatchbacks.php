@@ -201,7 +201,7 @@ class NlpMatchbacks
     }
     $matchback = $result->fetchAssoc();
     if(empty($matchback)) {return '';}
-    return $matchback['date'];
+    return empty( $matchback['date'])?'': $matchback['date'];
   }
 
   /**
