@@ -418,6 +418,11 @@ class NlpTurfs
     return $dbTurfs;
   }
 
+  public function getTurfAssignment(int $turfId): array
+  {
+    return $this->turfAssignmentsObj->getTurfAssignment($turfId);
+  }
+
   /**
    * updateTurf
    *

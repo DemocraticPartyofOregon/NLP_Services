@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit;
+namespace Drupal\Tests\nlpservices\Unit\Service;
 
 use Drupal\nlpservices\ApiActivistCodes;
 use Drupal\nlpservices\ApiSurveyQuestion;

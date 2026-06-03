@@ -8,7 +8,7 @@ namespace {
   }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal\Core\Form\FormStateInterface;
   use Drupal\nlpservices\ApiActivistCodes;

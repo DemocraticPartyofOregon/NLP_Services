@@ -11,7 +11,7 @@ namespace {
   }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
   use Drupal\Core\Form\FormStateInterface;

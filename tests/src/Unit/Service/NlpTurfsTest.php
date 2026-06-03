@@ -8,7 +8,7 @@ namespace {
   }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Database\Connection;
   use Drupal\Core\Database\Query\Delete;

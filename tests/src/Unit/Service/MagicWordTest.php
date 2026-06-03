@@ -11,7 +11,7 @@ namespace {
   }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Config\ConfigFactoryInterface;
   use Drupal\Core\Config\ImmutableConfig;

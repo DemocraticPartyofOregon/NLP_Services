@@ -18,7 +18,7 @@ namespace {
   if (!defined('NLP_LEADER_ROLE_LABEL'))   { define('NLP_LEADER_ROLE_LABEL',   'NLP Leader'); }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
   use Drupal\Core\Form\FormStateInterface;

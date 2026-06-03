@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit bootstrap="../../../core/tests/bootstrap.php">
+  <testsuites>
+    <testsuite name="nlpservices">
+      <directory>tests/src/Unit/Form</directory>
+      <directory>tests/src/Unit/Service</directory>
+    </testsuite>
+  </testsuites>
+</phpunit>

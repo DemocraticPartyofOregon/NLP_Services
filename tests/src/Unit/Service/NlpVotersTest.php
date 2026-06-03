@@ -8,7 +8,7 @@ namespace {
   }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
   use Drupal\Core\Database\Connection;

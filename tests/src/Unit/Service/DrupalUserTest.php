@@ -8,12 +8,12 @@ namespace {
   }
   if (!function_exists('user_load_by_name')) {
     function user_load_by_name(string $name): mixed {
-      return \Drupal\Tests\nlpservices\Unit\DrupalUserTest::$stubUserByName;
+      return \Drupal\Tests\nlpservices\Unit\Service\DrupalUserTest::$stubUserByName;
     }
   }
   if (!function_exists('user_load_by_mail')) {
     function user_load_by_mail(string $mail): mixed {
-      return \Drupal\Tests\nlpservices\Unit\DrupalUserTest::$stubUserByMail;
+      return \Drupal\Tests\nlpservices\Unit\Service\DrupalUserTest::$stubUserByMail;
     }
   }
   if (!defined('NLP_ADMIN_ROLE_ID'))        { define('NLP_ADMIN_ROLE_ID',        'nlp_admin'); }
@@ -22,7 +22,7 @@ namespace {
   if (!defined('NLP_LEADER_ROLE_LABEL'))    { define('NLP_LEADER_ROLE_LABEL',    'NLP Leader'); }
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
   use Drupal\nlpservices\DrupalUser;

@@ -4,17 +4,38 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Claude Unit test of DataEntry">
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/ActiveNlsDisplayFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/DeleteTurfFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/DrupalUserTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/MagicWordTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/NlpSearchBarTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsBatchTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/SyncTurfFormTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix export of credentials">
+      <change afterPath="$PROJECT_DIR$/phpunit.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ActiveNlsDisplayFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteTurfFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncActiveNlsFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiNlsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiVoterTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/DrupalUserTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/MagicWordTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryReportsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVoterListDisplayTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSearchBarTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpVotersTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/SyncActiveNlsBatchTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiVoter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiVoter.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/ActiveNlsDisplayFormTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/DeleteTurfFormTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/DrupalUserTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/MagicWordTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/NlpDataEntryReportsTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/NlpDataEntryVoterListDisplayTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/NlpSearchBarTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/NlpTurfsTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/NlpVotersTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsBatchTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/SyncActiveNlsFormTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/SyncTurfFormTest.php" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +89,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="254" />
+    <option name="cachedIndexableFilesCount" value="257" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -274,6 +295,7 @@
       <workItem from="1780077960353" duration="29259000" />
       <workItem from="1780202968733" duration="19116000" />
       <workItem from="1780286148197" duration="10930000" />
+      <workItem from="1780461765216" duration="1181000" />
     </task>
     <task id="LOCAL-00066" summary="Fix summary report for counties that have more than one CD.">
       <option name="closed" value="true" />

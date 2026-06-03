@@ -25,7 +25,7 @@ namespace {
   require_once __DIR__ . '/../../../src/Form/SyncActiveNlsBatch.php';
 }
 
-namespace Drupal\Tests\nlpservices\Unit {
+namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
   use Drupal\Core\Messenger\MessengerInterface;
