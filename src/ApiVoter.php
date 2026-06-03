@@ -2,31 +2,32 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 class ApiVoter
 {
-  
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
-  
-  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
+
+  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiVoter
   {
     return new static(
       $container->get('http_client'),
       $container->get('nlpservices.configuration'),
-      $container->get('nlpservices.api_key_management')
+      $container->get('nlpservices.api_key_management'),
     );
   }
   
@@ -154,7 +155,7 @@ class ApiVoter
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
     
-    $expandOptions = '?$expand=phones,emails,addresses,codes,districts,electionRecords';
+    $expandOptions = '?$expand=phones,addresses,districts,electionRecords';
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
     try {
       $request = $this->client->get($url);
@@ -169,7 +170,12 @@ class ApiVoter
       nlp_debug_msg('getApiVoter', $e->getMessage());
       return [];
     }
-    if (empty($result)) {return [];}
+    return $this->processVoterResult($result);
+  }
+
+  private function processVoterResult(array $result): array
+  {
+    if (empty($result)) { return []; }
     $voterAddress = $voter = [];
     $voter['vanid'] = $result['vanId'];
     $voter['firstName'] = $result['firstName'];
@@ -181,7 +187,6 @@ class ApiVoter
     $birthDate['year'] = $birthDate[0];
     $birthDate['month'] = $birthDate[1];
     $birthDate['day'] = $birthDate[2];
-    // get age from date or birthdate
     $birthTime = mktime(0, 0, 0, $birthDate['month'], $birthDate['day'], $birthDate['year']);
     $birthUDate = date("U", $birthTime);
     $age = (date("md", $birthUDate) > date("md")
@@ -190,9 +195,9 @@ class ApiVoter
     $voter['age'] = $age;
     $voter['party'] = $result['party'];
     $voter['sex'] = $result['sex'];
-    $voterAddress['city'] = $voterAddress['streetName'] = $voterAddress['streetPrefix'] =  $voterAddress['streetNo'] = NULL;
+    $voterAddress['city'] = $voterAddress['streetName'] = $voterAddress['streetPrefix'] = $voterAddress['streetNo'] = NULL;
     $voterAddress['mZip'] = $voterAddress['mCity'] = $voterAddress['mAddress'] = NULL;
-    if(!empty($result['addresses'])) {
+    if (!empty($result['addresses'])) {
       foreach ($result['addresses'] as $address) {
         $type = $address['type'];
         switch ($type) {
@@ -216,39 +221,38 @@ class ApiVoter
         }
       }
     }
-    
     $voter['homePhone'] = $voter['cellPhone'] = $voter['preferredPhoneType'] = NULL;
-    if(!empty($result['phones'])) {
+    if (!empty($result['phones'])) {
       foreach ($result['phones'] as $phone) {
         $phoneType = $phone['phoneType'];
         $deviceType = $phone['deviceType'];
         $displayType = 'Skip';
-        if($deviceType == 'Cell') {
+        if ($deviceType == 'Cell') {
           $displayType = 'Cell';
         } elseif ($phoneType == 'Personal (Home)') {
           $displayType = 'Home';
         }
         switch ($displayType) {
           case 'Home':
-            if($phone['isPreferred']) {
+            if ($phone['isPreferred']) {
               $voter['homePhone'] = $phone['phoneNumber'];
               $voter['homePhoneId'] = $phone['phoneId'];
               $voter['preferredPhoneType'] = 'H';
             } else {
-              if(empty($voter['homePhone'])) {
+              if (empty($voter['homePhone'])) {
                 $voter['homePhone'] = $phone['phoneNumber'];
                 $voter['homePhoneId'] = $phone['phoneId'];
               }
             }
             break;
           case 'Cell':
-            if($phone['isPreferred']) {
+            if ($phone['isPreferred']) {
               $voter['cellPhone'] = $phone['phoneNumber'];
               $voter['cellPhoneId'] = $phone['phoneId'];
               $voter['smsOptInStatus'] = $phone['smsOptInStatus'];
               $voter['preferredPhoneType'] = 'C';
             } else {
-              if(empty($voter['cellPhone'])) {
+              if (empty($voter['cellPhone'])) {
                 $voter['cellPhone'] = $phone['phoneNumber'];
                 $voter['cellPhoneId'] = $phone['phoneId'];
                 $voter['smsOptInStatus'] = $phone['smsOptInStatus'];
@@ -258,10 +262,9 @@ class ApiVoter
         }
       }
     }
-    
     $voterAddress['precinct'] = $voterAddress['hd'] = $voterAddress['county'] = $voterAddress['cd'] = NULL;
-    if(!empty($result['districts'])) {
-      foreach ($result['districts']as $district) {
+    if (!empty($result['districts'])) {
+      foreach ($result['districts'] as $district) {
         $districtType = $district['name'];
         switch ($districtType) {
           case 'Congressional':
@@ -285,11 +288,32 @@ class ApiVoter
     }
     $voter['address'] = $voterAddress;
     $voting = '';
-    $electionArray =  $this->findVotingRecord($result['electionRecords']);
+    $electionArray = $this->findVotingRecord($result['electionRecords']);
     foreach ($electionArray as $election) {
-      $voting .= $election['type'].$election['year'].':'.$election['participation'].' ';
+      $voting .= $election['type'] . $election['year'] . ':' . $election['participation'] . ' ';
     }
     $voter['votingHistory'] = $voting;
+    return $voter;
+  }
+
+  private function normalizeVoter(array $voter, string $state): array
+  {
+    if (empty($voter['nickname'])) {
+      $voter['nickname'] = $voter['firstName'];
+    }
+    $voter['address']['hd'] = ltrim($voter['address']['hd'], '0');
+    if ($state == 'Oregon') {
+      $voterPrecinct = $voter['address']['precinct'];
+      $precinctParts = explode('-', $voterPrecinct);
+      $voter['address']['precinct'] = !empty($precinctParts[1])
+        ? ltrim($precinctParts[1], '0')
+        : $precinctParts[0];
+    } else {
+      $voter['address']['precinct'] = str_replace(' ', '', $voter['address']['precinct']);
+    }
+    if (!empty($voter['address']['county'])) {
+      $voter['address']['county'] = str_replace(' ', '_', $voter['address']['county']);
+    }
     return $voter;
   }
 
@@ -311,9 +335,7 @@ class ApiVoter
    */
   private function findVotingRecord(array $electionRecords): array
   {
-    $config = Drupal::service('config.factory')->get('nlpservices.configuration');
-    $electionDates = $config->get('nlpservices-election-configuration');
-    $cycle = $electionDates['nlp_election_cycle'];
+    $cycle = $this->nlpConfigurationObj->getCycle();
     [$year, $month, $type] = explode('-', $cycle);
     // For a general election in an even year, look back starting with the primary else look back starting with the
     // previous general election.
@@ -394,45 +416,46 @@ class ApiVoter
    */
   public function getVoters(array $listVoters): array
   {
+    if (empty($listVoters)) { return []; }
+
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     $state = $this->nlpConfigurationObj->getStateName();
+    $expandOptions = '?$expand=phones,addresses,districts,electionRecords';
+
+    $requests = function() use ($listVoters, $user, $apiKey, $apiURL, $expandOptions) {
+      foreach ($listVoters as $vanid) {
+        $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
+        yield $vanid => new GuzzleRequest('GET', $url);
+      }
+    };
+
     $voters = [];
-    foreach ($listVoters as $vanid) {
-  
-      $voter = $this->getApiVoter($vanid);
-      if(empty($voter)) {
-        nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: '.$vanid, '');
-        return [];
-      }
-      // If the nickname field exists, and it has a value for this voter, use it.
-      if(empty($voter['nickname'])) {
-        $voter['nickname'] = $voter['firstName'];
-      }
-      
-      // Remove leading zeros from HD number.
-      $voter['address']['hd'] = ltrim($voter['address']['hd'],'0');
-      
-      // For Oregon, remove the county from the precinct name.
-      if($state == 'Oregon') {
-        $voterPrecinct = $voter['address']['precinct'];
-        $precinctParts = explode('-', $voterPrecinct);
-        if(!empty($precinctParts[1])) {
-          $precinctName =  ltrim($precinctParts[1],"0");
-        } else {
-          $precinctName =  $precinctParts[0];
+    $failed = FALSE;
+
+    $pool = new Pool($this->client, $requests(), [
+      'concurrency' => 10,
+      'fulfilled' => function($response, $vanid) use (&$voters, &$failed, $state) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, '');
+          $failed = TRUE;
+          return;
         }
-      } else {
-        $precinctName = str_replace(' ', '', $voter['address']['precinct']); // Remove blanks.
-      }
-      $voter['address']['precinct'] = $precinctName;
-      
-      // Protect against the space in Hood River.
-      if(!empty($voter['address']['county'])) {
-        $voter['address']['county'] = str_replace(' ', '_', $voter['address']['county']); // Remove blanks.
-      }
-      $voters[$voter['vanid']] = $voter;
-    }
-    
-    return $voters;
+        $voter = $this->normalizeVoter($this->processVoterResult($result), $state);
+        $voters[$voter['vanid']] = $voter;
+      },
+      'rejected' => function($reason, $vanid) use (&$failed) {
+        nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, $reason->getMessage());
+        $failed = TRUE;
+      },
+    ]);
+
+    $pool->promise()->wait();
+
+    return $failed ? [] : $voters;
   }
   
   /**

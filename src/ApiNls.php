@@ -4,6 +4,8 @@ namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -135,9 +137,14 @@ class ApiNls {
   public function getApiNls(string $committee, int $mcid, bool $errorStatus=FALSE): array
   {
     $expandOptions = '?$expand=phones,emails,addresses,districts,preferences,externalIds';
-    $result = $this->nlApiCall($committee,$mcid,$expandOptions, $errorStatus);
-    if(empty($result)) {return [];}
-    if(!empty($result[0]) && $result[0] == 'Invalid key') {return $result;}
+    $result = $this->nlApiCall($committee, $mcid, $expandOptions, $errorStatus);
+    if (empty($result)) { return []; }
+    if (!empty($result[0]) && $result[0] == 'Invalid key') { return $result; }
+    return $this->processNlResult($result);
+  }
+
+  private function processNlResult(array $result): array
+  {
     $nl = [];
     $nl['mcid'] = $result['vanId'];
     $nl['firstName'] = $result['firstName'];
@@ -145,26 +152,23 @@ class ApiNls {
     $nl['lastName'] = $result['lastName'];
     $nl['nickname'] = $result['nickname'];
     $nl['city'] = $nl['address'] = $nl['zip'] = '';
-    if(!empty($result['addresses'])) {
+    if (!empty($result['addresses'])) {
       foreach ($result['addresses'] as $address) {
-        $type = $address['type'];
-        if($type == 'Voting') {
+        if ($address['type'] == 'Voting') {
           $nl['address'] = $address['addressLine1'];
           $nl['city'] = $address['city'];
           $nl['zip'] = '';
-          if(!empty($address['zipOrPostalCode'])) {
-            $zipOrPostalCode = $address['zipOrPostalCode'];
-            $zipParts = explode("-",$zipOrPostalCode);
+          if (!empty($address['zipOrPostalCode'])) {
+            $zipParts = explode('-', $address['zipOrPostalCode']);
             $nl['zip'] = $zipParts[0];
           }
         }
       }
     }
     $nl['homePhone'] = $nl['cellPhone'] = $nl['phone'] = '';
-    if(!empty($result['phones'])) {
+    if (!empty($result['phones'])) {
       foreach ($result['phones'] as $phone) {
-        $phoneType = $phone['phoneType'];
-        switch ($phoneType) {
+        switch ($phone['phoneType']) {
           case 'Home':
             $nl['homePhone'] = $phone['phoneNumber'];
             $nl['homePhoneId'] = $phone['phoneId'];
@@ -174,53 +178,88 @@ class ApiNls {
             $nl['cellPhoneId'] = $phone['phoneId'];
             break;
         }
-        if($phone['isPreferred']) {
-          $nl['phone'] = $phone['phoneNumber'];
-        } elseif($phone['isBest']) {
+        if ($phone['isPreferred'] || $phone['isBest']) {
           $nl['phone'] = $phone['phoneNumber'];
         }
       }
     }
     $nl['email'] = NULL;
-    if(!empty($result['emails'])) {
+    if (!empty($result['emails'])) {
       foreach ($result['emails'] as $email) {
-        if($email['isPreferred']) {
+        if ($email['isPreferred']) {
           $nl['email'] = $email['email'];
         }
       }
     }
-    $nl['precinct'] = $nl['hd']= NULL;
-    if(!empty($result['districts'])) {
+    $nl['precinct'] = $nl['hd'] = NULL;
+    if (!empty($result['districts'])) {
       foreach ($result['districts'] as $district) {
-        $districtType = $district['name'];
-        switch ($districtType) {
+        switch ($district['name']) {
           case 'County':
-            $field = $district['districtFieldValues'][0];
-            $nl['county'] = $field['name'];
+            $nl['county'] = $district['districtFieldValues'][0]['name'];
             break;
           case 'Precinct':
-            $field = $district['districtFieldValues'][0];
-            $nl['precinct'] = $field['name'];
+            $nl['precinct'] = $district['districtFieldValues'][0]['name'];
             break;
           case 'State House':
-            $field = $district['districtFieldValues'][0];
-            $nl['hd'] = $field['name'];
+            $nl['hd'] = $district['districtFieldValues'][0]['name'];
             break;
         }
       }
     }
-    
     $vfid = 0;
-    if(!empty($result['identifiers'])) {
+    if (!empty($result['identifiers'])) {
       foreach ($result['identifiers'] as $identifier) {
-        if($identifier['type'] == 'VoterVANID') {
+        if ($identifier['type'] == 'VoterVANID') {
           $vfid = $identifier['externalId'];
         }
       }
     }
     $nl['vfid'] = $vfid;
-    
     return $nl;
+  }
+
+  public function getNls(string $committee, array $mcids): array
+  {
+    if (empty($mcids)) { return []; }
+
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+    $expandOptions = '?$expand=phones,emails,addresses,districts,preferences,externalIds';
+
+    $requests = function() use ($mcids, $user, $apiKey, $apiURL, $expandOptions) {
+      foreach ($mcids as $mcid) {
+        $url = "https://$user:$apiKey|1@$apiURL/people/$mcid$expandOptions";
+        yield $mcid => new GuzzleRequest('GET', $url);
+      }
+    };
+
+    $nls = [];
+    $failed = FALSE;
+
+    $pool = new Pool($this->client, $requests(), [
+      'concurrency' => 10,
+      'fulfilled' => function($response, $mcid) use (&$nls, &$failed) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
+          $failed = TRUE;
+          return;
+        }
+        $nl = $this->processNlResult($result);
+        $nls[$nl['mcid']] = $nl;
+      },
+      'rejected' => function($reason, $mcid) use (&$failed) {
+        nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
+        $failed = TRUE;
+      },
+    ]);
+
+    $pool->promise()->wait();
+
+    return $failed ? [] : $nls;
   }
   
   /**
