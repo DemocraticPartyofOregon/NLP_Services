@@ -3,7 +3,6 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
-use Drupal\nlpservices\NlpTurfAssignments;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpResyncTurf
@@ -144,7 +143,7 @@ class NlpResyncTurf
           }
         }
 
-        // Delete any records for voters that are no longer in the turf.
+        // Delete any records for voters that are no longer on the turf.
         if(!empty($deletedVanids)) {
           foreach ($deletedVanids as $vanid) {
             $this->votersObj->deleteVoterInTurf($vanid);
@@ -215,7 +214,7 @@ class NlpResyncTurf
   /**
    * Check if the turf needs to be resynced.
    *
-   * Return the list of voters added or deleted, a list of voters with the NLP Voter AC missing
+   * Return the list of voters added or deleted, a list of voters with the NLP Voter AC missing,
    * and the new turf ID if it changed.   All of these indicate something has to be updated.
    *
    * @param $county
@@ -365,7 +364,7 @@ class NlpResyncTurf
   }
 
   /**
-   * Process a queue element with a list of turfs to check for resync.
+   * Process a queue element with a list of turfs to check for resyncing.
    *
    * @param $turfData - An array with keys 'county' and 'turfIndexes'.
    * @return void
@@ -500,7 +499,7 @@ If the turf is still valid and the NL is still active, then please sync the turf
   }
 
   /**
-   * Create a queue of turfs to check for resync.  The turfs are selected either because the
+   * Create a queue of turfs to check for resyncing.  The turfs are selected either because the
    * turf was synced before the last update of the VoterFile or the map region was refreshed.
    *
    * @param $county

@@ -399,7 +399,7 @@ class NlpVoters {
       $voter['turfVoter'] = $this->getTurfVoter($voter['vanid']);
       $voter['address'] = $this->fetchVoterAddress($voter['vanid']);
       if(empty($voter['address']) || empty($voter['turfVoter'])) {
-        \Drupal::logger('nlpservices')->warning('fetchVotersByTurf: skipping vanid @vanid due to missing address or turf-voter record', ['@vanid' => $voter['vanid']]);
+        Drupal::logger('nlpservices')->warning('fetchVotersByTurf: skipping vanid @vanid due to missing address or turf-voter record', ['@vanid' => $voter['vanid']]);
         continue;
       }
       $voters[$voter['vanid']] = $voter;
@@ -474,7 +474,7 @@ class NlpVoters {
    * deleteVoterInTurf
    *
    * Delete a voter in a turf table.  This is used when a voter is removed from a turf.  Voters
-   * are removed individually by the resync process.
+   * are removed individually by the resynced process.
    *
    * @param int $vanid
    * @return void
@@ -494,7 +494,7 @@ class NlpVoters {
    * deleteAddressInTurf
    *
    * Delete a voter address in a turf table.  This is used when a voter address is removed from a turf.
-   * Voter addresses are removed individually by the resync process.
+   * Voter addresses are removed individually by the resynced process.
    *
    * @param int $vanid
    * @return void

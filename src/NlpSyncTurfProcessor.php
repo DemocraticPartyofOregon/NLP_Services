@@ -2,12 +2,13 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpSyncTurfProcessor {
 
-  const MAX_QUEUE_LIMIT = 17;
+  const int MAX_QUEUE_LIMIT = 17;
 
   protected ApiExportJobs $exportJobsObj;
   protected ApiSavedLists $savedListsObj;
@@ -201,7 +202,7 @@ class NlpSyncTurfProcessor {
         'action'   => 'Apply',
       ];
       if (!$this->activistCodesObj->setApiActivistCode($request)) {
-        \Drupal::logger('nlpservices')->warning('Failed to set NLPVoterAC for vanid @vanid during turf sync', ['@vanid' => $vanid]);
+        Drupal::logger('nlpservices')->warning('Failed to set NLPVoterAC for vanid @vanid during turf sync', ['@vanid' => $vanid]);
       }
 
       $voter['address']['turfIndex'] = $turfIndex;

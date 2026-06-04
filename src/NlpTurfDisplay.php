@@ -2,8 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal\Core\Url;
-
 class NlpTurfDisplay
 {
   private array $header = [];
@@ -209,7 +207,7 @@ class NlpTurfDisplay
       return;
     }
 
-    $sortColumn = $this->getSortField($order, 'other');
+    $sortColumn = $this->getSortField($order);
     if($sortColumn === '') {
       return;
     }

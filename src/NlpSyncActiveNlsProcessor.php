@@ -7,7 +7,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpSyncActiveNlsProcessor {
 
-  const BATCH_LIMIT = 50;
+  const int BATCH_LIMIT = 50;
 
   protected ApiNls $apiNlsObj;
   protected NlpLegislativeFixes $legislativeFixesObj;
