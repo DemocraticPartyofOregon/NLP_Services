@@ -189,6 +189,23 @@ services:
     class: Drupal\nlpservices\NlpConfiguration
     arguments: [ '@nlpservices.api_key_management', '@nlpservices.encryption', '@config.factory' ]
 
+  nlpservices.sync_active_nls_processor:
+    class: Drupal\nlpservices\NlpSyncActiveNlsProcessor
+    arguments: [ '@nlpservices.api_nls', '@nlpservices.legislative_fixes',
+                 '@nlpservices.configuration', '@nlpservices.magic_word',
+                 '@nlpservices.drupal_user', '@nlpservices.nls',
+                 '@nlpservices.awards', '@messenger' ]
+
+  nlpservices.sync_turf_processor:
+    class: Drupal\nlpservices\NlpSyncTurfProcessor
+    arguments: [ '@nlpservices.export_jobs', '@nlpservices.saved_lists',
+                 '@nlpservices.api_voter', '@nlpservices.nls',
+                 '@nlpservices.activist_codes', '@nlpservices.voters',
+                 '@nlpservices.turfs', '@nlpservices.configuration',
+                 '@nlpservices.awards', '@nlpservices.reports',
+                 '@nlpservices.paths', '@nlpservices.turf_assignments',
+                 '@messenger' ]
+
   nlpservices.create_walksheet:
     class: Drupal\nlpservices\NlpCreateWalksheet
     arguments: [ '@nlpservices.voters', '@nlpservices.paths', '@nlpservices.configuration',

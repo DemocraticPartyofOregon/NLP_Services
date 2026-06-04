@@ -150,6 +150,7 @@ house district or a precinct.  Specifying the precinct will likely yield the bes
       '#title' => t('Search value'),
       '#size' => 32,
       '#maxlength' => 64,
+      '#default_value' => $needle,
       '#description' => t("Enter a first name, last name, email, or MCID to find the Active NL."),
       '#prefix' => '<div class="search_needle_left">',
       '#suffix' => '</div>',

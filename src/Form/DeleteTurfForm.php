@@ -130,7 +130,8 @@ class DeleteTurfForm extends FormBase
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
     $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     
-    $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfArray);
+    $turfRows = $this->turfDisplayObj->buildTurfTableArray($turfArray);
+    $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfRows);
     
     // add a button to delete the selected turf or turfs.
     $form['submit'] = [

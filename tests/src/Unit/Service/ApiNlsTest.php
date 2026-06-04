@@ -16,6 +16,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Tests\UnitTestCase;
   use GuzzleHttp\ClientInterface;
   use GuzzleHttp\Exception\RequestException;
+  use GuzzleHttp\Promise\FulfilledPromise;
+  use GuzzleHttp\Promise\RejectedPromise;
   use Psr\Http\Message\RequestInterface;
   use Psr\Http\Message\ResponseInterface;
   use Psr\Http\Message\StreamInterface;
@@ -439,6 +441,61 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       );
 
       $this->assertSame('Invalid key', $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // getNls — Pool-based concurrent requests (mocks sendAsync, not get)
+    // -------------------------------------------------------------------------
+
+    public function testGetNlsReturnsMappedByMcid(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($this->baseApiResult(200456))));
+
+      $result = $this->buildApiNls()->getNls('', [200456]);
+
+      $this->assertArrayHasKey(200456, $result);
+      $this->assertSame('John', $result[200456]['firstName']);
+    }
+
+    public function testGetNlsReturnsMultipleNls(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')
+        ->willReturnOnConsecutiveCalls(
+          new FulfilledPromise($this->makeResponse($this->baseApiResult(200456))),
+          new FulfilledPromise($this->makeResponse($this->baseApiResult(200457))),
+        );
+
+      $result = $this->buildApiNls()->getNls('', [200456, 200457]);
+
+      $this->assertArrayHasKey(200456, $result);
+      $this->assertArrayHasKey(200457, $result);
+    }
+
+    public function testGetNlsEmptyListReturnsEmpty(): void {
+      $this->assertSame([], $this->buildApiNls()->getNls('', []));
+    }
+
+    public function testGetNlsRejectedRequestSkipsThatMcid(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')
+        ->willReturnOnConsecutiveCalls(
+          new RejectedPromise(new RequestException('error', $this->createMock(RequestInterface::class))),
+          new FulfilledPromise($this->makeResponse($this->baseApiResult(200457))),
+        );
+
+      $result = $this->buildApiNls()->getNls('', [200456, 200457]);
+
+      $this->assertArrayNotHasKey(200456, $result);
+      $this->assertArrayHasKey(200457, $result);
+    }
+
+    public function testGetNlsEmptyResponseReturnsEmpty(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse([])));
+
+      $this->assertSame([], $this->buildApiNls()->getNls('', [200456]));
     }
 
   }

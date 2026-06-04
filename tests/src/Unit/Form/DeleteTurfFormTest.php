@@ -143,6 +143,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
       $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
       $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+      $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([1 => []]);
       $this->turfDisplayMock->method('displayTurfs')->willReturn(['#type' => 'table']);
 
       $formState = $this->createMock(FormStateInterface::class);

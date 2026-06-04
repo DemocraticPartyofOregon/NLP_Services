@@ -15,6 +15,7 @@ use Drupal\nlpservices\ApiFolders;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpEncryption;
 use Drupal\nlpservices\NlpSessionData;
+use Drupal\nlpservices\Batch\SyncActiveNlsBatch;
 
 /**
  * @noinspection PhpUnused
@@ -181,21 +182,19 @@ the NLP Services Admin.</p>',
     // Send the local file to the batch process to chunk the list into smaller
     // parts and provide a progress throbber for creating the new list of
     // active NLs.
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $args = [
-      'uri' => $localFileUrl,
+      'uri'    => $localFileUrl,
       'county' => $county,
     ];
     $batch = [
-      'operations' => [
-        ['syncActiveNlsBatch', [$args]]
-      ],
-      'file' => $modulePath . '/src/Form/SyncActiveNlsBatch.php',
-      'finished' => 'syncActiveNlsBatchFinished',
-      'title' => t('Processing sync of active NLs.'),
-      'init_message' => t('Sync is starting.'),
+      'title'            => t('Processing sync of active NLs.'),
+      'init_message'     => t('Sync is starting.'),
       'progress_message' => t('Processed @percentage % of active NLs file.'),
-      'error_message' => t('Sync of NLs has encountered an error.'),
+      'error_message'    => t('Sync of NLs has encountered an error.'),
+      'finished'         => [SyncActiveNlsBatch::class, 'finished'],
+      'operations'       => [
+        [[SyncActiveNlsBatch::class, 'process'], [$args]],
+      ],
     ];
     batch_set($batch);
   }

@@ -16,6 +16,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Tests\UnitTestCase;
   use GuzzleHttp\ClientInterface;
   use GuzzleHttp\Exception\RequestException;
+  use GuzzleHttp\Promise\FulfilledPromise;
+  use GuzzleHttp\Promise\RejectedPromise;
   use Psr\Http\Message\RequestInterface;
   use Psr\Http\Message\ResponseInterface;
   use Psr\Http\Message\StreamInterface;
@@ -442,7 +444,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getVoters
+    // getVoters — Pool-based concurrent requests (mocks sendAsync, not get)
     // -------------------------------------------------------------------------
 
     public function testGetVotersUsesNicknameWhenPresent(): void {
@@ -451,7 +453,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
       $data = $this->baseApiResult();
       $data['nickname'] = 'JJ';
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($data)));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
@@ -462,18 +465,36 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $this->stubCycle();
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($this->baseApiResult())));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
       $this->assertSame('Jane', $result[100123]['nickname']);
     }
 
+    public function testGetVotersReturnsMultipleVoters(): void {
+      $this->stubKeyValues();
+      $this->stubCycle();
+      $this->configurationMock->method('getStateName')->willReturn('Oregon');
+      $this->clientMock->method('sendAsync')
+        ->willReturnOnConsecutiveCalls(
+          new FulfilledPromise($this->makeResponse($this->baseApiResult(100123))),
+          new FulfilledPromise($this->makeResponse($this->baseApiResult(100124))),
+        );
+
+      $result = $this->buildApiVoter()->getVoters([100123, 100124]);
+
+      $this->assertArrayHasKey(100123, $result);
+      $this->assertArrayHasKey(100124, $result);
+    }
+
     public function testGetVotersOregonStripsCountyFromPrecinct(): void {
       $this->stubKeyValues();
       $this->stubCycle();
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($this->baseApiResult())));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
@@ -487,7 +508,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->configurationMock->method('getStateName')->willReturn('Washington');
       $data = $this->baseApiResult();
       $data['districts'][2] = ['name' => 'Precinct', 'districtFieldValues' => [['name' => 'King 042']]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($data)));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
@@ -498,7 +520,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $this->stubCycle();
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($this->baseApiResult())));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
@@ -511,7 +534,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
       $data = $this->baseApiResult();
       $data['districts'][1] = ['name' => 'County', 'districtFieldValues' => [['name' => 'Hood River']]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($data)));
 
       $result = $this->buildApiVoter()->getVoters([100123]);
 
@@ -522,9 +546,26 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $this->stubCycle();
       $this->configurationMock->method('getStateName')->willReturn('Oregon');
-      $this->clientMock->method('get')->willReturn($this->makeResponse([]));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse([])));
 
       $this->assertSame([], $this->buildApiVoter()->getVoters([100123]));
+    }
+
+    public function testGetVotersRejectedRequestReturnsEmpty(): void {
+      $this->stubKeyValues();
+      $this->stubCycle();
+      $this->configurationMock->method('getStateName')->willReturn('Oregon');
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new RejectedPromise(
+          new RequestException('error', $this->createMock(RequestInterface::class))
+        ));
+
+      $this->assertSame([], $this->buildApiVoter()->getVoters([100123]));
+    }
+
+    public function testGetVotersEmptyListReturnsEmpty(): void {
+      $this->assertSame([], $this->buildApiVoter()->getVoters([]));
     }
 
   }

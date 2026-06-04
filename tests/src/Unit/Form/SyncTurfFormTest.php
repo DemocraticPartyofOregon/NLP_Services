@@ -32,6 +32,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
+  use Drupal\nlpservices\ApiMapRegions;
   use Drupal\nlpservices\Form\SyncTurfForm;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -47,6 +48,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpConfiguration $configurationMock;
     private NlpSessionData $sessionDataMock;
     private NlpTurfListDisplayVoteBuilder $turfListDisplayMock;
+    private ApiMapRegions $mapRegionsMock;
     private MessengerInterface $messengerMock;
 
     protected function setUp(): void {
@@ -60,6 +62,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->configurationMock  = $this->createMock(NlpConfiguration::class);
       $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
       $this->turfListDisplayMock = $this->createMock(NlpTurfListDisplayVoteBuilder::class);
+      $this->mapRegionsMock     = $this->createMock(ApiMapRegions::class);
       $this->messengerMock      = $this->createMock(MessengerInterface::class);
 
       // logger.factory is needed by any validateForm path that hits turfName-missing.
@@ -98,6 +101,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->configurationMock,
         $this->sessionDataMock,
         $this->turfListDisplayMock,
+        $this->mapRegionsMock,
       );
     }
 
@@ -567,7 +571,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $captured = [];
       $formState = $this->capturingFormState($captured);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'search_submit']);
-      $formState->method('getValues')->willReturn(['needle' => 'Smith']);
+      $formState->method('getUserInput')->willReturn(['needle' => 'Smith']);
       $formState->expects($this->never())->method('setErrorByName');
 
       $form = [];

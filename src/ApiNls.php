@@ -237,29 +237,26 @@ class ApiNls {
     };
 
     $nls = [];
-    $failed = FALSE;
 
     $pool = new Pool($this->client, $requests(), [
       'concurrency' => 10,
-      'fulfilled' => function($response, $mcid) use (&$nls, &$failed) {
+      'fulfilled' => function($response, $mcid) use (&$nls) {
         $result = json_decode($response->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
           nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
-          $failed = TRUE;
           return;
         }
         $nl = $this->processNlResult($result);
         $nls[$nl['mcid']] = $nl;
       },
-      'rejected' => function($reason, $mcid) use (&$failed) {
+      'rejected' => function($reason, $mcid) {
         nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
-        $failed = TRUE;
       },
     ]);
 
     $pool->promise()->wait();
 
-    return $failed ? [] : $nls;
+    return $nls;
   }
   
   /**

@@ -15,6 +15,8 @@ use Drupal\nlpservices\NlpSyncTurfBuilder;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
+use Drupal\nlpservices\ApiMapRegions;
+use Drupal\nlpservices\Batch\SyncTurfBatch;
 
 class SyncTurfForm extends FormBase {
   protected ApiSavedLists $savedListsObj;
@@ -26,12 +28,14 @@ class SyncTurfForm extends FormBase {
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpTurfListDisplayVoteBuilder $turfListDisplayObj;
-  
-  
-  
+  protected ApiMapRegions $mapRegionsObj;
+
+
+
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
-                                $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj ) {
+                                $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
+                                $mapRegionsObj ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -41,6 +45,7 @@ class SyncTurfForm extends FormBase {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
+    $this->mapRegionsObj = $mapRegionsObj;
   }
   
   /**
@@ -58,6 +63,7 @@ class SyncTurfForm extends FormBase {
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_list_display_votebuilder'),
+      $container->get('nlpservices.api_map_regions'),
     );
   }
   
@@ -159,7 +165,7 @@ class SyncTurfForm extends FormBase {
         break;
       
       case 'nl_search_by_name':
-        $needle = $form_state->get('needle');
+        $needle = $form_state->get('needle') ?? '';
         $county = $this->nlpSessionDataObj->getCounty();
         $form['nl_select'] = [
           '#type' => 'fieldset',
@@ -170,7 +176,7 @@ class SyncTurfForm extends FormBase {
         
         $nlSearchList = $nlsTable = [];
         if(!empty($needle)) {
-          $nlSearchList = $this->nlsObj->searchNls($county,$needle);
+          $nlSearchList = $this->nlsObj->searchNls($needle,$county);
           $nlsTable = $this->nlsListDisplayObj->createTableArray($nlSearchList,TRUE);
         }
         
@@ -304,7 +310,8 @@ class SyncTurfForm extends FormBase {
 
       // A search for an NL by name was submitted (actually a fragment of text).
       case 'search_submit':
-        $needle = $values['needle'];
+        $input = $form_state->getUserInput();
+        $needle = trim($input['needle'] ?? '');
         if(empty($needle)) {
           $form_state->setErrorByName('needle','You have to specify a value for the search.');
         }
@@ -314,7 +321,7 @@ class SyncTurfForm extends FormBase {
       // An NL was selected from the result of a search, typically by name.
       case 'search_select':
         $selections = $this->nlsListDisplayObj->
-                        validateNlSelection($form_state->getValue('search'));
+                        validateNlSelection($form_state->getValue('search') ?? []);
         $nlSelection = reset($selections);
         $form_state->set('nlSelection',$nlSelection);
         if(count($selections)!=1) {
@@ -344,7 +351,7 @@ class SyncTurfForm extends FormBase {
       
       // An NL was selected from the list of NLs in a district.
       case 'add_selected':
-        $selections = $this->nlsListDisplayObj->validateNlSelection($form_state->getValue('contacts'));
+        $selections = $this->nlsListDisplayObj->validateNlSelection($form_state->getValue('nlsForm') ?? []);
         $nlSelection = reset($selections);
         $form_state->set('nlSelection',$nlSelection);
         if(count($selections)!=1) {
@@ -444,19 +451,15 @@ class SyncTurfForm extends FormBase {
           'walksheetInfo' => $form_state->get('walksheetInfo'),
         
         ];
-        $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
         $form_state->set('page', 'turf_select');
-        
+
         $batch = [
-          'operations' => [
-            ['syncTurf', [$args]]
-          ],
-          'file' => $modulePath . '/src/Form/SyncTurfBatch.php',
-          'finished' => 'syncTurfFinished',
-          'title' => 'Processing Sync Turf Batch.',
-          'init_message' => 'Sync Turf Batch is starting.',
-          'progress_message' => 'Processed @percentage % of Sync Turf Batch.',
-          'error_message' => 'Sync Turf Batch has encountered an error.',
+          'operations'       => [[[SyncTurfBatch::class, 'process'], [$args]]],
+          'finished'         => [SyncTurfBatch::class, 'finished'],
+          'title'            => t('Processing Sync Turf Batch.'),
+          'init_message'     => t('Sync Turf Batch is starting.'),
+          'progress_message' => t('Processed @percentage % of Sync Turf Batch.'),
+          'error_message'    => t('Sync Turf Batch has encountered an error.'),
         ];
         batch_set($batch);
         
@@ -553,7 +556,7 @@ class SyncTurfForm extends FormBase {
       
       if(!$showLists) {
         // Reveal the Map Regions.
-        $mapRegionOptions = $this->foldersObj->mapRegionOptions($county, $currentFolderId);
+        $mapRegionOptions = $this->mapRegionsObj->mapRegionOptions($county, $currentFolderId);
         $mapRegionId = $this->nlpSessionDataObj->get('mapRegionId');
         
         if (empty($mapRegionOptions[$mapRegionId])) {  // It appears the Map Region has been deleted.
@@ -564,7 +567,7 @@ class SyncTurfForm extends FormBase {
         }
         // Remember the working Map Region and the turf choices in the map region.
         $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);
-        $turfOptions = $this->foldersObj->mapRegionTurfOptions($mapRegionId);
+        $turfOptions = $this->mapRegionsObj->mapRegionTurfOptions($mapRegionId);
         foreach ($turfOptions as $turfId => $turfOption) {
           $this->turfsObj->checkTurfIdChange($currentFolderId, $turfOption);
           $turfInUse = $this->turfsObj->turfInUse($currentFolderId, $turfId, $turfOption['turfName']);
@@ -581,8 +584,8 @@ class SyncTurfForm extends FormBase {
         
       } else {
         // Reveal only lists.
-        $this->foldersObj->getMapRegionInfo($county, $currentFolderId);
-        $excludedTurfIds = $this->foldersObj->getTurfIds();
+        $this->mapRegionsObj->getMapRegionInfo($county, $currentFolderId);
+        $excludedTurfIds = $this->mapRegionsObj->getTurfIds();
         $savedLists = $this->savedListsObj->getTurfLists($currentFolderId, $excludedTurfIds);
         $savedListOptions = $this->savedListsObj->savedListOptions($savedLists);
         
