@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Batch;
 
+use Drupal;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\MagicWord;
@@ -11,17 +12,17 @@ use Drupal\nlpservices\NlpSendEmail;
 class SyncTurfBatch {
 
   public static function process(array $arg, array &$context): void {
-    \Drupal::service('nlpservices.sync_turf_processor')->processBatch($arg, $context);
+    Drupal::service('nlpservices.sync_turf_processor')->processBatch($arg, $context);
   }
 
   public static function finished(bool $success, array $results, array $operations): void {
     /** @var NlpTurfs $turfsObj */
-    $turfsObj = \Drupal::service('nlpservices.turfs');
+    $turfsObj = Drupal::service('nlpservices.turfs');
     /** @var DrupalUser $drupalUserObj */
-    $drupalUserObj = \Drupal::service('nlpservices.drupal_user');
+    $drupalUserObj = Drupal::service('nlpservices.drupal_user');
     /** @var MagicWord $magicWordObj */
-    $magicWordObj = \Drupal::service('nlpservices.magic_word');
-    $messenger = \Drupal::messenger();
+    $magicWordObj = Drupal::service('nlpservices.magic_word');
+    $messenger = Drupal::messenger();
 
     if ($success) {
       if ($results['result'] == 'error') {
@@ -76,9 +77,9 @@ class SyncTurfBatch {
         ]));
 
         /** @var NlpNls $nlsObj */
-        $nlsObj = \Drupal::service('nlpservices.nls');
+        $nlsObj = Drupal::service('nlpservices.nls');
         /** @var NlpSendEmail $sendMailObj */
-        $sendMailObj = \Drupal::service('nlpservices.send_email');
+        $sendMailObj = Drupal::service('nlpservices.send_email');
 
         $byNl = [];
         foreach ($movedVoters as $voter) {

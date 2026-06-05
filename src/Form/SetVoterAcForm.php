@@ -7,6 +7,7 @@ namespace Drupal\nlpservices\Form;
 use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\nlpservices\Batch\SetVoterAcBatch;
 
 class SetVoterAcForm extends FormBase
 {
@@ -76,20 +77,17 @@ class SetVoterAcForm extends FormBase
       return;
     }
 
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-    $args = [
-      'turfIndexes' => $turfIndexes,
-    ];
+    $operations = [];
+    foreach (array_chunk($turfIndexes, 20) as $chunk) {
+      $operations[] = [[SetVoterAcBatch::class, 'process'], [['turfIndexes' => $chunk]]];
+    }
     $batch = [
-      'operations' => [
-        ['setVoterAcBatch', [$args]]
-      ],
-      'file' => $modulePath . '/src/Form/SetVoterAcBatch.php',
-      'finished' => 'setVoterAcBatchFinished',
-      'title' => t('Setting NLP Voter Activist Code.'),
-      'init_message' => t('Starting NLP Voter AC batch.'),
-      'progress_message' => t('Processed @percentage % of turfs.'),
-      'error_message' => t('NLP Voter AC batch encountered an error.'),
+      'operations'       => $operations,
+      'finished'         => [SetVoterAcBatch::class, 'finished'],
+      'title'            => t('Setting NLP Voter Activist Code.'),
+      'init_message'     => t('Starting NLP Voter AC batch.'),
+      'progress_message' => t('Processed @current of @total turf groups.'),
+      'error_message'    => t('NLP Voter AC batch encountered an error.'),
     ];
     batch_set($batch);
   }

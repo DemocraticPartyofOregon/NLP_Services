@@ -206,6 +206,11 @@ services:
                  '@nlpservices.paths', '@nlpservices.turf_assignments',
                  '@messenger' ]
 
+  nlpservices.voter_ac_processor:
+    class: Drupal\nlpservices\NlpVoterAcProcessor
+    arguments: [ '@nlpservices.activist_codes', '@nlpservices.file_functions',
+                 '@nlpservices.nls', '@nlpservices.turfs', '@nlpservices.voters' ]
+
   nlpservices.create_walksheet:
     class: Drupal\nlpservices\NlpCreateWalksheet
     arguments: [ '@nlpservices.voters', '@nlpservices.paths', '@nlpservices.configuration',
