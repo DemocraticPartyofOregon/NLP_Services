@@ -15,8 +15,9 @@ class ImportCrosstabsForm extends FormBase
 {
   protected NlpCrosstabCounts $crosstabsObj;
 
-  public function __construct($crosstabsObj) {
+  public function __construct($crosstabsObj, $requestStack) {
     $this->crosstabsObj = $crosstabsObj;
+    $this->requestStack = $requestStack;
   }
 
   /**
@@ -26,6 +27,7 @@ class ImportCrosstabsForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.crosstab_counts'),
+      $container->get('request_stack'),
     );
   }
 
