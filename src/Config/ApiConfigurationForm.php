@@ -202,14 +202,14 @@ and special characters. <strong>Suggested value: <code>@suggested_iv</code></str
       $this->apiKeyManagementObj->deleteKey('State Committee');
     }
     $committees = $this->nlpConfigurationObj->getCountyNames();
-    nlp_debug_msg('$committees',$committees);
+    //nlp_debug_msg('$committees',$committees);
     foreach ($committees as $committee) {
       $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee);
       nlp_debug_msg('$apiCredentials',$apiCredentials);
       if (empty($apiCredentials)) { continue; }
       $this->apiKeyManagementObj->deleteKey($committee);
     }
-    nlp_debug_msg('$apiKeys',$apiKeys);
+    //nlp_debug_msg('$apiKeys',$apiKeys);
     foreach ($apiKeys as $committee => $committeeKey) {
       if (empty($committeeKey['API Key'])) { continue; }
       if (!preg_match('/^[a-zA-Z0-9_\- ]+$/', $committee)) { continue; }
@@ -217,7 +217,7 @@ and special characters. <strong>Suggested value: <code>@suggested_iv</code></str
       $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
     }
 
-    nlp_debug_msg('apiKeys', $apiKeys);
+    //nlp_debug_msg('apiKeys', $apiKeys);
 
     $this->messenger()->addStatus($this->t('The API configuration has been saved.'));
   }

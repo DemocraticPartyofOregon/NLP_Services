@@ -11,6 +11,7 @@ class SetVoterAcBatch {
     Drupal::service('nlpservices.voter_ac_processor')->processBatch($arg, $context);
   }
 
+  /** @noinspection PhpUnusedParameterInspection */
   public static function finished(bool $success, array $results, array $operations): void {
     $messenger = Drupal::messenger();
     if ($success) {
@@ -18,14 +19,15 @@ class SetVoterAcBatch {
       $votersChecked   = $results['votersChecked'] ?? 0;
       $votersMissingAc = $results['votersMissingAc'] ?? 0;
 
-      $messenger->addStatus(t(
-        'Checked @checked voters across @turfs turfs. NLP Voter AC was missing and set for @missing voters.',
-        [
-          '@checked' => $votersChecked,
-          '@turfs'   => $turfsProcessed,
-          '@missing' => $votersMissingAc,
-        ]
-      ));
+      $reportOnly = $results['reportOnly'] ?? FALSE;
+      $message = $reportOnly
+        ? 'Checked @checked voters across @turfs turfs. NLP Voter AC was missing for @missing voters (not set).'
+        : 'Checked @checked voters across @turfs turfs. NLP Voter AC was missing and set for @missing voters.';
+      $messenger->addStatus(t($message, [
+        '@checked' => $votersChecked,
+        '@turfs'   => $turfsProcessed,
+        '@missing' => $votersMissingAc,
+      ]));
 
       $missingAcRecords = $results['missingAcRecords'] ?? [];
       if (!empty($missingAcRecords)) {
@@ -48,6 +50,7 @@ class SetVoterAcBatch {
             'NLP Voter AC missing report: @url',
             ['@url' => $fileUrl]
           );
+          /** @noinspection PhpUnresolvedPathReferenceInspection */
           $messenger->addStatus(t('Missing AC report: <a href=":url">@url</a>', [':url' => $fileUrl, '@url' => $fileUrl]));
         }
       }

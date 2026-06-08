@@ -36,6 +36,18 @@ class SetVoterAcForm extends FormBase
       '#options' => $counties,
     ];
 
+    $form['stop_at_limit'] = [
+      '#type'          => 'checkbox',
+      '#title'         => t('Stop after 100 errors are found'),
+      '#default_value' => FALSE,
+    ];
+
+    $form['report_only'] = [
+      '#type'          => 'checkbox',
+      '#title'         => t('Report only (do not set missing activist code)'),
+      '#default_value' => FALSE,
+    ];
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => t('Set NLP Voter Activist Code'),
@@ -77,9 +89,12 @@ class SetVoterAcForm extends FormBase
       return;
     }
 
+    $stopAtLimit = !empty($values['stop_at_limit']);
+    $reportOnly  = !empty($values['report_only']);
+
     $operations = [];
     foreach (array_chunk($turfIndexes, 20) as $chunk) {
-      $operations[] = [[SetVoterAcBatch::class, 'process'], [['turfIndexes' => $chunk]]];
+      $operations[] = [[SetVoterAcBatch::class, 'process'], [['turfIndexes' => $chunk, 'stopAtLimit' => $stopAtLimit, 'reportOnly' => $reportOnly]]];
     }
     $batch = [
       'operations'       => $operations,

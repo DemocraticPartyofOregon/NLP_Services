@@ -41,6 +41,8 @@ class NlpVoterAcProcessor {
   {
     $turfIndexes = array_values($arg['turfIndexes']);
     $turfCount   = count($turfIndexes);
+    $stopAtLimit = $arg['stopAtLimit'] ?? FALSE;
+    $reportOnly  = $arg['reportOnly'] ?? FALSE;
 
     if (empty($context['sandbox']['initialized'])) {
       $context['sandbox']['initialized']  = TRUE;
@@ -52,6 +54,7 @@ class NlpVoterAcProcessor {
       $context['results']['votersMissingAc']  = 0;
       $context['results']['turfsProcessed']   = 0;
       $context['results']['missingAcRecords'] = [];
+      $context['results']['reportOnly']       = $reportOnly;
     }
 
     $currentTurf = $context['sandbox']['currentTurf'];
@@ -74,13 +77,19 @@ class NlpVoterAcProcessor {
 
     $voters = $this->votersObj->getVotersInTurf($turfIndex);
     foreach ($voters as $vanid) {
+      if ($stopAtLimit && $context['results']['votersMissingAc'] >= 100) {
+        $context['finished'] = 1;
+        return;
+      }
       $context['results']['votersChecked']++;
       if (!$this->activistCodesObj->hasApiActivistCode($vanid, 'NLPVoterAC')) {
-        $this->activistCodesObj->setApiActivistCode([
-          'vanid'    => $vanid,
-          'codeName' => 'NLPVoterAC',
-          'action'   => 'Apply',
-        ]);
+        if (!$reportOnly) {
+          $this->activistCodesObj->setApiActivistCode([
+            'vanid'    => $vanid,
+            'codeName' => 'NLPVoterAC',
+            'action'   => 'Apply',
+          ]);
+        }
         $context['results']['missingAcRecords'][] = [
           'vanid'       => $vanid,
           'turfName'    => $turfName,

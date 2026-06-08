@@ -15,6 +15,7 @@ class SyncTurfBatch {
     Drupal::service('nlpservices.sync_turf_processor')->processBatch($arg, $context);
   }
 
+  /** @noinspection PhpUnusedParameterInspection */
   public static function finished(bool $success, array $results, array $operations): void {
     /** @var NlpTurfs $turfsObj */
     $turfsObj = Drupal::service('nlpservices.turfs');

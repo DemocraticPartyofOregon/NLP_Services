@@ -8,6 +8,7 @@ class SyncActiveNlsBatch {
     \Drupal::service('nlpservices.sync_active_nls_processor')->processBatch($arg, $context);
   }
 
+  /** @noinspection PhpUnusedParameterInspection */
   public static function finished(bool $success, array $results, array $operations): void {
     $messenger = \Drupal::messenger();
     if ($success) {
