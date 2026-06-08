@@ -347,13 +347,13 @@ nlpservices.documents_form:
   requirements:
     _permission: 'access content'
 
-nlpservices.export_nls_participation_status_form:
-  path: '/nlpservices-nls-participation-status'
+nlpservices.export_nls_status_form:
+  path: '/nlpservices-nls-status'
   defaults:
-    _form: Drupal\nlpservices\Form\ExportNlsParticipationStatusForm
-    _title: 'Report status of NL participation.'
+    _form: Drupal\nlpservices\Form\ExportNlsStatusForm
+    _title: 'Report status of NLs.'
   requirements:
-    _permission: 'access content'
+    _permission: 'nlp tools access'
 
 nlpservices.key_validate_form:
   path: '/nlpservices-key-validate-form'

@@ -2,9 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
-use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Database\Connection;
@@ -50,7 +47,8 @@ class NlpExportNlsStatus
   /**
    * createNlsStatusFile
    *
-   * Creates a CSV file containing the status of NLS users for a specified county and HD. The file is stored in a temporary directory and is intended for use in analyzing NLS participation and engagement.
+   * Creates a CSV file containing the status of NLS users for a specified county and HD. The file is stored in a
+   * temporary directory and is intended for use in analyzing NLS participation and engagement.
    *
    * @param string $tempFileName The name of the temporary file to be created.
    * @param string $county The county for which to generate the NLS status report. Use 'all' to include all counties.
@@ -82,23 +80,11 @@ class NlpExportNlsStatus
       'Email (formatted)'
     ];
     $hdrCsv = implode(',', $hdr) . "\n";
-    $fileRepository = Drupal::service('file.repository');
-    try {
-      $file = $fileRepository->writeData($hdrCsv, $tempFileName, FileExists::Replace);
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('ExportNlsParticipationForm', $e->getMessage());
-      return FALSE;
-    }
-    if ($file) {
-      $fileUri = $file->getFileUri();
-    } else {
-      nlp_debug_msg('ExportNlsParticipationForm','Failed to create temporary file: ');
-      return FALSE;
-    }
-    $fh = fopen($fileUri, "a");
+    $fh = fopen($tempFileName, "w");
     if (!$fh) {
       return FALSE;
     }
+    fwrite($fh, $hdrCsv);
 
     if ($county === 'all') {
       $counties = $this->voters->getParticipatingCounties();

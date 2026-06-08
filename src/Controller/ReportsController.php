@@ -6,11 +6,9 @@ use Drupal;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\File\FileExists;
 use Drupal\nlpservices\DrupalUser;
-use Drupal\nlpservices\NlpExportNlsStatus;
 use Drupal\nlpservices\NlpExportTurfStatus;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpResultsSummary;
-use Drupal\nlpservices\NlpCdResultsSummary;
 use Exception;
 
 /**
@@ -21,15 +19,14 @@ class ReportsController extends ControllerBase
 {
   protected NlpResultsSummary $resultsSummaryObj;
   protected NlpExportTurfStatus $exportTurfStatusObj;
-  protected  NlpExportNlsStatus $exportNlsStatusObj;
   protected DrupalUser $drupalUser;
 
-  public function __construct( $resultsSummaryObj, $exportTurfStatusObj, $exportNlsStatusObj, $drupalUser ) {
+  public function __construct($resultsSummaryObj, $exportTurfStatusObj, $drupalUser) {
     $this->resultsSummaryObj = $resultsSummaryObj;
     $this->exportTurfStatusObj = $exportTurfStatusObj;
-    $this->exportNlsStatusObj = $exportNlsStatusObj;
     $this->drupalUser = $drupalUser;
   }
+
   /**
    * {@inheritdoc}
    */
@@ -38,7 +35,6 @@ class ReportsController extends ControllerBase
     return new static(
       $container->get('nlpservices.results_summary'),
       $container->get('nlpservices.export_turf_status'),
-      $container->get('nlpservices.export_nls_status'),
       $container->get('nlpservices.drupal_user'),
     );
   }
@@ -106,10 +102,8 @@ class ReportsController extends ControllerBase
   /**
    * exportReport
    *
-   * Exports the report data to a CSV file.  There are two possible reports created
-   * here, one for the turf status and one for the NLs status.  The columns for each
-   * are intended to help coordinators with identifying NLs that are completing their
-   * assigned tasks.
+   * Exports the turf status to a CSV file. The columns are intended to help
+   * coordinators identify NLs that are completing their assigned tasks.
    *
    * The file is created in the public://temp directory and is set as temporary.
    * Drupal will delete the file after 6 hours.
@@ -120,7 +114,7 @@ class ReportsController extends ControllerBase
    */
   public function exportReport(): array
   {
-    $statusType = $_GET['statusType'];
+    $statusType = Drupal::service('request_stack')->getCurrentRequest()->query->get('statusType');
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
     // For an NLP admin, the report will be for all the counties.  Otherwise, only the user's
@@ -153,18 +147,11 @@ class ReportsController extends ControllerBase
       nlp_debug_msg('setTemporary',$e->getMessage());
       return ['#markup' => "Can't set file as temporary.",];
     }
-    // Create a file with one of the two possible reports.
+    // Create the turf status report.
     $results = FALSE;
-    $statusMessage = '??';
-    switch ($statusType) {
-      case 'nlp_turf_status':
-        $results = $this->exportTurfStatusObj->createTurfStatusFile($tempFileName,$county);
-        $statusMessage = 'Turf status';
-        break;
-      case 'nlp_nls_status':
-        $results = $this->exportNlsStatusObj->createNlsStatusFile($tempFileName,$county);
-        $statusMessage = 'NLs status';
-        break;
+    $statusMessage = 'Turf status';
+    if ($statusType === 'nlp_turf_status') {
+      $results = $this->exportTurfStatusObj->createTurfStatusFile($tempFileName, $county);
     }
     // Display a link to the file for the user to download.
     $page = '';

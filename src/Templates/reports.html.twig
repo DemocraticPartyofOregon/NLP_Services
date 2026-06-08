@@ -8,8 +8,7 @@ Links for functions to create reports.
 {% set resultsSummary = path('nlpservices.display_results_summary') %}
 {% set cdResultsSummary = path('nlpservices.display_cd_results_summary') %}
 {% set minivan = path('nlpservices.import_minivan_form') %}
-{% set nlsStatus = path('nlpservices.export_report', {'statusType': 'nlp_nls_status' } ) %}
-{% set exportNlsParticipationStatus = path('nlpservices.export_nls_participation_status_form') %}
+{% set exportNlsStatus = path('nlpservices.export_nls_status_form') %}
 {% set turfStatus = path('nlpservices.export_report', {'statusType': 'nlp_turf_status' } ) %}
 {% set turfList = path('nlpservices.export_table', {'tableName': 'nlp_turf' , 'option': 'county'}) %}
 {% set exportTurfAssignments = path('nlpservices.export_table', {'tableName': 'nlp_turf_assignment' , 'option': 'county'}) %}
@@ -20,8 +19,7 @@ Links for functions to create reports.
 
     <h2>Reports to assess the status of the election</h2>
     <ul>
-        <li><a href={{ nlsStatus }}>Export the status of NLs.</a></li>
-        <li><a href={{ exportNlsParticipationStatus }}>Export the status of NLs by district.</a></li>
+        <li><a href={{ exportNlsStatus }}>Export the status of NLs.</a></li>
         <li><a href={{ turfStatus }}>Export the status of Turfs.</a></li>
         <li><a href={{ turfList }}>Export a list of turfs.</a></li>
         <li><a href={{ exportTurfAssignments }}>Export turf assignments.</a></li>
