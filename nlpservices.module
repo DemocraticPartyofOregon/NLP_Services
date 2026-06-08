@@ -238,6 +238,7 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
     return;
   }
   $mcid = $user['mcid'];
+  if(empty($mcid)) { return; }  // No need to record the PW mistake for non-NLP users.
   $magicWordObj = Drupal::service('nlpservices.magic_word');
   $magicWord = $magicWordObj->getMagicWord($mcid);
   $admin = (in_array('administrator',$user['roles']) OR in_array('nlp_admin',$user['roles']));
