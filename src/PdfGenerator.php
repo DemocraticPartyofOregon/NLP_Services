@@ -37,6 +37,8 @@ class PdfGenerator {
     $file_repository = Drupal::service('file.repository');
     $file = $file_repository->writeData('Placeholder', $tempFile, FileExists::Replace);
     if ($file) {
+      $file->setTemporary();
+      $file->save();
       $file_uri = $file->getFileUri();
     }
     else {
