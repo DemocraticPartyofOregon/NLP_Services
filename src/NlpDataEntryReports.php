@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryReports
@@ -271,7 +270,7 @@ class NlpDataEntryReports
    * @param string $responseName
    * @return array
    */
-  private function phoneContact( string $vanid, string $contactMethod, string $responseName): array
+  private function phoneContact( int $vanid, string $contactMethod, string $responseName): array
   {
     if (!($contactMethod == 'Phone' || $contactMethod == 'SMS Text')) {
       return [];  // Alternate contact method is only for Phone and SMS Text.
