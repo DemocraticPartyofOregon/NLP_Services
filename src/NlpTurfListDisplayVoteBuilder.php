@@ -33,10 +33,10 @@ class NlpTurfListDisplayVoteBuilder
     foreach ($turfs as $turfId => $turf) {
       $row = [];
       $row['cb'] = ['type' => 'cb', 'turfId' => $turfId, 'mcid' => $turf['mcid']];
-      $row['turfId'] = $turf['turfId'];
+      //$row['turfId'] = $turf['turfId'];
       $row['turfAssigned'] = $turf['turfAssigned'];
       $row['nl'] = $turf['nl'];
-      $row['mcid'] = $turf['mcid'];
+      //$row['mcid'] = $turf['mcid'];
       $row['turfName'] = $turf['turfName'];
       $row['mapRegionName'] = (!empty($turf['mapRegionName'])) ? $turf['mapRegionName'] : ' ';
       $row['doorCount'] = $turf['doorCount'];
@@ -44,6 +44,8 @@ class NlpTurfListDisplayVoteBuilder
       $row['minivanNumber'] = (!empty($turf['minivanNumber'])) ? $turf['minivanNumber'] : '';
       $row['minivanCreateDate'] = (!empty($turf['minivanCreateDate'])) ?
         date('Y-m-d', strtotime($turf['minivanCreateDate'])) : '';
+      $row['turfId'] = $turf['turfId'];
+      $row['mcid'] = $turf['mcid'];
       $rows[] = $row;
     }
 
@@ -87,10 +89,10 @@ and cannot be assigned to this turf.<br>
   {
     $this->header = [
       ['data' => t('cb'), 'class' => ['nlp-th-color']],
-      ['data' => t('Turf ID'), 'field' => 'id', 'class' => ['nlp-th-color']],
+      //['data' => t('Turf ID'), 'field' => 'id', 'class' => ['nlp-th-color']],
       ['data' => t('A'), 'field' => 'hd', 'class' => ['nlp-th-color']],
       ['data' => t('Name'), 'field' => 'nlLastName', 'class' => ['nlp-th-color']],
-      ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']],
+      //['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']],
       ['data' => t('Turf Name'), 'field' => 'turfName', 'class' => ['nlp-th-color']],
     ];
     $this->header[] = ['data' => t('Map Region Name'), 'field' => 'mapRegionName', 'class' => ['nlp-th-color']];
@@ -98,6 +100,8 @@ and cannot be assigned to this turf.<br>
     $this->header[] = ['data' => t('Voters'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Minivan Number'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Created'), 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Turf ID'), 'field' => 'id', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']];
   }
 
   /**
