@@ -51,6 +51,27 @@ class NlpSyncActiveNlsProcessor {
     );
   }
 
+  /**
+   * processBatch
+   *
+   * Processes a batch of data from a CSV file and performs specific operations
+   * based on the data extracted.
+   *
+   * @param array $arg
+   *   An associative array containing arguments needed for processing:
+   *   - uri: The file path to the CSV file to process.
+   *   - county: The name of the county being processed.
+   * @param array &$context
+   *   A reference to the context array for batch operations. This includes:
+   *   - finished: A flag indicating the processing status (completed or not).
+   *   - sandbox: Stores intermediate processing data, such as cursor position
+   *     and field mappings.
+   *   - results: Stores the final processing results, such as the record count.
+   *
+   * @return void
+   *   This method does not return a value. All processing results are stored
+   *   in the reference context array.
+   */
   public function processBatch(array $arg, array &$context): void {
     $uri    = $arg['uri'];
     $county = $arg['county'];
@@ -134,6 +155,23 @@ class NlpSyncActiveNlsProcessor {
     fclose($fh);
   }
 
+  /**
+   * processNlRecord
+   *
+   * Processes a National Leader (NL) record by validating its attributes, handling errors,
+   * and creating the NL's record if all validations pass.
+   *
+   * @param array $nlRecord The NL record data to process, containing details
+   *                                   such as MCID, name, email, and address.
+   * @param array $flags Flags providing additional processing context, such
+   *                                   as 'notRegistered' and 'dropout' status.
+   * @param string $county The county information to associate with the NL record.
+   * @param array $legislativeFixes An array containing legislative fixes for validation
+   *                                   of districts based on MCID.
+   *
+   * @return void                      This method does not return a value. Errors and validation
+   *                                   results are handled within the method.
+   */
   private function processNlRecord(array $nlRecord, array $flags, string $county, array $legislativeFixes): void {
     $mcid          = $nlRecord['mcid'];
     $notRegistered = $flags['notRegistered'];
@@ -192,6 +230,23 @@ class NlpSyncActiveNlsProcessor {
     $this->createNlsRecord($nlRecord);
   }
 
+  /**
+   * checkDistricts
+   *
+   * Validates and updates district information in the given record using the provided legislative fix if necessary.
+   *
+   * @param array $nlRecord
+   *   The record containing district information to be checked and potentially updated.
+   *   It must include keys 'hd' (house district), 'precinct', 'mcid', 'firstName', and optionally 'nickname'.
+   *   The 'hd' and 'precinct' values may be modified directly within this array.
+   * @param array $legislativeFix
+   *   An optional array containing fallback values for 'hd' (house district) and 'precinct'.
+   *   This is used if the corresponding values in $nlRecord are missing.
+   *
+   * @return bool
+   *   Returns TRUE if district information is successfully validated or updated.
+   *   Returns FALSE if required information for validation is missing and cannot be repaired.
+   */
   public function checkDistricts(array &$nlRecord, array $legislativeFix): bool {
     $nlHd      = !empty($nlRecord['hd'])       ? ltrim($nlRecord['hd'], '0')      : 0;
     $pct       = !empty($nlRecord['precinct']) ? trim($nlRecord['precinct'])       : 0;
@@ -222,6 +277,26 @@ class NlpSyncActiveNlsProcessor {
     return TRUE;
   }
 
+  /**
+   * checkVoterId
+   *
+   * Confirms the validity of the VoterFile VANID for the given record and updates credentials if necessary.
+   *
+   * @param int $vfid
+   *   The current VoterFile VANID being verified.
+   * @param int $savedVfid
+   *   The previously saved VoterFile VANID for comparison.
+   * @param array $nl
+   *   An associative array containing voter information. It must include keys:
+   *   - 'mcid': The member contact ID associated with the record.
+   *   - 'firstName': The first name of the voter.
+   *   - 'lastName': The last name of the voter.
+   *   - 'vfid': The VoterFile VANID to be updated if required.
+   *
+   * @return void
+   *   This method does not return any value. It handles validation outcomes
+   *   through warnings and updates managed by other objects within the system.
+   */
   public function checkVoterId(int $vfid, int $savedVfid, array $nl): void {
     if (empty($vfid)) {
       $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, The VoterFile VANID is missing for this NL. Check if the MyCampaign record is a duplicate.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName']]));
@@ -236,6 +311,18 @@ class NlpSyncActiveNlsProcessor {
     }
   }
 
+  /**
+   * roleConvert
+   *
+   * Converts a list of role IDs into their corresponding role labels based on predefined mappings.
+   *
+   * @param array $roles
+   *   An array of role IDs to be converted. Each element represents a role ID to look up.
+   *
+   * @return array
+   *   An associative array where keys are the role IDs from the input, and values are the corresponding role labels.
+   *   Only role IDs that have a predefined mapping will be included.
+   */
   public function roleConvert(array $roles): array {
     $nlpRoleIds = [
       NLP_ADMIN_ROLE_ID       => NLP_ADMIN_ROLE_LABEL,
@@ -251,6 +338,26 @@ class NlpSyncActiveNlsProcessor {
     return $roleArray;
   }
 
+  /**
+   * verifyUniqueEmail
+   *
+   * Verifies if the email address in the given record is unique across both NL credentials and Drupal users.
+   * If the email is found to be in use by another record, a detailed message is returned.
+   *
+   * @param array $nlRecord
+   *   The record containing information about the NL volunteer.
+   *   The array must include the keys:
+   *   - 'email': The email address of the volunteer.
+   *   - 'mcid': The unique identifier for the NL participant.
+   *   - 'firstName': The first name of the participant.
+   *   - 'lastName': The last name of the participant.
+   *
+   * @return array
+   *   Returns an associative array structured as follows:
+   *   - 'uniqueEmail' (bool): TRUE if the email is unique or associated with the same record, FALSE otherwise.
+   *   - 'message' (string, optional): A detailed error message if the email is not unique.
+   *   - 'credentials' (array, optional): The credentials associated with the given MCID if available.
+   */
   private function verifyUniqueEmail(array $nlRecord): array {
     $nlEmail     = $nlRecord['email'];
     $mcid        = $nlRecord['mcid'];
@@ -295,6 +402,28 @@ class NlpSyncActiveNlsProcessor {
     return ['uniqueEmail' => TRUE, 'credentials' => []];
   }
 
+  /**
+   * verifyDrupalAccount
+   *
+   * Determines the status of a Drupal account based on the provided NL record and credentials.
+   * Creates or updates the account accordingly, or returns an error if the process fails.
+   *
+   * @param array $nlRecord
+   *   The NL record containing information about the user. Must include keys such as:
+   *   - 'email': The user's email address.
+   *   - 'mcid': The user's member ID.
+   *   - 'firstName': The user's first name.
+   *   - 'lastName': The user's last name.
+   * @param array $credentials
+   *   The credentials to be used for creating or updating the user's Drupal account.
+   *
+   * @return array
+   *   An associative array containing the result of the verification process. Keys include:
+   *   - 'accountOk': A boolean indicating if the account verification was successful.
+   *   - 'type': A string representing the type of account operation performed (e.g., 'newNl', 'updateBoth').
+   *   - 'credentials': The credentials used, included only in certain cases.
+   *   - 'message': A descriptive message providing details about the operation or error encountered.
+   */
   private function verifyDrupalAccount(array $nlRecord, array $credentials): array {
     $nlEmail        = $nlRecord['email'];
     $drupalEmailUser = $this->drupalUserObj->getUserByEmail($nlEmail);
@@ -366,6 +495,25 @@ class NlpSyncActiveNlsProcessor {
     }
   }
 
+  /**
+   * updateDrupalAccount
+   *
+   * Updates a Drupal user account with new information from a specified record.
+   * Compares fields to identify changes and applies updates if discrepancies are found.
+   *
+   * @param array $nlRecord
+   *   The source data containing updated user information.
+   *   Must include keys such as 'county', 'firstName', 'lastName', 'phone', 'hd', and optionally 'email'.
+   * @param array $drupalUser
+   *   The current Drupal user data to be checked against the source data.
+   *   Must include keys such as 'uid', 'county', 'firstName', 'lastName', 'phone', 'hd', and 'email'.
+   *
+   * @return array
+   *   Returns an associative array indicating the result of the account update:
+   *   - 'accountOk' (bool): TRUE if the update was successful or no changes were needed, FALSE if an error occurred.
+   *   - 'message' (string, optional): A message describing the error if 'accountOk' is FALSE.
+   *   - 'drupalUser' (array, optional): The updated Drupal user data if the update succeeded.
+   */
   private function updateDrupalAccount(array $nlRecord, array $drupalUser): array {
     $userUpdate = [];
     foreach (['county', 'firstName', 'lastName', 'phone', 'hd'] as $field) {
@@ -386,6 +534,19 @@ class NlpSyncActiveNlsProcessor {
     return ['accountOk' => TRUE, 'drupalUser' => empty($updatedUser) ? $drupalUser : $updatedUser];
   }
 
+  /**
+   * createNlsRecord
+   *
+   * Creates a new NLS (Non-Legislative System) record and updates its status if applicable.
+   *
+   * @param array $nlRecord
+   *   The record to be processed for creation. The array must include keys such as 'mcid' and 'county'.
+   *   The 'userName' key, if present, will be removed from the array before further processing.
+   *
+   * @return bool
+   *   Returns TRUE if the NLS record is successfully created and status is updated (if available).
+   *   Returns FALSE if the record creation process fails.
+   */
   private function createNlsRecord(array $nlRecord): bool {
     unset($nlRecord['userName']);
     $insertOk = $this->nlsObj->createNl($nlRecord);
@@ -397,6 +558,23 @@ class NlpSyncActiveNlsProcessor {
     return TRUE;
   }
 
+  /**
+   * verifyCredentials
+   *
+   * Verifies and updates user credentials or creates new credentials if none exist.
+   *
+   * @param array $nlRecord
+   *   The record containing information about the user. This array is used to generate or validate credentials.
+   * @param array $drupalUser
+   *   The Drupal user information associated with the user. It provides additional context during credential processing.
+   * @param array $credentials
+   *   The existing credentials of the user, if any. If empty, new credentials will be created.
+   * @param string $magicWord
+   *   A special string used in the process of creating or updating credentials.
+   *
+   * @return array
+   *   Returns an array containing the updated or newly created credentials.
+   */
   private function verifyCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord): array {
     if (empty($credentials)) {
       return $this->createNewCredentials($nlRecord, $drupalUser, $magicWord);
@@ -404,6 +582,40 @@ class NlpSyncActiveNlsProcessor {
     return $this->updateCredentials($nlRecord, $drupalUser, $credentials, $magicWord);
   }
 
+  /**
+   * createNewCredentials
+   *
+   * Generates a new set of user credentials based on provided user and record data,
+   * and associates them with a magic word if applicable.
+   *
+   * @param array $nlRecord
+   *   The record containing user data needed to create credentials. Required keys include:
+   *   - 'mcid': Unique identifier for the user.
+   *   - 'email': Email address of the user.
+   *   - 'vfid' (optional): Voting file ID, defaults to 0 if not provided.
+   * @param array $drupalUser
+   *   The Drupal user account data, containing:
+   *   - 'userName': Username for the account.
+   *   - 'county': User's county.
+   *   - 'hd': User's house district.
+   *   - 'roles': Roles assigned to the user.
+   *   - 'created': Timestamp of account creation.
+   *   - 'access': Timestamp of last account access.
+   * @param string $magicWord
+   *   An optional string to be stored as a magic word associated with the credentials.
+   *
+   * @return array
+   *   An array of newly generated credentials, including:
+   *   - 'mcid': User's unique identifier.
+   *   - 'email': User's email address.
+   *   - 'vfid': Voting file ID.
+   *   - 'county': User's county.
+   *   - 'hd': User's house district.
+   *   - 'roles': Converted user roles.
+   *   - 'created': Account creation timestamp.
+   *   - 'access': Account access timestamp.
+   *   - 'magicWord' (if applicable): Provided magic word.
+   */
   private function createNewCredentials(array $nlRecord, array $drupalUser, string $magicWord): array {
     $credentials              = $this->magicWordObj->createNewCredentials($nlRecord['mcid'], $drupalUser['userName'], $nlRecord['email']);
     $credentials['vfid']      = $nlRecord['vfid'] ?? 0;
@@ -422,6 +634,24 @@ class NlpSyncActiveNlsProcessor {
     return $credentials;
   }
 
+  /**
+   * updateCredentials
+   *
+   * Updates user credentials with data from the provided records and optionally sets a magic word.
+   *
+   * @param array $nlRecord
+   *   The record containing new data for updating credentials. It must include the 'vfid' and 'mcid' keys.
+   * @param array $drupalUser
+   *   The current user data from the Drupal system. It must include fields such as 'email', 'county', 'hd',
+   *   'created', 'access', and 'roles', which will be used to update the credentials.
+   * @param array $credentials
+   *   The current credentials array to be updated with values from $nlRecord and $drupalUser.
+   * @param string $magicWord
+   *   (Optional) A secret string to be set as a magic word if not already defined for the user in $nlRecord['mcid'].
+   *
+   * @return array
+   *   Returns the updated credentials array after applying changes from $nlRecord, $drupalUser, and potentially adding the magic word.
+   */
   private function updateCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord = ''): array {
     $vfid = $nlRecord['vfid'] ?? 0;
     if ($vfid != $credentials['vfid']) {
@@ -441,6 +671,29 @@ class NlpSyncActiveNlsProcessor {
     return $credentials;
   }
 
+  /**
+   * createDrupalLogin
+   *
+   * Creates a Drupal user account for the provided record, including generating a unique username
+   * and a magic word for authentication.
+   *
+   * @param array $nlRecord
+   *   An associative array containing the following information required to create a Drupal account:
+   *   - 'mcid': Unique identifier for the user.
+   *   - 'email': Email address of the user.
+   *   - 'firstName': First name of the user. If 'nickname' exists, it will be used instead.
+   *   - 'lastName': Last name of the user.
+   *   - 'phone': Phone number of the user.
+   *   - 'county': County associated with the user.
+   *   - 'hd': House district of the user.
+   *
+   * @return array
+   *   Returns an associative array with the following keys:
+   *   - 'accountOk' (bool): TRUE if the account creation was successful, FALSE otherwise.
+   *   - 'message' (string): An error message if account creation failed.
+   *   - 'drupalUser' (optional): The newly created Drupal user object, if account creation succeeded.
+   *   - 'magicWord' (optional): The generated magic word, if account creation succeeded.
+   */
   private function createDrupalLogin(array $nlRecord): array {
     $userInfo = [
       'mcid'      => $nlRecord['mcid'],
@@ -466,6 +719,20 @@ class NlpSyncActiveNlsProcessor {
     return ['accountOk' => TRUE, 'drupalUser' => $newAccount, 'magicWord' => $userInfo['magicWord']];
   }
 
+  /**
+   * getUniqueUsername
+   *
+   * Attempts to generate a unique username for the provided record by checking against existing usernames.
+   *
+   * @param array $nlRecord
+   *   The record containing user information for generating a username.
+   *   Must include keys 'mcid', 'email', 'firstName', and 'lastName'.
+   *
+   * @return array
+   *   An associative array containing the following keys:
+   *   - 'uniqueUsername': A string representing the unique username generated or an empty string if a username could not be created.
+   *   - 'message': A descriptive message indicating the success or failure of the username generation process.
+   */
   private function getUniqueUsername(array $nlRecord): array {
     $namesTried = [];
     do {
