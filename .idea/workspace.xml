@@ -4,9 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Change the column order for turf display vote builder">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add comments">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/SyncActiveNlsBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/SyncActiveNlsBatchTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +68,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="267" />
+    <option name="cachedIndexableFilesCount" value="268" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -100,61 +105,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000271987297" />
-      <entry key="MS500" value="1.05827494325137" />
-      <entry key="S2" value="2.276320013167622" />
-      <entry key="S5" value="4.597412228818088" />
-      <entry key="S10" value="6.555095551947001" />
-      <entry key="S30" value="9.26888055396806" />
-      <entry key="S60" value="11.25192536042547" />
-      <entry key="M2" value="13.072753373768066" />
-      <entry key="M5" value="14.654592392645306" />
-      <entry key="M10" value="15.293803449006202" />
-      <entry key="M15" value="15.52139254994269" />
-      <entry key="M30" value="15.7566953725954" />
-      <entry key="H1" value="15.877329096860189" />
-      <entry key="H2" value="15.939910254694652" />
-      <entry key="H4" value="16.276392125968357" />
-      <entry key="D1" value="69.71442304440677" />
-      <entry key="W1" value="569.3571433265467" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0" />
+      <entry key="M10" value="1.0000000000000004" />
+      <entry key="M15" value="1.0000000000697453" />
+      <entry key="M30" value="1.000012584609258" />
+      <entry key="H1" value="1.0057606573596236" />
+      <entry key="H2" value="1.1286830372070378" />
+      <entry key="H4" value="1.624401804583263" />
+      <entry key="D1" value="21.171952694929914" />
+      <entry key="W1" value="471.43504452549865" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="7.272771785176747E-192" />
-      <entry key="M15" value="4.8076865433373E-128" />
-      <entry key="M30" value="3.818260429437021E-64" />
-      <entry key="H1" value="3.762804692482157E-32" />
-      <entry key="H2" value="3.843204661998126E-16" />
-      <entry key="H4" value="3.91659376298877E-8" />
-      <entry key="D1" value="0.2624053152750212" />
-      <entry key="W1" value="10.546314311781426" />
+      <entry key="MS500" value="6.825058275053374E-183" />
+      <entry key="S2" value="2.874263573599442E-46" />
+      <entry key="S5" value="6.073102853993257E-19" />
+      <entry key="S10" value="7.793011519299364E-10" />
+      <entry key="S30" value="9.202414110999316E-4" />
+      <entry key="S60" value="0.0303354810593129" />
+      <entry key="M2" value="0.17417083871679812" />
+      <entry key="M5" value="0.49703866859532564" />
+      <entry key="M10" value="0.7050096939725911" />
+      <entry key="M15" value="0.7921304821809224" />
+      <entry key="M30" value="0.8900342203289237" />
+      <entry key="H1" value="0.9505660289169706" />
+      <entry key="H2" value="1.1178264140402807" />
+      <entry key="H4" value="1.6485524995051144" />
+      <entry key="D1" value="3.3938353181392067" />
+      <entry key="W1" value="12.506869469967413" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9138317005090021" />
-      <entry key="MS500" value="1.0395039385029445" />
-      <entry key="S2" value="2.2672612440830724" />
-      <entry key="S5" value="4.590416533353599" />
-      <entry key="S10" value="6.55015452496709" />
-      <entry key="S30" value="9.266490229268447" />
-      <entry key="S60" value="11.250407251123123" />
-      <entry key="M2" value="13.071838221904944" />
-      <entry key="M5" value="14.654170958290841" />
-      <entry key="M10" value="15.293581448623762" />
-      <entry key="M15" value="15.521241864440066" />
-      <entry key="M30" value="15.756618639946936" />
-      <entry key="H1" value="15.877290373919145" />
-      <entry key="H2" value="15.939890756422656" />
-      <entry key="H4" value="16.276373225905672" />
-      <entry key="D1" value="69.97645164824846" />
-      <entry key="W1" value="579.9023453970757" />
+      <entry key="MS100" value="9.572670314140105E-15" />
+      <entry key="MS500" value="0.0015711100994959283" />
+      <entry key="S2" value="0.19909101242631055" />
+      <entry key="S5" value="0.5243492631462441" />
+      <entry key="S10" value="0.7241196475820111" />
+      <entry key="S30" value="0.8988302697797944" />
+      <entry key="S60" value="0.9766587683118823" />
+      <entry key="M2" value="1.1438609871430425" />
+      <entry key="M5" value="1.4820063634343732" />
+      <entry key="M10" value="1.6965665430871912" />
+      <entry key="M15" value="1.7862432857906074" />
+      <entry key="M30" value="1.8869580896545224" />
+      <entry key="H1" value="1.95473724919747" />
+      <entry key="H2" value="2.2456502216844223" />
+      <entry key="H4" value="3.272421238555404" />
+      <entry key="D1" value="24.56555285997079" />
+      <entry key="W1" value="483.94098242034653" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -276,23 +281,7 @@
       <workItem from="1781067281132" duration="1655000" />
       <workItem from="1781099931385" duration="658000" />
       <workItem from="1781186350051" duration="91000" />
-      <workItem from="1781186480773" duration="6319000" />
-    </task>
-    <task id="LOCAL-00079" summary="Add key management">
-      <option name="closed" value="true" />
-      <created>1779551678567</created>
-      <option name="number" value="00079" />
-      <option name="presentableId" value="LOCAL-00079" />
-      <option name="project" value="LOCAL" />
-      <updated>1779551678568</updated>
-    </task>
-    <task id="LOCAL-00080" summary="Site configuration Claude code review">
-      <option name="closed" value="true" />
-      <created>1779684686993</created>
-      <option name="number" value="00080" />
-      <option name="presentableId" value="LOCAL-00080" />
-      <option name="project" value="LOCAL" />
-      <updated>1779684686994</updated>
+      <workItem from="1781186480773" duration="19250000" />
     </task>
     <task id="LOCAL-00081" summary="API calls Claude review and key protection">
       <option name="closed" value="true" />
@@ -670,7 +659,23 @@
       <option name="project" value="LOCAL" />
       <updated>1781408441016</updated>
     </task>
-    <option name="localTasksCounter" value="128" />
+    <task id="LOCAL-00128" summary="Add comments">
+      <option name="closed" value="true" />
+      <created>1781444939555</created>
+      <option name="number" value="00128" />
+      <option name="presentableId" value="LOCAL-00128" />
+      <option name="project" value="LOCAL" />
+      <updated>1781444939555</updated>
+    </task>
+    <task id="LOCAL-00129" summary="Add comments">
+      <option name="closed" value="true" />
+      <created>1781445151527</created>
+      <option name="number" value="00129" />
+      <option name="presentableId" value="LOCAL-00129" />
+      <option name="project" value="LOCAL" />
+      <updated>1781445151527</updated>
+    </task>
+    <option name="localTasksCounter" value="130" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -722,7 +727,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude code review forms DeliverTurf to Documents" />
     <MESSAGE value="Claude code review forms Export" />
     <MESSAGE value="Claude code review forms Croostab forms" />
     <MESSAGE value="Claude code review forms Crosstab forms" />
@@ -747,7 +751,8 @@
     <MESSAGE value="Code review" />
     <MESSAGE value="Fix version number" />
     <MESSAGE value="Change the column order for turf display vote builder" />
-    <option name="LAST_COMMIT_MESSAGE" value="Change the column order for turf display vote builder" />
+    <MESSAGE value="Add comments" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add comments" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

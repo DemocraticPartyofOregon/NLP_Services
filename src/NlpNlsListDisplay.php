@@ -87,7 +87,7 @@ class NlpNlsListDisplay
       
       $row['address'] = $nlRecord['address'];
       
-      $row['email'] = $nlRecord['email'].'<br>'.$nlRecord['phone'];
+      $row['email'] = $nlRecord['email'].'<br>'.$nlRecord['phone'].'<br>'.$nlRecord['vfid'];
       
       if(!$brief) {
         
@@ -264,7 +264,7 @@ class NlpNlsListDisplay
     $this->header[] = ['data' => t('Pct'), 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Name<br>MCID<br>(Coordinator)'), 'field' => 'name', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Address'), 'field' => 'address', 'class' => ['nlp-th-color'] ];
-    $this->header[] = ['data' => t('Email<br>Phone'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('Email<br>Phone<br>VFID'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     if(!$brief) {
       $this->header[] = ['data' => t('Notes'), 'field' => 'notes', 'class' => ['nlp-th-color', 'nl-notes-col'] ];
       $this->header[] = ['data' => t('NLP<br>Participation'),  'class' => ['nlp-th-color'] ];

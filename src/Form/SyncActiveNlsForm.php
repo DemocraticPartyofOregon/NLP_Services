@@ -156,10 +156,22 @@ the NLP Services Admin.</p>',
       $messenger->addError('NL database build failed.');
       return;
     }
-    
+    //nlp_debug_msg('Export Job', $exportJob);
     $this->nls->deleteNls($county);
     $remoteUrl = $exportJob['downloadUrl'];
-    
+
+    /*
+    $fh = fopen($remoteUrl, 'r');
+    if (!$fh) {
+      nlp_debug_msg('remoteUrl open failed', $remoteUrl);
+      return;
+    }
+    while (($record = fgetcsv($fh)) !== FALSE) {
+      nlp_debug_msg('record', $record);
+    }
+    fclose($fh);
+    */
+
     // Create a temporary file with a unique name and copy the remote file to it.
     $temp_dir = 'public://temp';
     $createDate = date('Y-m-d-H-i-s', time());
@@ -179,7 +191,7 @@ the NLP Services Admin.</p>',
       return;
     }
     copy($remoteUrl, $localFileUrl);
-    
+
     // Send the local file to the batch process to chunk the list into smaller
     // parts and provide a progress throbber for creating the new list of
     // active NLs.

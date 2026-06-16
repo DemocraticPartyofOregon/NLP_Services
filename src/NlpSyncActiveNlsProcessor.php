@@ -108,6 +108,7 @@ class NlpSyncActiveNlsProcessor {
         $fieldPos['dropoutAC'] = $fieldPos[$dropoutTitle];
         unset($fieldPos[$dropoutTitle]);
       }
+      //nlp_debug_msg('$fieldPos',$fieldPos);
 
       $context['sandbox']['fieldPos'] = $fieldPos;
     } else {
@@ -122,6 +123,7 @@ class NlpSyncActiveNlsProcessor {
     $queCnt    = 0;
     do {
       $nlRaw = fgetcsv($fh);
+      //nlp_debug_msg('$nlRaw',$nlRaw);
       if (empty($nlRaw)) { break; }
       $seek = ftell($fh);
       $queCnt++;
@@ -136,9 +138,11 @@ class NlpSyncActiveNlsProcessor {
       if ($queCnt == self::BATCH_LIMIT) { break; }
     } while (TRUE);
 
+    //nlp_debug_msg('$batchData',$batchData);
     // Phase 2: Fetch all NL records concurrently.
     $nlRecords = $this->apiNlsObj->getNls($county, array_keys($batchData));
 
+    //nlp_debug_msg('$nlRecords',$nlRecords);
     // Phase 3: Process each NL record.
     foreach ($batchData as $mcid => $flags) {
       if (empty($nlRecords[$mcid])) { continue; }
@@ -224,9 +228,12 @@ class NlpSyncActiveNlsProcessor {
 
     if (!$notRegistered) {
       $lastKnownVfId = $credentials['vfid'] ?? 0;
-      $this->checkVoterId($nlRecord['vfid'], $lastKnownVfId, $nlRecord);
+      if (!$this->checkVoterId($nlRecord['vfid'], $lastKnownVfId, $nlRecord)) {
+        return;
+      }
     }
 
+    $nlRecord['notRegistered'] = $notRegistered;
     $this->createNlsRecord($nlRecord);
   }
 
@@ -293,22 +300,30 @@ class NlpSyncActiveNlsProcessor {
    *   - 'lastName': The last name of the voter.
    *   - 'vfid': The VoterFile VANID to be updated if required.
    *
-   * @return void
-   *   This method does not return any value. It handles validation outcomes
-   *   through warnings and updates managed by other objects within the system.
+   * @return bool
+   *   TRUE if the voter ID is valid and processing should continue, FALSE if the
+   *   NL should be rejected due to a database corruption or missing voter ID.
    */
-  public function checkVoterId(int $vfid, int $savedVfid, array $nl): void {
+  public function checkVoterId(int $vfid, int $savedVfid, array $nl): bool {
     if (empty($vfid)) {
       $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, The VoterFile VANID is missing for this NL. Check if the MyCampaign record is a duplicate.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName']]));
-      return;
+      return FALSE;
+    }
+    $existingCredentials = $this->magicWordObj->getCredentialsByVfid($vfid);
+    if (!empty($existingCredentials) && $existingCredentials['mcid'] != $nl['mcid']) {
+      $this->messenger->addError(t('NL rejected. MCID:@mcid @firstName @lastName, VoterFile VANID @vfid is already associated with MCID:@existingMcid. This indicates a suspected duplicate MyCampaign record. Please resolve the duplicate before processing this NL.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@existingMcid' => $existingCredentials['mcid']]));
+      return FALSE;
     }
     if (empty($savedVfid)) {
       $this->magicWordObj->updateCredentials(['mcid' => $nl['mcid'], 'vfid' => $nl['vfid']]);
-      return;
+      return TRUE;
     }
     if ($vfid != $savedVfid) {
-      $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, new VoterID: @vfid, Old voterId: @savedVfid, The VoterFile VANID does not match a previous usage. The MyCampaign record may point to the wrong voter.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
+      $this->messenger->addError(t('NL rejected. MCID:@mcid @firstName @lastName, VoterFile VANID @vfid does not match the saved VANID @savedVfid. This indicates database corruption. Please contact the NLP Admin.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
+      return FALSE;
     }
+
+    return TRUE;
   }
 
   /**

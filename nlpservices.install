@@ -272,6 +272,9 @@ function nlpservices_schema(): array
       'vfid' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ],
     ],
     'primary key' => [ 'mcid', ],
+    'indexes' => [
+      'vfid' => [ 'vfid', ],
+    ],
   ];
   
   $schema['nlp_matchback'] = [
@@ -303,6 +306,7 @@ function nlpservices_schema(): array
       'cellPhone' => [ 'type' => 'varchar', 'length' => 32, ],
       'cellPhoneId' => [ 'type' => 'int', 'description' => 'VoteBuilder ID for this phone number.', ],
       'userName' => [ 'type' => 'varchar', 'length' => 128, ],
+      'notRegistered' => [ 'type' => 'char', 'length' => 1, ],
       'vfid' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE,
         'description' => 'VoterFile ID for this voter.', ],
     ],

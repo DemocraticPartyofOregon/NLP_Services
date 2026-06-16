@@ -276,6 +276,35 @@ class MagicWord {
 
 
   /**
+   * getCredentialsByVfid
+   *
+   * Retrieves user credentials by their VoterFile VANID.
+   *
+   * @param int $vfid The VoterFile VANID to search for.
+   * @return array An associative array of user credentials, or empty array if not found.
+   */
+  public function getCredentialsByVfid(int $vfid): array
+  {
+    if (empty($vfid)) {return [];}
+    try {
+      $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
+      $query->fields('m');
+      $query->condition('vfid', $vfid);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      $error = $e->getMessage();
+      nlp_debug_msg('getCredentialsByVfid', $error);
+      return [];
+    }
+    $credentials = $result->fetchAssoc();
+    if (empty($credentials)) {return [];}
+    unset($credentials['magicWordEncrypted']);
+    $credentials['roles'] = json_decode($credentials['roles'], true);
+    return $credentials;
+  }
+
+  /**
    * updateCredentials
    *
    * Update NL credentials in the database.
