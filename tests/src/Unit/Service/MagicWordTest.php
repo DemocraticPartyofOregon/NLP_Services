@@ -1,16 +1,5 @@
 <?php
 
-// nlp_debug_msg lives in nlpservices.module, which is not autoloaded in unit tests.
-// Bracketed namespace syntax is required to declare a global stub alongside a named namespace.
-namespace {
-  if (!function_exists('nlp_debug_msg')) {
-    function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
-  }
-  if (!defined('NLP_COORDINATOR_ROLE_ID')) {
-    define('NLP_COORDINATOR_ROLE_ID', 'nlp_coordinator');
-  }
-}
-
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Config\ConfigFactoryInterface;

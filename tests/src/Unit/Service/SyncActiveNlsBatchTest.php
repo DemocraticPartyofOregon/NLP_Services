@@ -1,21 +1,5 @@
 <?php
 
-namespace {
-  if (!function_exists('nlp_debug_msg')) {
-    function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
-  }
-  if (!function_exists('t')) {
-    function t($string, array $args = [], array $options = []): string { return $string; }
-  }
-  if (!defined('NLP_MODULE'))                { define('NLP_MODULE',                'nlpservices'); }
-  if (!defined('NLP_ADMIN_ROLE_ID'))         { define('NLP_ADMIN_ROLE_ID',         'nlp_admin'); }
-  if (!defined('NLP_COORDINATOR_ROLE_ID'))   { define('NLP_COORDINATOR_ROLE_ID',   'nlp_coordinator'); }
-  if (!defined('NLP_LEADER_ROLE_ID'))        { define('NLP_LEADER_ROLE_ID',        'nlp_leader'); }
-  if (!defined('NLP_ADMIN_ROLE_LABEL'))      { define('NLP_ADMIN_ROLE_LABEL',      'NLP Admin'); }
-  if (!defined('NLP_COORDINATOR_ROLE_LABEL')){ define('NLP_COORDINATOR_ROLE_LABEL','NLP Coordinator'); }
-  if (!defined('NLP_LEADER_ROLE_LABEL'))     { define('NLP_LEADER_ROLE_LABEL',     'NLP Leader'); }
-}
-
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
@@ -228,8 +212,26 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testCheckVoterIdUnknownSavedVfidUpdatesCredentials(): void {
       $this->magicWordMock->expects($this->once())->method('updateCredentials')
         ->with(['mcid' => 42, 'vfid' => 77]);
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn([]);
       $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 77];
       $this->buildProcessor()->checkVoterId(77, 0, $nl);
+    }
+
+    public function testCheckVoterIdDuplicateVfidAddsErrorAndReturnsFalse(): void {
+      $this->messengerMock->expects($this->once())->method('addError');
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 99]);
+      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 55];
+      $result = $this->buildProcessor()->checkVoterId(55, 0, $nl);
+      $this->assertFalse($result);
+    }
+
+    public function testCheckVoterIdSameMcidVfidMatchContinues(): void {
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->never())->method('addWarning');
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 42]);
+      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 55];
+      $result = $this->buildProcessor()->checkVoterId(55, 55, $nl);
+      $this->assertTrue($result);
     }
 
   }
