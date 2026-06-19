@@ -443,7 +443,31 @@ function nlpservices_cron (): void
     nlp_debug_msg('Turf resync check time: ', $displayTime);
     Drupal::logger('nlpservices')->notice('Turf resync check time: ' . $displayTime);
   }
-  
+
+  // Check for missing NLP Voter activist codes, run only at night between midnight and 3am.
+  $enableVoterAcCheck = !empty($cronConfiguration['enableVoterAcCheck']);
+  if ($enableVoterAcCheck) {
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+    $debug = $nlpConfigurationObj->getDebug();
+    $hour = (int) date('G');
+    if (!($hour >= 0 && $hour < 3) && !$debug) {
+      Drupal::logger('nlpservices')->notice("Voter AC check skipped, current hour: $hour");
+      return;
+    }
+    $turfsObj = Drupal::service('nlpservices.turfs');
+    $syncedCounties = $turfsObj->getSyncedCountyNames();
+    $queue = Drupal::queue('nlpservices_voter_ac_queue');
+    $turfCount = 0;
+    foreach ($syncedCounties as $county) {
+      $turfIndexes = $turfsObj->getTurfIndexes($county);
+      foreach ($turfIndexes as $turfIndex) {
+        $queue->createItem(['turfIndex' => $turfIndex]);
+        $turfCount++;
+      }
+    }
+    Drupal::logger('nlpservices')->notice("Voter AC check queued $turfCount turfs.");
+  }
+
 }
 
 /** @noinspection PhpUnusedParameterInspection */

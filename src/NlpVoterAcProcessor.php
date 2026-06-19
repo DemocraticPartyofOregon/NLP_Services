@@ -37,6 +37,18 @@ class NlpVoterAcProcessor {
     );
   }
 
+  public function processTurf(int $turfIndex): void
+  {
+    $voters = array_values($this->votersObj->getVotersInTurf($turfIndex));
+    if (empty($voters)) {
+      return;
+    }
+    $missingVanids = $this->activistCodesObj->hasApiActivistCodeBatch($voters, 'NLPVoterAC');
+    if (!empty($missingVanids)) {
+      $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC');
+    }
+  }
+
   public function processBatch(array $arg, array &$context): void
   {
     $turfIndexes = array_values($arg['turfIndexes']);
@@ -75,29 +87,31 @@ class NlpVoterAcProcessor {
       $coordinatorName = trim(($nl['firstName'] ?? '') . ' ' . ($nl['lastName'] ?? ''));
     }
 
-    $voters = $this->votersObj->getVotersInTurf($turfIndex);
-    foreach ($voters as $vanid) {
+    $voters = array_values($this->votersObj->getVotersInTurf($turfIndex));
+    $context['results']['votersChecked'] += count($voters);
+
+    $missingVanids = $this->activistCodesObj->hasApiActivistCodeBatch($voters, 'NLPVoterAC');
+
+    $toApply = [];
+    foreach ($missingVanids as $vanid) {
       if ($stopAtLimit && $context['results']['votersMissingAc'] >= 100) {
         $context['finished'] = 1;
         return;
       }
-      $context['results']['votersChecked']++;
-      if (!$this->activistCodesObj->hasApiActivistCode($vanid, 'NLPVoterAC')) {
-        if (!$reportOnly) {
-          $this->activistCodesObj->setApiActivistCode([
-            'vanid'    => $vanid,
-            'codeName' => 'NLPVoterAC',
-            'action'   => 'Apply',
-          ]);
-        }
-        $context['results']['missingAcRecords'][] = [
-          'vanid'       => $vanid,
-          'turfName'    => $turfName,
-          'county'      => $county,
-          'coordinator' => $coordinatorName,
-        ];
-        $context['results']['votersMissingAc']++;
+      $context['results']['missingAcRecords'][] = [
+        'vanid'       => $vanid,
+        'turfName'    => $turfName,
+        'county'      => $county,
+        'coordinator' => $coordinatorName,
+      ];
+      $context['results']['votersMissingAc']++;
+      if (!$reportOnly) {
+        $toApply[] = $vanid;
       }
+    }
+
+    if (!empty($toApply)) {
+      $this->activistCodesObj->setApiActivistCodeBatch($toApply, 'NLPVoterAC');
     }
     $context['results']['turfsProcessed']++;
 
