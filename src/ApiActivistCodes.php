@@ -4,6 +4,8 @@ namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Pool;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 use stdClass;
@@ -190,5 +192,128 @@ class ApiActivistCodes
       return FALSE;
     }
   }
-  
+
+  /**
+   * hasApiActivistCodeBatch
+   *
+   * Checks multiple voters concurrently and returns the subset that do NOT
+   * have the named activist code applied.
+   *
+   * @param array  $vanids   - flat array of int vanids to check
+   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @return array            - vanids (int) that are missing the code
+   */
+  public function hasApiActivistCodeBatch(array $vanids, string $codeName): array
+  {
+    if (empty($vanids)) {
+      return [];
+    }
+    $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
+    if (empty($rid)) {
+      return $vanids;
+    }
+    $database = $this->supportedActivistCodes[$codeName];
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiKey = $stateCommitteeKey['API Key'];
+    $apiURL = $stateCommitteeKey['Url'];
+    $user   = $stateCommitteeKey['App Name'];
+
+    $hasCode = [];
+    $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL) {
+      foreach ($vanids as $vanid) {
+        $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
+        yield $vanid => new GuzzleRequest('GET', $url);
+      }
+    };
+
+    $pool = new Pool($this->client, $requests(), [
+      'concurrency' => 10,
+      'fulfilled' => function($response, $vanid) use (&$hasCode, $rid) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          $hasCode[$vanid] = FALSE;
+          return;
+        }
+        $codes = array_map(fn($item) => (int) $item['activistCodeId'], $result['items'] ?? []);
+        $hasCode[$vanid] = in_array($rid, $codes);
+      },
+      'rejected' => function($reason, $vanid) use (&$hasCode) {
+        nlp_debug_msg('hasApiActivistCodeBatch', $reason->getMessage());
+        $hasCode[$vanid] = FALSE;
+      },
+    ]);
+    $pool->promise()->wait();
+
+    $missing = [];
+    foreach ($vanids as $vanid) {
+      if (!($hasCode[$vanid] ?? FALSE)) {
+        $missing[] = $vanid;
+      }
+    }
+    return $missing;
+  }
+
+  /**
+   * setApiActivistCodeBatch
+   *
+   * Applies (or removes) an activist code to multiple voters concurrently.
+   *
+   * @param array  $vanids   - flat array of int vanids to update
+   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $action   - 'Apply' or 'Remove'
+   */
+  public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action = 'Apply'): void
+  {
+    if (empty($vanids)) {
+      return;
+    }
+    $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
+    if (empty($rid)) {
+      return;
+    }
+    $database = $this->supportedActivistCodes[$codeName];
+    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiKey = $stateCommitteeKey['API Key'];
+    $apiURL = $stateCommitteeKey['Url'];
+    $user   = $stateCommitteeKey['App Name'];
+
+    $responseObj = new stdClass();
+    $responseObj->type = self::ACTIVIST_CODE;
+    $responseObj->activistCodeId = $rid;
+    $responseObj->action = $action;
+
+    $canvassContextObj = new stdClass();
+    $canvassContextObj->dateCanvassed = NULL;
+    $canvassContextObj->contactTypeId = NULL;
+    $canvassContextObj->inputTypeId = 11;
+
+    $canvassResponseObj = new stdClass();
+    $canvassResponseObj->canvassContext = $canvassContextObj;
+    $canvassResponseObj->resultCodeId = NULL;
+    $canvassResponseObj->responses = [$responseObj];
+
+    $dataJson = json_encode($canvassResponseObj);
+    $headers = [
+      'Content-Type' => 'application/json',
+      'Accept'       => 'application/json',
+      'Expect'       => '',
+    ];
+
+    $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL, $headers, $dataJson) {
+      foreach ($vanids as $vanid) {
+        $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
+        yield $vanid => new GuzzleRequest('POST', $url, $headers, $dataJson);
+      }
+    };
+
+    $pool = new Pool($this->client, $requests(), [
+      'concurrency' => 10,
+      'fulfilled' => function($response, $vanid) {},
+      'rejected' => function($reason, $vanid) {
+        nlp_debug_msg('setApiActivistCodeBatch', $reason->getMessage());
+      },
+    ]);
+    $pool->promise()->wait();
+  }
+
 }
