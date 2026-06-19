@@ -13,9 +13,8 @@ class NlpMatchbacks
   const string MATCHBACK_TBL = 'nlp_matchback';
   const int MULTI_INSERT = 100;
   const int BATCH = 100;
-  const int MATCHBACK_MAX_QUEUE = 2000;
-  
-  
+  const int MATCHBACK_BATCH_SIZE = 1000;
+
   private array $records = [];
   private int $sqlCnt = 0;
   private int $batchCnt = 0;
@@ -264,62 +263,151 @@ class NlpMatchbacks
   }
   
   /**
-   * matchbackEmailCheck
+   * matchbackEmailFetch
    *
-   * Check the email inbox for a new matchback email with an attachment with records
-   * for each ballot received.   There will be a lot of duplicates because the counties
-   * do not process ballot records sequentially.
+   * Check the email inbox for a new matchback email, download the attachment,
+   * save it to a temp file, and return the file path.  All CSV parsing is
+   * deferred to the queue worker so hook_cron returns quickly.
    *
-   * @return array
-   * @noinspection PhpUnused
-   * Used in nlpservices.module
+   * @return string  Path to temp file, or '' if no email was found.
    */
-  public function matchbackEmailCheck(): array
+  public function matchbackEmailFetch(): string
   {
-    $queueItems = [];
     $items = $this->imapObj->checkEmail('matchback');
-    if(empty($items)) {return [];}
-    
+    if (empty($items)) { return ''; }
     foreach ($items as $item) {
+      if (empty($item['reports'])) { continue; }
       $columnNames = str_getcsv($item['header']);
-      
-      $itemInfo = [];
-      $itemInfo['progress'] = 'chunk';
-      $itemInfo['subject'] = $item['subject'];
-      $itemInfo['month'] = $item['month'];
-      $itemInfo['day'] = $item['day'];
-  
       $fieldPos = $this->headerValidate($columnNames);
-      if(!$fieldPos['ok']) {continue;}
-      $reportCount = count($item['reports']);
-      if ($reportCount <= 1) {continue;}
-      $pos = $fieldPos['pos'];
-      $posKeys = array_keys($pos);
-      $itemInfo['header'] = implode(',',$posKeys);
-  
-      $recordCount = 0;
-      $queueIndex = 0;
-      $itemInfo['reportCount'] = $reportCount;
-      $queueItems[$queueIndex] = $itemInfo;
-      foreach ($item['reports'] as $rowRaw) {
-        $reportRaw = str_getcsv($rowRaw);
-        $report = array_map(function ($index) use ($reportRaw) {
-          return trim(strip_tags(htmlentities(stripslashes($reportRaw[$index] ?? ''), ENT_QUOTES)));
-        }, $pos);
-        $queueItems[$queueIndex]['reports'][] = json_encode($report);
-        $recordCount++;
-        if($recordCount == self::MATCHBACK_MAX_QUEUE) {
-          $queueIndex++;
-          $itemInfo['reportCount'] = $reportCount;
-          $recordCount = 0;
-          $queueItems[$queueIndex] = $itemInfo;
-          $queueItems[$queueIndex]['reports'] = [];
-        }
+      if (!$fieldPos['ok']) { continue; }
+      $filePath = sys_get_temp_dir() . '/nlp_matchback_' . time() . '.csv';
+      $fh = fopen($filePath, 'w');
+      if (!$fh) {
+        Drupal::logger('nlpservices')->notice('matchbackEmailFetch: Failed to create temp file.');
+        return '';
+      }
+      fwrite($fh, $item['header'] . "\n");
+      foreach ($item['reports'] as $row) {
+        fwrite($fh, $row . "\n");
+      }
+      fclose($fh);
+      return $filePath;
+    }
+    return '';
+  }
+
+  /**
+   * processMatchbackFile
+   *
+   * Read the temp CSV file written by matchbackEmailFetch() and import its
+   * records into the matchback table using INSERT IGNORE, so no per-record
+   * SELECT is needed.  Deletes the file when done.
+   *
+   * @param string $filePath
+   * @return array  Counts: recordCount, newRecordCount, skippedRecordCount, rejectedRecordCount
+   */
+  public function processMatchbackFile(string $filePath): array
+  {
+    $counts = ['recordCount' => 0, 'newRecordCount' => 0, 'skippedRecordCount' => 0, 'rejectedRecordCount' => 0];
+    if (!file_exists($filePath)) {
+      Drupal::logger('nlpservices')->notice("processMatchbackFile: File not found: $filePath");
+      return $counts;
+    }
+    $fh = fopen($filePath, 'r');
+    if (!$fh) {
+      Drupal::logger('nlpservices')->notice("processMatchbackFile: Cannot open: $filePath");
+      return $counts;
+    }
+    $headerRow = fgetcsv($fh);
+    if (empty($headerRow)) {
+      fclose($fh);
+      return $counts;
+    }
+    $fieldPos = $this->decodeMatchbackHdr($headerRow);
+    if (!$fieldPos['ok']) {
+      fclose($fh);
+      return $counts;
+    }
+    $pos = $fieldPos['pos'];
+    $latestMatchbackDate = $this->getLatestMatchbackDate();
+    $latestMatchbackTime = empty($latestMatchbackDate) ? 0 : strtotime($latestMatchbackDate);
+    $batch = [];
+    while (($row = fgetcsv($fh)) !== FALSE) {
+      $counts['recordCount']++;
+      $ballotReceived = isset($pos['ballotReceived']) ? ($row[$pos['ballotReceived']] ?? '') : '';
+      if (empty($ballotReceived)) {
+        $counts['skippedRecordCount']++;
+        continue;
+      }
+      $vanid = (int) ($row[$pos['vanid']] ?? 0);
+      if (empty($vanid)) {
+        $counts['rejectedRecordCount']++;
+        continue;
+      }
+      $ballotReceivedTime = strtotime($ballotReceived);
+      if (empty($ballotReceivedTime)) {
+        $counts['rejectedRecordCount']++;
+        continue;
+      }
+      $convertedDate = date('Y-m-d', $ballotReceivedTime);
+      if ($ballotReceivedTime > $latestMatchbackTime) {
+        $latestMatchbackTime = $ballotReceivedTime;
+        $latestMatchbackDate = $convertedDate;
+      }
+      $batch[] = ['vanid' => $vanid, 'date' => $convertedDate];
+      if (count($batch) >= self::MATCHBACK_BATCH_SIZE) {
+        $inserted = $this->insertIgnoreMatchbacks($batch);
+        $counts['newRecordCount'] += $inserted;
+        $counts['skippedRecordCount'] += count($batch) - $inserted;
+        $batch = [];
       }
     }
-    return $queueItems;
+    if (!empty($batch)) {
+      $inserted = $this->insertIgnoreMatchbacks($batch);
+      $counts['newRecordCount'] += $inserted;
+      $counts['skippedRecordCount'] += count($batch) - $inserted;
+    }
+    fclose($fh);
+    unlink($filePath);
+    if (!empty($latestMatchbackDate)) {
+      $this->setLatestMatchbackDate($latestMatchbackDate);
+    }
+    return $counts;
   }
- 
+
+  /**
+   * insertIgnoreMatchbacks
+   *
+   * Bulk-insert a batch of vanid/date records using INSERT IGNORE so that
+   * duplicate vanids (already in the table) are silently skipped without
+   * requiring a prior SELECT per record.  Returns the number of rows actually
+   * inserted.
+   *
+   * @param array $records  Each element: ['vanid' => int, 'date' => string]
+   * @return int
+   */
+  private function insertIgnoreMatchbacks(array $records): int
+  {
+    if (empty($records)) { return 0; }
+    $placeholders = [];
+    $args = [];
+    foreach ($records as $i => $record) {
+      $placeholders[] = "(:vanid$i, :date$i)";
+      $args[":vanid$i"] = $record['vanid'];
+      $args[":date$i"] = $record['date'];
+    }
+    try {
+      $result = $this->connection->query(
+        'INSERT IGNORE INTO {nlp_matchback} (vanid, date) VALUES ' . implode(',', $placeholders),
+        $args
+      );
+      return (int) $result->rowCount();
+    } catch (Exception $e) {
+      Drupal::logger('nlpservices')->notice('insertIgnoreMatchbacks: ' . $e->getMessage());
+      return 0;
+    }
+  }
+
   /**
    * headerValidate
    *
@@ -338,75 +426,6 @@ class NlpMatchbacks
       }
     }
     return $fieldPos;
-  }
-  
-  /**
-   * processMatchbackQueueReports
-   *
-   * Process a batch of matchback records from the queue. If the ballot-received date
-   * is already recorded, skip the record.  If the ballot-received date is newer than
-   * the latest recorded date, update the latest recorded date.
-   *
-   * Returns an array of counts with the following keys:
-   *  recordCount - total number of records in this matchback update.
-   *  newRecordCount - number of new records written to the database.
-   *  skippedRecordCount - the number of records that were already in the database and were skipped.
-   *  rejectedRecordCount - the number of records that were rejected, either because the vanid or date was empty.
-   *
-   * @param array $reports
-   * @return array
-   * @noinspection PhpUnused
-   *  Used in nlpservices_matchback_queue.php
-   */
-  public function processMatchbackQueueReports(array $reports): array
-  {
-    if(empty($reports)) {return [];}
-    $latestMatchbackDate = $this->getLatestMatchbackDate();
-    $latestMatchbackTime = strtotime($latestMatchbackDate);
-  
-    $recordCount = $newRecordCount = $skippedRecordCount = $rejectedRecordCount = 0;
-    foreach ($reports as $reportRaw) {
-  
-      $report = json_decode($reportRaw,true);
-      $recordCount++;
-      
-      $br = !empty($report['ballotReceived']);
-      if ($br) {
-        $vanid = $report['vanid'];
-        if(empty($vanid)) {
-          $rejectedRecordCount++;
-          continue;
-        }
-    
-        // If the record already exists, skip the insert.
-        $exists = $this->matchbackExists($vanid);
-        if($exists) {
-          $skippedRecordCount++;
-          continue;
-        }
-        $ballotReceivedDate = $report['ballotReceived'];
-        $ballotReceivedTime = strtotime($ballotReceivedDate);  // Convert US date to time.
-        if($ballotReceivedTime==0) {
-          $rejectedRecordCount++;
-          continue;
-        }
-        $newRecordCount++;
-        $convertedDate = date('Y-m-d',$ballotReceivedTime);  // Convert to ISO date.
-        if($ballotReceivedTime > $latestMatchbackTime) {
-          $latestMatchbackTime = $ballotReceivedTime;
-          $latestMatchbackDate = $convertedDate;
-        }
-        $this->insertMatchbacks($vanid,$convertedDate);
-      }
-     
-    }
-    $this->setLatestMatchbackDate($latestMatchbackDate);
-    $this->flushMatchbacks();
-    return [
-      'recordCount'=>$recordCount,
-      'newRecordCount'=>$newRecordCount,
-      'skippedRecordCount'=>$skippedRecordCount,
-      'rejectedRecordCount'=>$rejectedRecordCount,];
   }
   
 }

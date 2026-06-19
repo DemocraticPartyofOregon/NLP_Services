@@ -349,35 +349,14 @@ function nlpservices_cron (): void
   if($enableMatchback) {
     $queue = Drupal::queue('nlpservices_matchback_queue');
     $matchbackObj = Drupal::service('nlpservices.matchbacks');
-    $startTime = time();
-    $queueEmpty = TRUE;
-    do {
-      $queueItems = $matchbackObj->matchbackEmailCheck();  // Get the next email attachments.
-      if (empty($queueItems)) {break;}
-      if($queueEmpty) {
-        $queueItem = [
-          'progress' => 'start',
-          'startTime' => $startTime,
-        ];
-        $queue->createItem($queueItem);
-        $queueEmpty = FALSE;
-      }
+    while (TRUE) {
+      $filePath = $matchbackObj->matchbackEmailFetch();
+      if (empty($filePath)) { break; }
       $config = Drupal::service('config.factory')->getEditable('nlpservices.configuration');
-      $config->set('nlpservices-last-matchback-time',time());
+      $config->set('nlpservices-last-matchback-time', time());
       $config->save();
-      foreach ($queueItems as $queueItem) {
-        $queue->createItem($queueItem);
-      }
-    } while (TRUE);
-    
-    if(!$queueEmpty) {
-      $queueItem = [
-        'progress' => 'end',
-        'startTime' => $startTime,
-      ];
-      $queue->createItem($queueItem);
+      $queue->createItem(['filePath' => $filePath]);
     }
-    
   }
   
   // Check for emails sent to notifications that should have been sent to the coordinator.
@@ -455,8 +434,18 @@ function nlpservices_cron (): void
       return;
     }
     $turfsObj = Drupal::service('nlpservices.turfs');
+    $detailedCronLogging = Drupal::config('system.cron')->get('logging');
+    if ($detailedCronLogging) {
+      $counties = $turfsObj->getCountyNames();
+      foreach ($counties as $county) {
+        $countyTurfCount = $turfsObj->getCountyTurfCount($county);
+        Drupal::logger('nlpservices')->notice("Voter AC check turf count for $county: $countyTurfCount");
+      }
+    }
     $syncedCounties = $turfsObj->getSyncedCountyNames();
     $queue = Drupal::queue('nlpservices_voter_ac_queue');
+    $queue->deleteQueue();
+    $queue->createQueue();
     $turfCount = 0;
     foreach ($syncedCounties as $county) {
       $turfIndexes = $turfsObj->getTurfIndexes($county);
