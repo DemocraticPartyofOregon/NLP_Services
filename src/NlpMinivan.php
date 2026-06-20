@@ -5,7 +5,6 @@ namespace Drupal\nlpservices;
 use Drupal;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Queue\QueueFactory;
 
 class NlpMinivan {
 
@@ -53,19 +52,17 @@ class NlpMinivan {
   protected NlpImap $imapObj;
   protected ConfigFactoryInterface $config;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
-  protected QueueFactory $queueFactory;
   protected DrupalUser $drupalUserObj;
 
 
-  public function __construct( $config, $nlpReportsObj, $voterObj,  $nlsObj, $imapObj,
-                               $apiSurveyQuestionObj, $queueFactory, $drupalUserObj ) {
+  public function __construct( $config, $nlpReportsObj, $voterObj, $nlsObj, $imapObj,
+                               $apiSurveyQuestionObj, $drupalUserObj ) {
     $this->config = $config;
     $this->nlpReportsObj = $nlpReportsObj;
     $this->voterObj = $voterObj;
     $this->nlsObj = $nlsObj;
     $this->imapObj = $imapObj;
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
-    $this->queueFactory = $queueFactory;
     $this->drupalUserObj = $drupalUserObj;
   }
 
@@ -76,9 +73,8 @@ class NlpMinivan {
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.nls'),
-      $container->get('nlpservices.minivan'),
+      $container->get('nlpservices.imap'),
       $container->get('nlpservices.api_survey_question'),
-      $container->get('queue'),
       $container->get('nlpservices.drupal_user'),
     );
   }
@@ -565,6 +561,41 @@ class NlpMinivan {
   public function fetchReports(array $reportsRaw, string $fileType, int $activistCode, array $pos): array
   {
     return $this->buildReportChunks($reportsRaw, $fileType, $activistCode, $pos, true);
+  }
+
+  /**
+   * processMinivanEmails
+   *
+   * Fetch and process all pending MiniVAN emails directly in the cron hook without queuing.
+   * Loops until no unseen emails remain.  Returns aggregated counts across all emails processed.
+   *
+   * @return array  Keys: recordCount, newRecordCount, skippedRecordCount, rejectedRecordCount, notNlpCount
+   * @noinspection PhpUnused
+   * Used in nlpservices.module
+   */
+  public function processMinivanEmails(): array
+  {
+    $totals = array_fill_keys($this->minivanCountKeys, 0);
+    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+    $nlpHostileAC = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
+    while (TRUE) {
+      $items = $this->imapObj->checkEmail('minivan');
+      if (empty($items)) { break; }
+      foreach ($items as $item) {
+        $fileType = $item['fileType'];
+        $fieldPos = $this->headerValidate($fileType, $item['header']);
+        if (!$fieldPos['ok']) { continue; }
+        if (count($item['reports']) <= 1) { continue; }
+        $reportChunks = $this->buildReportChunks($item['reports'], $fileType, $nlpHostileAC, $fieldPos['pos']);
+        foreach ($reportChunks as $chunk) {
+          $counts = $this->processMinivanQueueReports($chunk, $fileType);
+          foreach ($this->minivanCountKeys as $key) {
+            $totals[$key] += $counts[$key] ?? 0;
+          }
+        }
+      }
+    }
+    return $totals;
   }
 
   /**

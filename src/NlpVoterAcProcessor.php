@@ -2,11 +2,13 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpVoterAcProcessor {
 
   protected ApiActivistCodes $activistCodesObj;
+  protected NlpCoordinators $coordinatorsObj;
   protected NlpFileFunctions $fileFunctionsObj;
   protected NlpNls $nlsObj;
   protected NlpTurfs $turfsObj;
@@ -14,12 +16,14 @@ class NlpVoterAcProcessor {
 
   public function __construct(
     $activistCodesObj,
+    $coordinatorsObj,
     $fileFunctionsObj,
     $nlsObj,
     $turfsObj,
     $votersObj,
   ) {
     $this->activistCodesObj = $activistCodesObj;
+    $this->coordinatorsObj  = $coordinatorsObj;
     $this->fileFunctionsObj = $fileFunctionsObj;
     $this->nlsObj           = $nlsObj;
     $this->turfsObj         = $turfsObj;
@@ -30,6 +34,7 @@ class NlpVoterAcProcessor {
   {
     return new static(
       $container->get('nlpservices.activist_codes'),
+      $container->get('nlpservices.coordinators'),
       $container->get('nlpservices.file_functions'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.turfs'),
@@ -37,6 +42,42 @@ class NlpVoterAcProcessor {
     );
   }
 
+  /**
+   * getCoordinatorName
+   *
+   * Gets the name of the coordinator for a turf.
+   *
+   * @param array $turf
+   * @return string
+   */
+  private function getCoordinatorName(array $turf): string
+  {
+    $mcid = $turf['mcid'] ?? 0;
+    if (empty($mcid)) {
+      return '';
+    }
+    $nl = $this->nlsObj->getNlById($mcid);
+    if (empty($nl)) {
+      return '';
+    }
+    $coordinator = $this->coordinatorsObj->getAssignedCoordinator($nl);
+    if (empty($coordinator)) {
+      return '';
+    }
+    return trim(($coordinator['firstName'] ?? '') . ' ' . ($coordinator['lastName'] ?? ''));
+  }
+
+  /**
+   * processTurf
+   *
+   * Processes a single turf by checking for missing activist codes and applying them.
+   * 1. Get all voters in the turf.
+   * 2. Check if any voters are missing the activist code.
+   * 3. If any voters are missing the activist code, apply the activist code.
+   *
+   * @param int $turfIndex
+   * @return void
+   */
   public function processTurf(int $turfIndex): void
   {
     $voters = array_values($this->votersObj->getVotersInTurf($turfIndex));
@@ -45,10 +86,49 @@ class NlpVoterAcProcessor {
     }
     $missingVanids = $this->activistCodesObj->hasApiActivistCodeBatch($voters, 'NLPVoterAC');
     if (!empty($missingVanids)) {
+      $turf            = $this->turfsObj->getTurf($turfIndex);
+      $turfName        = $turf['turfName'] ?? (string) $turfIndex;
+      $county          = $turf['county'] ?? '';
+      $coordinatorName = $this->getCoordinatorName($turf);
+      Drupal::logger('nlpservices')->notice(
+        'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids',
+        [
+          '@county'      => $county,
+          '@turf'        => $turfName,
+          '@coordinator' => $coordinatorName,
+          '@vanids'      => implode(', ', $missingVanids),
+        ]
+      );
+
       $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC');
     }
   }
 
+  /**
+   * processBatch
+   *
+   * Processes a batch of turfs by iterating through a list of voter data, applying specified logic,
+   * and updating the batch context for tracking progress and results.
+   *
+   * @param array $arg An associative array containing inputs for the batch process, including:
+   *                   - 'turfIndexes': An array of turf indexes to process.
+   *                   - 'stopAtLimit': (optional) A boolean indicating whether to stop processing when a specific limit is reached.
+   *                   - 'reportOnly': (optional) A boolean that, when true, skips applying codes and only accumulates data for reporting.
+   * @param array &$context A reference to an array used for storing the batch processing state, sandbox data, and accumulated results.
+   *                        The array should include or be updated with:
+   *                        - 'sandbox':
+   *                           - 'initialized': A flag indicating whether the sandbox has been initialized.
+   *                           - 'currentTurf': The index of the current turf being processed.
+   *                        - 'results':
+   *                           - 'votersChecked': The total number of voters processed.
+   *                           - 'votersMissingAc': The total number of voters missing the activist code.
+   *                           - 'turfsProcessed': The number of turfs processed.
+   *                           - 'missingAcRecords': An array of records detailing missing activist code information.
+   *                           - 'reportOnly': A flag indicating whether the batch was run in reporting-only mode.
+   *                        - 'finished': A flag or progress indicator signaling whether the processing is complete.
+   *
+   * @return void This method does not return a value. All results and state updates are stored in the $context.
+   */
   public function processBatch(array $arg, array &$context): void
   {
     $turfIndexes = array_values($arg['turfIndexes']);
@@ -80,12 +160,7 @@ class NlpVoterAcProcessor {
     $turf            = $this->turfsObj->getTurf($turfIndex);
     $turfName        = $turf['turfName'] ?? (string) $turfIndex;
     $county          = $turf['county'] ?? '';
-    $mcid            = $turf['mcid'] ?? 0;
-    $coordinatorName = '';
-    if (!empty($mcid)) {
-      $nl              = $this->nlsObj->getNlById($mcid);
-      $coordinatorName = trim(($nl['firstName'] ?? '') . ' ' . ($nl['lastName'] ?? ''));
-    }
+    $coordinatorName = $this->getCoordinatorName($turf);
 
     $voters = array_values($this->votersObj->getVotersInTurf($turfIndex));
     $context['results']['votersChecked'] += count($voters);

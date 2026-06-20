@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Controller;
 
+//use Drupal;
 use Drupal\Core\Controller\ControllerBase;
 use Drupal\nlpservices\ApiExportJobs;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -36,7 +37,8 @@ class WebHookController extends ControllerBase
   public function webhook_callback(): array
   {
     $eventId = $_GET['eventId'];
-    nlp_debug_msg('$eventId',$eventId);
+    //$nice = 'webhook_callback: eventId=' . $eventId;
+    //Drupal::logger('nlpservices')->notice($nice);
     $eventId = htmlentities($eventId, ENT_QUOTES);
     $this->exportJobsObj->endExportJob($eventId);
     return [

@@ -312,35 +312,21 @@ function nlpservices_cron (): void
   // Check for emails with MiniVAN reports.
   $enableMinivan = !empty($cronConfiguration['enableMinivan']);
   if($enableMinivan) {
-    $queue = Drupal::queue('nlpservices_minivan_canvass');
+    $minivanObj = Drupal::service('nlpservices.minivan');
     $startTime = time();
-    $queueEmpty = TRUE;
-    do {
-      $minivanObj = Drupal::service('nlpservices.minivan');
-      $queueItems = $minivanObj->minivanEmailCheck();  // Get the next email attachments.
-      //nlp_debug_msg('$queueItems',$queueItems);
-      if (empty($queueItems)) {break;}
-      foreach ($queueItems as $queueItem) {
-        if(empty($queueItem['reportCount'])) {continue;}  // An empty email.
-        //nlp_debug_msg('$queueItem',$queueItem);
-        if($queueEmpty) {
-          $queueStartItem = [
-            'progress' => 'start',
-            'startTime' => $startTime,
-          ];
-          $queue->createItem($queueStartItem);
-          $queueEmpty = FALSE;
-        }
-        $queue->createItem($queueItem);
-      }
-    } while (TRUE);
-    
-    if(!$queueEmpty) {
-      $queueItem = [
-        'progress' => 'end',
-        'startTime' => $startTime,
-      ];
-      $queue->createItem($queueItem);
+    $counts = $minivanObj->processMinivanEmails();
+    if ($counts['recordCount'] > 0) {
+      $elapsed = time() - $startTime;
+      $h = floor($elapsed / 3600);
+      $m = floor(($elapsed % 3600) / 60);
+      $s = $elapsed % 60;
+      $msg = "MiniVAN import elapsed: $h:$m:$s" .
+        ' Records=' . $counts['recordCount'] .
+        ' New=' . $counts['newRecordCount'] .
+        ' Skipped=' . $counts['skippedRecordCount'] .
+        ' Rejected=' . $counts['rejectedRecordCount'] .
+        ' Not NLP=' . $counts['notNlpCount'];
+      Drupal::logger('nlpservices')->notice($msg);
     }
   }
   

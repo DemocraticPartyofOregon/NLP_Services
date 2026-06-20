@@ -208,8 +208,9 @@ services:
 
   nlpservices.voter_ac_processor:
     class: Drupal\nlpservices\NlpVoterAcProcessor
-    arguments: [ '@nlpservices.activist_codes', '@nlpservices.file_functions',
-                 '@nlpservices.nls', '@nlpservices.turfs', '@nlpservices.voters' ]
+    arguments: [ '@nlpservices.activist_codes', '@nlpservices.coordinators',
+                 '@nlpservices.file_functions', '@nlpservices.nls',
+                 '@nlpservices.turfs', '@nlpservices.voters' ]
 
   nlpservices.create_walksheet:
     class: Drupal\nlpservices\NlpCreateWalksheet
@@ -258,7 +259,7 @@ services:
   nlpservices.minivan:
     class: Drupal\nlpservices\NlpMinivan
     arguments: [ '@config.factory' , '@nlpservices.reports' , '@nlpservices.voters', '@nlpservices.nls',
-                 '@nlpservices.imap', '@nlpservices.survey_question', '@queue', '@nlpservices.drupal_user' ]
+                 '@nlpservices.imap', '@nlpservices.survey_question', '@nlpservices.drupal_user' ]
 
   nlpservices.nls:
     class: Drupal\nlpservices\NlpNls

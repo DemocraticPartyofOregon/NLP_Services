@@ -146,6 +146,7 @@ the NLP Services Admin.</p>',
   {
     $messenger = Drupal::messenger();
     $listId = (int) $form_state->getValue('file_select');
+    nlp_debug_msg('listId', $listId);
     $county = $form_state->get('county');
     
     // Get a list of vanIds for the NLs in the list.
@@ -156,21 +157,8 @@ the NLP Services Admin.</p>',
       $messenger->addError('NL database build failed.');
       return;
     }
-    //nlp_debug_msg('Export Job', $exportJob);
     $this->nls->deleteNls($county);
     $remoteUrl = $exportJob['downloadUrl'];
-
-    /*
-    $fh = fopen($remoteUrl, 'r');
-    if (!$fh) {
-      nlp_debug_msg('remoteUrl open failed', $remoteUrl);
-      return;
-    }
-    while (($record = fgetcsv($fh)) !== FALSE) {
-      nlp_debug_msg('record', $record);
-    }
-    fclose($fh);
-    */
 
     // Create a temporary file with a unique name and copy the remote file to it.
     $temp_dir = 'public://temp';

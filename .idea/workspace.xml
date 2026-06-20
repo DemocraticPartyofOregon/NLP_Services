@@ -4,14 +4,17 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add comments">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Refactor matchback processing to avoid cron timeout">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiExportJobs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiExportJobs.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/WebHookController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/WebHookController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/SyncActiveNlsBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/SyncActiveNlsBatchTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpVoterAcProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpVoterAcProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_minivan_canvass.php" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -68,7 +71,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="268" />
+    <option name="cachedIndexableFilesCount" value="277" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -106,60 +109,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0000000000000004" />
-      <entry key="M15" value="1.0000000000697453" />
-      <entry key="M30" value="1.000012584609258" />
-      <entry key="H1" value="1.0057606573596236" />
-      <entry key="H2" value="1.1286830372070378" />
-      <entry key="H4" value="1.624401804583263" />
-      <entry key="D1" value="21.171952694929914" />
-      <entry key="W1" value="471.43504452549865" />
+      <entry key="MS500" value="1.0007799443365022" />
+      <entry key="S2" value="1.464716733115457" />
+      <entry key="S5" value="3.673314142363998" />
+      <entry key="S10" value="6.405580173420863" />
+      <entry key="S30" value="10.090826129970228" />
+      <entry key="S60" value="11.428272599518152" />
+      <entry key="M2" value="12.182117706501026" />
+      <entry key="M5" value="12.66478036041409" />
+      <entry key="M10" value="12.83134882418485" />
+      <entry key="M15" value="12.89312735042296" />
+      <entry key="M30" value="13.053761320172157" />
+      <entry key="H1" value="13.44156341146958" />
+      <entry key="H2" value="13.992692733391463" />
+      <entry key="H4" value="15.91909857760896" />
+      <entry key="D1" value="67.31784031317562" />
+      <entry key="W1" value="496.0473737676456" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="6.825058275053374E-183" />
-      <entry key="S2" value="2.874263573599442E-46" />
-      <entry key="S5" value="6.073102853993257E-19" />
-      <entry key="S10" value="7.793011519299364E-10" />
-      <entry key="S30" value="9.202414110999316E-4" />
-      <entry key="S60" value="0.0303354810593129" />
-      <entry key="M2" value="0.17417083871679812" />
-      <entry key="M5" value="0.49703866859532564" />
-      <entry key="M10" value="0.7050096939725911" />
-      <entry key="M15" value="0.7921304821809224" />
-      <entry key="M30" value="0.8900342203289237" />
-      <entry key="H1" value="0.9505660289169706" />
-      <entry key="H2" value="1.1178264140402807" />
-      <entry key="H4" value="1.6485524995051144" />
-      <entry key="D1" value="3.3938353181392067" />
-      <entry key="W1" value="12.506869469967413" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="7.966146808537247E-215" />
+      <entry key="M5" value="2.293503051589957E-86" />
+      <entry key="M10" value="1.5144315935657055E-43" />
+      <entry key="M15" value="2.841186707156961E-29" />
+      <entry key="M30" value="5.330279198317342E-15" />
+      <entry key="H1" value="7.305046091678865E-8" />
+      <entry key="H2" value="2.7952062103231933E-4" />
+      <entry key="H4" value="0.02138959748220545" />
+      <entry key="D1" value="2.147667441579022" />
+      <entry key="W1" value="13.022714439865553" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="9.572670314140105E-15" />
-      <entry key="MS500" value="0.0015711100994959283" />
-      <entry key="S2" value="0.19909101242631055" />
-      <entry key="S5" value="0.5243492631462441" />
-      <entry key="S10" value="0.7241196475820111" />
-      <entry key="S30" value="0.8988302697797944" />
-      <entry key="S60" value="0.9766587683118823" />
-      <entry key="M2" value="1.1438609871430425" />
-      <entry key="M5" value="1.4820063634343732" />
-      <entry key="M10" value="1.6965665430871912" />
-      <entry key="M15" value="1.7862432857906074" />
-      <entry key="M30" value="1.8869580896545224" />
-      <entry key="H1" value="1.95473724919747" />
-      <entry key="H2" value="2.2456502216844223" />
-      <entry key="H4" value="3.272421238555404" />
-      <entry key="D1" value="24.56555285997079" />
-      <entry key="W1" value="483.94098242034653" />
+      <entry key="MS100" value="0.9460576467255959" />
+      <entry key="MS500" value="0.9897402306214502" />
+      <entry key="S2" value="1.4606034311150224" />
+      <entry key="S5" value="3.669150501289744" />
+      <entry key="S10" value="6.401877535135766" />
+      <entry key="S30" value="10.0888328349897" />
+      <entry key="S60" value="11.427134861545799" />
+      <entry key="M2" value="12.181508743469848" />
+      <entry key="M5" value="12.664526459849101" />
+      <entry key="M10" value="12.831219929753104" />
+      <entry key="M15" value="12.893039136248236" />
+      <entry key="M30" value="13.053699808778001" />
+      <entry key="H1" value="13.441502892865776" />
+      <entry key="H2" value="13.992920988855058" />
+      <entry key="H4" value="15.940443309836018" />
+      <entry key="D1" value="69.46528683775648" />
+      <entry key="W1" value="509.06926497372535" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -167,6 +170,33 @@
       <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
       <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
       <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/myclabs/deep-copy" />
+      <path value="$PROJECT_DIR$/vendor/nikic/php-parser" />
+      <path value="$PROJECT_DIR$/vendor/phar-io/version" />
+      <path value="$PROJECT_DIR$/vendor/phar-io/manifest" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-file-iterator" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-code-coverage" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-text-template" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-invoker" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/phpunit" />
+      <path value="$PROJECT_DIR$/vendor/phpunit/php-timer" />
+      <path value="$PROJECT_DIR$/vendor/theseer/tokenizer" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/code-unit" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/cli-parser" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/comparator" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/code-unit-reverse-lookup" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/diff" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/complexity" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/exporter" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/environment" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/lines-of-code" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/global-state" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/object-reflector" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/object-enumerator" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/type" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/recursion-context" />
+      <path value="$PROJECT_DIR$/vendor/sebastian/version" />
     </include_path>
   </component>
   <component name="ProblemsViewState">
@@ -176,6 +206,20 @@
   &quot;associatedIndex&quot;: 3
 }</component>
   <component name="ProjectId" id="39v9tqCOrZPMPcc7tFcp5ctKsn1" />
+  <component name="ProjectSessionTemplates">
+    <option name="panelTemplate">
+      <template>
+        <option name="modeId" value="Ask" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="BACKGROUND" />
+      </template>
+    </option>
+  </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
@@ -196,6 +240,7 @@
     &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
     &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
     &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
     &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__2__0&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
     &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
@@ -281,71 +326,12 @@
       <workItem from="1781067281132" duration="1655000" />
       <workItem from="1781099931385" duration="658000" />
       <workItem from="1781186350051" duration="91000" />
-      <workItem from="1781186480773" duration="19250000" />
-    </task>
-    <task id="LOCAL-00081" summary="API calls Claude review and key protection">
-      <option name="closed" value="true" />
-      <created>1779769801561</created>
-      <option name="number" value="00081" />
-      <option name="presentableId" value="LOCAL-00081" />
-      <option name="project" value="LOCAL" />
-      <updated>1779769801561</updated>
-    </task>
-    <task id="LOCAL-00082" summary="User password security - Claude review">
-      <option name="closed" value="true" />
-      <created>1779805618867</created>
-      <option name="number" value="00082" />
-      <option name="presentableId" value="LOCAL-00082" />
-      <option name="project" value="LOCAL" />
-      <updated>1779805618867</updated>
-    </task>
-    <task id="LOCAL-00083" summary="Fix polymorphic errors in DrupalUser">
-      <option name="closed" value="true" />
-      <created>1779808477403</created>
-      <option name="number" value="00083" />
-      <option name="presentableId" value="LOCAL-00083" />
-      <option name="project" value="LOCAL" />
-      <updated>1779808477405</updated>
-    </task>
-    <task id="LOCAL-00084" summary="Claude review of awards and remove the database function">
-      <option name="closed" value="true" />
-      <created>1779809072726</created>
-      <option name="number" value="00084" />
-      <option name="presentableId" value="LOCAL-00084" />
-      <option name="project" value="LOCAL" />
-      <updated>1779809072727</updated>
-    </task>
-    <task id="LOCAL-00085" summary="Claude review of coordinator setup">
-      <option name="closed" value="true" />
-      <created>1779813668307</created>
-      <option name="number" value="00085" />
-      <option name="presentableId" value="LOCAL-00085" />
-      <option name="project" value="LOCAL" />
-      <updated>1779813668308</updated>
-    </task>
-    <task id="LOCAL-00086" summary="Claude review of credentials email">
-      <option name="closed" value="true" />
-      <created>1779851728923</created>
-      <option name="number" value="00086" />
-      <option name="presentableId" value="LOCAL-00086" />
-      <option name="project" value="LOCAL" />
-      <updated>1779851728924</updated>
-    </task>
-    <task id="LOCAL-00087" summary="Claude review of counts and crosstabs">
-      <option name="closed" value="true" />
-      <created>1779851784721</created>
-      <option name="number" value="00087" />
-      <option name="presentableId" value="LOCAL-00087" />
-      <option name="project" value="LOCAL" />
-      <updated>1779851784721</updated>
-    </task>
-    <task id="LOCAL-00088" summary="Improve usability of postcard reporting">
-      <option name="closed" value="true" />
-      <created>1779976006675</created>
-      <option name="number" value="00088" />
-      <option name="presentableId" value="LOCAL-00088" />
-      <option name="project" value="LOCAL" />
-      <updated>1779976006676</updated>
+      <workItem from="1781186480773" duration="19897000" />
+      <workItem from="1781621095174" duration="880000" />
+      <workItem from="1781622630755" duration="5029000" />
+      <workItem from="1781657743426" duration="5772000" />
+      <workItem from="1781726404471" duration="3190000" />
+      <workItem from="1781811156444" duration="28536000" />
     </task>
     <task id="LOCAL-00089" summary="Claude code review of documents, email config and exports">
       <option name="closed" value="true" />
@@ -675,7 +661,71 @@
       <option name="project" value="LOCAL" />
       <updated>1781445151527</updated>
     </task>
-    <option name="localTasksCounter" value="130" />
+    <task id="LOCAL-00130" summary="Verify a sync of active NLs does not allow two records pointing to the same VFID.">
+      <option name="closed" value="true" />
+      <created>1781619344425</created>
+      <option name="number" value="00130" />
+      <option name="presentableId" value="LOCAL-00130" />
+      <option name="project" value="LOCAL" />
+      <updated>1781619344426</updated>
+    </task>
+    <task id="LOCAL-00131" summary="Convert the request for the NLP Voter activist code to a Guzzle batch to improve performance for a turf.">
+      <option name="closed" value="true" />
+      <created>1781828232274</created>
+      <option name="number" value="00131" />
+      <option name="presentableId" value="LOCAL-00131" />
+      <option name="project" value="LOCAL" />
+      <updated>1781828232275</updated>
+    </task>
+    <task id="LOCAL-00132" summary="Create a CRON task to find, fix and report missing NLP Voter AC.">
+      <option name="closed" value="true" />
+      <created>1781838400495</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1781838400495</updated>
+    </task>
+    <task id="LOCAL-00133" summary="Fix annotations in queueWorker">
+      <option name="closed" value="true" />
+      <created>1781838658415</created>
+      <option name="number" value="00133" />
+      <option name="presentableId" value="LOCAL-00133" />
+      <option name="project" value="LOCAL" />
+      <updated>1781838658415</updated>
+    </task>
+    <task id="LOCAL-00134" summary="Fix tests">
+      <option name="closed" value="true" />
+      <created>1781845785377</created>
+      <option name="number" value="00134" />
+      <option name="presentableId" value="LOCAL-00134" />
+      <option name="project" value="LOCAL" />
+      <updated>1781845785377</updated>
+    </task>
+    <task id="LOCAL-00135" summary="Fix tests">
+      <option name="closed" value="true" />
+      <created>1781845812434</created>
+      <option name="number" value="00135" />
+      <option name="presentableId" value="LOCAL-00135" />
+      <option name="project" value="LOCAL" />
+      <updated>1781845812435</updated>
+    </task>
+    <task id="LOCAL-00136" summary="Prepare for Drupal 11">
+      <option name="closed" value="true" />
+      <created>1781845861986</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1781845861986</updated>
+    </task>
+    <task id="LOCAL-00137" summary="Refactor matchback processing to avoid cron timeout">
+      <option name="closed" value="true" />
+      <created>1781913587333</created>
+      <option name="number" value="00137" />
+      <option name="presentableId" value="LOCAL-00137" />
+      <option name="project" value="LOCAL" />
+      <updated>1781913587333</updated>
+    </task>
+    <option name="localTasksCounter" value="138" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -727,13 +777,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude code review forms Export" />
-    <MESSAGE value="Claude code review forms Croostab forms" />
-    <MESSAGE value="Claude code review forms Crosstab forms" />
-    <MESSAGE value="Claude code review forms import matchback, minivan, reports forms" />
-    <MESSAGE value="Claude code review forms import table to resync turfs forms" />
-    <MESSAGE value="Claude code review forms voter ac to vanid forms" />
-    <MESSAGE value="Claude code review install, module and lots of forms" />
     <MESSAGE value="Fix the rebuild of the table when the HD is changed." />
     <MESSAGE value="Change the title of the CO and NL columns" />
     <MESSAGE value="Close possible causes of the lost NLP Voter activist code." />
@@ -752,7 +795,14 @@
     <MESSAGE value="Fix version number" />
     <MESSAGE value="Change the column order for turf display vote builder" />
     <MESSAGE value="Add comments" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add comments" />
+    <MESSAGE value="Verify a sync of active NLs does not allow two records pointing to the same VFID." />
+    <MESSAGE value="Convert the request for the NLP Voter activist code to a Guzzle batch to improve performance for a turf." />
+    <MESSAGE value="Create a CRON task to find, fix and report missing NLP Voter AC." />
+    <MESSAGE value="Fix annotations in queueWorker" />
+    <MESSAGE value="Fix tests" />
+    <MESSAGE value="Prepare for Drupal 11" />
+    <MESSAGE value="Refactor matchback processing to avoid cron timeout" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor matchback processing to avoid cron timeout" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
