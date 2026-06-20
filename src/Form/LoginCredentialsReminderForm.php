@@ -111,9 +111,9 @@ class LoginCredentialsReminderForm extends FormBase
     $users = $this->drupalUser->getUsers($county);
     
     // The user selected a phrase to search, display all possible candidates.
-    $needle = $form_state->get('nl-search-needle');
+    $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $form_state->set('nl-search-needle', NULL);
+      $form_state->set('search-needle', NULL);
       $users = $this->searchBarObj->searchInfoArray($needle,$users);
     }
     
@@ -121,7 +121,7 @@ class LoginCredentialsReminderForm extends FormBase
     $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
     if(!empty($sort)) {
       $order = $_GET['order'];
-      $this->userDisplayObj->sortUsers($users,$sort,$order);
+      $this->userDisplayObj->sortUsers($users, $sort, $order, true );
     }
     
     $this->hdsWithUsers($users,$currentHd);  // Populate the HD field.
@@ -147,7 +147,7 @@ class LoginCredentialsReminderForm extends FormBase
           ],
         ];
         
-        $form['user-form']['user-table'] = $this->userDisplayObj->displayUsers($users,true);
+        $form['user-form']['user-table'] = $this->userDisplayObj->displayUsers( $users, true );
         
         $form['reminder_select'] = [
           '#type' => 'submit',
@@ -172,12 +172,12 @@ class LoginCredentialsReminderForm extends FormBase
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
-      
+      /*
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
-        $form_state->set('nl-search-needle', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
-        
+        */
       case 'hd-select':
         $currentHdIndex = $form_state->getValue('hd-select');
         // The user changed the HD to display.
@@ -213,8 +213,8 @@ class LoginCredentialsReminderForm extends FormBase
     switch ($elementClicked) {
 
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
-        $form_state->set('nl-search-needle', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
         
       case 'reminder_select':

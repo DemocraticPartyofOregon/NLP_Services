@@ -40,8 +40,8 @@ class NlpUserDisplay
       if(!$loginReminder) {
         $createDate = date('Y/n/j',$user['created']);
         $accessDate = (!empty($user['access']))?date('Y/n/j',$user['access']):'Never';
-        $column['createDate'] = $createDate;
-        $column['accessDate'] = $accessDate;
+        $column['created'] = $createDate;
+        $column['access'] = $accessDate;
       } else {
         $column['phone'] = $user['phone'];
         $column['email'] = $user['email'];
@@ -97,22 +97,22 @@ class NlpUserDisplay
   private function headerBuild(bool $loginReminder=FALSE):void
   {
     $this->header = [
-      ['data' => t('cb'), 'field' => 't.cb', 'class' => ['nlp-th-color'] ],
-      ['data' => t('UID'), 'field' => 'd.uid', 'class' => ['nlp-th-color'] ],
-      ['data' => t('HD'), 'field' => 'd.hd', 'class' => ['nlp-th-color'] ],
-      ['data' => t('MCID'), 'field' => 'd.mcid', 'class' => ['nlp-th-color'] ],
-      ['data' => t('Last&nbsp;Name'), 'field' => 'd.lastName', 'class' => ['nlp-th-color'] ],
-      ['data' => t('First&nbsp;Name'), 'field' => 'd.firstName', 'class' => ['nlp-th-color'] ],
-      ['data' => t('Username'), 'field' => 'd.userName', 'class' => ['nlp-th-color'] ],
+      ['data' => t('cb'), 'class' => ['nlp-th-color'] ],
+      ['data' => t('UID'), 'field' => 'uid', 'class' => ['nlp-th-color'] ],
+      ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ],
+      ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color'] ],
+      ['data' => t('Last&nbsp;Name'), 'field' => 'lastName', 'class' => ['nlp-th-color'] ],
+      ['data' => t('First&nbsp;Name'), 'field' => 'firstName', 'class' => ['nlp-th-color'] ],
+      ['data' => t('Username'), 'field' => 'userName', 'class' => ['nlp-th-color'] ],
     ];
     if(!$loginReminder) {
-      $this->header[] = ['data' => t('Create'), 'field' => 'd.created', 'class' => ['nlp-th-color'] ];
-      $this->header[] = ['data' => t('Access'), 'field' => 'd.access', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Create'), 'field' => 'created', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Access'), 'field' => 'access', 'class' => ['nlp-th-color'] ];
     } else {
-      $this->header[] = ['data' => t('Phone'), 'field' => 'd.phone', 'class' => ['nlp-th-color'] ];
-      $this->header[] = ['data' => t('Email'), 'field' => 'd.email', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Phone'), 'field' => 'phone', 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('Email'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     }
-    $this->header[] = ['data' => t('County'), 'field' => 'd.county', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('County'), 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Roles'), 'class' => ['nlp-th-color'] ];
   }
   
@@ -142,11 +142,11 @@ class NlpUserDisplay
   /**
    * Given the information provided by Drupal, determine which column is to be sorted.
    *
-   * @param $data
+   * @param string $data
    * @param bool $loginReminder
    * @return string
    */
-  public function getSortField($data, bool $loginReminder=FALSE):string
+  public function getSortField( string $data, bool $loginReminder=FALSE):string
   {
     $this->headerBuild($loginReminder);
     foreach ($this->header as $headerInfo) {
@@ -162,20 +162,17 @@ class NlpUserDisplay
    *
    * Sort the user's array by the specified column and order.
    *
-   * @param $users - the array of users being displayed in the table.
-   * @param $sort - 'asc' or 'desc'
-   * @param $order - The column to sort.
+   * @param array $users - the array of users being displayed in the table.
+   * @param string $sort - 'asc' or 'desc'
+   * @param string $order - The column to sort.
    * @param bool $loginReminder - TRUE if the table is for a login reminder.
    * @return void
    */
-  public function sortUsers(&$users, $sort, $order, bool $loginReminder=FALSE):void
+  public function sortUsers(array  &$users, string $sort, string $order, bool $loginReminder=FALSE):void
   {
-    $sortField = $this->getSortField($order,$loginReminder);
-    $sortFieldParts = explode('.',$sortField);
-    if($sortFieldParts[0]!='d') {return;}
-    $sortColumn = $sortFieldParts[1];
+    $sortColumn = $this->getSortField($order,$loginReminder);
     $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;
-    $column = array_column($users, $sortColumn);
+    $column = array_map(fn($v) => strtolower((string) $v), array_column($users, $sortColumn));
     array_multisort($column, $sortOrder, $users);
   }
   

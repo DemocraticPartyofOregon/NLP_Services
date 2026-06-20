@@ -4,17 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Refactor matchback processing to avoid cron timeout">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiExportJobs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiExportJobs.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/WebHookController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/WebHookController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpVoterAcProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpVoterAcProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_minivan_canvass.php" beforeDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Refactor minivan and missingAc processing to avoid cron timeout">
+      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpUserDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpUserDisplay.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,60 +101,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0007799443365022" />
-      <entry key="S2" value="1.464716733115457" />
-      <entry key="S5" value="3.673314142363998" />
-      <entry key="S10" value="6.405580173420863" />
-      <entry key="S30" value="10.090826129970228" />
-      <entry key="S60" value="11.428272599518152" />
-      <entry key="M2" value="12.182117706501026" />
-      <entry key="M5" value="12.66478036041409" />
-      <entry key="M10" value="12.83134882418485" />
-      <entry key="M15" value="12.89312735042296" />
-      <entry key="M30" value="13.053761320172157" />
-      <entry key="H1" value="13.44156341146958" />
-      <entry key="H2" value="13.992692733391463" />
-      <entry key="H4" value="15.91909857760896" />
-      <entry key="D1" value="67.31784031317562" />
-      <entry key="W1" value="496.0473737676456" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0000000000029996" />
+      <entry key="S10" value="1.0000017338618064" />
+      <entry key="S30" value="1.0139102998940497" />
+      <entry key="S60" value="1.1709041152975141" />
+      <entry key="M2" value="1.6807353275276662" />
+      <entry key="M5" value="2.6378982719013635" />
+      <entry key="M10" value="3.2124266576330944" />
+      <entry key="M15" value="3.4477670121760107" />
+      <entry key="M30" value="3.70929755780059" />
+      <entry key="H1" value="3.8640645955640913" />
+      <entry key="H2" value="4.486733164960603" />
+      <entry key="H4" value="8.303285325681811" />
+      <entry key="D1" value="63.43645067438943" />
+      <entry key="W1" value="491.1969679915007" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="7.966146808537247E-215" />
-      <entry key="M5" value="2.293503051589957E-86" />
-      <entry key="M10" value="1.5144315935657055E-43" />
-      <entry key="M15" value="2.841186707156961E-29" />
-      <entry key="M30" value="5.330279198317342E-15" />
-      <entry key="H1" value="7.305046091678865E-8" />
-      <entry key="H2" value="2.7952062103231933E-4" />
-      <entry key="H4" value="0.02138959748220545" />
-      <entry key="D1" value="2.147667441579022" />
-      <entry key="W1" value="13.022714439865553" />
+      <entry key="MS100" value="1.8931004010722373E-73" />
+      <entry key="MS500" value="2.8538735703770417E-15" />
+      <entry key="S2" value="2.3113125762615092E-4" />
+      <entry key="S5" value="0.0351191080251922" />
+      <entry key="S10" value="0.1874188436031642" />
+      <entry key="S30" value="0.5984228294213005" />
+      <entry key="S60" value="0.9182369673523167" />
+      <entry key="M2" value="1.271951315859675" />
+      <entry key="M5" value="1.6403760688630928" />
+      <entry key="M10" value="1.8059423171331022" />
+      <entry key="M15" value="1.8672084110503115" />
+      <entry key="M30" value="1.9318277465508182" />
+      <entry key="H1" value="1.9680054276311254" />
+      <entry key="H2" value="2.081660794433586" />
+      <entry key="H4" value="2.6191273816077434" />
+      <entry key="D1" value="6.324218982929219" />
+      <entry key="W1" value="18.065980804123278" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9460576467255959" />
-      <entry key="MS500" value="0.9897402306214502" />
-      <entry key="S2" value="1.4606034311150224" />
-      <entry key="S5" value="3.669150501289744" />
-      <entry key="S10" value="6.401877535135766" />
-      <entry key="S30" value="10.0888328349897" />
-      <entry key="S60" value="11.427134861545799" />
-      <entry key="M2" value="12.181508743469848" />
-      <entry key="M5" value="12.664526459849101" />
-      <entry key="M10" value="12.831219929753104" />
-      <entry key="M15" value="12.893039136248236" />
-      <entry key="M30" value="13.053699808778001" />
-      <entry key="H1" value="13.441502892865776" />
-      <entry key="H2" value="13.992920988855058" />
-      <entry key="H4" value="15.940443309836018" />
-      <entry key="D1" value="69.46528683775648" />
-      <entry key="W1" value="509.06926497372535" />
+      <entry key="MS100" value="1.8147501576128285E-31" />
+      <entry key="MS500" value="7.108261045679695E-7" />
+      <entry key="S2" value="0.0291054407835354" />
+      <entry key="S5" value="0.2644349210178508" />
+      <entry key="S10" value="0.6399465358602782" />
+      <entry key="S30" value="1.3544801230297718" />
+      <entry key="S60" value="1.9348948263638632" />
+      <entry key="M2" value="2.858514530556588" />
+      <entry key="M5" value="4.231618541339527" />
+      <entry key="M10" value="4.99269136643297" />
+      <entry key="M15" value="5.297242283491736" />
+      <entry key="M30" value="5.631924234233757" />
+      <entry key="H1" value="5.8273701861467435" />
+      <entry key="H2" value="6.565843134679106" />
+      <entry key="H4" value="10.920662244087872" />
+      <entry key="D1" value="69.75990387443798" />
+      <entry key="W1" value="509.2620680544102" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -331,15 +323,7 @@
       <workItem from="1781622630755" duration="5029000" />
       <workItem from="1781657743426" duration="5772000" />
       <workItem from="1781726404471" duration="3190000" />
-      <workItem from="1781811156444" duration="28536000" />
-    </task>
-    <task id="LOCAL-00089" summary="Claude code review of documents, email config and exports">
-      <option name="closed" value="true" />
-      <created>1779977938467</created>
-      <option name="number" value="00089" />
-      <option name="presentableId" value="LOCAL-00089" />
-      <option name="project" value="LOCAL" />
-      <updated>1779977938468</updated>
+      <workItem from="1781811156444" duration="39534000" />
     </task>
     <task id="LOCAL-00090" summary="Dulicate code resolution in export methods">
       <option name="closed" value="true" />
@@ -725,7 +709,15 @@
       <option name="project" value="LOCAL" />
       <updated>1781913587333</updated>
     </task>
-    <option name="localTasksCounter" value="138" />
+    <task id="LOCAL-00138" summary="Refactor minivan and missingAc processing to avoid cron timeout">
+      <option name="closed" value="true" />
+      <created>1781915870100</created>
+      <option name="number" value="00138" />
+      <option name="presentableId" value="LOCAL-00138" />
+      <option name="project" value="LOCAL" />
+      <updated>1781915870100</updated>
+    </task>
+    <option name="localTasksCounter" value="139" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -777,7 +769,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the rebuild of the table when the HD is changed." />
     <MESSAGE value="Change the title of the CO and NL columns" />
     <MESSAGE value="Close possible causes of the lost NLP Voter activist code." />
     <MESSAGE value="Claude Unit test of DataEntry" />
@@ -802,7 +793,8 @@
     <MESSAGE value="Fix tests" />
     <MESSAGE value="Prepare for Drupal 11" />
     <MESSAGE value="Refactor matchback processing to avoid cron timeout" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor matchback processing to avoid cron timeout" />
+    <MESSAGE value="Refactor minivan and missingAc processing to avoid cron timeout" />
+    <option name="LAST_COMMIT_MESSAGE" value="Refactor minivan and missingAc processing to avoid cron timeout" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
