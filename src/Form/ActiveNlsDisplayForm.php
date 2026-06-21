@@ -119,9 +119,9 @@ class ActiveNlsDisplayForm extends FormBase
       $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
       
       // Fetch the list of NL names and contact information.
-      $needle = $form_state->get('nl-search-needle');
+      $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
-        $form_state->set('nl-search-needle', NULL);
+        $form_state->set('search-needle', NULL);
         $nlRecords = $this->nlsObj->searchNls($county,$needle);
       } else {
         $nlRecords = $this->nlsObj->getNls($county, $currentHd);
@@ -279,8 +279,8 @@ class ActiveNlsDisplayForm extends FormBase
     $elementClicked = $triggeringElement['#name'];
     //nlp_debug_msg('submitForm',"Element clicked: $elementClicked");
     if($elementClicked=='search_submit') {
-      $needle = $form_state->getValue('nl-search-needle');
-      $form_state->set('nl-search-needle', $needle);
+      $needle = $form_state->getValue('search-needle');
+      $form_state->set('search-needle', $needle);
     }
   }
   

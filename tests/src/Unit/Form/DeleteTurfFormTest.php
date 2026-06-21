@@ -251,7 +251,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testSubmitFormSearchSubmitStoresNeedle(): void {
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'search_submit']);
-      $formState->method('getValue')->with('nl-search-needle')->willReturn('Smith');
+      $formState->method('getValue')->with('search-needle')->willReturn('Smith');
       $formState->expects($this->atLeast(1))
         ->method('set')
         ->with($this->logicalOr(

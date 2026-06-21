@@ -131,9 +131,9 @@ class DeleteCoordinatorForm extends FormBase
     
     /* --- Remove coordinator assignment --- */
     
-    $needle = $form_state->get('nl-search-needle-remove');
+    $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $form_state->set('nl-search-needle-remove', NULL);
+      $form_state->set('search-needle', NULL);
       $assignedCoordinators = $this->searchBarObj->searchInfoArray($needle,$assignedCoordinators);
     }
     $currentInfo['sortRequest'] = $sortRequest;
@@ -197,9 +197,9 @@ class DeleteCoordinatorForm extends FormBase
     //nlp_debug_msg('$element_clicked',$element_clicked);
     switch ($elementClicked) {
       
-      case 'search_submit-remove':
-        $needle = $form_state->getValue('nl-search-needle-remove');
-        $form_state->set('nl-search-needle-remove', $needle);
+      case 'search_submit':
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
       
       case 'delete_current_coordinator':

@@ -183,10 +183,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testSubmitFormSearchSubmitStoresNeedle(): void {
       $formStateMock = $this->createMock(FormStateInterface::class);
       $formStateMock->method('getTriggeringElement')->willReturn(['#name' => 'search_submit']);
-      $formStateMock->method('getValue')->with('nl-search-needle')->willReturn('Smith');
+      $formStateMock->method('getValue')->with('search-needle')->willReturn('Smith');
       $formStateMock->expects($this->once())
         ->method('set')
-        ->with('nl-search-needle', 'Smith');
+        ->with('search-needle', 'Smith');
       $form = [];
       $this->buildForm()->submitForm($form, $formStateMock);
     }

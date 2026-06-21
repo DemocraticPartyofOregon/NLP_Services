@@ -183,7 +183,7 @@ class DeleteTurfForm extends FormBase
     switch ($elementClicked) {
       
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
+        $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
       

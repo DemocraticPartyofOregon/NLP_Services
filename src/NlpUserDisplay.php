@@ -150,6 +150,7 @@ class NlpUserDisplay
   {
     $this->headerBuild($loginReminder);
     foreach ($this->header as $headerInfo) {
+      if(empty($headerInfo['field'])) { continue; }
       if((string) $headerInfo['data'] == $data) {
         return $headerInfo['field'];
       }
@@ -168,12 +169,16 @@ class NlpUserDisplay
    * @param bool $loginReminder - TRUE if the table is for a login reminder.
    * @return void
    */
-  public function sortUsers(array  &$users, string $sort, string $order, bool $loginReminder=FALSE):void
+  public function sortUsers(array &$users, string $sort, string $order, bool $loginReminder=FALSE): void
   {
-    $sortColumn = $this->getSortField($order,$loginReminder);
-    $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;
-    $column = array_map(fn($v) => strtolower((string) $v), array_column($users, $sortColumn));
-    array_multisort($column, $sortOrder, $users);
+    $sortColumn = $this->getSortField($order, $loginReminder);
+    if (empty($sortColumn)) { return; }
+    $direction = ($sort === 'asc') ? 1 : -1;
+    uasort($users, function($a, $b) use ($sortColumn, $direction) {
+      $aVal = strtolower((string) ($a[$sortColumn] ?? ''));
+      $bVal = strtolower((string) ($b[$sortColumn] ?? ''));
+      return $direction * strcmp($aVal, $bVal);
+    });
   }
   
 }

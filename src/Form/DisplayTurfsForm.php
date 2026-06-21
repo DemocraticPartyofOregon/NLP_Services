@@ -28,7 +28,7 @@ class DisplayTurfsForm extends FormBase
   protected ApiMapRegions $apiMapRegionObj;
 
   public function __construct( $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
-                               $sessionDataObj, $foldersObj, $apiMapRegionObj ) {
+                               $sessionDataObj, $foldersObj, $apiMapRegionObj, $requestStack ) {
     $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
@@ -36,6 +36,7 @@ class DisplayTurfsForm extends FormBase
     $this->sessionDataObj = $sessionDataObj;
     $this->foldersObj = $foldersObj;
     $this->apiMapRegionObj = $apiMapRegionObj;
+    $this->setRequestStack($requestStack);
   }
 
   /**
@@ -51,6 +52,7 @@ class DisplayTurfsForm extends FormBase
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.api_folders'),
       $container->get('nlpservices.api_map_regions'),
+      $container->get('request_stack'),
     );
   }
 
@@ -67,6 +69,10 @@ class DisplayTurfsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/search-boxes';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+
     if (empty($form_state->get('reenter'))) {
       $county = $this->sessionDataObj->getCounty();
       if(empty($county)) {

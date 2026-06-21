@@ -35,7 +35,7 @@ class SyncTurfForm extends FormBase {
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
                                 $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
-                                $mapRegionsObj ) {
+                                $mapRegionsObj, $requestStack ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -46,8 +46,9 @@ class SyncTurfForm extends FormBase {
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
     $this->mapRegionsObj = $mapRegionsObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -64,6 +65,7 @@ class SyncTurfForm extends FormBase {
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_list_display_votebuilder'),
       $container->get('nlpservices.api_map_regions'),
+      $container->get('request_stack'),
     );
   }
   
@@ -109,17 +111,24 @@ class SyncTurfForm extends FormBase {
         $form['turf_select_title'] = [
           '#markup' => '<div class="small-title" >'.$selectTitle.'</div>',
         ];
-        
-        //$form['turf_filter'] = $this->buildTurfFilter($showLists);
-        
+
         $form['turf_select_page'] = [
           '#type' => 'fieldset',
           '#prefix' => '<div id="folder_change_wrapper" >',
           '#suffix' => '</div>',
         ];
-        
+
         $form['turf_select_page']['turf_filter'] = $this->buildTurfFilter($showLists);
-        
+
+        $request = $this->requestStack->getCurrentRequest();
+        $sort = $request->query->get('sort', '');
+        if (!empty($sort)) {
+          $order = $request->query->get('order', '');
+          $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
+          $this->turfListDisplayObj->sortTurfs($turfOptions, $sort, $order);
+          $this->nlpSessionDataObj->set('turfOptions', $turfOptions);
+        }
+
         $form['turf_select_page']['turf_display'] = $this->buildTurfSelectPage($showLists);
         
         $form['turf_submit'] = [
@@ -228,7 +237,6 @@ class SyncTurfForm extends FormBase {
       // A new folder was selected for the turf selection.
       case 'folder':
         $currentFolderId = $values['folder'];
-        //nlp_debug_msg('currentFolderId',$currentFolderId);
         $this->nlpSessionDataObj->set('folderId',$currentFolderId);
         $mapRegionId = 0;
         $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);

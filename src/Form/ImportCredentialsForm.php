@@ -21,15 +21,16 @@ class ImportCredentialsForm extends FormBase
   protected MagicWord $magicWordObj;
   protected ApiNls $apiNlsObj;
   
-  public function __construct($fileSystem, $connection, $drupalUserObj, $magicWordObj, $apiNlsObj)
+  public function __construct($fileSystem, $connection, $drupalUserObj, $magicWordObj, $apiNlsObj, $requestStack)
   {
     $this->fileSystem = $fileSystem;
     $this->connection = $connection;
     $this->drupalUserObj = $drupalUserObj;
     $this->magicWordObj = $magicWordObj;
     $this->apiNlsObj = $apiNlsObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -41,6 +42,7 @@ class ImportCredentialsForm extends FormBase
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.api_nls'),
+      $container->get('request_stack'),
     );
   }
   

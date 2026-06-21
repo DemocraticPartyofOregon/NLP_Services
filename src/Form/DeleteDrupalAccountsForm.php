@@ -93,10 +93,10 @@ class DeleteDrupalAccountsForm extends FormBase
     if ($page == 'displayUsers') {
       
       // A search needle was entered, display all possible matches.
-      $needle = $form_state->get('nl-search-needle');
+      $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
         $users = $this->drupalUser->getUsers($county);
-        $form_state->set('nl-search-needle', NULL);
+        $form_state->set('search-needle', NULL);
         $users = $this->searchBarObj->searchInfoArray($needle,$users);
       } else {
         $currentHd = $this->sessionDataObj->getSavedHd();
@@ -193,8 +193,8 @@ class DeleteDrupalAccountsForm extends FormBase
     switch ($elementClicked) {
       
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
-        $form_state->set('nl-search-needle', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         break;
      
       case 'delete-submit':

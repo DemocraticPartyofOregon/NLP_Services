@@ -22,14 +22,15 @@ class ImportTableForm extends FormBase
   protected NlpTurfs $turfsObj;
   protected NlpTurfAssignments $turfAssignmentsObj;
 
-  public function __construct( $databaseFunctionsObj, $nlpAwardsObj, $nlpNlsObj, $turfsObj, $turfAssignmentsObj) {
+  public function __construct( $databaseFunctionsObj, $nlpAwardsObj, $nlpNlsObj, $turfsObj, $turfAssignmentsObj, $requestStack) {
     $this->databaseFunctionsObj = $databaseFunctionsObj;
     $this->nlpAwardsObj = $nlpAwardsObj;
     $this->nlpNlsObj = $nlpNlsObj;
     $this->turfsObj = $turfsObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -41,6 +42,7 @@ class ImportTableForm extends FormBase
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.turf_assignments'),
+      $container->get('request_stack'),
     );
   }
   

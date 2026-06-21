@@ -49,7 +49,8 @@ class DeliverTurfForm extends FormBase
   public function __construct( $turfsObj, $drupalUserObj, $pathsObj, $fileSystemObj,
                               $instructionsObj, $coordinatorsObj, $magicWordObj, $turfMsgObj,
                               $turfDisplayObj, $searchBarObj,
-                              $nlpConfigurationObj, $nlpSessionDataObj, $sendMailObj, $nlsObj, $foldersObj)
+                              $nlpConfigurationObj, $nlpSessionDataObj, $sendMailObj, $nlsObj, $foldersObj,
+                              $requestStack)
   {
     $this->turfsObj = $turfsObj;
     $this->drupalUserObj = $drupalUserObj;
@@ -66,6 +67,7 @@ class DeliverTurfForm extends FormBase
     $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
     $this->foldersObj = $foldersObj;
+    $this->setRequestStack($requestStack);
   }
 
   /**
@@ -89,6 +91,7 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.folders'),
+      $container->get('request_stack'),
     );
   }
 
@@ -147,23 +150,15 @@ class DeliverTurfForm extends FormBase
       return $form;
     }
     
-    $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
-    if(!empty($sort)) {
-      $order = $_GET['order'];
-      $sortField = $this->turfDisplayObj->getSortField($order);
-      $sortOrder = ['sort'=>$sort,'field'=>$sortField,];
-      $turfArray = $this->turfsObj->getTurfs($county,$currentHd,$sortOrder);
+    $needle = $form_state->get('search-needle');
+    if (!empty($needle)) {
+      $turfArray = $this->turfsObj->getTurfs($county, 'All');
+      $form_state->set('search-needle', NULL);
+      $turfArray = $this->searchBarObj->searchInfoArray($needle, $turfArray);
     } else {
-      $needle = $form_state->get('search-needle');
-      if(!empty($needle)) {
-        $turfArray = $this->turfsObj->getTurfs($county,'All');
-        $form_state->set('search-needle', NULL);
-        $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
-      } else {
-        $turfArray = $this->turfsObj->getTurfs($county,$currentHd);
-      }
+      $turfArray = $this->turfsObj->getTurfs($county, $currentHd);
     }
-    $form_state->set('turfArray',$turfArray);
+    $form_state->set('turfArray', $turfArray);
     
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     
@@ -176,7 +171,13 @@ class DeliverTurfForm extends FormBase
         'style' => ['background-image:none;border:0px;padding:0px;margin:0px;background-color:rgb(255,255,255);'],
       ],
     ];
-    $form['turf-form']['turf_table'] = $this->turfDisplayObj->displayTurfs($turfArray,'walksheet');
+    $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray, 'walksheet');
+    $request = $this->requestStack->getCurrentRequest();
+    $sort = $request->query->get('sort', '');
+    if (!empty($sort)) {
+      $this->turfDisplayObj->sortTurfTable($turfTableArray, $sort, $request->query->get('order', ''));
+    }
+    $form['turf-form']['turf_table'] = $this->turfDisplayObj->displayTurfs($turfTableArray, 'walksheet');
     
     $form['footnote'] = [
       '#markup' => '<p>&#134;&#134;  This turf does not have a printable walksheet associated.  If the NL is
@@ -219,8 +220,8 @@ class DeliverTurfForm extends FormBase
     
     switch ($elementClicked) {
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
-        $form_state->set('nl-search-needle', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
       
       case 'hd-select':
@@ -272,7 +273,7 @@ class DeliverTurfForm extends FormBase
     switch ($elementClicked) {
      
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
+        $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
       

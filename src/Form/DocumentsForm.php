@@ -21,12 +21,13 @@ class DocumentsForm extends FormBase
   protected NlpPaths $pathsObj;
   protected FileSystemInterface $filesystem;
 
-  public function __construct( $documentsObj, $drupalUserObj, $pathsObj, $filesystem)
+  public function __construct( $documentsObj, $drupalUserObj, $pathsObj, $filesystem, $requestStack)
   {
     $this->documentsObj = $documentsObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->pathsObj = $pathsObj;
     $this->filesystem = $filesystem;
+    $this->setRequestStack($requestStack);
   }
 
   /**
@@ -39,6 +40,7 @@ class DocumentsForm extends FormBase
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.paths'),
       $container->get('file_system'),
+      $container->get('request_stack'),
     );
   }
 

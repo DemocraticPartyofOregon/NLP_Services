@@ -143,9 +143,9 @@ class RemoveCoordinatorRoleFrom extends FormBase
     //nlp_debug_msg('$unassignedCoordinators',$unassignedCoordinators);
     
     //$assignedCoordinators = $coordinators;
-    $needle = $form_state->get('nl-search-needle-remove');
+    $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $form_state->set('nl-search-needle-remove', NULL);
+      $form_state->set('search-needle', NULL);
       $form_state->set('unassignedCoordinators',$unassignedCoordinators);
       $unassignedCoordinators = $this->searchBarObj->searchInfoArray($needle,$unassignedCoordinators);
     }
@@ -225,9 +225,9 @@ class RemoveCoordinatorRoleFrom extends FormBase
         // The user changed the HD to display.
         $this->sessionDataObj->saveHdIndex($newHdIndex);
         return;
-      case 'search_submit-add':
-        $needle = $form_state->getValue('nl-search-needle-add');
-        $form_state->set('nl-search-needle-add', $needle);
+      case 'search_submit':
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
       
       case 'user_select':

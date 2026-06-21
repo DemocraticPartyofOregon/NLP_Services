@@ -17,13 +17,14 @@ class CoordinatorEmail extends FormBase
   protected LanguageManagerInterface $languageManager;
   protected HtmlText $htmlText;
   
-  public function __construct($mailManager, $languageManager, $htmlText)
+  public function __construct($mailManager, $languageManager, $htmlText, $requestStack)
   {
     $this->mailManager = $mailManager;
     $this->languageManager = $languageManager;
     $this->htmlText = $htmlText;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -33,6 +34,7 @@ class CoordinatorEmail extends FormBase
       $container->get('plugin.manager.mail'),
       $container->get('language_manager'),
       $container->get('nlpservices.html_text'),
+      $container->get('request_stack'),
     );
   }
   

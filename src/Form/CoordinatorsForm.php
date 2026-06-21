@@ -161,7 +161,7 @@ coordinator and not to the NLP Site admin.</p>"),
     /* - - - assign a coordinator  - - - */
     
     // Search the list of available NLs for a match with the needle.
-    $needle = $form_state->get('nl-search-needle-add');
+    $needle = $form_state->get('search-needle');
     //nlp_debug_msg('needle',$needle);
     if(!empty($needle)) {
       $allCountyNls = $this->nlsObj->getCountyNls($county);
@@ -310,11 +310,11 @@ coordinator and not to the NLP Site admin.</p>"),
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
       
-      case 'search_submit-add':
+      case 'search_submit':
         $form_state->set('reenter', TRUE);
         $form_state->setRebuild();  // form_state will persist.
-        $needle = $form_state->getValue('nl-search-needle-add');
-        $form_state->set('nl-search-needle-add', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         return;
       
       case 'remove_coordinator_assignment':

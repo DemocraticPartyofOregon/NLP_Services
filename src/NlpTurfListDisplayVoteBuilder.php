@@ -33,10 +33,8 @@ class NlpTurfListDisplayVoteBuilder
     foreach ($turfs as $turfId => $turf) {
       $row = [];
       $row['cb'] = ['type' => 'cb', 'turfId' => $turfId, 'mcid' => $turf['mcid']];
-      //$row['turfId'] = $turf['turfId'];
       $row['turfAssigned'] = $turf['turfAssigned'];
-      $row['nl'] = $turf['nl'];
-      //$row['mcid'] = $turf['mcid'];
+      $row['nlName'] = $turf['nl'];
       $row['turfName'] = $turf['turfName'];
       $row['mapRegionName'] = (!empty($turf['mapRegionName'])) ? $turf['mapRegionName'] : ' ';
       $row['doorCount'] = $turf['doorCount'];
@@ -89,10 +87,8 @@ and cannot be assigned to this turf.<br>
   {
     $this->header = [
       ['data' => t('cb'), 'class' => ['nlp-th-color']],
-      //['data' => t('Turf ID'), 'field' => 'id', 'class' => ['nlp-th-color']],
-      ['data' => t('A'), 'field' => 'hd', 'class' => ['nlp-th-color']],
-      ['data' => t('Name'), 'field' => 'nlLastName', 'class' => ['nlp-th-color']],
-      //['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']],
+      ['data' => t('A'), 'field' => 'turfAssigned', 'class' => ['nlp-th-color']],
+      ['data' => t('Name'), 'field' => 'nl', 'class' => ['nlp-th-color']],
       ['data' => t('Turf Name'), 'field' => 'turfName', 'class' => ['nlp-th-color']],
     ];
     $this->header[] = ['data' => t('Map Region Name'), 'field' => 'mapRegionName', 'class' => ['nlp-th-color']];
@@ -100,7 +96,7 @@ and cannot be assigned to this turf.<br>
     $this->header[] = ['data' => t('Voters'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Minivan Number'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Created'), 'class' => ['nlp-th-color']];
-    $this->header[] = ['data' => t('Turf ID'), 'field' => 'id', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Turf ID'), 'field' => 'turfId', 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']];
   }
 
@@ -130,6 +126,35 @@ and cannot be assigned to this turf.<br>
       }
     }
     return $selections;
+  }
+
+  /**
+   * Given the information provided by Drupal, determine which column is to be sorted.
+   *
+   * @param string $data
+   * @return string
+   */
+  public function getSortField( string $data ):string
+  {
+    $this->headerBuild();
+    foreach ($this->header as $headerInfo) {
+      if((string) $headerInfo['data'] == $data) {
+        return $headerInfo['field'];
+      }
+    }
+    return '';
+  }
+
+  public function sortTurfs(array &$turfs, string $sort, string $order): void
+  {
+    $sortColumn = $this->getSortField($order);
+    if (empty($sortColumn)) { return; }
+    $direction = ($sort === 'asc') ? 1 : -1;
+    uasort($turfs, function($a, $b) use ($sortColumn, $direction) {
+      $aVal = strtolower((string) ($a[$sortColumn] ?? ''));
+      $bVal = strtolower((string) ($b[$sortColumn] ?? ''));
+      return $direction * strcmp($aVal, $bVal);
+    });
   }
 
 }

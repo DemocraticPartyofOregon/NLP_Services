@@ -117,9 +117,9 @@ class ManageDrupalAccountsForm extends FormBase
         $currentHd = $this->sessionDataObj->getSavedHd();
         $hdOptions = $this->sessionDataObj->getHdOptions();
        
-        $needle = $form_state->get('nl-search-needle');
+        $needle = $form_state->get('search-needle');
         if(!empty($needle)) {
-          $form_state->set('nl-search-needle', NULL);
+          $form_state->set('search-needle', NULL);
           $users = $this->drupalUserObj->getUsers($county);  // All the uses in the county for the search.
           $users = $this->searchBarObj->searchInfoArray($needle,$users);  // just the ones with the needle.
         } else {
@@ -356,8 +356,8 @@ class ManageDrupalAccountsForm extends FormBase
     
     switch ($element_clicked) {
       case 'search_submit':
-        $needle = $form_state->getValue('nl-search-needle');
-        $form_state->set('nl-search-needle', $needle);
+        $needle = $form_state->getValue('search-needle');
+        $form_state->set('search-needle', $needle);
         break;
       
       case 'user_select':
