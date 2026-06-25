@@ -94,7 +94,7 @@ class SyncTurfForm extends FormBase {
       $hdList = $this->nlsObj->getHdList($county);
       $pctList = $this->nlsObj->getPctList($county); // All precincts in the county.
       $this->nlpSessionDataObj->setNewDistricts($hdList,$pctList);
-      // POST requests (AJAX or submit-button) must restore from session so AJAX callbacks
+      // POST-requests (AJAX or submit-button) must restore from session so AJAX callbacks
       // see the correct page. Sort links (GET + ?sort=) also restore from session.
       // Only a clean GET with no sort params is a true fresh load that resets to turf_select.
       $request = $this->requestStack->getCurrentRequest();
@@ -258,14 +258,14 @@ class SyncTurfForm extends FormBase {
         $this->nlpSessionDataObj->set('folderId',$currentFolderId);
         $mapRegionId = 0;
         $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);
-        $form_state->setRebuild(TRUE);
+        $form_state->setRebuild();
         return;
       // A Map Region was selected for the turf selection. (Narrows the display of turfs for
       // folders with lots of precincts.)
       case 'map_region_select':
         $mapRegionId = $values['map_region_select'];
         $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);
-        $form_state->setRebuild(TRUE);
+        $form_state->setRebuild();
         return;
       // Show just the saved lists and not the turfs associated with the Map Regions.
       // This should rarely be used and is only for the cases where lots of addresses have
@@ -322,7 +322,7 @@ class SyncTurfForm extends FormBase {
           $form_state->setValue('nl_select_precinct', 0);
         }
         $this->nlpSessionDataObj->saveHdIndex($selectedHdIndex);
-        $form_state->setRebuild(TRUE);
+        $form_state->setRebuild();
         return;
 
       // A precinct was selected.
@@ -336,7 +336,7 @@ class SyncTurfForm extends FormBase {
           $this->nlpSessionDataObj->set('hdSelected',FALSE);
         }
         $this->nlpSessionDataObj->savePrecinctIndex($selectedHdPrecinct);
-        $form_state->setRebuild(TRUE);
+        $form_state->setRebuild();
         return;
 
       // A search for an NL by name was submitted (actually a fragment of text).

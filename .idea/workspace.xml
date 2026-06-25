@@ -4,13 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the search/sort for various table displays.">
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the search/sort for sync turf table displays.">
       <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,23 +99,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000117254271035" />
-      <entry key="MS500" value="1.104091714402803" />
-      <entry key="S2" value="1.8479962164855117" />
-      <entry key="S5" value="2.903646465311609" />
-      <entry key="S10" value="3.8757047606364954" />
-      <entry key="S30" value="5.082099867897753" />
-      <entry key="S60" value="5.50679169440944" />
-      <entry key="M2" value="5.744066362066377" />
-      <entry key="M5" value="5.895281178293029" />
-      <entry key="M10" value="5.947240462356124" />
-      <entry key="M15" value="5.964737360112286" />
-      <entry key="M30" value="5.9823237979117225" />
-      <entry key="H1" value="5.9926511490284415" />
-      <entry key="H2" value="6.184691719280633" />
-      <entry key="H4" value="8.42876333610959" />
-      <entry key="D1" value="60.81454276115108" />
-      <entry key="W1" value="487.1667783776967" />
+      <entry key="MS100" value="1.0017982531575258" />
+      <entry key="MS500" value="1.5056134581581317" />
+      <entry key="S2" value="2.980130907777646" />
+      <entry key="S5" value="4.368950191158296" />
+      <entry key="S10" value="5.527183904776184" />
+      <entry key="S30" value="6.9327869851540775" />
+      <entry key="S60" value="7.426312383944129" />
+      <entry key="M2" value="7.7021997599668675" />
+      <entry key="M5" value="7.878119695609822" />
+      <entry key="M10" value="7.938588437529852" />
+      <entry key="M15" value="7.958953339859263" />
+      <entry key="M30" value="7.979423744749058" />
+      <entry key="H1" value="7.991198786474468" />
+      <entry key="H2" value="8.183945183163157" />
+      <entry key="H4" value="10.428271348721873" />
+      <entry key="D1" value="62.81399889024216" />
+      <entry key="W1" value="489.16616367493646" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -129,36 +124,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="1.3489243480371657E-240" />
-      <entry key="M2" value="1.16143203040663E-120" />
-      <entry key="M5" value="1.0624397359540785E-48" />
-      <entry key="M10" value="1.0690050718433944E-24" />
-      <entry key="M15" value="1.1640161873220096E-16" />
-      <entry key="M30" value="1.5462492702395382E-8" />
-      <entry key="H1" value="2.041847683017232E-4" />
-      <entry key="H2" value="0.025134612995964083" />
-      <entry key="H4" value="0.32326543823594805" />
-      <entry key="D1" value="4.876549085024202" />
-      <entry key="W1" value="17.98376980740171" />
+      <entry key="S60" value="1.3319064671083855E-240" />
+      <entry key="M2" value="1.1540825274472092E-120" />
+      <entry key="M5" value="1.0597453802246644E-48" />
+      <entry key="M10" value="1.0676487086234272E-24" />
+      <entry key="M15" value="1.163031369540847E-16" />
+      <entry key="M30" value="1.5455950284795618E-8" />
+      <entry key="H1" value="2.0414156687931093E-4" />
+      <entry key="H2" value="0.025131953864030734" />
+      <entry key="H4" value="0.3232483377501215" />
+      <entry key="D1" value="4.87650608981203" />
+      <entry key="W1" value="17.983747156169493" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.895035785992027" />
-      <entry key="MS500" value="1.0802945648454794" />
-      <entry key="S2" value="1.8385764777290956" />
-      <entry key="S5" value="2.8974619252831593" />
-      <entry key="S10" value="3.8711715401774236" />
-      <entry key="S30" value="5.079906687906724" />
-      <entry key="S60" value="5.505567954855243" />
-      <entry key="M2" value="5.743418374369589" />
-      <entry key="M5" value="5.895012695873621" />
-      <entry key="M10" value="5.947104618719681" />
-      <entry key="M15" value="5.964646437443432" />
-      <entry key="M30" value="5.982278170822541" />
-      <entry key="H1" value="5.992832112371779" />
-      <entry key="H2" value="6.209790975299091" />
-      <entry key="H4" value="8.751846797378" />
-      <entry key="D1" value="65.69055198299972" />
-      <entry key="W1" value="505.14971132205494" />
+      <entry key="MS100" value="0.9469893932110748" />
+      <entry key="MS500" value="1.442349398272985" />
+      <entry key="S2" value="2.93670817659535" />
+      <entry key="S5" value="4.345581595736709" />
+      <entry key="S10" value="5.513327900153823" />
+      <entry key="S30" value="6.92728268220944" />
+      <entry key="S60" value="7.423402011070791" />
+      <entry key="M2" value="7.700700040178754" />
+      <entry key="M5" value="7.877508404376544" />
+      <entry key="M10" value="7.9382808281712745" />
+      <entry key="M15" value="7.958747825751982" />
+      <entry key="M30" value="7.979320781287097" />
+      <entry key="H1" value="7.9913510283147104" />
+      <entry key="H2" value="8.209027440838739" />
+      <entry key="H4" value="10.75133054731906" />
+      <entry key="D1" value="67.68996392628982" />
+      <entry key="W1" value="507.14907379835125" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -336,15 +331,7 @@
       <workItem from="1781811156444" duration="52116000" />
       <workItem from="1782319556792" duration="41000" />
       <workItem from="1782319617761" duration="6365000" />
-      <workItem from="1782402136841" duration="1221000" />
-    </task>
-    <task id="LOCAL-00092" summary="Claude code review minvan and NlpNls">
-      <option name="closed" value="true" />
-      <created>1779992856121</created>
-      <option name="number" value="00092" />
-      <option name="presentableId" value="LOCAL-00092" />
-      <option name="project" value="LOCAL" />
-      <updated>1779992856123</updated>
+      <workItem from="1782402136841" duration="1649000" />
     </task>
     <task id="LOCAL-00093" summary="Claude code review reports, lst display, paths, replies">
       <option name="closed" value="true" />
@@ -730,7 +717,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782018842063</updated>
     </task>
-    <option name="localTasksCounter" value="141" />
+    <task id="LOCAL-00141" summary="Fix the search/sort for sync turf table displays.">
+      <option name="closed" value="true" />
+      <created>1782404789188</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1782404789189</updated>
+    </task>
+    <option name="localTasksCounter" value="142" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -782,7 +777,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Claude Unit test of DataEntry" />
     <MESSAGE value="Add more unit tests" />
     <MESSAGE value="Update ActiveNls and turf sync for Drupal 10 best practices" />
     <MESSAGE value="Remove varius typos" />
@@ -807,7 +801,8 @@
     <MESSAGE value="Refactor minivan and missingAc processing to avoid cron timeout" />
     <MESSAGE value="Fix the search/sort for the display of NLs." />
     <MESSAGE value="Fix the search/sort for various table displays." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the search/sort for various table displays." />
+    <MESSAGE value="Fix the search/sort for sync turf table displays." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the search/sort for sync turf table displays." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
