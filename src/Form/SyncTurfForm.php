@@ -611,7 +611,7 @@ class SyncTurfForm extends FormBase {
       // Reveal only lists.
       $this->mapRegionsObj->getMapRegionInfo($county, $currentFolderId);
       $excludedTurfIds = $this->mapRegionsObj->getTurfIds();
-      $savedLists = $this->savedListsObj->getTurfLists($currentFolderId, $excludedTurfIds);
+      $savedLists = $this->savedListsObj->getTurfLists($county, $currentFolderId, $excludedTurfIds);
       $savedListOptions = $this->savedListsObj->savedListOptions($savedLists);
 
       foreach ($savedListOptions as $turfId => $savedListOption) {
