@@ -4,16 +4,20 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Refactor minivan and missingAc processing to avoid cron timeout">
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpUserDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpUserDisplay.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the search/sort for various table displays.">
+      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfBuilder.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
-  <component name="ComposerSettings">
+  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
     <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
     <execution>
       <executable path="composer" />
@@ -63,7 +67,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="277" />
+    <option name="cachedIndexableFilesCount" value="276" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -100,61 +104,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0000000000029996" />
-      <entry key="S10" value="1.0000017338618064" />
-      <entry key="S30" value="1.0139102998940497" />
-      <entry key="S60" value="1.1709041152975141" />
-      <entry key="M2" value="1.6807353275276662" />
-      <entry key="M5" value="2.6378982719013635" />
-      <entry key="M10" value="3.2124266576330944" />
-      <entry key="M15" value="3.4477670121760107" />
-      <entry key="M30" value="3.70929755780059" />
-      <entry key="H1" value="3.8640645955640913" />
-      <entry key="H2" value="4.486733164960603" />
-      <entry key="H4" value="8.303285325681811" />
-      <entry key="D1" value="63.43645067438943" />
-      <entry key="W1" value="491.1969679915007" />
+      <entry key="MS100" value="1.0000117254271035" />
+      <entry key="MS500" value="1.104091714402803" />
+      <entry key="S2" value="1.8479962164855117" />
+      <entry key="S5" value="2.903646465311609" />
+      <entry key="S10" value="3.8757047606364954" />
+      <entry key="S30" value="5.082099867897753" />
+      <entry key="S60" value="5.50679169440944" />
+      <entry key="M2" value="5.744066362066377" />
+      <entry key="M5" value="5.895281178293029" />
+      <entry key="M10" value="5.947240462356124" />
+      <entry key="M15" value="5.964737360112286" />
+      <entry key="M30" value="5.9823237979117225" />
+      <entry key="H1" value="5.9926511490284415" />
+      <entry key="H2" value="6.184691719280633" />
+      <entry key="H4" value="8.42876333610959" />
+      <entry key="D1" value="60.81454276115108" />
+      <entry key="W1" value="487.1667783776967" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="1.8931004010722373E-73" />
-      <entry key="MS500" value="2.8538735703770417E-15" />
-      <entry key="S2" value="2.3113125762615092E-4" />
-      <entry key="S5" value="0.0351191080251922" />
-      <entry key="S10" value="0.1874188436031642" />
-      <entry key="S30" value="0.5984228294213005" />
-      <entry key="S60" value="0.9182369673523167" />
-      <entry key="M2" value="1.271951315859675" />
-      <entry key="M5" value="1.6403760688630928" />
-      <entry key="M10" value="1.8059423171331022" />
-      <entry key="M15" value="1.8672084110503115" />
-      <entry key="M30" value="1.9318277465508182" />
-      <entry key="H1" value="1.9680054276311254" />
-      <entry key="H2" value="2.081660794433586" />
-      <entry key="H4" value="2.6191273816077434" />
-      <entry key="D1" value="6.324218982929219" />
-      <entry key="W1" value="18.065980804123278" />
+      <entry key="MS100" value="0.0" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="1.3489243480371657E-240" />
+      <entry key="M2" value="1.16143203040663E-120" />
+      <entry key="M5" value="1.0624397359540785E-48" />
+      <entry key="M10" value="1.0690050718433944E-24" />
+      <entry key="M15" value="1.1640161873220096E-16" />
+      <entry key="M30" value="1.5462492702395382E-8" />
+      <entry key="H1" value="2.041847683017232E-4" />
+      <entry key="H2" value="0.025134612995964083" />
+      <entry key="H4" value="0.32326543823594805" />
+      <entry key="D1" value="4.876549085024202" />
+      <entry key="W1" value="17.98376980740171" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.8147501576128285E-31" />
-      <entry key="MS500" value="7.108261045679695E-7" />
-      <entry key="S2" value="0.0291054407835354" />
-      <entry key="S5" value="0.2644349210178508" />
-      <entry key="S10" value="0.6399465358602782" />
-      <entry key="S30" value="1.3544801230297718" />
-      <entry key="S60" value="1.9348948263638632" />
-      <entry key="M2" value="2.858514530556588" />
-      <entry key="M5" value="4.231618541339527" />
-      <entry key="M10" value="4.99269136643297" />
-      <entry key="M15" value="5.297242283491736" />
-      <entry key="M30" value="5.631924234233757" />
-      <entry key="H1" value="5.8273701861467435" />
-      <entry key="H2" value="6.565843134679106" />
-      <entry key="H4" value="10.920662244087872" />
-      <entry key="D1" value="69.75990387443798" />
-      <entry key="W1" value="509.2620680544102" />
+      <entry key="MS100" value="0.895035785992027" />
+      <entry key="MS500" value="1.0802945648454794" />
+      <entry key="S2" value="1.8385764777290956" />
+      <entry key="S5" value="2.8974619252831593" />
+      <entry key="S10" value="3.8711715401774236" />
+      <entry key="S30" value="5.079906687906724" />
+      <entry key="S60" value="5.505567954855243" />
+      <entry key="M2" value="5.743418374369589" />
+      <entry key="M5" value="5.895012695873621" />
+      <entry key="M10" value="5.947104618719681" />
+      <entry key="M15" value="5.964646437443432" />
+      <entry key="M30" value="5.982278170822541" />
+      <entry key="H1" value="5.992832112371779" />
+      <entry key="H2" value="6.209790975299091" />
+      <entry key="H4" value="8.751846797378" />
+      <entry key="D1" value="65.69055198299972" />
+      <entry key="W1" value="505.14971132205494" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -246,6 +250,12 @@
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
+  <component name="RunManager">
+    <configuration name="Main" type="PHPUnitRunConfigurationType" factoryName="PHPUnit">
+      <TestRunner configuration_file="$PROJECT_DIR$/phpunit.xml" scope="XML" use_alternative_configuration_file="true" />
+      <method v="2" />
+    </configuration>
+  </component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -323,23 +333,10 @@
       <workItem from="1781622630755" duration="5029000" />
       <workItem from="1781657743426" duration="5772000" />
       <workItem from="1781726404471" duration="3190000" />
-      <workItem from="1781811156444" duration="39534000" />
-    </task>
-    <task id="LOCAL-00090" summary="Dulicate code resolution in export methods">
-      <option name="closed" value="true" />
-      <created>1779979142766</created>
-      <option name="number" value="00090" />
-      <option name="presentableId" value="LOCAL-00090" />
-      <option name="project" value="LOCAL" />
-      <updated>1779979142766</updated>
-    </task>
-    <task id="LOCAL-00091" summary="Claude code review of imap, instructions, leg fixes, matchbacks, mcid recovery">
-      <option name="closed" value="true" />
-      <created>1779983860612</created>
-      <option name="number" value="00091" />
-      <option name="presentableId" value="LOCAL-00091" />
-      <option name="project" value="LOCAL" />
-      <updated>1779983860612</updated>
+      <workItem from="1781811156444" duration="52116000" />
+      <workItem from="1782319556792" duration="41000" />
+      <workItem from="1782319617761" duration="6365000" />
+      <workItem from="1782402136841" duration="1221000" />
     </task>
     <task id="LOCAL-00092" summary="Claude code review minvan and NlpNls">
       <option name="closed" value="true" />
@@ -717,7 +714,23 @@
       <option name="project" value="LOCAL" />
       <updated>1781915870100</updated>
     </task>
-    <option name="localTasksCounter" value="139" />
+    <task id="LOCAL-00139" summary="Fix the search/sort for the display of NLs.">
+      <option name="closed" value="true" />
+      <created>1781968562838</created>
+      <option name="number" value="00139" />
+      <option name="presentableId" value="LOCAL-00139" />
+      <option name="project" value="LOCAL" />
+      <updated>1781968562839</updated>
+    </task>
+    <task id="LOCAL-00140" summary="Fix the search/sort for various table displays.">
+      <option name="closed" value="true" />
+      <created>1782018842063</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1782018842063</updated>
+    </task>
+    <option name="localTasksCounter" value="141" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -769,8 +782,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Change the title of the CO and NL columns" />
-    <MESSAGE value="Close possible causes of the lost NLP Voter activist code." />
     <MESSAGE value="Claude Unit test of DataEntry" />
     <MESSAGE value="Add more unit tests" />
     <MESSAGE value="Update ActiveNls and turf sync for Drupal 10 best practices" />
@@ -794,7 +805,9 @@
     <MESSAGE value="Prepare for Drupal 11" />
     <MESSAGE value="Refactor matchback processing to avoid cron timeout" />
     <MESSAGE value="Refactor minivan and missingAc processing to avoid cron timeout" />
-    <option name="LAST_COMMIT_MESSAGE" value="Refactor minivan and missingAc processing to avoid cron timeout" />
+    <MESSAGE value="Fix the search/sort for the display of NLs." />
+    <MESSAGE value="Fix the search/sort for various table displays." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the search/sort for various table displays." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

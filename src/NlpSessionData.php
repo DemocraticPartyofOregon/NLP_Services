@@ -113,8 +113,15 @@ class NlpSessionData
         $savedDistricts['selectedHdIndex'] = $newHdIndex;
         $savedDistricts['districtList'] = $districtList;
         if(!empty($pctList)) {
-          $savedDistricts['selectedPrecinctIndex'] = 0;
+          $savedPctIndex = $savedDistricts['selectedPrecinctIndex'] ?? 0;
+          $savedPct = (!empty($savedDistricts['pctList'][$savedPctIndex])) ? $savedDistricts['pctList'][$savedPctIndex] : '';
           $savedDistricts['pctList'] = $pctList;
+          if(!empty($savedPct)) {
+            $newPctIndex = array_search($savedPct, $pctList);
+            $savedDistricts['selectedPrecinctIndex'] = ($newPctIndex !== FALSE) ? $newPctIndex : 0;
+          } else {
+            $savedDistricts['selectedPrecinctIndex'] = 0;
+          }
         }
         $this->set('selectedDistricts', $savedDistricts);
         return;

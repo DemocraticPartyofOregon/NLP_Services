@@ -2,6 +2,9 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal\Component\Utility\Html;
+use Drupal\Core\Render\Markup;
+use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpNlsListDisplay
@@ -154,11 +157,32 @@ class NlpNlsListDisplay
   public function buildNlsTable(array $rows, bool $brief=FALSE, string $type='contacts', string $callback='nlsForm'): array
   {
     $this->headerBuild($brief);
-    
+
+    // Build sort links manually instead of using #tablesort => TRUE.
+    // TableSort::getQueryParameters appends all current request query params to
+    // sort link URLs (via `+ request->query->all()`). When the form is rebuilt
+    // during an AJAX POST, any AJAX-identifying params in the request URL (e.g.
+    // ajax_form=1) would be inherited by the sort links, causing the browser's
+    // subsequent GET click to be treated as AJAX and returning a JSON error.
+    // Manual links with only ?sort=…&order=… keep the URLs clean.
+    $request = \Drupal::request();
+    $currentSort  = $request->query->get('sort', '');
+    $currentOrder = $request->query->get('order', '');
+    foreach ($this->header as &$cell) {
+      if (empty($cell['field']) || $cell['field'] === 'cb') {
+        continue;
+      }
+      $label    = (string) ($cell['data'] ?? $cell['field']);
+      $nextSort = ($currentOrder === $label && $currentSort === 'asc') ? 'desc' : 'asc';
+      $url  = Url::fromRoute('<current>', [], ['query' => ['sort' => $nextSort, 'order' => $label]]);
+      $href = Html::escape($url->toString());
+      $cell['data'] = Markup::create('<a href="' . $href . '">' . $label . '</a>');
+    }
+    unset($cell);
+
     $form_element[$type] = [
-      '#type' => 'table',
-      '#header' => $this->header,
-      '#tablesort' => TRUE,
+      '#type'       => 'table',
+      '#header'     => $this->header,
       '#attributes' => ['class' => ['nlp-nls-table']],
     ];
     

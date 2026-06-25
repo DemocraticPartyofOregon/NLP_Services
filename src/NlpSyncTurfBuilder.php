@@ -79,6 +79,7 @@ class NlpSyncTurfBuilder
         'callback' => '::selectboxCallback',
         'wrapper' => 'nlsFormDiv',
       ],
+      '#limit_validation_errors' => [],
       '#prefix' => '<div class="district_search_left">',
       '#suffix' => '</div>',
     ];
@@ -108,6 +109,7 @@ house district or a precinct.  Specifying the precinct will likely yield the bes
         'callback' => '::selectboxCallback',
         'wrapper' => 'nlsFormDiv',
       ],
+      '#limit_validation_errors' => [],
     ];
 
     if(!empty($selectedPrecinctIndex) || !empty($selectedHdIndex)) {
@@ -267,6 +269,11 @@ case-insensitive.
       '#markup' => 'Walksheet',
       '#prefix' => '<div class="walksheet-title-box-left" id="file-title-box-left">',
       '#suffix' => '</div>',
+    ];
+    $form['max_file_size_'.$type] = [
+      '#type' => 'hidden',
+      '#name' => 'MAX_FILE_SIZE',
+      '#value' => 10485760, // 10 MB per-file limit; prevents oversized files from bloating AJAX POSTs.
     ];
     $form[$formName] = [
       '#type' => 'file',
