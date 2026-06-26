@@ -49,7 +49,7 @@ class ApiFolders {
     }
     
     try {
-      $request = $this->client->get($foldersURL);
+      $request = $this->client->request('GET', $foldersURL);
     } catch (RequestException $e) {
       $code = $e->getCode();
       if ($code == 401) {

@@ -69,7 +69,7 @@ class ApiSavedLists {
         $url .= '&$skip='.$count;
       }
       try {
-        $request = $this->client->get($url);
+        $request = $this->client->request('GET', $url);
         $results = json_decode($request->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
@@ -142,7 +142,7 @@ class ApiSavedLists {
     if(!empty($listId)) {
       // Get the information about a specific saved list.
       try {
-        $request = $this->client->get($listsURL);
+        $request = $this->client->request('GET', $listsURL);
         $results = json_decode($request->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
@@ -170,7 +170,7 @@ class ApiSavedLists {
           $url .= '&$skip='.$count;
         }
         try {
-          $request = $this->client->get($url);
+          $request = $this->client->request('GET', $url);
           $results = json_decode($request->getBody(), TRUE);
           if (json_last_error() !== JSON_ERROR_NONE) {
             return [];

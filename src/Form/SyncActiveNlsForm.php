@@ -146,7 +146,6 @@ the NLP Services Admin.</p>',
   {
     $messenger = Drupal::messenger();
     $listId = (int) $form_state->getValue('file_select');
-    nlp_debug_msg('listId', $listId);
     $county = $form_state->get('county');
     
     // Get a list of vanIds for the NLs in the list.

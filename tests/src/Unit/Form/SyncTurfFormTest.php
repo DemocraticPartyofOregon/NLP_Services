@@ -18,6 +18,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\Form\SyncTurfForm;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
+  use Symfony\Component\HttpFoundation\Request;
   use Symfony\Component\HttpFoundation\RequestStack;
 
   class SyncTurfFormTest extends UnitTestCase {
@@ -49,6 +50,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->mapRegionsMock     = $this->createMock(ApiMapRegions::class);
       $this->messengerMock      = $this->createMock(MessengerInterface::class);
       $this->requestStackMock   = $this->createMock(RequestStack::class);
+      $defaultRequest = Request::create('/test', 'GET');
+      $this->requestStackMock->method('getCurrentRequest')->willReturn($defaultRequest);
 
       // logger.factory is needed by any validateForm path that hits turfName-missing.
       $loggerMock = $this->getMockBuilder(\stdClass::class)
@@ -62,6 +65,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $container = new ContainerBuilder();
       $container->set('messenger', $this->messengerMock);
       $container->set('logger.factory', $loggerFactoryMock);
+      $container->set('string_translation', $this->getStringTranslationStub());
       Drupal::setContainer($container);
     }
 

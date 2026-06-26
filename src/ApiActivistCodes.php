@@ -62,7 +62,7 @@ class ApiActivistCodes
     $user = $stateCommitteeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/activistCodes".'?$top=200';
     try {
-      $request = $this->client->get($postUrl);
+      $request = $this->client->request('GET', $postUrl);
       $results = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
@@ -95,7 +95,7 @@ class ApiActivistCodes
     $user = $stateCommitteeKey['App Name'];
     $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
     try {
-      $request = $this->client->get($url);
+      $request = $this->client->request('GET', $url);
       $results = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
@@ -182,7 +182,7 @@ class ApiActivistCodes
       'Expect'       => '',
     ];
     try {
-      $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
       return TRUE;
     } catch (Exception $e) {
       nlp_debug_msg('setApiActivistCode', $e->getMessage());

@@ -69,7 +69,7 @@ class ApiSurveyQuestion
    
     $url = "https://$user:$apiKey|$database@$apiURL/surveyQuestions";
     try {
-      $request = $this->client->get($url);
+      $request = $this->client->request('GET', $url);
       $result = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
@@ -213,7 +213,7 @@ class ApiSurveyQuestion
       'Expect'       => '',
     ];
     try {
-      $this->client->post($postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (GuzzleException $e) {
       nlp_debug_msg('reportSurveyResponse', $e->getMessage());
       nlp_debug_msg('reportSurveyResponse', "postUrl: $postUrl");

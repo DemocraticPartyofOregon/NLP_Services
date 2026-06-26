@@ -100,7 +100,7 @@ class ApiResponseCodes
     $user = $committeeKey['App Name'];
     $post_url = "https://$user:$apiKey|0@$apiURL/canvassResponses/contactTypes?inputTypeId=11";
     try {
-      $request = $this->client->get($post_url);
+      $request = $this->client->request('GET', $post_url);
       $result = json_decode($request->getBody(), true);
     } catch (Exception $e)  {
       $error = $e->getMessage();

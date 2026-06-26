@@ -92,7 +92,7 @@ class ApiExportJobs {
     $headers = ['Content-Type' => 'application/json'];
     try {
       try {
-        $response = $this->client->post($post_url, ['headers' => $headers, 'body' => $dataJson]);
+        $response = $this->client->request('POST', $post_url, ['headers' => $headers, 'body' => $dataJson]);
       } catch (GuzzleException $e) {
         nlp_debug_msg('getExportJobs', $e->getMessage());
         return [];

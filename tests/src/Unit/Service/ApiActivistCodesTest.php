@@ -78,7 +78,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ['activistCodeId' => 1001, 'name' => 'NLPVoterAC',   'type' => 'Neighborhood Leader'],
         ['activistCodeId' => 1002, 'name' => 'NLPHostileAC', 'type' => 'Neighborhood Leader'],
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse(['items' => $items]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['items' => $items]));
 
       $result = $this->buildService()->getApiActivistCodes(0);
 
@@ -90,7 +90,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiActivistCodesMyCampaignDatabaseReturnsItems(): void {
       $this->stubKeyValues();
       $items = [['activistCodeId' => 2001, 'name' => 'NLPNotRegisteredAC', 'type' => 'Neighborhood Leader']];
-      $this->clientMock->method('get')->willReturn($this->makeResponse(['items' => $items]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['items' => $items]));
 
       $result = $this->buildService()->getApiActivistCodes(1);
 
@@ -100,7 +100,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiActivistCodesNoItemsKeyReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse([]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse([]));
 
       $this->assertSame([], $this->buildService()->getApiActivistCodes(0));
     }
@@ -111,14 +111,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $stream->method('__toString')->willReturn('{bad json');
       $response = $this->createMock(ResponseInterface::class);
       $response->method('getBody')->willReturn($stream);
-      $this->clientMock->method('get')->willReturn($response);
+      $this->clientMock->method('request')->willReturn($response);
 
       $this->assertSame([], $this->buildService()->getApiActivistCodes(0));
     }
 
     public function testGetApiActivistCodesGuzzleExceptionReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException());
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException());
 
       $this->assertSame([], $this->buildService()->getApiActivistCodes(0));
     }
@@ -130,7 +130,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiVoterActivistCodesReturnsIntegerCodeIds(): void {
       $this->stubKeyValues();
       $items = [['activistCodeId' => 1001], ['activistCodeId' => 1002]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse(['items' => $items]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['items' => $items]));
 
       $result = $this->buildService()->getApiVoterActivistCodes(99999);
 
@@ -139,7 +139,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiVoterActivistCodesEmptyItemsReturnsEmptyArray(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse(['items' => []]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['items' => []]));
 
       $this->assertSame([], $this->buildService()->getApiVoterActivistCodes(99999));
     }
@@ -150,14 +150,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $stream->method('__toString')->willReturn('{bad json');
       $response = $this->createMock(ResponseInterface::class);
       $response->method('getBody')->willReturn($stream);
-      $this->clientMock->method('get')->willReturn($response);
+      $this->clientMock->method('request')->willReturn($response);
 
       $this->assertSame([], $this->buildService()->getApiVoterActivistCodes(99999));
     }
 
     public function testGetApiVoterActivistCodesGuzzleExceptionReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException());
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException());
 
       $this->assertSame([], $this->buildService()->getApiVoterActivistCodes(99999));
     }
@@ -175,7 +175,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testHasApiActivistCodeReturnsTrueWhenVoterHasCode(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
 
       $this->assertTrue($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
@@ -184,7 +184,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testHasApiActivistCodeReturnsFalseWhenVoterHasDifferentCode(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->makeResponse(['items' => [['activistCodeId' => 9999]]]));
 
       $this->assertFalse($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
@@ -193,7 +193,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testHasApiActivistCodeReturnsFalseWhenVoterHasNoCodes(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->makeResponse(['items' => []]));
 
       $this->assertFalse($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
@@ -213,7 +213,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSetApiActivistCodeApplyReturnsTrueOnSuccess(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('post')
+      $this->clientMock->method('request')
         ->willReturn($this->createMock(ResponseInterface::class));
 
       $request = ['codeName' => 'NLPVoterAC', 'vanid' => 99999, 'action' => 'Apply'];
@@ -223,7 +223,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSetApiActivistCodeRemoveReturnsTrueOnSuccess(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('post')
+      $this->clientMock->method('request')
         ->willReturn($this->createMock(ResponseInterface::class));
 
       $request = ['codeName' => 'NLPVoterAC', 'vanid' => 99999, 'action' => 'Remove'];
@@ -233,7 +233,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSetApiActivistCodeReturnsFalseOnGuzzleException(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('post')->willThrowException($this->makeGuzzleException());
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException());
 
       $request = ['codeName' => 'NLPVoterAC', 'vanid' => 99999, 'action' => 'Apply'];
       $this->assertFalse($this->buildService()->setApiActivistCode($request));

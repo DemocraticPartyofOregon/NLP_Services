@@ -135,7 +135,7 @@ class ApiMapRegions
     }
     
     try {
-      $request = $this->client->get($foldersURL);
+      $request = $this->client->request('GET', $foldersURL);
     } catch (RequestException $e) {
       // Request error
       $code = $e->getCode();
