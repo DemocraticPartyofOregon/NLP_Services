@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices\Batch;
 
 use Drupal;
+use Drupal\Core\Render\Markup;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\MagicWord;
@@ -64,7 +65,7 @@ class SyncTurfBatch {
         $mcid      = $drupalUser['mcid'];
         $magicWord = $magicWordObj->getMagicWord($mcid);
         $messages[] = t('User credentials: Username: @userName Password: @magicWord', ['@userName' => $userName, '@magicWord' => $magicWord]);
-        $messenger->addStatus(implode('<br>', $messages));
+        $messenger->addStatus(Markup::create(implode('<br>', $messages)));
       }
       $movedVoters = $results['movedVoters'] ?? [];
       if (!empty($movedVoters)) {
