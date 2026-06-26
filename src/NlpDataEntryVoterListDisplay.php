@@ -47,22 +47,22 @@ class NlpDataEntryVoterListDisplay
     // Basic voter information.
     $vanid = $voter['vanid'];
     $voterArray['vanid'] = $voter['vanid'];
-    $firstName = Html::escape($voter['firstName']);
+    $firstName = Html::escape($voter['firstName'] ?? '');
     $voterArray['firstName'] = $firstName;
-    $lastName = Html::escape($voter['lastName']);
+    $lastName = Html::escape($voter['lastName'] ?? '');
     $voterArray['lastName'] = $lastName;
-    $age = Html::escape($voter['age']);
-    $gender = Html::escape($voter['sex']);
-    $party = Html::escape($voter['party']);
+    $age = Html::escape($voter['age'] ?? '');
+    $gender = Html::escape($voter['sex'] ?? '');
+    $party = Html::escape($voter['party'] ?? '');
     $voterArray['name'] = "<b>$lastName, $firstName</b> - Age:$age Gender:$gender Party:$party";
     $voterArray['nickname'] = $voter['nickname'];
     // Address information.
-    $street = Html::escape($voter['address']['streetNo'])." ".Html::escape($voter['address']['streetPrefix'])." "
-      .Html::escape($voter['address']['streetName'])." ".Html::escape($voter['address']['streetType']);
+    $street = Html::escape($voter['address']['streetNo'] ?? '')." ".Html::escape($voter['address']['streetPrefix'] ?? '')." "
+      .Html::escape($voter['address']['streetName'] ?? '')." ".Html::escape($voter['address']['streetType'] ?? '');
     $apt = (!empty($voter['address']['aptType']))
-      ? '<br>'.Html::escape($voter['address']['aptType'])." ".Html::escape($voter['address']['aptNo'])
+      ? '<br>'.Html::escape($voter['address']['aptType'])." ".Html::escape($voter['address']['aptNo'] ?? '')
       : '';
-    $city = Html::escape($voter['address']['city']);
+    $city = Html::escape($voter['address']['city'] ?? '');
     $voterArray['address'] = "$street$apt<br>$city";
     $voterArray['cd'] = $voter['address']['cd'];
     // Contact information.
