@@ -193,7 +193,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
       ->with('Phone')
       ->willReturn(2);
     $this->reportsMock->method('setNlReport')->willReturn(10);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
@@ -206,7 +206,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(3);
     $this->reportsMock->method('setNlReport')->willReturn(10);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->votersMock->expects($this->once())
       ->method('updateTurfVoter')
@@ -311,7 +311,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Not Home');
     $this->votersMock->method('getVoterById')->willReturn([]);
     $this->reportsMock->method('setNlReport')->willReturn(5);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->votersMock->expects($this->once())
       ->method('updateTurfVoter')
@@ -335,7 +335,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   public function testBadPhoneRecordsCorrectPhoneTypeInReport(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
-    $this->votersMock->method('getVoterCd')->willReturn('CD1');
+    $this->votersMock->method('getVoterCd')->willReturn(1);
 
     $this->reportsMock->expects($this->once())
       ->method('setNlReport')
@@ -354,9 +354,9 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   public function testBadPhoneClearsPhoneFromVoterRecord(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
-    $this->votersMock->method('getVoterCd')->willReturn('CD1');
-    $this->reportsMock->method('setNlReport')->willReturn(NULL);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    $this->votersMock->method('getVoterCd')->willReturn(1);
+    $this->reportsMock->method('setNlReport')->willReturn(0);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->votersMock->expects($this->once())
       ->method('updateVoterPhone')
@@ -375,8 +375,8 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   public function testBadPhoneReportsSurveyResponseToVoteBuilder(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
-    $this->votersMock->method('getVoterCd')->willReturn('CD1');
-    $this->reportsMock->method('setNlReport')->willReturn(NULL);
+    $this->votersMock->method('getVoterCd')->willReturn(1);
+    $this->reportsMock->method('setNlReport')->willReturn(0);
 
     $this->apiSurveyQuestionMock->expects($this->once())
       ->method('reportSurveyResponse')
@@ -496,7 +496,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->votersMock->method('addressCompare')->willReturn(TRUE);
     $this->votersMock->method('addressExtract')->willReturn(['street' => '123 Main']);
     $this->apiVoterMock->method('getApiVoter')->willReturn(['address' => ['street' => '123 Main']]);
-    $this->reportsMock->method('setNlReport')->willReturn(NULL);
+    $this->reportsMock->method('setNlReport')->willReturn(0);
 
     $this->apiSurveyQuestionMock->expects($this->once())
       ->method('reportSurveyResponse')
@@ -516,7 +516,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->votersMock->method('addressCompare')->willReturn(FALSE);
     $this->votersMock->method('addressExtract')->willReturn(['street' => '456 New St']);
     $this->apiVoterMock->method('getApiVoter')->willReturn(['address' => ['street' => '456 New St']]);
-    $this->reportsMock->method('setNlReport')->willReturn(NULL);
+    $this->reportsMock->method('setNlReport')->willReturn(0);
 
     $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
 
@@ -534,7 +534,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->votersMock->method('addressCompare')->willReturn(TRUE);
     $this->votersMock->method('addressExtract')->willReturn([]);
     $this->apiVoterMock->method('getApiVoter')->willReturn(['address' => []]);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->reportsMock->expects($this->once())
       ->method('setNlReport')
@@ -557,7 +557,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->votersMock->method('addressCompare')->willReturn(FALSE);
     $this->votersMock->method('addressExtract')->willReturn([]);
     $this->apiVoterMock->method('getApiVoter')->willReturn(['address' => []]);
-    $this->reportsMock->method('setNlReport')->willReturn(NULL);
+    $this->reportsMock->method('setNlReport')->willReturn(0);
 
     $this->nlsMock->expects($this->once())->method('resultsReported')->with(101, 'TestCounty');
     $this->awardsMock->expects($this->once())->method('nlParticipation')->with(101, 'Completed');
@@ -626,7 +626,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     ]);
     $this->votersMock->method('getVoterById')->willReturn([]);
     $this->reportsMock->method('setNlReport')->willReturn(20);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
 
     $this->votersMock->expects($this->once())
       ->method('updateTurfVoter')
@@ -678,8 +678,8 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     ]);
     $this->votersMock->method('getVoterById')->willReturn([]);
     $this->reportsMock->method('setNlReport')->willReturn(20);
-    $this->apiSurveyQuestionMock->method('reportSurveyResponse')->willReturn(NULL);
-    $this->votersMock->method('updateTurfVoter')->willReturn(NULL);
+    // reportSurveyResponse is void — no willReturn needed.
+    $this->votersMock->method('updateTurfVoter')->willReturn(TRUE);
 
     $this->nlsMock->expects($this->once())->method('resultsReported')->with(101, 'TestCounty');
     $this->awardsMock->expects($this->once())->method('nlParticipation')->with(101, 'Completed');

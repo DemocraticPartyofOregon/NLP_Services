@@ -53,7 +53,7 @@ class ApiNls {
     
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid.$expandOptions;
     try {
-      $request = $this->client->get($post_url);
+      $request = $this->client->request('GET', $post_url);
       $results = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
@@ -92,7 +92,7 @@ class ApiNls {
     $user = $committeeKey['App Name'];
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid;
     try {
-      $this->client->get($post_url);
+      $this->client->request('GET', $post_url);
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return FALSE;}
@@ -275,7 +275,7 @@ class ApiNls {
     $user = $committeeKey['App Name'];
     $postUrl = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid;
     try {
-      $this->client->get($postUrl);
+      $this->client->request('GET', $postUrl);
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return 'Invalid mcid';}

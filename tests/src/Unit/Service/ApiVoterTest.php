@@ -100,7 +100,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiVoterReturnsVoterArray(): void {
       $this->stubKeyValues();
       $this->stubCycle();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -116,7 +116,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubCycle();
       $data = $this->baseApiResult();
       $data['dateOfBirth'] = '1980-01-01T00:00:00';
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -127,7 +127,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiVoterParsesVotingAddress(): void {
       $this->stubKeyValues();
       $this->stubCycle();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -149,7 +149,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'stateOrProvince'   => 'OR',
         'zipOrPostalCode'   => '97202',
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -160,7 +160,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiVoterParsesDistricts(): void {
       $this->stubKeyValues();
       $this->stubCycle();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -186,7 +186,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'isPreferred'    => TRUE,
         'smsOptInStatus' => 'OptedIn',
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -205,7 +205,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'phoneId'     => 2,
         'isPreferred' => TRUE,
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -225,7 +225,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ['electionRecordType' => '2024 - General', 'participation' => 'Y'],
         ['electionRecordType' => '2024 - Primary', 'participation' => 'Y'],
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -238,7 +238,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubCycle('2024-11-G');
       $data = $this->baseApiResult();
       $data['electionRecords'] = [];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -252,7 +252,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $data['electionRecords'] = [
         ['electionRecordType' => '2024 - General', 'participation' => 'Y'],
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
@@ -265,7 +265,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiVoterGuzzleExceptionReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willThrowException($this->makeGuzzleException(500));
 
       $this->assertSame([], $this->buildApiVoter()->getApiVoter(100123));
@@ -277,14 +277,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $stream->method('__toString')->willReturn('not-json{{');
       $response = $this->createMock(ResponseInterface::class);
       $response->method('getBody')->willReturn($stream);
-      $this->clientMock->method('get')->willReturn($response);
+      $this->clientMock->method('request')->willReturn($response);
 
       $this->assertSame([], $this->buildApiVoter()->getApiVoter(100123));
     }
 
     public function testGetApiVoterEmptyResponseReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->makeResponse([]));
 
       $this->assertSame([], $this->buildApiVoter()->getApiVoter(100123));
@@ -299,7 +299,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubCycle();
       $data = $this->baseApiResult();
       $data['addresses'][0]['addressLine1'] = $addressLine1;
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
       $result = $this->buildApiVoter()->getApiVoter(100123);
       return $result['address'];
     }
@@ -338,7 +338,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testVoterExistsReturnsTrueOnSuccess(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->createMock(ResponseInterface::class));
 
       $this->assertTrue($this->buildApiVoter()->voterExists(100123));
@@ -346,23 +346,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testVoterExistsReturnsFalseOn404(): void {
       $this->stubKeyValues();
-      $request = $this->createMock(RequestInterface::class);
-      $exception = new RequestException('Not Found', $request, NULL, NULL, []);
-      // Force getCode() to return 404 via a real RequestException subclass isn't easy,
-      // so we use a mock that overrides getCode.
-      $guzzleException = $this->getMockBuilder(RequestException::class)
-        ->setConstructorArgs(['Not Found', $request])
-        ->onlyMethods(['getCode'])
-        ->getMock();
-      $guzzleException->method('getCode')->willReturn(404);
-      $this->clientMock->method('get')->willThrowException($guzzleException);
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn(404);
+      $guzzleException = new RequestException('Not Found', $this->createMock(RequestInterface::class), $response);
+      $this->clientMock->method('request')->willThrowException($guzzleException);
 
       $this->assertFalse($this->buildApiVoter()->voterExists(100123));
     }
 
     public function testVoterExistsReturnsFalseOnOtherException(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willThrowException($this->makeGuzzleException(500));
 
       $this->assertFalse($this->buildApiVoter()->voterExists(100123));
@@ -375,7 +369,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetVotersByAddressReturnsResults(): void {
       $this->stubKeyValues();
       $payload = [['vanId' => 100123, 'firstName' => 'Jane']];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($payload));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($payload));
 
       $result = $this->buildApiVoter()->getVotersByAddress([
         'addressLine1' => '1234 Main St',
@@ -387,12 +381,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetVotersByAddressReturnsEmptyOn404(): void {
       $this->stubKeyValues();
-      $guzzleException = $this->getMockBuilder(RequestException::class)
-        ->setConstructorArgs(['Not Found', $this->createMock(RequestInterface::class)])
-        ->onlyMethods(['getCode'])
-        ->getMock();
-      $guzzleException->method('getCode')->willReturn(404);
-      $this->clientMock->method('get')->willThrowException($guzzleException);
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn(404);
+      $guzzleException = new RequestException('Not Found', $this->createMock(RequestInterface::class), $response);
+      $this->clientMock->method('request')->willThrowException($guzzleException);
 
       $result = $this->buildApiVoter()->getVotersByAddress([
         'addressLine1' => '1234 Main St',
@@ -404,12 +396,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetVotersByAddressReturnsInvalidKeyOn401(): void {
       $this->stubKeyValues();
-      $guzzleException = $this->getMockBuilder(RequestException::class)
-        ->setConstructorArgs(['Unauthorized', $this->createMock(RequestInterface::class)])
-        ->onlyMethods(['getCode'])
-        ->getMock();
-      $guzzleException->method('getCode')->willReturn(401);
-      $this->clientMock->method('get')->willThrowException($guzzleException);
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn(401);
+      $guzzleException = new RequestException('Unauthorized', $this->createMock(RequestInterface::class), $response);
+      $this->clientMock->method('request')->willThrowException($guzzleException);
 
       $result = $this->buildApiVoter()->getVotersByAddress([
         'addressLine1' => '1234 Main St',
@@ -425,7 +415,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $stream->method('__toString')->willReturn('{bad json');
       $response = $this->createMock(ResponseInterface::class);
       $response->method('getBody')->willReturn($stream);
-      $this->clientMock->method('get')->willReturn($response);
+      $this->clientMock->method('request')->willReturn($response);
 
       $result = $this->buildApiVoter()->getVotersByAddress([
         'addressLine1' => '1234 Main St',

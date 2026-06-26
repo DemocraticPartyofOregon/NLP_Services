@@ -1,5 +1,11 @@
 <?php
 
+namespace {
+  if (!function_exists('nlp_debug_msg')) {
+    function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
+  }
+}
+
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\nlpservices\ApiKeyManagement;
@@ -56,12 +62,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function makeGuzzleException(int $code): RequestException {
-      $exception = $this->getMockBuilder(RequestException::class)
-        ->setConstructorArgs(['error', $this->createMock(RequestInterface::class)])
-        ->onlyMethods(['getCode'])
-        ->getMock();
-      $exception->method('getCode')->willReturn($code);
-      return $exception;
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn($code);
+      return new RequestException(
+        'error',
+        $this->createMock(RequestInterface::class),
+        $response,
+      );
     }
 
     private function baseApiResult(int $vanid = 200456): array {
@@ -96,7 +103,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsReturnsNlArray(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -109,7 +116,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsParsesVotingAddress(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -122,7 +129,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $data = $this->baseApiResult();
       $data['addresses'][0]['zipOrPostalCode'] = '97301-5678';
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -133,7 +140,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $data = $this->baseApiResult();
       $data['addresses'] = [];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -156,7 +163,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'isPreferred' => FALSE,
         'isBest'      => FALSE,
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -174,7 +181,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'isPreferred' => FALSE,
         'isBest'      => FALSE,
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -192,7 +199,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'isPreferred' => TRUE,
         'isBest'      => FALSE,
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -209,7 +216,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'isPreferred' => FALSE,
         'isBest'      => TRUE,
       ]];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -218,7 +225,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsNoPhonesLeavesBlankFields(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -238,7 +245,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ['email' => 'other@example.com', 'isPreferred' => FALSE],
         ['email' => 'primary@example.com', 'isPreferred' => TRUE],
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -247,7 +254,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsNoEmailsLeavesNull(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -260,7 +267,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsParsesDistricts(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -273,7 +280,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $data = $this->baseApiResult();
       $data['districts'] = [];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -292,7 +299,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ['type' => 'Other',       'externalId' => 999],
         ['type' => 'VoterVANID',  'externalId' => 88888],
       ];
-      $this->clientMock->method('get')->willReturn($this->makeResponse($data));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -301,7 +308,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsNoIdentifiersLeavesVfidZero(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse($this->baseApiResult()));
+      $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
 
       $result = $this->buildApiNls()->getApiNls('', 200456);
 
@@ -314,7 +321,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsEmptyApiResultReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willReturn($this->makeResponse([]));
+      $this->clientMock->method('request')->willReturn($this->makeResponse([]));
 
       $this->assertSame([], $this->buildApiNls()->getApiNls('', 200456));
     }
@@ -325,21 +332,21 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $stream->method('__toString')->willReturn('{bad json');
       $response = $this->createMock(ResponseInterface::class);
       $response->method('getBody')->willReturn($stream);
-      $this->clientMock->method('get')->willReturn($response);
+      $this->clientMock->method('request')->willReturn($response);
 
       $this->assertSame([], $this->buildApiNls()->getApiNls('', 200456));
     }
 
     public function testGetApiNlsGuzzle404ReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(404));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(404));
 
       $this->assertSame([], $this->buildApiNls()->getApiNls('', 200456));
     }
 
     public function testGetApiNlsGuzzle401WithErrorStatusReturnsInvalidKey(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(401));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(401));
 
       $result = $this->buildApiNls()->getApiNls('', 200456, TRUE);
 
@@ -348,14 +355,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiNlsGuzzle401WithoutErrorStatusReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(401));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(401));
 
       $this->assertSame([], $this->buildApiNls()->getApiNls('', 200456, FALSE));
     }
 
     public function testGetApiNlsGuzzle500ReturnsEmpty(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(500));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(500));
 
       $this->assertSame([], $this->buildApiNls()->getApiNls('', 200456));
     }
@@ -366,7 +373,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testNlExistsReturnsTrueOnSuccess(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->createMock(ResponseInterface::class));
 
       $this->assertTrue($this->buildApiNls()->nlExists('', 200456));
@@ -374,14 +381,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testNlExistsReturnsFalseOn404(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(404));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(404));
 
       $this->assertFalse($this->buildApiNls()->nlExists('', 200456));
     }
 
     public function testNlExistsReturnsFalseOnOtherGuzzleException(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(500));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(500));
 
       $this->assertFalse($this->buildApiNls()->nlExists('', 200456));
     }
@@ -391,7 +398,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testApiKeyVerifyReturnsOkOnSuccess(): void {
-      $this->clientMock->method('get')
+      $this->clientMock->method('request')
         ->willReturn($this->createMock(ResponseInterface::class));
 
       $result = $this->buildApiNls()->apiKeyVerify(
@@ -403,7 +410,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testApiKeyVerifyReturnsInvalidMcidOn404(): void {
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(404));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(404));
 
       $result = $this->buildApiNls()->apiKeyVerify(
         ['API Key' => 'k', 'Url' => 'api.example.com/v4', 'App Name' => 'app'],
@@ -414,7 +421,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testApiKeyVerifyReturnsInvalidKeyOn401(): void {
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(401));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(401));
 
       $result = $this->buildApiNls()->apiKeyVerify(
         ['API Key' => 'k', 'Url' => 'api.example.com/v4', 'App Name' => 'app'],
@@ -425,7 +432,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testApiKeyVerifyReturnsInvalidKeyOnOtherGuzzleException(): void {
-      $this->clientMock->method('get')->willThrowException($this->makeGuzzleException(500));
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(500));
 
       $result = $this->buildApiNls()->apiKeyVerify(
         ['API Key' => 'k', 'Url' => 'api.example.com/v4', 'App Name' => 'app'],

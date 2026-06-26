@@ -168,11 +168,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfsMock->method('createTurf')->willReturn(7);
       $this->apiVoterMock->method('getVoters')
         ->willReturnCallback(fn($ids) => $this->makeVoters($ids));
-      $this->votersMock->method('duplicateVoters')->willReturn([]);
-      $this->activistCodesMock->method('setApiActivistCode')->willReturn(TRUE);
       $this->votersMock->method('createVoter')->willReturn(TRUE);
       $this->votersMock->method('getVoterStatus')->willReturn([]);
-      $this->configMock->method('getCycle')->willReturn(2024);
+      $this->configMock->method('getCycle')->willReturn('2024');
       $this->votersMock->method('setVoterStatus')->willReturn(TRUE);
       $this->votersMock->method('createTurfVoter')->willReturn(TRUE);
       $this->reportsMock->method('getNlpTypeReports')->willReturn([]);

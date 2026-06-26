@@ -77,7 +77,7 @@ class NlpSyncActiveNlsProcessor {
     $county = $arg['county'];
     $legislativeFixes = $this->legislativeFixesObj->getLegFixes($county);
 
-    $fh = fopen($uri, 'r');
+    $fh = @fopen($uri, 'r');
     if (!$fh) {
       $this->messenger->addWarning(t('Unable to open @uri', ['@uri' => $uri]));
       $context['finished'] = TRUE;
@@ -319,7 +319,7 @@ class NlpSyncActiveNlsProcessor {
       return TRUE;
     }
     if ($vfid != $savedVfid) {
-      $this->messenger->addError(t('NL rejected. MCID:@mcid @firstName @lastName, VoterFile VANID @vfid does not match the saved VANID @savedVfid. This indicates database corruption. Please contact the NLP Admin.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
+      $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, VoterFile VANID @vfid does not match the saved VANID @savedVfid. Please verify this NL\'s MyCampaign record.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
       return FALSE;
     }
 

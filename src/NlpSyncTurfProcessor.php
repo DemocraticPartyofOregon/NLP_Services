@@ -100,7 +100,7 @@ class NlpSyncTurfProcessor {
           return;
         }
       }
-      $fh = fopen($exportJob['downloadUrl'], 'r');
+      $fh = @fopen($exportJob['downloadUrl'], 'r');
       if (!$fh) {
         $context['finished']           = 1;
         $context['results']['message'] = [0 => t('Unable to download the turf voter list.')];

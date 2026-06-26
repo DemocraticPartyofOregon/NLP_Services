@@ -477,7 +477,7 @@ class NlpResultsSummary
 
   /**
    * Build 4 rows for a display of voting activity.  The rows are for all
-   * participating districts, either County or CD.  The 4 rows
+   * participating districts, either County or CD. The 4 rows
    * are for all voters, Democrats, Republicans, and Non-Affiliated. The
    * counts come from a report created by VoteBuilder and are assembled
    * by County or CD by NLP Services

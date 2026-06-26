@@ -1,26 +1,8 @@
 <?php
 
-// nlp_debug_msg lives in nlpservices.module; user_load_by_* are Drupal global helpers.
-// Neither is autoloaded in unit tests, so we stub them here.
-namespace {
-  if (!function_exists('nlp_debug_msg')) {
-    function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
-  }
-  if (!function_exists('user_load_by_name')) {
-    function user_load_by_name(string $name): mixed {
-      return \Drupal\Tests\nlpservices\Unit\Service\DrupalUserTest::$stubUserByName;
-    }
-  }
-  if (!function_exists('user_load_by_mail')) {
-    function user_load_by_mail(string $mail): mixed {
-      return \Drupal\Tests\nlpservices\Unit\Service\DrupalUserTest::$stubUserByMail;
-    }
-  }
-  if (!defined('NLP_ADMIN_ROLE_ID'))        { define('NLP_ADMIN_ROLE_ID',        'nlp_admin'); }
-  if (!defined('NLP_COORDINATOR_ROLE_ID'))  { define('NLP_COORDINATOR_ROLE_ID',  'nlp_coordinator'); }
-  if (!defined('NLP_LEADER_ROLE_ID'))       { define('NLP_LEADER_ROLE_ID',       'nlp_leader'); }
-  if (!defined('NLP_LEADER_ROLE_LABEL'))    { define('NLP_LEADER_ROLE_LABEL',    'NLP Leader'); }
-}
+// All stubs (nlp_debug_msg, user_load_by_*, constants) are provided by
+// tests/bootstrap.php.  user_load_by_* read from \NlpTestGlobals, which
+// this test controls directly.
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
@@ -34,17 +16,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   class DrupalUserTest extends UnitTestCase {
 
-    // Controlled by individual tests; user_load_by_* stubs read these.
-    public static mixed $stubUserByName = FALSE;
-    public static mixed $stubUserByMail = FALSE;
-
     private MagicWord $magicWordMock;
     private RequestStack $requestStackMock;
 
     protected function setUp(): void {
       parent::setUp();
-      self::$stubUserByName = FALSE;
-      self::$stubUserByMail = FALSE;
+      \NlpTestGlobals::$stubUserByName = FALSE;
+      \NlpTestGlobals::$stubUserByMail = FALSE;
       $this->magicWordMock    = $this->createMock(MagicWord::class);
       $this->requestStackMock = $this->createMock(RequestStack::class);
     }
@@ -180,12 +158,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetUserByNameNotFoundReturnsEmptyArray(): void {
-      self::$stubUserByName = FALSE;
+      \NlpTestGlobals::$stubUserByName = FALSE;
       $this->assertSame([], $this->buildDrupalUser()->getUserByName('nobody'));
     }
 
     public function testGetUserByNameFoundReturnsUserInfoArray(): void {
-      self::$stubUserByName = $this->buildUserStub();
+      \NlpTestGlobals::$stubUserByName = $this->buildUserStub();
       $result = $this->buildDrupalUser()->getUserByName('alice.smith');
       $this->assertSame(10, $result['uid']);
       $this->assertSame('alice@example.com', $result['email']);
@@ -198,12 +176,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testGetUserByEmailNotFoundReturnsEmptyArray(): void {
-      self::$stubUserByMail = FALSE;
+      \NlpTestGlobals::$stubUserByMail = FALSE;
       $this->assertSame([], $this->buildDrupalUser()->getUserByEmail('nobody@example.com'));
     }
 
     public function testGetUserByEmailFoundReturnsUserInfoArray(): void {
-      self::$stubUserByMail = $this->buildUserStub();
+      \NlpTestGlobals::$stubUserByMail = $this->buildUserStub();
       $result = $this->buildDrupalUser()->getUserByEmail('alice@example.com');
       $this->assertSame(10, $result['uid']);
       $this->assertSame('Alice', $result['firstName']);
@@ -269,14 +247,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testAddUserExistingUsernameReturnsExistsStatus(): void {
       // Stub user_load_by_name to return a user so getUserByName returns non-empty.
-      self::$stubUserByName = $this->buildUserStub();
+      \NlpTestGlobals::$stubUserByName = $this->buildUserStub();
       $result = $this->buildDrupalUser()->addUser(['userName' => 'alice.smith']);
       $this->assertSame('exists', $result['status']);
     }
 
     public function testAddUserMissingEmailReturnsNoEmailStatus(): void {
       // User does not exist, so getUserByName returns [], but email is absent.
-      self::$stubUserByName = FALSE;
+      \NlpTestGlobals::$stubUserByName = FALSE;
       $result = $this->buildDrupalUser()->addUser(['userName' => 'newuser']);
       $this->assertSame('no email', $result['status']);
     }
@@ -295,7 +273,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn('crane5');
 
       // getUserByName check inside addUser needs a controlled stub.
-      self::$stubUserByName = FALSE;
+      \NlpTestGlobals::$stubUserByName = FALSE;
 
       // addUser will fail past the email check when it hits entity manager —
       // we only care that createMagicWord was called.

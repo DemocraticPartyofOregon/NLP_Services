@@ -158,7 +158,7 @@ class ApiVoter
     $expandOptions = '?$expand=phones,addresses,districts,electionRecords';
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
     try {
-      $request = $this->client->get($url);
+      $request = $this->client->request('GET',$url);
       $result = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
@@ -477,7 +477,7 @@ class ApiVoter
 
     $url = 'https://'.$user.':'.$apiKey.'|0@'.$apiURL.'/people/'.$vanid;
     try {
-      $this->client->get($url);
+      $this->client->request('GET',$url);
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return FALSE;}
@@ -502,7 +502,7 @@ class ApiVoter
       . "streetAddress=" . urlencode($address['addressLine1'])
       . "&city=" . urlencode($address['city']);
     try {
-      $request = $this->client->get($url);
+      $request = $this->client->request('GET',$url);
       $results = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];

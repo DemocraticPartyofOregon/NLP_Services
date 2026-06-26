@@ -503,7 +503,7 @@ class SyncTurfForm extends FormBase {
 
     }
 
-  private function validateWalksheet(string $name): array
+  public function validateWalksheet(string $name): array
   {
     $emptyResult = [
       'result' => 'ok',
@@ -515,39 +515,30 @@ class SyncTurfForm extends FormBase {
       ],
     ];
 
-    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
-    $uploadedFile = $files[$name] ?? NULL;
+    $files = $_FILES['files'] ?? [];
+    $fileName = $files['name'][$name] ?? '';
 
-    if (empty($uploadedFile)) {
+    if (empty($fileName)) {
       return $emptyResult;
     }
 
-    if (!$uploadedFile->isValid()) {
-      return ['result' => 'error', 'message' => t('The walksheet upload failed. The file may exceed the allowed size limit.')];
+    $tempName     = $files['tmp_name'][$name] ?? '';
+    $lcFileName   = strtolower($fileName);
+    $parts        = explode('.', $lcFileName);
+    $fileType     = end($parts);
+    $allowed      = ['pdf', 'xls', 'xlsx'];
+    if (!in_array($fileType, $allowed)) {
+      return ['result' => 'error', 'message' => t('The walksheet must be a PDF, XLS, or XLSX type.')];
     }
-
-    $fileName = $uploadedFile->getClientOriginalName();
-    $tempName = $uploadedFile->getRealPath();
-    $fileType = $fileNameBase = '';
-
-    if (!empty($fileName)) {
-      $lcFileName = strtolower($fileName);
-      $lcFileNameParts = explode('.', $lcFileName);
-      $fileType = end($lcFileNameParts);
-      $allowed = ['pdf', 'xls', 'xlsx'];
-      if (!in_array($fileType, $allowed)) {
-        return ['result' => 'error', 'message' => t('The walksheet must be a PDF, XLS, or XLSX type.')];
-      }
-      $fileNameBase = $lcFileNameParts[0];
-    }
+    $fileNameBase = $parts[0];
 
     return [
       'result' => 'ok',
       'walksheetInfo' => [
-        'fileName' => $fileName,
-        'tempName' => $tempName,
+        'fileName'     => $fileName,
+        'tempName'     => $tempName,
         'fileNameBase' => $fileNameBase,
-        'fileType' => $fileType,
+        'fileType'     => $fileType,
       ],
     ];
   }
@@ -660,7 +651,7 @@ class SyncTurfForm extends FormBase {
    * @param int $mcid - The MCID of the previously assigned NL.
    * @return array - The form array for the page.
    */
-  private function previouslyAssignedNl(int $turfId, int &$mcid): array
+  public function previouslyAssignedNl(int $turfId, int &$mcid): array
     {
       $form = [];
       $turfAssignment = $this->turfsObj->getTurfAssignment($turfId);
@@ -705,7 +696,7 @@ class SyncTurfForm extends FormBase {
    *         false if the user is selecting a turf.
    * @return array - The form array for the page.
    */
-  private function buildTurfSelectPage(bool $showLists): array
+  public function buildTurfSelectPage(bool $showLists): array
     {
 
       $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
@@ -740,7 +731,7 @@ class SyncTurfForm extends FormBase {
    *
    * @return array - The form array for the page.
    */
-  private function buildNlSelectPage(): array
+  public function buildNlSelectPage(): array
     {
       $form = [];
 
@@ -788,6 +779,20 @@ find an NL when working on a specific Precinct. </div>',
   public function folderSelectedCallback ($form,$unused): array
   {
     return $form['turf_select_page'];
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * districtCallback
+   *
+   * @param $form
+   * @param $unused
+   * @return array
+   * @noinspection PhpUnused
+   * @noinspection PhpUnusedParameterInspection
+   */
+  public function districtCallback($form, $unused): array
+  {
+    return $form['nl_district']['nl_select_district'];
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

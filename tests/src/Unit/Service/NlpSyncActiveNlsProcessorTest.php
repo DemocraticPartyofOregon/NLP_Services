@@ -27,6 +27,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     /** Temp files created during a test — cleaned up in tearDown. */
     private array $tempFiles = [];
 
+    /** Controls what getLegFixes() returns; override per-test before calling processBatch. */
+    private array $legFixesData = [];
+
     protected function setUp(): void {
       parent::setUp();
       $this->apiNlsMock     = $this->createMock(ApiNls::class);
@@ -39,10 +42,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->messengerMock  = $this->createMock(MessengerInterface::class);
 
       // Default stubs so tests only need to override what they care about.
-      $this->legFixesMock->method('getLegFixes')->willReturn([]);
+      $this->legFixesMock->method('getLegFixes')->willReturnCallback(fn() => $this->legFixesData);
       $this->configMock->method('getActivistCode')->willReturnMap([
-        ['NLPNotRegisteredAC', 'NR'],
-        ['NLPDropoutAC',       'DO'],
+        ['NLPNotRegisteredAC', 11],
+        ['NLPDropoutAC',       22],
       ]);
       $this->configMock->method('getStateName')->willReturn('Colorado');
     }
@@ -88,7 +91,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /** Standard header matching the activist-code names returned by configMock. */
     private function csvHeader(): array {
-      return ['VanID', 'ActivistCode_NR', 'ActivistCode_DO'];
+      return ['VanID', 'ActivistCode_11', 'ActivistCode_22'];
     }
 
     /** A data row with all flags clear. */
@@ -234,8 +237,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testProcessBatchMissingHdRepairedByLegislativeFixAddsWarning(): void {
       $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
-      $this->legFixesMock->method('getLegFixes')
-        ->willReturn([101 => ['hd' => '6', 'precinct' => '6.1']]);
+      $this->legFixesData = [101 => ['hd' => '6', 'precinct' => '6.1']];
       $this->apiNlsMock->method('getNls')
         ->willReturn([101 => $this->baseNlRecord(['hd' => '', 'precinct' => ''])]);
 

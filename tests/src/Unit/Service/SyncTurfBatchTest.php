@@ -45,6 +45,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private function buildContainer(): void {
       $container = new ContainerBuilder();
+      $container->set('string_translation',       $this->getStringTranslationStub());
       $container->set('messenger',                $this->messengerMock);
       $container->set('nlpservices.turfs',        $this->turfsMock);
       $container->set('nlpservices.drupal_user',  $this->drupalUserMock);
