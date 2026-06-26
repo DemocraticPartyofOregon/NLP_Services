@@ -129,25 +129,29 @@ class ApiResponseCodes
    */
   public function getApiResultCodes(int $contactTypeId ): array
   {
+    $messenger = Drupal::messenger();
     $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
     $url = "https://$apiURL/canvassResponses/resultCodes?contactTypeId=$contactTypeId";
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_HEADER, "Content-type: application/json");
-    curl_setopt($ch, CURLOPT_USERPWD, "$user:$apiKey|0");
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $result = curl_exec($ch);
-    if($result === FALSE) {
-      nlp_debug_msg('getApiResultCodes', curl_error($ch));
+    try {
+      $request = $this->client->request('GET', $url, [
+        'auth' => [$user, "$apiKey|0"],
+      ]);
+      $resultArray = json_decode($request->getBody(), true);
+    } catch (Exception $e) {
+      $error = $e->getMessage();
+      $messenger->addStatus(t('An error occurred. Please contact the Administrator. '.$error));
+      return [];
+    } catch (GuzzleException $e) {
+      $error = $e->getMessage();
+      $messenger->addStatus(t('An error occurred. Please contact the Administrator. '.$error));
       return [];
     }
-    curl_close($ch);
-    $resultArray = json_decode($result);
     $resultCodes = [];
     foreach ($resultArray as $resultCodeObj) {
-      $resultCodes[$resultCodeObj->name] = $resultCodeObj->resultCodeId;
+      $resultCodes[$resultCodeObj['name']] = $resultCodeObj['resultCodeId'];
     }
     return $resultCodes;
   }

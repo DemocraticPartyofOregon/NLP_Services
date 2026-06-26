@@ -3,7 +3,11 @@
     "description": "Neighborhood Leader organizing module for Drupal 10",
     "type": "drupal-custom-module",
     "license": "GPL-2.0-or-later",
-    "require": {},
+    "require": {
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-openssl": "*"
+    },
     "require-dev": {
         "phpunit/phpunit": "^10"
     },
