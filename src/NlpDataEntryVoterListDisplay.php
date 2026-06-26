@@ -200,10 +200,10 @@ class NlpDataEntryVoterListDisplay
     }
     $rawMsg = $statusMessage[$contactStatusType]['text'];
     $contactStatusMsg = t($rawMsg, [
-      ':fn' => $fn,
-      ':contactDate' => $contactDate,
-      ':scriptQuestion' => $scriptQuestion,
-      ':response' => $response,
+      ':fn' => $fn ?? '',
+      ':contactDate' => $contactDate ?? '',
+      ':scriptQuestion' => $scriptQuestion ?? '',
+      ':response' => $response ?? '',
     ]);
     $voterArray['contactStatusMsg'] = Markup::create(
       '<div class="' . $statusMessage[$contactStatusType]['class'] . '">' . $contactStatusMsg . '</div>'

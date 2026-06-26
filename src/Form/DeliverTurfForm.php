@@ -418,17 +418,17 @@ class DeliverTurfForm extends FormBase
     $to = $nl['email'];
 
     $message = t($paragraphsAdded, [
-      '@nickname' => $turfChoice['nlFirstName'],
+      '@nickname' => $turfChoice['nlFirstName'] ?? '',
       '@county' => $county,
       '@electionDay' => date("F j, Y",$electionTimeStamp),
       '@ballotDropDay' => date("F j, Y",$ballotDropTimeStamp),
       '@server_url' => $serverUrl,
       '@name' => $userName,
       '@pass' => $magicWord,
-      '@firstName' => $nlCoordinator['firstName'],
-      '@lastName' => $nlCoordinator['lastName'],
-      '@phone' => $nlCoordinator['phone'],
-      '@email' => $nlCoordinator['email'],
+      '@firstName' => $nlCoordinator['firstName'] ?? '',
+      '@lastName' => $nlCoordinator['lastName'] ?? '',
+      '@phone' => $nlCoordinator['phone'] ?? '',
+      '@email' => $nlCoordinator['email'] ?? '',
       '@minivanNumber' => $minivanNumber,
       '@minivanCreateDate' => $minivanCreateDate,
     ]);

@@ -579,16 +579,11 @@ class NlpTurfs
    * Returns an array of turfs for a specific county and house district.
    * If the house district is 'All', then all turfs for the county are returned.
    *
-   * The list can optionally be sorted by ordered by a specific field and direction.
-   * The orderBy parameter is an associative array with 'field' and 'sort' keys.
-   * The sort key can be 'asc' or 'desc', and the field key is the name of the field to sort by.
-   *
    * @param string $county - The name of the county.
    * @param mixed $hd - The house district or 'All'.
-   * @param array|null $orderBy - Optional sorting parameters.
    * @return array - An associative array of turf records.
    */
-  public function getTurfs(string $county, mixed $hd, array $orderBy = NULL): array
+  public function getTurfs(string $county, mixed $hd): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -598,10 +593,6 @@ class NlpTurfs
       $query->condition('t.county', $county);
       if ($hd != 'All') {
         $query->condition('t.turfHd', $hd);
-      }
-      if(!empty($orderBy) && !empty($orderBy['field'])) {
-        $sortOrder = ($orderBy['sort'] == 'desc') ? 'DESC' : 'ASC';
-        $query->orderBy($orderBy['field'], $sortOrder);
       }
       $result = $query->execute();
     } catch (Exception $e) {
@@ -1182,12 +1173,12 @@ class NlpTurfs
    * down by voted status, contact attempts, and survey responses.
    *
    * Returns an array with keys:
-   *   `total`          - all voters in county turfs
-   *   `totalVoted`     - of those, how many have turned in a ballot
-   *   `contacted`      - voters who had at least one contact attempt (contact or survey)
+   *   `total` - all voters in county turfs
+   *   `totalVoted` - of those, how many have turned in a ballot
+   *   `contacted` - voters who had at least one contact attempt (contact or survey)
    *   `contactedVoted` - of those, how many voted
-   *   `surveyed`       - voters who answered the survey question
-   *   `surveyedVoted`  - of those, how many voted
+   *   `surveyed` - voters who answered the survey question
+   *   `surveyedVoted` - of those, how many voted
    *
    * @param string $county - The county name.
    * @return array<string,int>
