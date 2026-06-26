@@ -91,7 +91,7 @@ class NlpExportNlsStatus
     } else {
       $counties = [$county];
     }
-    nlp_debug_msg_safe('$counties',$counties);
+    //nlp_debug_msg_safe('$counties',$counties);
     foreach ($counties as $countyName) {
       $nlList = $this->nls->getCountyNls($countyName,$hd);
       if (!$nlList) {

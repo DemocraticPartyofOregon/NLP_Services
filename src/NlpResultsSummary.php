@@ -233,12 +233,12 @@ class NlpResultsSummary
     $row = reset($rows);
     if(is_array($row)) {
       foreach ($rows as $row) {
-        fputcsv($fh, $row);
+        fputcsv($fh, $row, ',', '"', '\\');
       }
     } else {
       foreach ($rows as $row) {
         $rowAsArray = [$row];
-        fputcsv($fh, $rowAsArray);
+        fputcsv($fh, $rowAsArray, ',', '"', '\\');
       }
     }
   }

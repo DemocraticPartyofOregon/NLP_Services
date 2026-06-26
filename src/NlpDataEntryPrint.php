@@ -405,11 +405,11 @@ household has not yet voted, and a reminder call might be helpful.</p>";
    * buildCallListPrint
    *
    * @param string $type
-   * @param string $page
+   * @param array $page
    * @param string $title
    * @return string
    */
-  public function buildListPrint( string $type, string $page, string $title ): string
+  public function buildListPrint( string $type, array $page, string $title ): string
   {
     $messenger = Drupal::messenger();
 
@@ -452,11 +452,11 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       if (empty($css)) {break;}
       if (empty(trim($css))) {continue;}  // Blank line.
       if ($skip) {
-        if (strpos($css, '*/') !== false) {$skip = false;}
+        if (str_contains($css, '*/')) {$skip = false;}
         continue;
       }
-      if (strpos($css, '/*') !== false) {
-        if (strpos($css, '*/') === false) {$skip = true;}
+      if (str_contains($css, '/*')) {
+        if (!str_contains($css, '*/')) {$skip = true;}
         continue;
       }
       fputs($fh,$css);
