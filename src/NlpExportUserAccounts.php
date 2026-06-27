@@ -88,7 +88,7 @@ to a new site.</p>";
           $updateDrupal = TRUE;
           $hdNew = $hdNlp;
         } else {
-          $nlRecord = $this->apiNlsObj->getApiNls(NULL, $mcid);
+          $nlRecord = $this->apiNlsObj->getApiNls('', $mcid);
           if (empty($nlRecord) || empty($nlRecord['hd'])) {
             $hdNew = 'Unknown'; // This NL seems to be missing from VoteBuilder.
           } else {
@@ -107,7 +107,7 @@ to a new site.</p>";
     } else {
       // The Drupal login has an empty HD, probably created before the HD field was created.
       if ($hdNlp === 'Unknown') {
-        $nlRecord = $this->apiNlsObj->getApiNls(NULL, $mcid);
+        $nlRecord = $this->apiNlsObj->getApiNls('', $mcid);
         if (empty($nlRecord) || empty($nlRecord['hd'])) {
           $hdNew = 'Unknown'; // This NL seems to be missing from VoteBuilder.
         } else {
