@@ -3,27 +3,24 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
+  <component name="BackgroundAgentGlobalSettings">
+    <option name="selectedModelId" value="auto" />
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update unit tests">
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiExportJobsTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiFoldersTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyVerificationTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiMapRegionsTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiResponseCodesTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiSavedListsTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiSurveyQuestionTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Replace curl calls with guzzle for API requests">
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/DatabaseFunctionsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpAwardsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpCoordinatorsListDisplayTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpCoordinatorsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpCreateWalksheetTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpCredentialsEmailTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpCrosstabCountsTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryDateBarTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryHelperTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryPrintTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVotersTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiExportJobs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiExportJobs.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiMapRegions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiMapRegions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiResponseCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiResponseCodes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiSavedLists.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSavedLists.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiSurveyQuestion.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiSurveyQuestion.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncActiveNlsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiActivistCodesTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiActivistCodesTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -80,7 +77,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="276" />
+    <option name="cachedIndexableFilesCount" value="288" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -117,23 +114,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000007379389957" />
-      <entry key="MS500" value="1.0642002660664556" />
-      <entry key="S2" value="1.9632376617534986" />
-      <entry key="S5" value="3.9871868659690897" />
-      <entry key="S10" value="6.181132376747882" />
-      <entry key="S30" value="8.936787407795556" />
-      <entry key="S60" value="9.895826758042777" />
-      <entry key="M2" value="10.428396183914334" />
-      <entry key="M5" value="10.819219630507506" />
-      <entry key="M10" value="11.418658566930334" />
-      <entry key="M15" value="12.303874189149088" />
-      <entry key="M30" value="16.972747625436185" />
-      <entry key="H1" value="27.645344163516967" />
-      <entry key="H2" value="40.417844169411744" />
-      <entry key="H4" value="52.026567377623266" />
-      <entry key="D1" value="113.10802799058168" />
-      <entry key="W1" value="540.782297319516" />
+      <entry key="MS100" value="1.000841862390909" />
+      <entry key="MS500" value="1.408801042435254" />
+      <entry key="S2" value="3.223939512128061" />
+      <entry key="S5" value="5.097865037611983" />
+      <entry key="S10" value="6.27762981730414" />
+      <entry key="S30" value="7.349564673902431" />
+      <entry key="S60" value="7.69550964040664" />
+      <entry key="M2" value="8.299332603947294" />
+      <entry key="M5" value="10.307398959727982" />
+      <entry key="M10" value="12.043904969822323" />
+      <entry key="M15" value="12.860046520052418" />
+      <entry key="M30" value="13.843995614814474" />
+      <entry key="H1" value="15.029208764849642" />
+      <entry key="H2" value="20.827484936675162" />
+      <entry key="H4" value="35.118174374555025" />
+      <entry key="D1" value="111.64187532453835" />
+      <entry key="W1" value="543.7801968834132" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -142,36 +139,36 @@
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
-      <entry key="S60" value="3.3950879556296917E-277" />
-      <entry key="M2" value="5.826738357688742E-139" />
-      <entry key="M5" value="5.087178686825013E-56" />
-      <entry key="M10" value="2.3391932890243828E-28" />
-      <entry key="M15" value="4.2268475293188813E-19" />
-      <entry key="M30" value="9.317690676284469E-10" />
-      <entry key="H1" value="5.01230779498577E-5" />
-      <entry key="H2" value="0.012453155124252298" />
-      <entry key="H4" value="0.227542681812685" />
-      <entry key="D1" value="4.599350775963155" />
-      <entry key="W1" value="17.834045413825763" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="4.516270336027003E-188" />
+      <entry key="M5" value="1.154034408024254E-75" />
+      <entry key="M10" value="3.5231975227719766E-38" />
+      <entry key="M15" value="1.1965490436610621E-25" />
+      <entry key="M30" value="4.957528844451229E-13" />
+      <entry key="H1" value="1.1561554018612215E-6" />
+      <entry key="H2" value="0.00189133577843224" />
+      <entry key="H4" value="0.08867628540067246" />
+      <entry key="D1" value="3.9308575245629664" />
+      <entry key="W1" value="17.438362146397104" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.8705512192078307" />
-      <entry key="MS500" value="1.0353727193253637" />
-      <entry key="S2" value="1.947607559283072" />
-      <entry key="S5" value="3.9663119109555214" />
-      <entry key="S10" value="6.16225104345563" />
-      <entry key="S30" value="8.927076941299966" />
-      <entry key="S60" value="9.890393861313886" />
-      <entry key="M2" value="10.425521094251817" />
-      <entry key="M5" value="10.818028382009091" />
-      <entry key="M10" value="11.418050269575714" />
-      <entry key="M15" value="12.303457180214775" />
-      <entry key="M30" value="16.972497182038715" />
-      <entry key="H1" value="27.645214848719206" />
-      <entry key="H2" value="40.43016259375386" />
-      <entry key="H4" value="52.25391132659065" />
-      <entry key="D1" value="117.70685558419653" />
-      <entry key="W1" value="558.6155107729799" />
+      <entry key="MS100" value="0.8896446712774169" />
+      <entry key="MS500" value="1.3815838519594894" />
+      <entry key="S2" value="3.212749524776647" />
+      <entry key="S5" value="5.091563831118204" />
+      <entry key="S10" value="6.27390118139973" />
+      <entry key="S30" value="7.34814632778592" />
+      <entry key="S60" value="7.694771171447805" />
+      <entry key="M2" value="8.29893179088617" />
+      <entry key="M5" value="10.307193629523795" />
+      <entry key="M10" value="12.043782629527914" />
+      <entry key="M15" value="12.859958779592906" />
+      <entry key="M30" value="13.843947916009117" />
+      <entry key="H1" value="15.029180943633076" />
+      <entry key="H2" value="20.829343108692427" />
+      <entry key="H4" value="35.20676678758455" />
+      <entry key="D1" value="115.57228462781055" />
+      <entry key="W1" value="561.2177453734431" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -258,7 +255,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.settings.ide.settings.spelling&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -353,23 +350,9 @@
       <workItem from="1782405678127" duration="24000" />
       <workItem from="1782405749053" duration="3916000" />
       <workItem from="1782429620080" duration="19667000" />
-      <workItem from="1782489871300" duration="6986000" />
-    </task>
-    <task id="LOCAL-00100" summary="Claude code review users and voters">
-      <option name="closed" value="true" />
-      <created>1780031468409</created>
-      <option name="number" value="00100" />
-      <option name="presentableId" value="LOCAL-00100" />
-      <option name="project" value="LOCAL" />
-      <updated>1780031468409</updated>
-    </task>
-    <task id="LOCAL-00101" summary="Claude code review forms NlsDisplay, addAccount, to coordinators">
-      <option name="closed" value="true" />
-      <created>1780062965112</created>
-      <option name="number" value="00101" />
-      <option name="presentableId" value="LOCAL-00101" />
-      <option name="project" value="LOCAL" />
-      <updated>1780062965112</updated>
+      <workItem from="1782489871300" duration="15291000" />
+      <workItem from="1782533684152" duration="58000" />
+      <workItem from="1782533757807" duration="4505000" />
     </task>
     <task id="LOCAL-00102" summary="Claude code review forms DatabaseSchema to DeleteDrupalAccounts">
       <option name="closed" value="true" />
@@ -747,7 +730,23 @@
       <option name="project" value="LOCAL" />
       <updated>1782492899719</updated>
     </task>
-    <option name="localTasksCounter" value="149" />
+    <task id="LOCAL-00149" summary="Add unit tests for remaining api files">
+      <option name="closed" value="true" />
+      <created>1782512011078</created>
+      <option name="number" value="00149" />
+      <option name="presentableId" value="LOCAL-00149" />
+      <option name="project" value="LOCAL" />
+      <updated>1782512011078</updated>
+    </task>
+    <task id="LOCAL-00150" summary="Replace curl calls with guzzle for API requests">
+      <option name="closed" value="true" />
+      <created>1782512418812</created>
+      <option name="number" value="00150" />
+      <option name="presentableId" value="LOCAL-00150" />
+      <option name="project" value="LOCAL" />
+      <updated>1782512418812</updated>
+    </task>
+    <option name="localTasksCounter" value="151" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -799,8 +798,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Make generated walksheets temp" />
-    <MESSAGE value="Fix null requestStack" />
     <MESSAGE value="Make walksheet temporary" />
     <MESSAGE value="Code review" />
     <MESSAGE value="Fix version number" />
@@ -824,7 +821,9 @@
     <MESSAGE value="Fix display of turf for dataentry." />
     <MESSAGE value="Drupal 11 migration" />
     <MESSAGE value="Update unit tests" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update unit tests" />
+    <MESSAGE value="Add unit tests for remaining api files" />
+    <MESSAGE value="Replace curl calls with guzzle for API requests" />
+    <option name="LAST_COMMIT_MESSAGE" value="Replace curl calls with guzzle for API requests" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
