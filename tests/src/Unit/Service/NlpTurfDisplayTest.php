@@ -1,0 +1,322 @@
+<?php
+
+namespace Drupal\Tests\nlpservices\Unit\Service {
+
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\nlpservices\NlpTurfDisplay;
+  use Drupal\Tests\UnitTestCase;
+
+  class NlpTurfDisplayTest extends UnitTestCase {
+
+    private NlpTurfDisplay $service;
+
+    protected function setUp(): void {
+      parent::setUp();
+      $container = new ContainerBuilder();
+      $container->set('string_translation', $this->getStringTranslationStub());
+      \Drupal::setContainer($container);
+      $this->service = new NlpTurfDisplay();
+    }
+
+    protected function tearDown(): void {
+      parent::tearDown();
+      \Drupal::setContainer(new ContainerBuilder());
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private function baseTurf(): array {
+      return [
+        'turfIndex'        => 7,
+        'turfHd'           => 6,
+        'turfPrecinct'     => '6.1',
+        'nlLastName'       => 'Doe',
+        'nlFirstName'      => 'Jane',
+        'mcid'             => 42,
+        'turfName'         => 'Denver-001',
+        'mapRegionName'    => 'Region A',
+        'folderName'       => 'Folder1',
+        'turfPDF'          => 'some.pdf',
+        'minivanNumber'    => '',
+        'minivanCreateDate'=> '',
+        'email'            => 'jane@example.com',
+      ];
+    }
+
+    // -------------------------------------------------------------------------
+    // buildTurfTableArray
+    // -------------------------------------------------------------------------
+
+    public function testBuildTurfTableArrayOtherTypeIncludesCbColumn(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertArrayHasKey('cb', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayOtherTypeIncludesNlLastName(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertArrayHasKey('nlLastName', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayCbColumnHasTurfIndex(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertSame(7, $rows[1]['cb']['turfIndex']);
+    }
+
+    public function testBuildTurfTableArrayCbColumnHasRowCount(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertSame(1, $rows[1]['cb']['rowCount']);
+    }
+
+    public function testBuildTurfTableArrayRowNumbersStartAtOne(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf(), $this->baseTurf()]);
+      $this->assertArrayHasKey(1, $rows);
+      $this->assertArrayHasKey(2, $rows);
+    }
+
+    public function testBuildTurfTableArrayNlLastNameContainsBothNames(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertStringContainsString('Doe', $rows[1]['nlLastName']);
+      $this->assertStringContainsString('Jane', $rows[1]['nlLastName']);
+    }
+
+    public function testBuildTurfTableArrayTurfNameContainsMapRegion(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertStringContainsString('Region A', $rows[1]['turfName']);
+    }
+
+    public function testBuildTurfTableArrayFolderNameSet(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $this->assertSame('Folder1', $rows[1]['folderName']);
+    }
+
+    public function testBuildTurfTableArrayEmptyTurfsReturnsEmptyArray(): void {
+      $this->assertSame([], $this->service->buildTurfTableArray([]));
+    }
+
+    public function testBuildTurfTableArrayDisplayTypeExcludesCb(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
+      $this->assertArrayNotHasKey('cb', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayDisplayTypeIncludesMinivanNumberEmpty(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
+      $this->assertArrayHasKey('minivanNumber', $rows[1]);
+      $this->assertSame('', $rows[1]['minivanNumber']);
+    }
+
+    public function testBuildTurfTableArrayDisplayTypeShowsMinivanWhenSet(): void {
+      $turf = array_merge($this->baseTurf(), [
+        'minivanNumber'     => 99,
+        'minivanCreateDate' => '2024-10-15 00:00:00',
+      ]);
+      $rows = $this->service->buildTurfTableArray([$turf], 'display');
+      $this->assertStringContainsString('99', $rows[1]['minivanNumber']);
+      $this->assertStringContainsString('2024-10-15', $rows[1]['minivanNumber']);
+    }
+
+    public function testBuildTurfTableArrayDisplayTypeIncludesNlLastName(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
+      $this->assertArrayHasKey('nlLastName', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayReplacementTypeExcludesNlLastName(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'replacement');
+      $this->assertArrayNotHasKey('nlLastName', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayReplacementTypeIncludesCb(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'replacement');
+      $this->assertArrayHasKey('cb', $rows[1]);
+    }
+
+    public function testBuildTurfTableArrayWalksheetTypeIncludesEmail(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'walksheet');
+      $this->assertSame('jane@example.com', $rows[1]['email']);
+    }
+
+    public function testBuildTurfTableArrayWalksheetTypeAddsNoPdfWhenPdfEmpty(): void {
+      $turf = array_merge($this->baseTurf(), ['turfPDF' => '']);
+      $rows = $this->service->buildTurfTableArray([$turf], 'walksheet');
+      $this->assertStringContainsString('&#134;', $rows[1]['turfIndex']);
+    }
+
+    public function testBuildTurfTableArrayWalksheetTypeNoMarkerWhenPdfSet(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'walksheet');
+      $this->assertSame((string) 7, (string) $rows[1]['turfIndex']);
+    }
+
+    // -------------------------------------------------------------------------
+    // displayTurfs
+    // -------------------------------------------------------------------------
+
+    public function testDisplayTurfsReturnsContactsKey(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertArrayHasKey('contacts', $result);
+    }
+
+    public function testDisplayTurfsContactsIsTableType(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertSame('table', $result['contacts']['#type']);
+    }
+
+    public function testDisplayTurfsHasHeader(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertNotEmpty($result['contacts']['#header']);
+    }
+
+    public function testDisplayTurfsCbColumnIsCheckbox(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertSame('checkbox', $result['contacts'][1]['cb']['#type']);
+    }
+
+    public function testDisplayTurfsCbReturnValueContainsTurfIndex(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertStringContainsString('7', $result['contacts'][1]['cb']['#return_value']);
+    }
+
+    public function testDisplayTurfsNonCbColumnHasMarkup(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $this->assertArrayHasKey('#markup', $result['contacts'][1]['turfIndex']);
+    }
+
+    public function testDisplayTurfsEmptyRowsReturnsTableWithNoRows(): void {
+      $result = $this->service->displayTurfs([]);
+      $this->assertSame('table', $result['contacts']['#type']);
+      $this->assertCount(0, array_filter(array_keys($result['contacts']), 'is_int'));
+    }
+
+    // -------------------------------------------------------------------------
+    // validateTurfSelection
+    // -------------------------------------------------------------------------
+
+    public function testValidateTurfSelectionEmptyContactsReturnsEmptyArray(): void {
+      $this->assertSame([], $this->service->validateTurfSelection([]));
+    }
+
+    public function testValidateTurfSelectionCheckedContactReturnsSelection(): void {
+      $contacts = [['cb' => 'CB_7_1']];
+      $result = $this->service->validateTurfSelection($contacts);
+      $this->assertArrayHasKey('7', $result);
+      $this->assertSame('7', $result['7']['turfIndex']);
+      $this->assertSame('1', $result['7']['rowCount']);
+    }
+
+    public function testValidateTurfSelectionUncheckedContactSkipped(): void {
+      $contacts = [['cb' => ''], ['cb' => 'CB_7_1']];
+      $result = $this->service->validateTurfSelection($contacts);
+      $this->assertCount(1, $result);
+    }
+
+    public function testValidateTurfSelectionMultipleCheckedReturnsAll(): void {
+      $contacts = [['cb' => 'CB_7_1'], ['cb' => 'CB_8_2']];
+      $result = $this->service->validateTurfSelection($contacts);
+      $this->assertArrayHasKey('7', $result);
+      $this->assertArrayHasKey('8', $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // getSortField
+    // -------------------------------------------------------------------------
+
+    public function testGetSortFieldReturnsTurfIndexForTi(): void {
+      $this->assertSame('turfIndex', $this->service->getSortField('ti'));
+    }
+
+    public function testGetSortFieldReturnsHdForHD(): void {
+      $this->assertSame('hd', $this->service->getSortField('HD'));
+    }
+
+    public function testGetSortFieldReturnsPrecinctForPct(): void {
+      $this->assertSame('precinct', $this->service->getSortField('Pct'));
+    }
+
+    public function testGetSortFieldReturnsNlLastNameForNameMcid(): void {
+      $this->assertSame('nlLastName', $this->service->getSortField('Name<br>MCID'));
+    }
+
+    public function testGetSortFieldReturnsTurfNameForTurfNameLabel(): void {
+      $this->assertSame('turfName', $this->service->getSortField('Turf name<br>Map Region Name'));
+    }
+
+    public function testGetSortFieldReturnsFolderNameForFolderName(): void {
+      $this->assertSame('folderName', $this->service->getSortField('Folder name'));
+    }
+
+    public function testGetSortFieldReturnsEmptyStringForUnknownLabel(): void {
+      $this->assertSame('', $this->service->getSortField('Unknown'));
+    }
+
+    public function testGetSortFieldDisplayTypeExcludesCbFromSearchableFields(): void {
+      $this->assertSame('', $this->service->getSortField('cb', 'display'));
+    }
+
+    public function testGetSortFieldReplacementTypeExcludesNlLastName(): void {
+      $this->assertSame('', $this->service->getSortField('Name<br>MCID', 'replacement'));
+    }
+
+    // -------------------------------------------------------------------------
+    // sortTurfTable
+    // -------------------------------------------------------------------------
+
+    private function buildTurfTable(): array {
+      return [
+        1 => ['turfIndex' => '10', 'hd' => '8', 'precinct' => '8.2', 'nlLastName' => 'Zara'],
+        2 => ['turfIndex' => '5',  'hd' => '6', 'precinct' => '6.1', 'nlLastName' => 'Alice'],
+        3 => ['turfIndex' => '7',  'hd' => '7', 'precinct' => '7.0', 'nlLastName' => 'Mike'],
+      ];
+    }
+
+    public function testSortTurfTableSortsAscendingByTurfIndex(): void {
+      $table = $this->buildTurfTable();
+      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $values = array_column($table, 'turfIndex');
+      $this->assertSame('5', $values[0]);
+      $this->assertSame('10', $values[2]);
+    }
+
+    public function testSortTurfTableSortsDescendingByTurfIndex(): void {
+      $table = $this->buildTurfTable();
+      $this->service->sortTurfTable($table, 'desc', 'ti');
+      $values = array_column($table, 'turfIndex');
+      $this->assertSame('10', $values[0]);
+      $this->assertSame('5', $values[2]);
+    }
+
+    public function testSortTurfTableSortsAscendingByNlLastName(): void {
+      $table = $this->buildTurfTable();
+      $this->service->sortTurfTable($table, 'asc', 'Name<br>MCID');
+      $values = array_column($table, 'nlLastName');
+      $this->assertSame('Alice', $values[0]);
+      $this->assertSame('Zara', $values[2]);
+    }
+
+    public function testSortTurfTableEmptyTableDoesNotError(): void {
+      $table = [];
+      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $this->assertSame([], $table);
+    }
+
+    public function testSortTurfTableUnknownOrderDoesNotSort(): void {
+      $table = $this->buildTurfTable();
+      $original = $table;
+      $this->service->sortTurfTable($table, 'asc', 'Unknown');
+      $this->assertSame($original, $table);
+    }
+
+    public function testSortTurfTablePreservesKeysAfterSort(): void {
+      $table = $this->buildTurfTable();
+      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $this->assertArrayHasKey(2, $table);
+    }
+
+  }
+
+}

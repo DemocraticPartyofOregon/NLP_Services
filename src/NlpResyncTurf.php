@@ -14,7 +14,7 @@ class NlpResyncTurf
   protected NlpTurfs $turfsObj;
   protected ApiExportJobs $exportJobsObj;
   protected ApiSavedLists $savedListsObj;
-  protected NlpsyncTurfAddVoter $syncTurfAddVoterObj;
+  protected NlpSyncTurfAddVoter $syncTurfAddVoterObj;
   protected ApiVoter $apiVoterObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiFolders $apiFoldersObj;
@@ -269,7 +269,7 @@ class NlpResyncTurf
       return ['result' => 'transient_error', 'message' => 'Export job failed'];
     }
 
-    $fh = fopen($exportJob['downloadUrl'], "r");
+    $fh = @fopen($exportJob['downloadUrl'], "r");
     if(!$fh) {
       return ['result' => 'transient_error', 'message' => 'Unable to open export job download URL'];
     }

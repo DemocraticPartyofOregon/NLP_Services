@@ -139,7 +139,7 @@ and cannot be assigned to this turf.<br>
     $this->headerBuild();
     foreach ($this->header as $headerInfo) {
       if((string) $headerInfo['data'] == $data) {
-        return $headerInfo['field'];
+        return $headerInfo['field'] ?? '';
       }
     }
     return '';
