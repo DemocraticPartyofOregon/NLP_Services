@@ -205,7 +205,7 @@ class TurfDeliveryMessageForm extends FormBase
           in the body of the email message. ');
           return;
         }
-        $this->turfMsg->putTurfMsg(NULL,$stateMsg);
+        $this->turfMsg->putTurfMsg('',$stateMsg);
         $form_state->set('page', 'county_select');
         break;
     

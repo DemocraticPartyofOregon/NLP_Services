@@ -1,0 +1,509 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Drupal\Tests\nlpservices\Unit\Form;
+
+use Drupal;
+use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Form\FormState;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\nlpservices\DrupalUser;
+use Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom;
+use Drupal\nlpservices\MagicWord;
+use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpCoordinators;
+use Drupal\nlpservices\NlpCoordinatorsListDisplay;
+use Drupal\nlpservices\NlpNls;
+use Drupal\nlpservices\NlpSearchBar;
+use Drupal\nlpservices\NlpSessionData;
+use Drupal\Tests\UnitTestCase;
+
+/**
+ * @coversDefaultClass \Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom
+ * @group nlpservices
+ */
+class RemoveCoordinatorRoleFromTest extends UnitTestCase {
+
+  private NlpCoordinators $coordinatorsMock;
+  private NlpNls $nlsMock;
+  private DrupalUser $drupalUserMock;
+  private MagicWord $magicWordMock;
+  private NlpCoordinatorsListDisplay $coordinatorsListDisplayMock;
+  private NlpSessionData $sessionDataMock;
+  private NlpSearchBar $searchBarMock;
+  private NlpConfiguration $nlpConfigurationMock;
+  private MessengerInterface $messengerMock;
+
+  protected function setUp(): void {
+    parent::setUp();
+
+    $this->coordinatorsMock           = $this->createMock(NlpCoordinators::class);
+    $this->nlsMock                    = $this->createMock(NlpNls::class);
+    $this->drupalUserMock             = $this->createMock(DrupalUser::class);
+    $this->magicWordMock              = $this->createMock(MagicWord::class);
+    $this->coordinatorsListDisplayMock = $this->createMock(NlpCoordinatorsListDisplay::class);
+    $this->sessionDataMock            = $this->createMock(NlpSessionData::class);
+    $this->searchBarMock              = $this->createMock(NlpSearchBar::class);
+    $this->nlpConfigurationMock       = $this->createMock(NlpConfiguration::class);
+    $this->messengerMock              = $this->createMock(MessengerInterface::class);
+
+    $container = new ContainerBuilder();
+    $container->set('messenger', $this->messengerMock);
+    $container->set('string_translation', $this->getStringTranslationStub());
+    Drupal::setContainer($container);
+  }
+
+  protected function tearDown(): void {
+    parent::tearDown();
+    Drupal::setContainer(new ContainerBuilder());
+  }
+
+  // -------------------------------------------------------------------------
+  // Helpers
+  // -------------------------------------------------------------------------
+
+  private function buildFormInstance(): RemoveCoordinatorRoleFrom {
+    $form = new RemoveCoordinatorRoleFrom(
+      $this->coordinatorsMock,
+      $this->nlsMock,
+      $this->drupalUserMock,
+      $this->magicWordMock,
+      $this->coordinatorsListDisplayMock,
+      $this->sessionDataMock,
+      $this->searchBarMock,
+      $this->nlpConfigurationMock,
+    );
+    $form->setStringTranslation($this->getStringTranslationStub());
+    $form->setMessenger($this->messengerMock);
+    return $form;
+  }
+
+  private function configureStandardBuildMocks(string $county = 'TestCounty'): void {
+    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', 'HD1', 'HD2']);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+    $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
+    $this->drupalUserMock->method('getCoordinators')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
+  }
+
+  private function baseCoordinator(int $mcid, string $hd = 'HD1'): array {
+    return [
+      'mcid'      => $mcid,
+      'firstName' => 'Test',
+      'lastName'  => 'Coordinator',
+      'hd'        => $hd,
+    ];
+  }
+
+  // -------------------------------------------------------------------------
+  // getFormId
+  // -------------------------------------------------------------------------
+
+  /**
+   * @covers ::getFormId
+   */
+  public function testGetFormIdReturnsExpectedString(): void {
+    $this->assertSame(
+      'nlpservices_remove_coordinator_role_form',
+      $this->buildFormInstance()->getFormId()
+    );
+  }
+
+  // -------------------------------------------------------------------------
+  // buildForm
+  // -------------------------------------------------------------------------
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormSetsReenterAndScopeOnFirstRender(): void {
+    $this->configureStandardBuildMocks();
+
+    $formState = new FormState();
+    $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertTrue($formState->get('reenter'));
+    $this->assertSame('unknown', $formState->get('scope'));
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormSetsCountyFromSessionOnFirstRender(): void {
+    $this->configureStandardBuildMocks('Denver');
+
+    $formState = new FormState();
+    $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertSame('Denver', $formState->get('county'));
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormAddsWarningAndReturnsEmptyWhenCountyIsEmpty(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('');
+    $this->messengerMock->expects($this->once())->method('addWarning');
+
+    $result = $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertSame([], $result);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
+    $this->sessionDataMock->expects($this->never())->method('getCounty');
+    $this->sessionDataMock->method('getHdOptions')->willReturn([]);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+    $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
+    $this->drupalUserMock->method('getCoordinators')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('county', 'TestCounty');
+
+    $this->buildFormInstance()->buildForm([], $formState);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormContainsExpectedFormElements(): void {
+    $this->configureStandardBuildMocks();
+
+    $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertArrayHasKey('options_display', $form);
+    $this->assertArrayHasKey('manageCoordinators', $form);
+    $this->assertArrayHasKey('submit', $form);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormAttachesRequiredLibraries(): void {
+    $this->configureStandardBuildMocks();
+
+    $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+    $libs = $form['#attached']['library'];
+    $this->assertContains('nlpservices/nlp-table', $libs);
+    $this->assertContains('nlpservices/info-boxes', $libs);
+    $this->assertContains('nlpservices/search-boxes', $libs);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormFiltersCoordinatorsByHdWhenNotAll(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', 'HD1', 'HD2']);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(1);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('HD1');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+    $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
+
+    $coordinators = [
+      10 => $this->baseCoordinator(10, 'HD1'),
+      20 => $this->baseCoordinator(20, 'HD2'),
+    ];
+    $this->drupalUserMock->method('getCoordinators')->willReturn($coordinators);
+
+    $capturedTable = NULL;
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorTableArray')
+      ->willReturnCallback(function ($mode, $coords) use (&$capturedTable) {
+        $capturedTable = $coords;
+        return [];
+      });
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertArrayHasKey(10, $capturedTable);
+    $this->assertArrayNotHasKey(20, $capturedTable);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormExcludesAssignedCoordinatorsFromUnassignedList(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->nlsMock->method('getHdList')->willReturn([]);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+
+    // mcid 10 is formally assigned, mcid 20 is not.
+    $this->coordinatorsMock->method('getCoordinators')
+      ->willReturn([['mcid' => 10, 'firstName' => 'Assigned', 'lastName' => 'Coord', 'hd' => 'HD1']]);
+    $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+
+    $coordinators = [
+      10 => $this->baseCoordinator(10),
+      20 => $this->baseCoordinator(20),
+    ];
+    $this->drupalUserMock->method('getCoordinators')->willReturn($coordinators);
+
+    $capturedTable = NULL;
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorTableArray')
+      ->willReturnCallback(function ($mode, $coords) use (&$capturedTable) {
+        $capturedTable = $coords;
+        return [];
+      });
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertArrayNotHasKey(10, $capturedTable);
+    $this->assertArrayHasKey(20, $capturedTable);
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormFiltersUnassignedCoordinatorsBySearchNeedleAndClearsNeedle(): void {
+    $this->configureStandardBuildMocks();
+
+    $unassigned = [20 => $this->baseCoordinator(20)];
+    $filtered   = [20 => $this->baseCoordinator(20)];
+
+    $this->searchBarMock->expects($this->once())
+      ->method('searchInfoArray')
+      ->with('Test', $this->anything())
+      ->willReturn($filtered);
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('county', 'TestCounty');
+    $formState->set('search-needle', 'Test');
+
+    $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertNull($formState->get('search-needle'));
+  }
+
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormEnrichesAssignedCoordinatorsWithDrupalUserData(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->nlsMock->method('getHdList')->willReturn([]);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+
+    $this->coordinatorsMock->method('getCoordinators')
+      ->willReturn([['mcid' => 10, 'firstName' => 'Coord', 'lastName' => 'One', 'hd' => 'HD1']]);
+    $this->drupalUserMock->expects($this->atLeastOnce())
+      ->method('getUserByMcid')
+      ->with(10)
+      ->willReturn(['uid' => 99, 'roles' => ['nlp_coordinator' => 'nlp_coordinator']]);
+    $this->drupalUserMock->method('getCoordinators')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
+    $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], new FormState());
+  }
+
+  // -------------------------------------------------------------------------
+  // validateForm
+  // -------------------------------------------------------------------------
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormHdSelectSavesHdIndex(): void {
+    $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(3);
+
+    $formState = $this->createMock(FormStateInterface::class);
+    $formState->method('getTriggeringElement')->willReturn(['#name' => 'hd-select']);
+    $formState->method('getValue')->with('hd-select')->willReturn(3);
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormUserSelectSetsErrorWhenNoSelections(): void {
+    $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')->willReturn([]);
+
+    $formState = $this->createMock(FormStateInterface::class);
+    $formState->method('getTriggeringElement')->willReturn(['#name' => 'user_select']);
+    $formState->method('getValue')->with('contacts')->willReturn([]);
+    $formState->expects($this->once())->method('setErrorByName')
+      ->with('user_select', $this->anything());
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormUserSelectStoresSelectionsWhenValid(): void {
+    $selections = [['mcid' => 10]];
+    $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')->willReturn($selections);
+
+    $captured = [];
+    $formState = $this->createMock(FormStateInterface::class);
+    $formState->method('getTriggeringElement')->willReturn(['#name' => 'user_select']);
+    $formState->method('getValue')->with('contacts')->willReturn([]);
+    $formState->method('set')->willReturnCallback(
+      function ($key, $value) use (&$captured): void { $captured[$key] = $value; }
+    );
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+
+    $this->assertSame($selections, $captured['selections']);
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormUserSelectDoesNotSetErrorWhenSelectionsExist(): void {
+    $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')
+      ->willReturn([['mcid' => 10]]);
+
+    $formState = $this->createMock(FormStateInterface::class);
+    $formState->method('getTriggeringElement')->willReturn(['#name' => 'user_select']);
+    $formState->method('getValue')->with('contacts')->willReturn([]);
+    $formState->expects($this->never())->method('setErrorByName');
+    $formState->method('set')->willReturn(NULL);
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+  }
+
+  // -------------------------------------------------------------------------
+  // submitForm
+  // -------------------------------------------------------------------------
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormSetsReenterAndCallsSetRebuild(): void {
+    $formState = $this->getMockBuilder(FormState::class)
+      ->onlyMethods(['setRebuild'])
+      ->getMock();
+    $formState->expects($this->once())->method('setRebuild');
+    $formState->setValue('search-needle', '');
+    $formState->setTriggeringElement(['#name' => 'search_submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertTrue($formState->get('reenter'));
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormHdChangeSavesNewHdIndex(): void {
+    $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(2);
+
+    $formState = new FormState();
+    $formState->setValue('hd-change', 2);
+    $formState->setTriggeringElement(['#name' => 'hd-change']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormSearchSubmitStoresNeedle(): void {
+    $formState = new FormState();
+    $formState->setValue('search-needle', 'Smith');
+    $formState->setTriggeringElement(['#name' => 'search_submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertSame('Smith', $formState->get('search-needle'));
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormUserSelectCallsRemoveCoordinatorRoleForEachSelection(): void {
+    $this->drupalUserMock->method('getUserByMcid')->willReturnCallback(
+      fn($mcid) => ['uid' => $mcid * 10]
+    );
+    $this->magicWordMock->expects($this->exactly(2))
+      ->method('removeCoordinatorRole')
+      ->with($this->logicalOr(10, 20));
+    $this->drupalUserMock->method('removeNlpRoles')->willReturn(TRUE);
+
+    $formState = new FormState();
+    $formState->set('selections', [['mcid' => 10], ['mcid' => 20]]);
+    $formState->setTriggeringElement(['#name' => 'user_select']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormUserSelectCallsRemoveNlpRolesWithCoordinatorRoleId(): void {
+    $this->drupalUserMock->method('getUserByMcid')
+      ->with(10)
+      ->willReturn(['uid' => 99]);
+    $this->magicWordMock->method('removeCoordinatorRole');
+
+    $this->drupalUserMock->expects($this->once())
+      ->method('removeNlpRoles')
+      ->with(99, [NLP_COORDINATOR_ROLE_ID]);
+
+    $formState = new FormState();
+    $formState->set('selections', [['mcid' => 10]]);
+    $formState->setTriggeringElement(['#name' => 'user_select']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormUserSelectProcessesAllSelectionsInOrder(): void {
+    $processedMcids = [];
+    $this->drupalUserMock->method('getUserByMcid')
+      ->willReturnCallback(fn($mcid) => ['uid' => $mcid * 10]);
+    $this->magicWordMock->method('removeCoordinatorRole')
+      ->willReturnCallback(function ($mcid) use (&$processedMcids): void {
+        $processedMcids[] = $mcid;
+      });
+    $this->drupalUserMock->method('removeNlpRoles')->willReturn(TRUE);
+
+    $formState = new FormState();
+    $formState->set('selections', [['mcid' => 5], ['mcid' => 7], ['mcid' => 9]]);
+    $formState->setTriggeringElement(['#name' => 'user_select']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertSame([5, 7, 9], $processedMcids);
+  }
+
+}

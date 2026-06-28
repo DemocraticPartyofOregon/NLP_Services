@@ -94,7 +94,7 @@ class NlpDataEntryPrint
     
     $county = $this->sessionData->getCounty();
     $currentUser = $this->drupalUserObj->getCurrentUser();
-    $mcid = $currentUser['mcid'];
+    $mcid = $currentUser['mcid'] ?? 0;
     
     $instructions = $this->instructionsObj->getInstructions($county);
     $page = '<p>The links below provide access to printable documents for voter contact instructions, canvassing
@@ -128,7 +128,7 @@ recent information from VoteBuilder.)</p>';
     $turfIndex = $this->sessionData->get('turfIndex');
   
     if(empty($turfIndex)) {
-      $turfArray = $this->turfsObj->turfExists($mcid,$county);
+      $turfArray = (!empty($mcid))?$this->turfsObj->turfExists($mcid,$county):[];
       if (empty($turfArray)) {
         $messenger->addWarning(t("You do not have a turf assigned"));
         return '';
