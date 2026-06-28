@@ -230,7 +230,7 @@ sent.  There is no need to report this an additional time.</p>',
    * @param int $mcid
    * @return void
    */
-  public function reportPostcardMailed(array $vanid, string $canvassDate, int $mcid): void
+  public function reportPostcardMailed(int $vanid, string $canvassDate, int $mcid): void
   {
     $county = $this->sessionDataObj->getCounty();
     

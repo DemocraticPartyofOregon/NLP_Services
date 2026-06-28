@@ -249,7 +249,7 @@ class DeleteDrupalAccountsForm extends FormBase
    * @param int $selectedHd - The HD to display.
    * @return array
    */
-  function justUsersInHd(array $users, int $selectedHd): array
+  function justUsersInHd(array $users, $selectedHd): array
   {
     $hdUsers = [];
     foreach ($users as $uid => $user) {

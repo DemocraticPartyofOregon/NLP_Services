@@ -23,7 +23,7 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpNls;
-use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\ApiMapRegions;
 
 /**
  * @noinspection PhpUnused
@@ -39,13 +39,13 @@ class DeliverTurfForm extends FormBase
   protected MagicWord $magicWordObj;
   protected NlpTurfDeliveryMessage $turfMsgObj;
   protected NlpTurfDisplay $turfDisplayObj;
-  
+
   protected NlpSearchBar $searchBarObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpSendEmail $sendMailObj;
   protected  NlpNls $nlsObj;
-  protected ApiFolders $foldersObj;
+  protected ApiMapRegions $foldersObj;
   public function __construct( $turfsObj, $drupalUserObj, $pathsObj, $fileSystemObj,
                               $instructionsObj, $coordinatorsObj, $magicWordObj, $turfMsgObj,
                               $turfDisplayObj, $searchBarObj,
@@ -90,7 +90,7 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
-      $container->get('nlpservices.folders'),
+      $container->get('nlpservices.api_map_regions'),
       $container->get('request_stack'),
     );
   }
@@ -113,22 +113,21 @@ class DeliverTurfForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
 
     $messenger = Drupal::messenger();
-    
+
     if (empty($form_state->get('reenter'))) {
-      
+
       $county = $this->nlpSessionDataObj->getCounty();
       if(empty($county)) {
-        $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
       $instructions = $this->instructionsObj->getInstructions($county);
-      if (empty($instructions['canvass']['fileName']) AND empty($instructions['postcard']['fileName'])) {
-        $messenger->addError('You need to upload the canvass or postcard instructions first.');
+      if (empty($instructions['canvass']['fileName']) && empty($instructions['postcard']['fileName'])) {
+        $messenger->addError(t('You need to upload the canvass or postcard instructions first.'));
         return [];
       }
       $form_state->set('county', $county);
-      
+
       $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
       $turfCount = $this->turfsObj->getCountyTurfCount($county);
       if($turfCount<$this->turfsObj::TURF_ALL_MAX ) {
@@ -136,20 +135,20 @@ class DeliverTurfForm extends FormBase
       }
       $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
-    
+
     $county = $form_state->get('county');
-    
+
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
     $hdOptions = $this->nlpSessionDataObj->getHdOptions();
-    
+
     if (empty($hdOptions)) {
       $form['turf-table']['turf-form'] = [
         '#markup' => '<p>No turf to display</p>',
       ];
       return $form;
     }
-    
+
     $needle = $form_state->get('search-needle');
     if (!empty($needle)) {
       $turfArray = $this->turfsObj->getTurfs($county, 'All');
@@ -159,9 +158,9 @@ class DeliverTurfForm extends FormBase
       $turfArray = $this->turfsObj->getTurfs($county, $currentHd);
     }
     $form_state->set('turfArray', $turfArray);
-    
+
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
-    
+
     // Create the AJAX wrapper for updating the form changes.
     $form['turf-form'] = [
       '#prefix' => '<div id="selectbox-div">',
@@ -178,7 +177,7 @@ class DeliverTurfForm extends FormBase
       $this->turfDisplayObj->sortTurfTable($turfTableArray, $sort, $request->query->get('order', ''));
     }
     $form['turf-form']['turf_table'] = $this->turfDisplayObj->displayTurfs($turfTableArray, 'walksheet');
-    
+
     $form['footnote'] = [
       '#markup' => '<p>&#134;&#134;  This turf does not have a printable walksheet associated.  If the NL is
                     canvassing, consider doing that now.  The walksheet will be associated with the
@@ -217,36 +216,37 @@ class DeliverTurfForm extends FormBase
     $form_state->set('reenter',TRUE);
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    
+
     switch ($elementClicked) {
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
-      
+
       case 'hd-select':
         $currentHdIndex = $form_state->getValue('hd-select');
         // The user changed the HD to display.
         $this->nlpSessionDataObj->saveHdIndex($currentHdIndex);
         return;
     }
-    
+
     $values = $form_state->getValues();
     $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
     $form_state->set('selections', $selections);
-    
+
     if (count($selections) == 0) {
       $form_state->setErrorByName('submit',
         'You must select at least one NL to send the email to.');
       return;
     }
-    
-    $pdfFile = $_FILES['files']['name']['turf_pdf'];
-    if (!empty($pdfFile )) {
-      $pdfFileName = strtolower($pdfFile);
+
+    $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+    $uploadedFile = $files['turf_pdf'] ?? NULL;
+    if (!empty($uploadedFile)) {
+      $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
       $pdfFileNameParts = explode('.', $pdfFileName);
       $pdfFileNameType = end($pdfFileNameParts);
-      $allowed = array('pdf','xls','xlsx');
+      $allowed = ['pdf', 'xls', 'xlsx'];
       if (!in_array($pdfFileNameType, $allowed)) {
         $form_state->setErrorByName('turf_pdf',
           'The walksheet must be a PDF, XLS, or XLSX type.');
@@ -255,9 +255,8 @@ class DeliverTurfForm extends FormBase
         $form_state->setErrorByName('turf_pdf',
           'You can only attach a walksheet to one NL at a time.');
       }
-      
     }
-  
+
   }
 
   /**
@@ -267,32 +266,34 @@ class DeliverTurfForm extends FormBase
   {
     $form_state->set('reenter',TRUE);
     $form_state->setRebuild();
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
-     
+
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
-      
+
       default:
         $input = $form_state->getUserInput();
         $selections = $form_state->get('selections');
-        
+
+        $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
+        $uploadedFile = $files['turf_pdf'] ?? NULL;
+
         foreach ($selections as $turfIndex => $selection) {
-         
+
           $county = $form_state->get('county');
-          
-          $pdfFile = $_FILES['files']['name']['turf_pdf'];
-          if (!empty($pdfFile )) {
-            $pdfFileName = strtolower($pdfFile);
+
+          if (!empty($uploadedFile)) {
+            $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
             $pdfFileNameParts = explode('.', $pdfFileName);
             $pdfFileNameType = end($pdfFileNameParts);
             // Save the PDF where we can find it.
-            $pdfTempName = $_FILES['files']['tmp_name']['turf_pdf'];
-            
+            $pdfTempName = $uploadedFile->getRealPath();
+
             $turf = $this->turfsObj->getTurf($turfIndex);
             $mcid = $turf['mcid'];
             $pdfName = $pdfFileNameParts[0];
@@ -301,7 +302,7 @@ class DeliverTurfForm extends FormBase
             $this->fileSystemObj->moveUploadedFile($pdfTempName, $uri);
             $this->turfsObj->updateTurf($turfIndex, 'turfPDF', $pdfUniqueFileName);
           }
-          
+
           // Get the optional note from the sender to the NL.
           $note = $form_state->getValue('note');
           $string = new FormattableMarkup($note,[]);
@@ -310,13 +311,11 @@ class DeliverTurfForm extends FormBase
           $this->notifyUserCredentials($turf,$note);
           }
         $form_state->setUserInput($input);
-        // Rebuild the form state values.
-        $form_state->setRebuild();
         break;
     }
-    
+
   }
-  
+
   /**
    * notifyUserCredentials
    *
@@ -335,7 +334,7 @@ class DeliverTurfForm extends FormBase
    * @param string $note
    * @return bool
    */
-  function notifyUserCredentials(array $turfChoice,string $note): bool
+  public function notifyUserCredentials(array $turfChoice,string $note): bool
   {
     $messenger = Drupal::messenger();
     $county = $this->nlpSessionDataObj->getCounty();
@@ -345,39 +344,28 @@ class DeliverTurfForm extends FormBase
       'pct'=>$turfPrecinct,
       'county'=>$county,
     ];
-    
+
     $nlCoordinator = $this->coordinatorsObj->getCoordinator($region);
     if (empty($nlCoordinator)) {
-      $messenger->addError('A coordinator for the county must be assigned before you can send a
-                      notification of a turf to '.$turfChoice['nlFirstName'].' '.$turfChoice['nlLastName']);
+      $messenger->addError(t('A coordinator for the county must be assigned before you can send a
+                      notification of a turf to @first @last', [
+        '@first' => $turfChoice['nlFirstName'],
+        '@last'  => $turfChoice['nlLastName'],
+      ]));
       return FALSE;
     }
-    
-    $serverName = $GLOBALS['_SERVER']['SERVER_NAME'];
+
+    $serverName = $this->requestStack->getCurrentRequest()->server->get('SERVER_NAME');
     $serverUrl = 'https://'.$serverName;
     $turfMsg = $this->turfMsgObj->getTurfMsg($county);
-    
+
     $coordinatorContactTemplate = '<p>@firstName @lastName<br>Phone: @phone<br>Email:
 <a href="mailto:@email?subject=Request for help with turf">@email</a></p>';
 
     /** @noinspection HtmlUnknownTarget */
     $nlpLoginTemplate = '<p><b>Neighborhood Leader Login: </b><a href="@server_url" target="_blank">@server_url</a>
 <br><b>Username:</b> @name<br><b>Password:</b> @pass</p>';
-    
-    $turfArray[$turfChoice['turfIndex']] = $turfChoice;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
-    
-    if($turfChoice['minivanNumber'] != $turfArray[$turfChoice['turfIndex']]['minivanNumber']) {
-      $minivanNumber = $turfArray[$turfChoice['turfIndex']]['minivanNumber'];
-      $minivanCreateDate = $turfArray[$turfChoice['turfIndex']]['minivanCreateDate'];
-      $fields = [
-        'minivanNumber' => $minivanNumber,
-        'minivanCreateDate' => $minivanCreateDate,
-      ];
-      $turfChoice = $turfArray[$turfChoice['turfIndex']];
-      $this->turfsObj->updateTurfFields($turfChoice, $fields);
-    }
-    
+
     $minivanNumber = 0;
     $minivanCreateDate = '';
     if(!empty($turfChoice['minivanNumber'])) {
@@ -385,8 +373,8 @@ class DeliverTurfForm extends FormBase
       $minivanCreateDate = $turfChoice['minivanCreateDate'];
       $nlpLoginTemplate .= '<p><b>MiniVan Number: </b>@minivanNumber<br>MiniVan was created @minivanCreateDate</p>';
     }
-    
-    $plainNote = NULL;
+
+    $plainNote = '';
     if (!empty($note)) {
       $plainNote = '<p>' . $note . '</p>';
     }
@@ -394,18 +382,18 @@ class DeliverTurfForm extends FormBase
     $needles = ['@nlpLogin','@coordinatorContactInfo','@plainNote'];
     $replace = [$nlpLoginTemplate,$coordinatorContactTemplate,$plainNote];
     $paragraphsAdded = str_replace($needles, $replace ,$turfMsg);
-    
+
     $electionDate = $this->nlpConfigurationObj->getElectionDate();
     $ballotDropDate = $this->nlpConfigurationObj->getBallotDropDate();
     $electionTimeStamp = strtotime($electionDate);
     $ballotDropTimeStamp = strtotime($ballotDropDate);
-    
+
     $mcid = $turfChoice['mcid'];
     $magicWord = $this->magicWordObj->getMagicWord($mcid);
     if(empty($magicWord)) {
       $magicWord = 'Your Password';
     }
-    
+
     $user = $this->drupalUserObj->getUserByMcid($mcid);
     if(empty($user)) {
       Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
@@ -413,11 +401,11 @@ class DeliverTurfForm extends FormBase
     } else {
       $userName = $user['userName'];
     }
-    
+
     $nl = $this->nlsObj->getNlById($mcid);
     $to = $nl['email'];
 
-    $message = t($paragraphsAdded, [
+    $message = (string) new FormattableMarkup($paragraphsAdded, [
       '@nickname' => $turfChoice['nlFirstName'] ?? '',
       '@county' => $county,
       '@electionDay' => date("F j, Y",$electionTimeStamp),
@@ -435,26 +423,27 @@ class DeliverTurfForm extends FormBase
 
     $subject =  "Neighborhood Leader Materials - $county County";
     $reply = $nlCoordinator['email'];
-    
-    $message = (string)$message;
+
     $result = $this->sendMailObj->sendEmail('deliver_turf',$to, $subject, $message, $reply);
     if (!$result) {
       $messenger->addMessage(t('There was a problem sending your message and it was not sent.'),
         $messenger::TYPE_ERROR,TRUE);
       return FALSE;
     }
-    
+
     // Update the NLs status to indicate the turf was delivered.
     $this->nlsObj->updateNlStatus($mcid,['turfDelivered' => 'Y']);
     // Now update date the turf was delivered.
     $this->turfsObj->setTurfDelivered($turfChoice['turfIndex']);
     // Done.
-    $messenger->addMessage(t('Your message has been sent to '.$turfChoice['nlFirstName'].
-      ' '.$turfChoice['nlLastName']),$messenger::TYPE_STATUS,TRUE);
-    
+    $messenger->addMessage(t('Your message has been sent to @first @last', [
+      '@first' => $turfChoice['nlFirstName'],
+      '@last'  => $turfChoice['nlLastName'],
+    ]), $messenger::TYPE_STATUS, TRUE);
+
     return TRUE;
   }
-  
+
   /**
    * updateMinivanInfo
    *
@@ -465,7 +454,7 @@ class DeliverTurfForm extends FormBase
    * @param int $turfIndex - the index of the turf to update.
    * @return array - the updated turf information.
    */
-  function updateMinivanInfo(int $turfIndex): array
+  public function updateMinivanInfo(int $turfIndex): array
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
     $county = $this->nlpSessionDataObj->getCounty();
@@ -484,7 +473,7 @@ class DeliverTurfForm extends FormBase
     }
     return $turf;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * selectboxCallback
    *
@@ -494,9 +483,9 @@ class DeliverTurfForm extends FormBase
    * @noinspection PhpUnusedParameterInspection
    * @noinspection PhpUnused
    */
-  function selectboxCallback($form, $unused): array
+  public function selectboxCallback($form, $unused): array
   {
     return $form['turf-form'];
   }
-  
+
 }
