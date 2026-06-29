@@ -52,7 +52,7 @@ function importMatchbacksBatch($arg,&$context): void
 
   do {
     if($fileType == 'csv') {
-      $voterInfo = fgetcsv($fh);
+      $voterInfo = fgetcsv($fh, escape: '');
       if (!$voterInfo) {break;} //We've processed the last voter for this upload.
       $recordCount++;
     } else {

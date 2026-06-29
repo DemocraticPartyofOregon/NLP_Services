@@ -40,7 +40,7 @@ class NlpExportCredentials
     if ($key !== false) {
       $columns[$key] = 'magicWord';
     }
-    fputcsv($fh, $columns);
+    fputcsv($fh, $columns, escape: '');
 
     $mcids = $this->magicWordObj->getKeys();
     foreach ($mcids as $mcid) {
@@ -51,7 +51,7 @@ class NlpExportCredentials
         $reordered[$column] = $credentials[$column] ?? '';
       }
       $reordered['roles'] =  json_encode($credentials['roles']);
-      fputcsv($fh, $reordered);
+      fputcsv($fh, $reordered, escape: '');
     }
     fclose($fh);
     $userUrl = Drupal::service('file_url_generator')->generateAbsoluteString($userUri);

@@ -140,7 +140,7 @@ class CompareVanidsForm extends FormBase
    */
   private function findVanidColumn($fh, string $columnTitle): ?int
   {
-    $header = fgetcsv($fh);
+    $header = fgetcsv($fh, escape: '');
     if (empty($header)) {
       return NULL;
     }
@@ -170,9 +170,9 @@ class CompareVanidsForm extends FormBase
       Drupal::messenger()->addError(t('Failed to re-open the second file.'));
       return;
     }
-    fgetcsv($fh2); // skip header
+    fgetcsv($fh2, escape: ''); // skip header
     do {
-      $row = fgetcsv($fh2);
+      $row = fgetcsv($fh2, escape: '');
       if ($row === FALSE) { break; }
       $vanid = trim($row[$vanidPos2] ?? '');
       if ($vanid !== '') {
@@ -200,7 +200,7 @@ class CompareVanidsForm extends FormBase
       Drupal::messenger()->addError(t('Failed to write the output file.'));
       return;
     }
-    fputcsv($fhOut, ['vanid']);
+    fputcsv($fhOut, ['vanid'], escape: '');
 
     // Stream file 1 and write each VANID that is absent from file 2 directly
     // to the output, avoiding any large in-memory accumulation.
@@ -211,14 +211,14 @@ class CompareVanidsForm extends FormBase
       Drupal::messenger()->addError(t('Failed to re-open the first file.'));
       return;
     }
-    fgetcsv($fh1); // skip header
+    fgetcsv($fh1, escape: ''); // skip header
     do {
-      $row = fgetcsv($fh1);
+      $row = fgetcsv($fh1, escape: '');
       if ($row === FALSE) { break; }
       if (count($row) === 1 && $row[0] === NULL) { continue; } // skip blank lines
       $vanid = trim($row[$vanidPos1] ?? '');
       if ($vanid !== '' && !isset($file2Vanids[$vanid])) {
-        fputcsv($fhOut, [$vanid]);
+        fputcsv($fhOut, [$vanid], escape: '');
         $missingCount++;
       }
     } while (TRUE);

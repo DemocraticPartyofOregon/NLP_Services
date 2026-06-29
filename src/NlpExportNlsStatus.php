@@ -162,7 +162,7 @@ class NlpExportNlsStatus
           $turfNames,
           $formatted_email,
         ];
-        fputcsv($fh, $nlRecord);
+        fputcsv($fh, $nlRecord, escape: '');
       }
     }
     fclose($fh);

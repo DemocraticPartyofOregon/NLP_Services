@@ -71,7 +71,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function readCsv(string $path): array {
-      return array_map('str_getcsv', file($path, FILE_SKIP_EMPTY_LINES));
+      return array_map(fn($line) => str_getcsv($line, escape: ''), file($path, FILE_SKIP_EMPTY_LINES));
     }
 
     // -------------------------------------------------------------------------

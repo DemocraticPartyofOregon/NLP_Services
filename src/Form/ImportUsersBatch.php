@@ -39,7 +39,7 @@ function importUsersBatch($arg,&$context): void
   if(empty($context['sandbox']['seek'])) {
     // Read the header record.
     $context['sandbox']['recordCount'] = 0;
-    $hdr = fgetcsv($fh);
+    $hdr = fgetcsv($fh, escape: '');
     $fieldPos = array_flip($hdr);
     $context['sandbox']['fieldPos'] = $fieldPos;
   } else {
@@ -57,7 +57,7 @@ function importUsersBatch($arg,&$context): void
 
   $loopCount = 0;
   do {
-    $user = fgetcsv($fh);
+    $user = fgetcsv($fh, escape: '');
     if (!$user) { break; }
     $loopCount++;
     $roles = [];

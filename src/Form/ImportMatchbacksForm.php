@@ -105,7 +105,7 @@ class ImportMatchbacksForm extends FormBase
     }
 
     if($fileType == 'csv') {
-      $fieldPosHeader = fgetcsv($fh);
+      $fieldPosHeader = fgetcsv($fh, escape: '');
       if (!$fieldPosHeader) {
         $messenger->addError(t('Failed to read Matchback File Header'));
         fclose($fh);

@@ -82,7 +82,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $path = tempnam(sys_get_temp_dir(), 'nlp_test_');
       $fh   = fopen($path, 'w');
       foreach ($rows as $row) {
-        fputcsv($fh, $row);
+        fputcsv($fh, $row, escape: '');
       }
       fclose($fh);
       $this->tempFiles[] = $path;

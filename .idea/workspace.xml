@@ -8,24 +8,43 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add tests for various forms">
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DisplayTurfsFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ExportNlsStatusFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/LegislativeFixesFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/LoginCredentialsReminderFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ManageDrupalAccountsFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/RemoveCoordinatorRoleFromTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfSelectFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/UploadInstructionsFormTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/VanidFormTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Batch/SetVoterAcBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Batch/SetVoterAcBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/MinivanController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/MinivanController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AcValidateBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AcValidateBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMatchbacksBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportReportsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportReportsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportTableForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTableForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportUsersBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportUsersBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpImap.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpImap.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMatchbacks.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMatchbacks.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportNlsStatusTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportNlsStatusTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportTurfStatusTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportTurfStatusTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbacksTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbacksTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpReportsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpReportsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -360,15 +379,7 @@
       <workItem from="1782533757807" duration="11973000" />
       <workItem from="1782573850167" duration="534000" />
       <workItem from="1782574404630" duration="14306000" />
-      <workItem from="1782600811993" duration="22924000" />
-    </task>
-    <task id="LOCAL-00106" summary="Claude code review forms import matchback, minivan, reports forms">
-      <option name="closed" value="true" />
-      <created>1780084175370</created>
-      <option name="number" value="00106" />
-      <option name="presentableId" value="LOCAL-00106" />
-      <option name="project" value="LOCAL" />
-      <updated>1780084175371</updated>
+      <workItem from="1782600811993" duration="34193000" />
     </task>
     <task id="LOCAL-00107" summary="Claude code review forms import table to resync turfs forms">
       <option name="closed" value="true" />
@@ -754,7 +765,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782625519830</updated>
     </task>
-    <option name="localTasksCounter" value="155" />
+    <task id="LOCAL-00155" summary="Add tests for various forms">
+      <option name="closed" value="true" />
+      <created>1782679472377</created>
+      <option name="number" value="00155" />
+      <option name="presentableId" value="LOCAL-00155" />
+      <option name="project" value="LOCAL" />
+      <updated>1782679472377</updated>
+    </task>
+    <option name="localTasksCounter" value="156" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

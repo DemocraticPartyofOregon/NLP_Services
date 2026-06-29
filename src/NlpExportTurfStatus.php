@@ -77,7 +77,7 @@ class NlpExportTurfStatus
     if (!$fh) {
       return FALSE;
     }
-    fputcsv($fh, $header);
+    fputcsv($fh, $header, escape: '');
 
     $turfRecords = $this->turfsObj->getCountyTurfs($county);
     if (empty($turfRecords)) {
@@ -142,7 +142,7 @@ class NlpExportTurfStatus
         $turfRecord['syncDate'],
       ];
 
-      fputcsv($fh, $turfOutput);
+      fputcsv($fh, $turfOutput, escape: '');
     }
     fclose($fh);
 

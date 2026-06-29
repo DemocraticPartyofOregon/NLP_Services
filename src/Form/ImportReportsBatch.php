@@ -26,7 +26,7 @@ function importReportsBatch($arg,&$context): void
   if(empty($context['sandbox']['seek'])) {
     // Read the header record.
     $context['sandbox']['recordCount'] = 0;
-    $csvColumnNames = fgetcsv($fh);
+    $csvColumnNames = fgetcsv($fh, escape: '');
     $context['sandbox']['csvColumnNames'] = $csvColumnNames;
   } else {
     // Seek to where we will restart.
@@ -40,7 +40,7 @@ function importReportsBatch($arg,&$context): void
 
   $done = TRUE;
   do {
-    $report = fgetcsv($fh);
+    $report = fgetcsv($fh, escape: '');
     if (!$report) { break; }
     $recordCount++;
 

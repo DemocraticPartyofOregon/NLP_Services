@@ -277,7 +277,7 @@ class NlpMatchbacks
     if (empty($items)) { return ''; }
     foreach ($items as $item) {
       if (empty($item['reports'])) { continue; }
-      $columnNames = str_getcsv($item['header']);
+      $columnNames = str_getcsv($item['header'], escape: '');
       $fieldPos = $this->headerValidate($columnNames);
       if (!$fieldPos['ok']) { continue; }
       $filePath = sys_get_temp_dir() . '/nlp_matchback_' . time() . '.csv';
@@ -318,7 +318,7 @@ class NlpMatchbacks
       Drupal::logger('nlpservices')->notice("processMatchbackFile: Cannot open: $filePath");
       return $counts;
     }
-    $headerRow = fgetcsv($fh);
+    $headerRow = fgetcsv($fh, escape: '');
     if (empty($headerRow)) {
       fclose($fh);
       return $counts;
@@ -332,7 +332,7 @@ class NlpMatchbacks
     $latestMatchbackDate = $this->getLatestMatchbackDate();
     $latestMatchbackTime = empty($latestMatchbackDate) ? 0 : strtotime($latestMatchbackDate);
     $batch = [];
-    while (($row = fgetcsv($fh)) !== FALSE) {
+    while (($row = fgetcsv($fh, escape: '')) !== FALSE) {
       $counts['recordCount']++;
       $ballotReceived = isset($pos['ballotReceived']) ? ($row[$pos['ballotReceived']] ?? '') : '';
       if (empty($ballotReceived)) {

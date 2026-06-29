@@ -212,13 +212,13 @@ The date will be in the form mm_dd_yyyy. If the date is missing, the current tim
       return FALSE;
     }
     // Discard the two header records.
-    fgetcsv($fh);
-    fgetcsv($fh);
+    fgetcsv($fh, escape: '');
+    fgetcsv($fh, escape: '');
 
     $fieldPos = $fileData['pos'];
     $imported = FALSE;
     do {
-      $rawCount = fgetcsv($fh);
+      $rawCount = fgetcsv($fh, escape: '');
       if (!$rawCount) {break;}
 
       $countsInfo = [];
@@ -253,7 +253,7 @@ The date will be in the form mm_dd_yyyy. If the date is missing, the current tim
 
   function getHeaderRecord($fh): array
   {
-    $rawHeader = fgetcsv($fh);
+    $rawHeader = fgetcsv($fh, escape: '');
     if (!$rawHeader) {
       return [];
     }

@@ -66,7 +66,7 @@ class MinivanController extends ControllerBase
       $attachmentsToProcess = $this->imapObj->getNewEmailAttachments($emailNumber);
       foreach ($attachmentsToProcess as $attachment) {
         if ($attachment['is_attachment']) {
-          $reports = str_getcsv($attachment['attachment'], "\n");
+          $reports = str_getcsv($attachment['attachment'], "\n", escape: '');
           $headerRaw = $reports[0];
           $subject = $emailToProcess['subject'];
           $day = $emailToProcess['day'];

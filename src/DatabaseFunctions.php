@@ -62,8 +62,8 @@ class DatabaseFunctions
               string $tempFileName, string $county, bool $sort): bool
   {
     $fh = fopen($tempFileName,"w");
-    fputcsv($fh, $columnNames);
-    
+    fputcsv($fh, $columnNames, escape: '');
+
     try {
       $query = $this->connection->select($tableName, 'n');
       $query->fields('n');
@@ -80,7 +80,7 @@ class DatabaseFunctions
     
     do {
       if(!$award = $result->fetchAssoc()) {break;}
-      fputcsv($fh, $award);
+      fputcsv($fh, $award, escape: '');
     } while (TRUE);
     fclose($fh);
     

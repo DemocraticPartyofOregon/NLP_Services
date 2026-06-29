@@ -104,9 +104,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private function writeTurfCsv(array $vanids): string {
       $path = tempnam(sys_get_temp_dir(), 'nlp_turf_');
       $fh   = fopen($path, 'w');
-      fputcsv($fh, ['Header', 'VanID']);
+      fputcsv($fh, ['Header', 'VanID'], escape: '');
       foreach ($vanids as $vanid) {
-        fputcsv($fh, ['', $vanid]);
+        fputcsv($fh, ['', $vanid], escape: '');
       }
       fclose($fh);
       $this->tempFiles[] = $path;

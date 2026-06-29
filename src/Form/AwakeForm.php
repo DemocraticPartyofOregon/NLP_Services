@@ -60,7 +60,7 @@ class AwakeForm extends FormBase {
     if (!$fh) {
       nlp_debug_msg('remoteUrl open failed', $remoteUrl);
     } else {
-      while (($record = fgetcsv($fh)) !== FALSE) {
+      while (($record = fgetcsv($fh, escape: '')) !== FALSE) {
         nlp_debug_msg('record', $record);
       }
     }

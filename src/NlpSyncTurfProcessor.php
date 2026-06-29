@@ -107,12 +107,12 @@ class NlpSyncTurfProcessor {
         $context['results']['result']  = 'error';
         return;
       }
-      fgetcsv($fh);
+      fgetcsv($fh, escape: '');
       $turfVoters = [];
       $voterCount = 0;
       $voterBatch = 0;
       do {
-        $listRecord = fgetcsv($fh);
+        $listRecord = fgetcsv($fh, escape: '');
         if ($listRecord === FALSE) { break; }
         if (empty($listRecord)) { continue; }
         $turfVoters[$voterBatch][] = $listRecord[1];

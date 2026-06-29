@@ -124,10 +124,10 @@ function awakeBatch($arg, &$context): void
       $vbTurfVoters = $missingAC = [];
       if (!empty($exportJob['downloadUrl'])) {
         $fh = fopen($exportJob['downloadUrl'], "r");
-        $hdr = fgetcsv($fh);
+        $hdr = fgetcsv($fh, escape: '');
         $exportList = [];
         do {
-          $listRecord = fgetcsv($fh);
+          $listRecord = fgetcsv($fh, escape: '');
           if (empty($listRecord)) {
             break;
           }

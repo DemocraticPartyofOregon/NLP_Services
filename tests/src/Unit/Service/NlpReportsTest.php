@@ -959,7 +959,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testFlushNlReportsInsertsRemainingRecordsViaBatch(): void {
-      $transactionMock = $this->createMock(Transaction::class);
+      $transactionMock = new class extends Transaction {
+        public function __construct() {}
+        public function __destruct() {}
+      };
       $this->connectionMock->method('startTransaction')->willReturn($transactionMock);
       $this->connectionMock->expects($this->once())->method('insert')->willReturn($this->buildInsertMock());
 

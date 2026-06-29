@@ -396,12 +396,19 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testProcessTurfResyncEndResetsSessionData(): void {
       $this->sessionDataMock->method('get')->with('queueStart')->willReturn(time() - 10);
+      $callIndex = 0;
       $this->sessionDataMock->expects($this->exactly(2))
         ->method('set')
-        ->withConsecutive(
-          ['queueInProgress', FALSE],
-          ['queueStart', 0]
-        );
+        ->willReturnCallback(function (string $key, mixed $value) use (&$callIndex): void {
+          $callIndex++;
+          if ($callIndex === 1) {
+            $this->assertSame('queueInProgress', $key);
+            $this->assertFalse($value);
+          } else {
+            $this->assertSame('queueStart', $key);
+            $this->assertSame(0, $value);
+          }
+        });
 
       $service = $this->buildPartialService(['resyncTurf']);
       $service->processTurfResync(['queueStart' => 'end', 'county' => 'King', 'turfIndexes' => []]);

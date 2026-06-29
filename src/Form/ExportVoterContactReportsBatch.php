@@ -85,7 +85,7 @@ function exportVoterContactReportsBatch($arg,&$context): void
       if($currentCycleOnly && empty($record['cd'])) {
         $record['cd'] = $voterObj->getVoterCd($vanid);
       }
-      fputcsv($fh, $record);
+      fputcsv($fh, $record, escape: '');
     }
 
   } while (TRUE);

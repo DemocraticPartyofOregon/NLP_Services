@@ -311,8 +311,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $capturedBody = '';
       $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): void {
+        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): bool {
           $capturedBody = $body;
+          return true;
         });
 
       $this->buildService()->emailForward();
@@ -331,8 +332,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $capturedBody = '';
       $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): void {
+        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): bool {
           $capturedBody = $body;
+          return true;
         });
 
       $this->buildService()->emailForward();
@@ -352,8 +354,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $capturedBody = '';
       $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): void {
+        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): bool {
           $capturedBody = $body;
+          return true;
         });
 
       $this->buildService()->emailForward();
@@ -373,8 +376,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $capturedBody = '';
       $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): void {
+        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): bool {
           $capturedBody = $body;
+          return true;
         });
 
       $this->buildService()->emailForward();
@@ -390,9 +394,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->imapMock->method('getImapConnection')->willReturn(true);
       $this->imapMock->method('getNewNotificationReplies')->willReturn([]);
 
-      $this->messengerMock->expects($this->once())
-        ->method('addMessage')
-        ->with('All emails processed.');
+      // emailForward() returns early when there are no replies, so addMessage is never called.
+      $this->messengerMock->expects($this->never())->method('addMessage');
 
       $this->buildService()->emailForward();
     }

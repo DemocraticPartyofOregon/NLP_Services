@@ -89,7 +89,7 @@ class NlpSyncActiveNlsProcessor {
 
     if (empty($context['sandbox']['seek'])) {
       $context['sandbox']['recordCount'] = 0;
-      $hdr      = fgetcsv($fh);
+      $hdr      = fgetcsv($fh, escape: '');
       $fieldPos = array_flip($hdr);
 
       $notRegisteredAC    = $this->nlpConfigurationObj->getActivistCode('NLPNotRegisteredAC');
@@ -122,7 +122,7 @@ class NlpSyncActiveNlsProcessor {
     $seek      = ftell($fh);
     $queCnt    = 0;
     do {
-      $nlRaw = fgetcsv($fh);
+      $nlRaw = fgetcsv($fh, escape: '');
       //nlp_debug_msg('$nlRaw',$nlRaw);
       if (empty($nlRaw)) { break; }
       $seek = ftell($fh);

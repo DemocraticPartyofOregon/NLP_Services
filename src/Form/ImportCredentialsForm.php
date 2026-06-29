@@ -124,7 +124,7 @@ accounts before restoring any passwords.</p>',
       $form_state->setErrorByName('table_file', t('Failed to open table file.'));
       return;
     }
-    $rawHeader = fgetcsv($fh);
+    $rawHeader = fgetcsv($fh, escape: '');
     if (!$rawHeader) {
       $form_state->setErrorByName('table_file', t('Failed to read header.'));
       return;
@@ -137,7 +137,7 @@ accounts before restoring any passwords.</p>',
     $form_state->set('tempName', $tempName);
     $form_state->set('fieldPos', $fieldPos);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -155,12 +155,12 @@ accounts before restoring any passwords.</p>',
       $messenger->addError(t('Failed to open table file.'));
       return;
     }
-    fgetcsv($fh);
+    fgetcsv($fh, escape: '');
 
     $restored = 0;
 
     do {
-      $rawRecord = fgetcsv($fh);
+      $rawRecord = fgetcsv($fh, escape: '');
       if (!$rawRecord) {
         break;
       }

@@ -116,7 +116,7 @@ class ImportTableForm extends FormBase
       $form_state->setErrorByName('table_file', t('Failed to open table file.'));
       return;
     }
-    $rawHeader = fgetcsv($fh);
+    $rawHeader = fgetcsv($fh, escape: '');
     if (!$rawHeader) {
       $form_state->setErrorByName('table_file', t('Failed to read header.'));
       return;
@@ -162,10 +162,10 @@ class ImportTableForm extends FormBase
       $messenger->addError(t('Failed to open table file.'));
       return;
     }
-    fgetcsv($fh);
-    
+    fgetcsv($fh, escape: '');
+
     do {
-      $rawRecord = fgetcsv($fh);
+      $rawRecord = fgetcsv($fh, escape: '');
       if (!$rawRecord) {break;}
       $keys = [];
       $update = FALSE;

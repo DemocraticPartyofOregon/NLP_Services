@@ -613,7 +613,7 @@ class NlpImap
     $attachmentsToProcess = $this->getNewEmailAttachments($emailNumber);
     foreach ($attachmentsToProcess as $attachment) {
       if (!empty($attachment['is_attachment'])) {
-        $reports = str_getcsv($attachment['attachment'], "\n");
+        $reports = str_getcsv($attachment['attachment'], "\n", escape: '');
         $headerRaw = $reports[0];
         $subject = $emailToProcess['subject'];
         $day = $emailToProcess['day'];

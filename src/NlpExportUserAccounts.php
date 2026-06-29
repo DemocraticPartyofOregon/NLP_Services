@@ -64,10 +64,10 @@ class NlpExportUserAccounts
         }
         $user['roles'] = $roleStr;
         if ($first) {
-          fputcsv($fh, array_keys($user));
+          fputcsv($fh, array_keys($user), escape: '');
           $first = FALSE;
         }
-        fputcsv($fh, $user);
+        fputcsv($fh, $user, escape: '');
       }
     }
     fclose($fh);

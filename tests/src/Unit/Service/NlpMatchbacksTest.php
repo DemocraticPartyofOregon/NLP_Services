@@ -151,7 +151,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testMatchbackTransactionReturnsConnectionTransaction(): void {
-      $transaction = $this->createMock(Transaction::class);
+      $transaction = new class extends Transaction {
+        public function __construct() {}
+        public function __destruct() {}
+      };
 
       $this->connectionMock->method('startTransaction')->willReturn($transaction);
 

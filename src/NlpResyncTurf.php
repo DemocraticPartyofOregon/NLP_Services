@@ -273,14 +273,14 @@ class NlpResyncTurf
     if(!$fh) {
       return ['result' => 'transient_error', 'message' => 'Unable to open export job download URL'];
     }
-    $hdr = fgetcsv($fh);
+    $hdr = fgetcsv($fh, escape: '');
     // The third column in the header is the name of the NLP Voter AC.
     $nlpVoterAcName = $hdr[2];
 
     // Convert the result of the export job into an associative array.
     $votersInVbTurf = [];
     do {
-      $listRecord = fgetcsv($fh);
+      $listRecord = fgetcsv($fh, escape: '');
       if($listRecord === FALSE) {break;}
       if(empty($listRecord)) {continue;}
       $associativeRecord = array_combine($hdr, $listRecord);

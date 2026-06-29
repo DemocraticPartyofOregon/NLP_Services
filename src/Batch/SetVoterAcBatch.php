@@ -35,14 +35,14 @@ class SetVoterAcBatch {
         $fileFunctionsObj = Drupal::service('nlpservices.file_functions');
         $fileData = $fileFunctionsObj->createTempCsvFile('missing-voter-ac');
         if ($fileData !== FALSE) {
-          fputcsv($fileData['fh'], ['VANID', 'Turf Name', 'County', 'Coordinator']);
+          fputcsv($fileData['fh'], ['VANID', 'Turf Name', 'County', 'Coordinator'], escape: '');
           foreach ($missingAcRecords as $record) {
             fputcsv($fileData['fh'], [
               $record['vanid'],
               $record['turfName'],
               $record['county'],
               $record['coordinator'],
-            ]);
+            ], escape: '');
           }
           fclose($fileData['fh']);
           $fileUrl = Drupal::service('file_url_generator')->generateAbsoluteString($fileData['uri']);

@@ -60,9 +60,9 @@ class ImportMatchbacksBatchTest extends UnitTestCase {
   private function writeCsvFile(array $headers, array $rows): string {
     $path = tempnam(sys_get_temp_dir(), 'nlp_mb_test_');
     $fh = fopen($path, 'w');
-    fputcsv($fh, $headers);
+    fputcsv($fh, $headers, escape: '');
     foreach ($rows as $row) {
-      fputcsv($fh, $row);
+      fputcsv($fh, $row, escape: '');
     }
     fclose($fh);
     $this->tempFiles[] = $path;
@@ -95,7 +95,10 @@ class ImportMatchbacksBatchTest extends UnitTestCase {
 
   private function stubTransaction(): void {
     $this->matchbacksMock->method('matchbackTransaction')
-      ->willReturn($this->createMock(Transaction::class));
+      ->willReturn(new class extends Transaction {
+        public function __construct() {}
+        public function __destruct() {}
+      });
   }
 
   // -------------------------------------------------------------------------
@@ -290,8 +293,8 @@ class ImportMatchbacksBatchTest extends UnitTestCase {
 
     // Calculate the byte offset of the second data row.
     $fh = fopen($path, 'r');
-    fgetcsv($fh); // header
-    fgetcsv($fh); // first data row — already processed in a prior batch
+    fgetcsv($fh, escape: ''); // header
+    fgetcsv($fh, escape: ''); // first data row — already processed in a prior batch
     $seekPos = ftell($fh);
     fclose($fh);
 

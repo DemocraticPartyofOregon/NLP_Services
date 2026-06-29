@@ -133,12 +133,12 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
       return;
     }
     // Discard the two header records for the counts and crosstabs export.
-    fgetcsv($fh);
-    fgetcsv($fh);
+    fgetcsv($fh, escape: '');
+    fgetcsv($fh, escape: '');
 
     $crossTabCounts = [];
     do {
-      $rawCount = fgetcsv($fh);
+      $rawCount = fgetcsv($fh, escape: '');
       if (!$rawCount) { break; }
       $countsInfo = [];
       foreach ($rawCount as $countField) {
@@ -191,7 +191,7 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
 
   private function getHeaderRecord($fh): array
   {
-    $rawHeader = fgetcsv($fh);
+    $rawHeader = fgetcsv($fh, escape: '');
     if (!$rawHeader) {
       return [];
     }

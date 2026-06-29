@@ -530,7 +530,7 @@ class NlpMinivan {
   {
     $headerRecord = trim(strip_tags(htmlentities(stripslashes($headerRaw),ENT_QUOTES)));
     // Extract the column headers.
-    $columnHeader = str_getcsv($headerRecord);
+    $columnHeader = str_getcsv($headerRecord, escape: '');
     $fieldPos['ok'] = FALSE;
 
     if(empty($this->minivanHdr[$fileType])) {
@@ -672,7 +672,7 @@ class NlpMinivan {
     $reports = [];
     $blockIndex = $recordCount = 0;
     foreach ($reportsRaw as $rowRaw) {
-      $fieldsRaw = str_getcsv($rowRaw);
+      $fieldsRaw = str_getcsv($rowRaw, escape: '');
       // Remove any stuff that might be a security risk.
       $record = [];
       foreach ($fieldsRaw as $fieldRaw) {
