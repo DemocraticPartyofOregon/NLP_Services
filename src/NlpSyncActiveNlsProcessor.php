@@ -232,7 +232,6 @@ class NlpSyncActiveNlsProcessor {
         return;
       }
     }
-
     $nlRecord['notRegistered'] = $notRegistered;
     $this->createNlsRecord($nlRecord);
   }
@@ -459,7 +458,7 @@ class NlpSyncActiveNlsProcessor {
 
     switch ($type) {
       case 'newNl':
-        $result           = $this->createDrupalLogin($nlRecord);
+        $result           = $this->createDrupalLogin($nlRecord, $credentials);
         $result['type']        = $type;
         $result['credentials'] = $credentials;
         return $result;
@@ -478,34 +477,6 @@ class NlpSyncActiveNlsProcessor {
         $message .= $mcidMessage;
         $message .= $emailMessage;
 
-        if ($this->nlpConfigurationObj->getDebug()) {
-          nlp_debug_msg('$nlRecord:', $nlRecord);
-          nlp_debug_msg('$credentials:', $credentials);
-          nlp_debug_msg('$drupalMcidUser:', $drupalMcidUser);
-          nlp_debug_msg('$drupalEmailUser:', $drupalEmailUser);
-          $awards = $this->awardsObj->getAward($nlRecord['mcid']);
-          nlp_debug_msg('$awards:', $awards);
-          if (!empty($drupalEmailUser)) {
-            $altMcid = $drupalEmailUser['mcid'];
-            nlp_debug_msg('$altMcid:', $altMcid);
-            if (!empty($altMcid)) {
-              $county = $drupalEmailUser['county'];
-              $altNls = $this->apiNlsObj->getApiNls($county, $altMcid);
-              nlp_debug_msg('$altNls:', $altNls);
-              if (empty($altNls)) {
-                $drupalUserUpdate = ['uid' => $drupalEmailUser['uid'], 'mcid' => $nlRecord['mcid']];
-                nlp_debug_msg('$drupalUserUpdate:', $drupalUserUpdate);
-                $this->drupalUserObj->updateUser($drupalUserUpdate);
-              }
-            }
-            if ($altMcid != $nlRecord['mcid']) {
-              $altAwards      = $this->awardsObj->getAward($altMcid);
-              nlp_debug_msg('$altAwards:', $altAwards);
-              $altCredentials = $this->magicWordObj->getCredentials($altMcid);
-              nlp_debug_msg('$altCredentials:', $altCredentials);
-            }
-          }
-        }
         return ['accountOk' => FALSE, 'message' => $message];
     }
   }
@@ -709,7 +680,7 @@ class NlpSyncActiveNlsProcessor {
    *   - 'drupalUser' (optional): The newly created Drupal user object, if account creation succeeded.
    *   - 'magicWord' (optional): The generated magic word, if account creation succeeded.
    */
-  private function createDrupalLogin(array $nlRecord): array {
+  private function createDrupalLogin(array $nlRecord, array $savedCredentials = []): array {
     $userInfo = [
       'mcid'      => $nlRecord['mcid'],
       'email'     => $nlRecord['email'],
@@ -719,13 +690,20 @@ class NlpSyncActiveNlsProcessor {
       'county'    => $nlRecord['county'],
       'hd'        => $nlRecord['hd'],
     ];
-    $uniqueUsernameArray = $this->getUniqueUsername($nlRecord);
-    $uniqueUsername      = $uniqueUsernameArray['uniqueUsername'];
-    if (empty($uniqueUsername)) {
-      return ['accountOk' => FALSE, 'message' => $uniqueUsernameArray['message']];
+    if (!empty($savedCredentials['userName']) && !empty($savedCredentials['magicWord'])) {
+      $userInfo['userName']  = $savedCredentials['userName'];
+      $userInfo['magicWord'] = $savedCredentials['magicWord'];
+      if (!empty($savedCredentials['created'])) { $userInfo['created'] = $savedCredentials['created']; }
+      if (!empty($savedCredentials['access']))  { $userInfo['access']  = $savedCredentials['access'];  }
+    } else {
+      $uniqueUsernameArray = $this->getUniqueUsername($nlRecord);
+      $uniqueUsername      = $uniqueUsernameArray['uniqueUsername'];
+      if (empty($uniqueUsername)) {
+        return ['accountOk' => FALSE, 'message' => $uniqueUsernameArray['message']];
+      }
+      $userInfo['userName']  = $uniqueUsername;
+      $userInfo['magicWord'] = $this->magicWordObj->createMagicWord();
     }
-    $userInfo['userName']  = $uniqueUsername;
-    $userInfo['magicWord'] = $this->magicWordObj->createMagicWord();
     $newAccount = $this->drupalUserObj->createDrupalAccount($userInfo);
     if (empty($newAccount)) {
       nlp_debug_msg('NL rejected. Unable to create Drupal account.', $userInfo);

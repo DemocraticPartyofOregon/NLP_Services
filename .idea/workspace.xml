@@ -7,44 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add tests for various forms">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Make tests run on both the D10 and D11 sites">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Batch/SetVoterAcBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Batch/SetVoterAcBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/MinivanController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/MinivanController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AcValidateBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AcValidateBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCrosstabsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMatchbacksBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportReportsBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportReportsBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportTableForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTableForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportUsersBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportUsersBatch.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportNlsStatus.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportTurfStatus.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpImap.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpImap.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMatchbacks.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMatchbacks.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportNlsStatusTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportNlsStatusTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportTurfStatusTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportTurfStatusTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbacksTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbacksTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpReportsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpReportsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -139,60 +105,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0005321055235417" />
-      <entry key="S2" value="1.1518796037662289" />
-      <entry key="S5" value="1.4711482742015107" />
-      <entry key="S10" value="1.7194527769421106" />
-      <entry key="S30" value="2.389014800583441" />
-      <entry key="S60" value="2.9450185961479702" />
-      <entry key="M2" value="3.3870551325605827" />
-      <entry key="M5" value="3.7303475193872737" />
-      <entry key="M10" value="3.860710052820563" />
-      <entry key="M15" value="3.9061174174345723" />
-      <entry key="M30" value="3.9525395421988017" />
-      <entry key="H1" value="3.9766033550460183" />
-      <entry key="H2" value="4.190153107345436" />
-      <entry key="H4" value="9.90363521013858" />
-      <entry key="D1" value="150.42425034482008" />
-      <entry key="W1" value="647.6483593730775" />
+      <entry key="MS500" value="1.0000009768893097" />
+      <entry key="S2" value="1.03612888403888" />
+      <entry key="S5" value="1.3905349630422181" />
+      <entry key="S10" value="2.056291656699891" />
+      <entry key="S30" value="3.441387036237455" />
+      <entry key="S60" value="4.104163915973218" />
+      <entry key="M2" value="4.5277299256838965" />
+      <entry key="M5" value="5.2617391627602395" />
+      <entry key="M10" value="6.878022536952581" />
+      <entry key="M15" value="8.476323533062423" />
+      <entry key="M30" value="12.380938075127084" />
+      <entry key="H1" value="16.736501448095208" />
+      <entry key="H2" value="20.288788602062034" />
+      <entry key="H4" value="23.945921672313023" />
+      <entry key="D1" value="135.0382363685863" />
+      <entry key="W1" value="644.6667939489739" />
     </decayedCancelled>
     <decayedSelected>
-      <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="6.794759049375951E-182" />
-      <entry key="M10" value="2.703426978386697E-91" />
-      <entry key="M15" value="4.6549562652801945E-61" />
-      <entry key="M30" value="9.778174880334058E-31" />
-      <entry key="H1" value="1.6237250391877817E-15" />
-      <entry key="H2" value="7.087886848336803E-8" />
-      <entry key="H4" value="5.428521488364576E-4" />
-      <entry key="D1" value="1.6812526468508815" />
-      <entry key="W1" value="15.445864404762993" />
+      <entry key="MS100" value="1.3707511102107177E-70" />
+      <entry key="MS500" value="1.065103277934686E-14" />
+      <entry key="S2" value="3.2125354614966E-4" />
+      <entry key="S5" value="0.04006260380264113" />
+      <entry key="S10" value="0.20015644831641355" />
+      <entry key="S30" value="0.5849559941987088" />
+      <entry key="S60" value="0.7648445310099542" />
+      <entry key="M2" value="0.8790558224213623" />
+      <entry key="M5" value="1.063084749697447" />
+      <entry key="M10" value="1.3130954610975345" />
+      <entry key="M15" value="1.4689937531906345" />
+      <entry key="M30" value="1.6887481041938746" />
+      <entry key="H1" value="1.8307930982489458" />
+      <entry key="H2" value="1.9116892645299142" />
+      <entry key="H4" value="1.9549609858055106" />
+      <entry key="D1" value="3.227425688855226" />
+      <entry key="W1" value="16.779039791964063" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.0866795210407845E-11" />
-      <entry key="MS500" value="0.0073345535932219895" />
-      <entry key="S2" value="0.3631040746696058" />
-      <entry key="S5" value="0.9586571573518787" />
-      <entry key="S10" value="1.4040849778793931" />
-      <entry key="S30" value="2.2660487180988915" />
-      <entry key="S60" value="2.8807920986727424" />
-      <entry key="M2" value="3.354190232917663" />
-      <entry key="M5" value="3.717010246527337" />
-      <entry key="M10" value="3.8540084802926216" />
-      <entry key="M15" value="3.901642299600365" />
-      <entry key="M30" value="3.950298260343525" />
-      <entry key="H1" value="3.9754817773486253" />
-      <entry key="H2" value="4.189591613462866" />
-      <entry key="H4" value="9.90388907880658" />
-      <entry key="D1" value="152.10524156470106" />
-      <entry key="W1" value="663.093491024592" />
+      <entry key="MS100" value="5.591119338671027E-12" />
+      <entry key="MS500" value="0.005617863358829316" />
+      <entry key="S2" value="0.30724461411186815" />
+      <entry key="S5" value="0.9786646630553903" />
+      <entry key="S10" value="1.9249521813338422" />
+      <entry key="S30" value="3.8416314623827024" />
+      <entry key="S60" value="4.758824293305859" />
+      <entry key="M2" value="5.345682516423583" />
+      <entry key="M5" value="6.2921340112190505" />
+      <entry key="M10" value="8.16506001060171" />
+      <entry key="M15" value="9.922946495040906" />
+      <entry key="M30" value="14.054496588756884" />
+      <entry key="H1" value="18.558273385051958" />
+      <entry key="H2" value="22.195526402766735" />
+      <entry key="H4" value="25.898251296916783" />
+      <entry key="D1" value="138.26502179540685" />
+      <entry key="W1" value="661.4450681048047" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -237,6 +203,18 @@
 }</component>
   <component name="ProjectId" id="39v9tqCOrZPMPcc7tFcp5ctKsn1" />
   <component name="ProjectSessionTemplates">
+    <option name="inlineTemplate">
+      <template>
+        <option name="modeId" value="InlineAgent" />
+        <option name="model">
+          <model>
+            <option name="modelType" value="builtin_family" />
+            <option name="modelValue" value="auto" />
+          </model>
+        </option>
+        <option name="targetType" value="LOCAL" />
+      </template>
+    </option>
     <option name="panelTemplate">
       <template>
         <option name="modeId" value="Ask" />
@@ -379,15 +357,7 @@
       <workItem from="1782533757807" duration="11973000" />
       <workItem from="1782573850167" duration="534000" />
       <workItem from="1782574404630" duration="14306000" />
-      <workItem from="1782600811993" duration="34193000" />
-    </task>
-    <task id="LOCAL-00107" summary="Claude code review forms import table to resync turfs forms">
-      <option name="closed" value="true" />
-      <created>1780098103772</created>
-      <option name="number" value="00107" />
-      <option name="presentableId" value="LOCAL-00107" />
-      <option name="project" value="LOCAL" />
-      <updated>1780098103772</updated>
+      <workItem from="1782600811993" duration="39473000" />
     </task>
     <task id="LOCAL-00108" summary="Claude code review forms voter ac to vanid forms">
       <option name="closed" value="true" />
@@ -773,7 +743,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782679472377</updated>
     </task>
-    <option name="localTasksCounter" value="156" />
+    <task id="LOCAL-00156" summary="Make tests run on both the D10 and D11 sites">
+      <option name="closed" value="true" />
+      <created>1782706113623</created>
+      <option name="number" value="00156" />
+      <option name="presentableId" value="LOCAL-00156" />
+      <option name="project" value="LOCAL" />
+      <updated>1782706113623</updated>
+    </task>
+    <option name="localTasksCounter" value="157" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -825,7 +803,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix version number" />
     <MESSAGE value="Change the column order for turf display vote builder" />
     <MESSAGE value="Add comments" />
     <MESSAGE value="Verify a sync of active NLs does not allow two records pointing to the same VFID." />
@@ -850,7 +827,8 @@
     <MESSAGE value="Replace curl calls with guzzle for API requests" />
     <MESSAGE value="Add tests for various services" />
     <MESSAGE value="Add tests for various forms" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add tests for various forms" />
+    <MESSAGE value="Make tests run on both the D10 and D11 sites" />
+    <option name="LAST_COMMIT_MESSAGE" value="Make tests run on both the D10 and D11 sites" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

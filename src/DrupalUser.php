@@ -722,6 +722,7 @@ class DrupalUser {
       $users = $this->getUsers($county);
       foreach ($users as $user) {
         $roles = $user['roles'];
+        $roles = array_flip($roles);
         if(count($roles)==2 AND isset($roles['authenticated']) AND isset($roles[NLP_LEADER_ROLE_ID])) {
           $this->deleteUser($user['uid']);
         }
