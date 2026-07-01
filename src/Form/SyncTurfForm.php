@@ -4,6 +4,7 @@ namespace Drupal\nlpservices\Form;
 
 use Drupal;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
@@ -454,6 +455,20 @@ class SyncTurfForm extends FormBase {
       if($syncTurf) {
         $mcid = $form_state->get('mcid');
         $county = $form_state->get('county');
+
+        // PHP deletes uploaded temp files at end of request. Move the walksheet
+        // to persistent storage now so the batch (a later request) can access it.
+        $walksheetInfo = $form_state->get('walksheetInfo');
+        if (!empty($walksheetInfo['tempName'])) {
+          /** @var FileSystemInterface $fileSystem */
+          $fileSystem = Drupal::service('file_system');
+          $stagingDir = 'public://temp';
+          $fileSystem->prepareDirectory($stagingDir, FileSystemInterface::CREATE_DIRECTORY);
+          $stagingUri = $stagingDir . '/nlp_ws_' . uniqid() . '.' . $walksheetInfo['fileType'];
+          $fileSystem->moveUploadedFile($walksheetInfo['tempName'], $stagingUri);
+          $walksheetInfo['tempName'] = $fileSystem->realpath($stagingUri);
+          $form_state->set('walksheetInfo', $walksheetInfo);
+        }
 
         $folderId = $this->nlpSessionDataObj->get('folderId');
         $folderOptions = $this->nlpSessionDataObj->get('folderOptions');

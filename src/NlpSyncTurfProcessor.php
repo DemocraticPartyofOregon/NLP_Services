@@ -420,6 +420,7 @@ class NlpSyncTurfProcessor {
         . '_TI' . $turfIndex . '.' . $walksheetInfo['fileType'];
       $uri = $this->pathsObj->getPath('PDF', $county) . $uniqueWalksheetName;
       copy($walksheetInfo['tempName'], $uri);
+      unlink($walksheetInfo['tempName']);
       $this->turfsObj->updateTurf($turfIndex, 'turfPDF', $uniqueWalksheetName);
     }
   }
