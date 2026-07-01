@@ -1,8 +1,8 @@
 name: NLP Services
 type: module
 description: 'Support for the Neighborhood Leader Program.'
-core_version_requirement: ^9.5 || ^10 || ^11
+core_version_requirement: ^10 || ^11
 package: Custom
 dependencies:
   - drupal:block
-version: '7.2.0'
+version: '7.2.1'
