@@ -9,25 +9,31 @@ class NlpVoterAcProcessor {
 
   protected ApiActivistCodes $activistCodesObj;
   protected NlpCoordinators $coordinatorsObj;
+  protected NlpConfiguration $nlpConfigurationObj;
   protected NlpFileFunctions $fileFunctionsObj;
   protected NlpNls $nlsObj;
+  protected NlpSendEmail $sendEmailObj;
   protected NlpTurfs $turfsObj;
   protected NlpVoters $votersObj;
 
   public function __construct(
     $activistCodesObj,
     $coordinatorsObj,
+    $nlpConfigurationObj,
     $fileFunctionsObj,
     $nlsObj,
+    $sendEmailObj,
     $turfsObj,
     $votersObj,
   ) {
-    $this->activistCodesObj = $activistCodesObj;
-    $this->coordinatorsObj  = $coordinatorsObj;
-    $this->fileFunctionsObj = $fileFunctionsObj;
-    $this->nlsObj           = $nlsObj;
-    $this->turfsObj         = $turfsObj;
-    $this->votersObj        = $votersObj;
+    $this->activistCodesObj    = $activistCodesObj;
+    $this->coordinatorsObj     = $coordinatorsObj;
+    $this->nlpConfigurationObj = $nlpConfigurationObj;
+    $this->fileFunctionsObj    = $fileFunctionsObj;
+    $this->nlsObj              = $nlsObj;
+    $this->sendEmailObj        = $sendEmailObj;
+    $this->turfsObj            = $turfsObj;
+    $this->votersObj           = $votersObj;
   }
 
   public static function create(ContainerInterface $container): NlpVoterAcProcessor
@@ -35,8 +41,10 @@ class NlpVoterAcProcessor {
     return new static(
       $container->get('nlpservices.activist_codes'),
       $container->get('nlpservices.coordinators'),
+      $container->get('nlpservices.configuration'),
       $container->get('nlpservices.file_functions'),
       $container->get('nlpservices.nls'),
+      $container->get('nlpservices.send_email'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.voters'),
     );
@@ -99,6 +107,19 @@ class NlpVoterAcProcessor {
           '@vanids'      => implode(', ', $missingVanids),
         ]
       );
+
+      $adminEmail = $this->nlpConfigurationObj->getNotificationEmail();
+      $subject    = t('Missing NLPVoterAC activist codes detected');
+      $message    = t(
+        'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids',
+        [
+          '@county'      => $county,
+          '@turf'        => $turfName,
+          '@coordinator' => $coordinatorName,
+          '@vanids'      => implode(', ', $missingVanids),
+        ]
+      );
+      $this->sendEmailObj->sendEmail('nlp_admin_notice', $adminEmail, $subject, $message);
 
       $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC');
     }

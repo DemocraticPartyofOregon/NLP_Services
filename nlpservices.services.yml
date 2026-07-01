@@ -209,7 +209,8 @@ services:
   nlpservices.voter_ac_processor:
     class: Drupal\nlpservices\NlpVoterAcProcessor
     arguments: [ '@nlpservices.activist_codes', '@nlpservices.coordinators',
-                 '@nlpservices.file_functions', '@nlpservices.nls',
+                 '@nlpservices.configuration', '@nlpservices.file_functions',
+                 '@nlpservices.nls', '@nlpservices.send_email',
                  '@nlpservices.turfs', '@nlpservices.voters' ]
 
   nlpservices.create_walksheet:

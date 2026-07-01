@@ -56,7 +56,7 @@ class MinivanController extends ControllerBase
     $nlpConfig = $this->config->get('nlpservices.configuration');
     $nlpHostileCode = $nlpConfig->get('nlpservices_hostile_ac');
     $emailsToProcess = $this->imapObj->getNewEmailsToProcess('minivan');
-    nlp_debug_msg('$emailsToProcess',$emailsToProcess);
+    //nlp_debug_msg('$emailsToProcess',$emailsToProcess);
     if(empty($emailsToProcess)) {
       $messenger->addMessage('There are no emails to process.');
       Drupal::logger('nlpservices')->notice('MiniVAN import: There are no emails to process.');
@@ -90,7 +90,7 @@ class MinivanController extends ControllerBase
           }
           foreach ($reportBatch as $reportBlock) {
             $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-            nlp_debug_msg('$modulePath',$modulePath);
+            //nlp_debug_msg('$modulePath',$modulePath);
             // Set up the call to start a batch operation.
             $args = [
               'records' => $reportBlock,
@@ -115,11 +115,13 @@ class MinivanController extends ControllerBase
         }
       }
     }
+    /*
     if (!empty($moveMessage)) {
       sort($moveMessage);
       $sorted = implode(',', $moveMessage);
       $this->imapObj->moveEmailToTrash($sorted);
     }
+    */
     $this->imapObj->closeConnection();
     
     return ['#markup' => 'All done!',];

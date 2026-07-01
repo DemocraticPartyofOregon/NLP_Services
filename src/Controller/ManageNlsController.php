@@ -52,9 +52,11 @@ class ManageNlsController extends ControllerBase
       ],
     ];
     // Make the entire page dynamic (no render caching).
+    /*
     $cacheable = new CacheableMetadata();
     $cacheable->setCacheMaxAge(0);
     $cacheable->applyTo($page);
+    */
     Drupal::service("page_cache_kill_switch")->trigger();
     return $page;
   }
