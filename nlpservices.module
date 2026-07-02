@@ -69,6 +69,7 @@ function nlpservices_mail($key, &$message, $params): void
     case 'forward_nl_reply':
     case 'help_request':
     case 'turf_deletion_notification':
+    case 'nlp_admin_notice':
       //if($key=='forward_nl_reply') {
       //  nlp_debug_msg('emailForward', $message);
       //}
