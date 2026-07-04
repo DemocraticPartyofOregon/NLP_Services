@@ -444,6 +444,23 @@ function nlpservices_cron (): void
     Drupal::logger('nlpservices')->notice("Voter AC check queued $turfCount turfs.");
   }
 
+  // Queue expired turf status records for activist code verification.
+  $enableTurfAcCheck = !empty($cronConfiguration['enableTurfAcCheck']);
+  if ($enableTurfAcCheck) {
+    $turfStatusObj = Drupal::service('nlpservices.turf_status');
+    $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
+    if (!empty($expiredRecords)) {
+      $queue = Drupal::queue('nlpservices_turf_ac_check_queue');
+      foreach ($expiredRecords as $record) {
+        $queue->createItem($record);
+      }
+      Drupal::logger('nlpservices')->notice(
+        'Queued @count expired turf status record(s) for activist code verification.',
+        ['@count' => count($expiredRecords)]
+      );
+    }
+  }
+
 }
 
 /** @noinspection PhpUnusedParameterInspection */

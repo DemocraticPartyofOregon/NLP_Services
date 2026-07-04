@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Pool;
@@ -13,7 +14,7 @@ use stdClass;
 class ApiActivistCodes
 {
   const string ACTIVIST_CODE = 'ActivistCode';
-  
+
   private array $supportedActivistCodes = [
     'NLPVoterAC' => 0,
     'NLPHostileAC' => 0,
@@ -29,7 +30,7 @@ class ApiActivistCodes
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiActivistCodes
   {
     return new static(
@@ -38,7 +39,7 @@ class ApiActivistCodes
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * getApiActivistCodes
    *
@@ -76,7 +77,7 @@ class ApiActivistCodes
       return [];
     }
   }
-  
+
   /**
    * getApiVoterActivistCodes
    *
@@ -150,7 +151,8 @@ class ApiActivistCodes
     $activistCodeName = $request['codeName'];
     $rid = $this->nlpConfigurationObj->getActivistCode($activistCodeName);
     if(empty($rid)) {return FALSE;}
-    $vanid = $request['vanid'];
+    $vanid  = $request['vanid'];
+    $action = $request['action'];
     $database = $this->supportedActivistCodes[$activistCodeName];
 
     $responseObj = new stdClass();
@@ -165,7 +167,7 @@ class ApiActivistCodes
 
     $responseObj->type = self::ACTIVIST_CODE;
     $responseObj->activistCodeId = $rid;
-    $responseObj->action = $request['action'];
+    $responseObj->action = $action;
 
     $canvassContextObj->dateCanvassed = NULL;
     $canvassContextObj->contactTypeId = NULL;
@@ -183,7 +185,6 @@ class ApiActivistCodes
     ];
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-      return TRUE;
     } catch (Exception $e) {
       nlp_debug_msg('setApiActivistCode', $e->getMessage());
       return FALSE;
@@ -191,12 +192,43 @@ class ApiActivistCodes
       nlp_debug_msg('setApiActivistCode', $e->getMessage());
       return FALSE;
     }
+
+    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName);
+    $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
+    if ($verified) {
+      return TRUE;
+    }
+
+    Drupal::logger('nlpservices')->warning(
+      'Activist code @code @action not confirmed for vanid @vanid after POST; retrying.',
+      ['@code' => $activistCodeName, '@action' => $action, '@vanid' => $vanid]
+    );
+    try {
+      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+    } catch (Exception $e) {
+      nlp_debug_msg('setApiActivistCode retry', $e->getMessage());
+      return FALSE;
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('setApiActivistCode retry', $e->getMessage());
+      return FALSE;
+    }
+
+    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName);
+    $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
+    if (!$verified) {
+      Drupal::logger('nlpservices')->error(
+        'Activist code @code @action still not confirmed for vanid @vanid after retry.',
+        ['@code' => $activistCodeName, '@action' => $action, '@vanid' => $vanid]
+      );
+      return FALSE;
+    }
+    return TRUE;
   }
 
   /**
    * hasApiActivistCodeBatch
    *
-   * Checks multiple voters concurrently and returns the subset that do NOT
+   * Checks multiple voters concurrently and returns the subset that does NOT
    * have the named activist code applied.
    *
    * @param array  $vanids   - flat array of int vanids to check
@@ -302,6 +334,7 @@ class ApiActivistCodes
     $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL, $headers, $dataJson) {
       foreach ($vanids as $vanid) {
         $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
+        //nlp_debug_msg('setApiActivistCode', "POST $url with data: $dataJson");
         yield $vanid => new GuzzleRequest('POST', $url, $headers, $dataJson);
       }
     };
@@ -314,6 +347,73 @@ class ApiActivistCodes
       },
     ]);
     $pool->promise()->wait();
+  }
+
+  /**
+   * applyAndVerifyBatch
+   *
+   * Applies or removes an activist code for a batch of voters, then verifies
+   * the outcome concurrently. Retries once for any that did not confirm, logs
+   * the event at each step, and returns the vanids that still failed after retry.
+   *
+   * @param array  $vanids   - flat array of int vanids
+   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $action   - 'Apply' or 'Remove'
+   * @return array            - vanids that could not be confirmed after one retry
+   */
+  public function applyAndVerifyBatch(array $vanids, string $codeName, string $action = 'Apply'): array
+  {
+    if (empty($vanids)) {
+      return [];
+    }
+    $this->setApiActivistCodeBatch($vanids, $codeName, $action);
+    $total     = count($vanids);
+    $startTime = microtime(TRUE);
+    $pending   = $vanids;
+    for ($i = 0; $i < 30; $i++) {
+      sleep(5);
+      $pending  = $this->checkBatch($pending, $codeName, $action);
+      $elapsed  = round(microtime(TRUE) - $startTime, 1);
+      Drupal::logger('nlpservices')->notice(
+        '@code @action poll #@poll at @sec seconds: @fail of @total @state.',
+        [
+          '@code'  => $codeName,
+          '@action' => $action,
+          '@poll'  => $i + 1,
+          '@sec'   => $elapsed,
+          '@fail'  => count($pending),
+          '@total' => $total,
+          '@state' => ($action === 'Apply') ? 'still missing code' : 'still have code',
+        ]
+      );
+      if (empty($pending)) {
+        return [];
+      }
+      if ($i % 5 === 4) {
+        $this->setApiActivistCodeBatch($pending, $codeName, $action);
+      }
+    }
+    return $pending;
+  }
+
+  /**
+   * checkBatch: single non-blocking check. Returns vanids not yet confirmed.
+   * Callers retry on the next Drupal batch re-entry rather than looping here.
+   */
+  public function checkBatch(array $vanids, string $codeName, string $action = 'Apply'): array
+  {
+    if (empty($vanids)) { return []; }
+    return $this->verifyBatch($vanids, $codeName, $action);
+  }
+
+  private function verifyBatch(array $vanids, string $codeName, string $action): array
+  {
+    $missingCode = $this->hasApiActivistCodeBatch($vanids, $codeName);
+    if ($action === 'Apply') {
+      return $missingCode;
+    }
+    $missingSet = array_flip($missingCode);
+    return array_values(array_filter($vanids, fn($v) => !isset($missingSet[$v])));
   }
 
 }

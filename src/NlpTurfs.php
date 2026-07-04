@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\File\FileSystemInterface;
 use Exception;
@@ -778,15 +779,7 @@ class NlpTurfs
 
     $voters = $this->votersObj->fetchVotersByTurf($turfIndex);
     $vanids = array_keys($voters);
-    // Delete the NLP Voter AC.
-    $request = [
-      'codeName' => 'NLPVoterAC',
-      'action' => 'Remove',
-    ];
-    foreach ($vanids as $vanid) {
-      $request['vanid'] = $vanid;
-      $this->apiActivistCodesObj->setApiActivistCode($request);
-    }
+    $this->apiActivistCodesObj->setApiActivistCodeBatch($vanids, 'NLPVoterAC', 'Remove');
 
     // remove the list of voters.
     $this->votersObj->deleteVotersInTurf($turfIndex);

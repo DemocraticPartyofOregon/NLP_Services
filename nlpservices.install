@@ -426,6 +426,20 @@ function nlpservices_schema(): array
       ],
   ];
   
+  $schema['nlp_turf_status'] = [
+    'description' => 'Tracks turf creation and deletion events.',
+    'fields' => [
+      'folderName'     => [ 'type' => 'varchar', 'length' => 160, 'not null' => TRUE, ],
+      'folderId'       => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ],
+      'turfName'       => [ 'type' => 'varchar', 'length' => 160, 'not null' => TRUE, ],
+      'turfId'         => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ],
+      'createTime'     => [ 'type' => 'varchar', 'length' => 32, ],
+      'expirationTime' => [ 'type' => 'varchar', 'length' => 32, ],
+      'status'         => [ 'type' => 'varchar', 'length' => 32, 'description' => 'turfCreated or turfDeleted.', ],
+    ],
+    'primary key' => [ 'folderName', 'turfName', ],
+  ];
+
   $schema['nlp_turf_map_regions'] = [
     'description' => 'Map regions with known turfs.',
     'fields' => [

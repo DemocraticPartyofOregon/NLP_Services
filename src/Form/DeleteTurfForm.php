@@ -13,25 +13,28 @@ use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\ApiFolders;
+use Drupal\nlpservices\NlpTurfStatus;
 
 /**
  * @noinspection PhpUnused
  */
 class DeleteTurfForm extends FormBase
 {
- 
+
   protected NlpTurfs $turfs;
-  
+
   protected NlpAwards $awardsObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpTurfDisplay $turfDisplayObj;
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiFolders $foldersObj;
-  
-  
+  protected NlpTurfStatus $turfStatusObj;
+
+
   public function __construct(   $turfs, $awardsObj, $searchBarObj, $turfDisplayObj,
-                                 $nlpSessionDataObj, $nlpConfigurationObj, $foldersObj) {
+                                 $nlpSessionDataObj, $nlpConfigurationObj, $foldersObj,
+                                 $turfStatusObj) {
     $this->turfs = $turfs;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
@@ -39,8 +42,9 @@ class DeleteTurfForm extends FormBase
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->foldersObj = $foldersObj;
+    $this->turfStatusObj = $turfStatusObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -54,6 +58,7 @@ class DeleteTurfForm extends FormBase
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.folders'),
+      $container->get('nlpservices.turf_status'),
     );
   }
   
@@ -87,7 +92,6 @@ class DeleteTurfForm extends FormBase
       if($turfCount<$this->turfs::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
-      //nlp_debug_msg('$hdOptions',$hdOptions);
       $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
     
@@ -95,7 +99,6 @@ class DeleteTurfForm extends FormBase
 
     $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
-    //nlp_debug_msg('$currentHd',$currentHd);
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
       $turfArray = $this->turfs->getTurfs($county,'All');
@@ -104,15 +107,10 @@ class DeleteTurfForm extends FormBase
     } else {
       $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd):[];
     }
-    //nlp_debug_msg('$turfArray',$turfArray);
-    //$this->foldersObj->updateMinivanInfo($county, $turfArray);
-    
-    
+
     $form_state->set('turfArray',$turfArray);
-    //nlp_debug_msg('$turfArray',$turfArray);
-    
+
     $turfCount = count($turfArray);
-    //nlp_debug_msg('$turfCount',$turfCount);
     if(empty($turfCount)) {
       $form['turf-table']['turf-form'] = [
         '#markup' => '<p>There is no turf to display.</p>',
@@ -150,16 +148,13 @@ class DeleteTurfForm extends FormBase
     $form_state->set('reenter',TRUE);
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('$elementClicked',$elementClicked);
     if ($elementClicked=='hd-select') {
       $newHdIndex = $form_state->getValue('hd-select');
-      //nlp_debug_msg('$newHdIndex',$newHdIndex);
       // The user changed the HD to display.
       $this->nlpSessionDataObj->saveHdIndex($newHdIndex);
       return;
     }
     $values = $form_state->getValues();
-    //nlp_debug_msg('$values',$values);
     $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
     $form_state->set('selections', $selections);
     
@@ -191,10 +186,7 @@ class DeleteTurfForm extends FormBase
         $county = $form_state->get('county');
         // From the list of turfs in the list, find the ones to be deleted.
         $turfArray = $form_state->get('turfArray');
-        //nlp_debug_msg('$turfArray',$turfArray);
         $selections = $form_state->get('selections');
-        //nlp_debug_msg('$selections',$selections);
-        
         
         foreach ($selections as $turfIndex => $selection) {
           
@@ -203,19 +195,41 @@ class DeleteTurfForm extends FormBase
             $lastName = $turfChoice['nlLastName'];
             $turfName = $turfChoice['turfName'];
             $mcid = $turfChoice['mcid'];
-            //$turfIndex = $turfChoice['turfIndex'];
-            
+
+            $folderName = $turfChoice['folderName'] ?? '';
+            if (!$this->turfStatusObj->turfStatusCheck($folderName, $turfName)) {
+              $messenger->addWarning(t('Turf @turfName cannot be deleted yet — activist codes are still being processed. Please try again later.', ['@turfName' => $turfName]));
+              continue;
+            }
+
+            $folderId   = (int) ($turfChoice['folderId'] ?? 0);
+            $turfId     = (int) ($turfChoice['listId'] ?? 0);
+            $voterCount = (int) ($turfChoice['voterCount'] ?? 0);
+
             $turf['mcid'] = $mcid;
             $turf['county'] = $county;
             $turf['turfIndex'] = $turfIndex;
-            //nlp_debug_msg('$turf',$turf);
-            
+
+
+
             $status = $this->turfs->deleteTurf($turf);
             if(!$status) {
               $messenger->addError(t('Turf remove failed'));
               return;
             }
-            
+
+            $expirationSeconds = ($voterCount < 60) ? NlpTurfStatus::DELETED_EXPIRY_SMALL_SECS : NlpTurfStatus::DELETED_EXPIRY_LARGE_SECS;
+            $now = time();
+            $this->turfStatusObj->createTurfStatus([
+              'folderName'     => $folderName,
+              'folderId'       => $folderId,
+              'turfName'       => $turfName,
+              'turfId'         => $turfId,
+              'createTime'     => date('c', $now),
+              'expirationTime' => date('c', $now + $expirationSeconds),
+              'status'         => NlpTurfStatus::TURF_DELETED,
+            ]);
+
             $this->awardsObj->nlParticipation($mcid,'Yes');
             
             // successful!

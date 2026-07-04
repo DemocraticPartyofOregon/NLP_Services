@@ -54,6 +54,7 @@ class EnableCronTasksForm extends FormBase {
     $enableEmailRedirect = $cronConfiguration['enableEmailRedirect'] ?? 0;
     $enableTurfResync    = $cronConfiguration['enableTurfResync'] ?? 0;
     $enableVoterAcCheck  = $cronConfiguration['enableVoterAcCheck'] ?? 0;
+    $enableTurfAcCheck   = $cronConfiguration['enableTurfAcCheck'] ?? 0;
 
     if ($this->emailConfigurationObj->emailCredentialsValidated('minivan')) {
       $form['enableMinivan'] = [
@@ -113,6 +114,14 @@ class EnableCronTasksForm extends FormBase {
       '#description' => $this->t('When enabled, NLP Services will check for and apply missing NLP Voter activist codes nightly.'),
     ];
 
+    $form['enableTurfAcCheck'] = [
+      '#type' => 'checkbox',
+      '#id' => 'enableTurfAcCheck',
+      '#title' => $this->t('Enable turf activist code completion check.'),
+      '#default_value' => $enableTurfAcCheck,
+      '#description' => $this->t('When enabled, NLP Services will queue expired turf status records and verify that activist codes have been fully applied or removed, logging any incomplete vanids.'),
+    ];
+
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
@@ -144,6 +153,7 @@ class EnableCronTasksForm extends FormBase {
     $cronConfiguration['enableEmailRedirect'] = $values['enableEmailRedirect'] ?? 0;
     $cronConfiguration['enableTurfResync']    = $values['enableTurfResync'] ?? 0;
     $cronConfiguration['enableVoterAcCheck']  = $values['enableVoterAcCheck'] ?? 0;
+    $cronConfiguration['enableTurfAcCheck']   = $values['enableTurfAcCheck'] ?? 0;
 
     $this->configFactory->getEditable('nlpservices.configuration')
       ->set('nlpservices-cron-configuration', $cronConfiguration)

@@ -204,7 +204,7 @@ services:
                  '@nlpservices.turfs', '@nlpservices.configuration',
                  '@nlpservices.awards', '@nlpservices.reports',
                  '@nlpservices.paths', '@nlpservices.turf_assignments',
-                 '@messenger' ]
+                 '@messenger', '@nlpservices.turf_status' ]
 
   nlpservices.voter_ac_processor:
     class: Drupal\nlpservices\NlpVoterAcProcessor
@@ -310,6 +310,15 @@ services:
   nlpservices.turf_assignments:
     class: Drupal\nlpservices\NlpTurfAssignments
     arguments: [ '@database' ]
+
+  nlpservices.turf_ac_checker:
+    class: Drupal\nlpservices\NlpTurfAcChecker
+    arguments: [ '@nlpservices.turfs', '@nlpservices.voters', '@nlpservices.activist_codes',
+                 '@nlpservices.turf_status' ]
+
+  nlpservices.turf_status:
+    class: Drupal\nlpservices\NlpTurfStatus
+    arguments: [ '@database', '@nlpservices.turfs', '@nlpservices.voters', '@nlpservices.activist_codes' ]
 
   nlpservices.turfs:
     class: Drupal\nlpservices\NlpTurfs

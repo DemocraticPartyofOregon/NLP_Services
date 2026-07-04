@@ -7,9 +7,23 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Drupal migration">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix failed emeail for detection of missing NLPVoterAC">
+      <change afterPath="$PROJECT_DIR$/src/NlpTurfAcChecker.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NlpTurfStatus.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_turf_ac_check_queue.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EnableCronTasksForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSendEmail.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSendEmail.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +80,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="355" />
+    <option name="cachedIndexableFilesCount" value="360" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -103,23 +117,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000036340263472" />
-      <entry key="MS500" value="1.0859090372792708" />
-      <entry key="S2" value="1.9861200376040924" />
-      <entry key="S5" value="3.292970981940019" />
-      <entry key="S10" value="4.296254721296938" />
-      <entry key="S30" value="5.324270044749118" />
-      <entry key="S60" value="5.646556097795283" />
-      <entry key="M2" value="5.894816104782432" />
-      <entry key="M5" value="7.662860591383765" />
-      <entry key="M10" value="10.892962088155395" />
-      <entry key="M15" value="12.9564389026128" />
-      <entry key="M30" value="15.873650983466003" />
-      <entry key="H1" value="17.758307818396677" />
-      <entry key="H2" value="18.830581515036418" />
-      <entry key="H4" value="19.427566919421466" />
-      <entry key="D1" value="59.25554910167727" />
-      <entry key="W1" value="563.5589104858425" />
+      <entry key="MS100" value="1.0896222030009892" />
+      <entry key="MS500" value="1.6172813034467692" />
+      <entry key="S2" value="1.8863816991948674" />
+      <entry key="S5" value="1.9529021620001208" />
+      <entry key="S10" value="1.97616707688803" />
+      <entry key="S30" value="1.99199173121958" />
+      <entry key="S60" value="1.9959976945228421" />
+      <entry key="M2" value="2.001134783955547" />
+      <entry key="M5" value="2.098950606434374" />
+      <entry key="M10" value="2.3154371505496405" />
+      <entry key="M15" value="2.463510508929925" />
+      <entry key="M30" value="2.6815112652374298" />
+      <entry key="H1" value="2.973382026258659" />
+      <entry key="H2" value="5.183788656140246" />
+      <entry key="H4" value="11.881442183352888" />
+      <entry key="D1" value="62.28519706158687" />
+      <entry key="W1" value="563.2506394258413" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -127,37 +141,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="1.2048306383539262E-173" />
-      <entry key="M10" value="4.42054033427209E-87" />
-      <entry key="M15" value="3.299686302338547E-58" />
-      <entry key="M30" value="2.5309946488843794E-29" />
-      <entry key="H1" value="7.0876529304584735E-15" />
-      <entry key="H2" value="1.1894573914137007E-7" />
-      <entry key="H4" value="4.8764512719507076E-4" />
-      <entry key="D1" value="0.8097492426244279" />
-      <entry key="W1" value="13.77147871719253" />
+      <entry key="S30" value="6.07853120599021E-282" />
+      <entry key="S60" value="2.4654677458831645E-141" />
+      <entry key="M2" value="4.965347667468174E-71" />
+      <entry key="M5" value="7.557529743407501E-29" />
+      <entry key="M10" value="8.69340539915602E-15" />
+      <entry key="M15" value="4.2279186431382125E-10" />
+      <entry key="M30" value="2.0561903226934552E-5" />
+      <entry key="H1" value="0.004534523483998605" />
+      <entry key="H2" value="0.06733887851351607" />
+      <entry key="H4" value="0.2596236930056658" />
+      <entry key="D1" value="1.4451895243095163" />
+      <entry key="W1" value="14.30408707170298" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9265914998887749" />
-      <entry key="MS500" value="1.0698176006428337" />
-      <entry key="S2" value="1.9792771035438124" />
-      <entry key="S5" value="3.288190851446629" />
-      <entry key="S10" value="4.292955483992897" />
-      <entry key="S30" value="5.322835927330872" />
-      <entry key="S60" value="5.645784761176442" />
-      <entry key="M2" value="5.894411182978886" />
-      <entry key="M5" value="7.662654604413562" />
-      <entry key="M10" value="10.89281951904163" />
-      <entry key="M15" value="12.95632700900735" />
-      <entry key="M30" value="15.873583124117147" />
-      <entry key="H1" value="17.75827003935237" />
-      <entry key="H2" value="18.83056164887102" />
-      <entry key="H4" value="19.428043612953356" />
-      <entry key="D1" value="60.06513543688244" />
-      <entry key="W1" value="577.329760358467" />
+      <entry key="MS100" value="0.15614533940432418" />
+      <entry key="MS500" value="1.1988413242206946" />
+      <entry key="S2" value="1.7596518902744336" />
+      <entry key="S5" value="1.9001409083236274" />
+      <entry key="S10" value="1.9494289873332638" />
+      <entry key="S30" value="1.9829983971031069" />
+      <entry key="S60" value="1.9914908639822788" />
+      <entry key="M2" value="1.998877593661355" />
+      <entry key="M5" value="2.0980319410460697" />
+      <entry key="M10" value="2.31496074134213" />
+      <entry key="M15" value="2.463185132782756" />
+      <entry key="M30" value="2.6813633924767473" />
+      <entry key="H1" value="2.9778254053135504" />
+      <entry key="H2" value="5.251046629697986" />
+      <entry key="H4" value="12.14097208611251" />
+      <entry key="D1" value="63.73021756374106" />
+      <entry key="W1" value="577.55411092017" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -225,6 +239,7 @@
           </model>
         </option>
         <option name="targetType" value="BACKGROUND" />
+        <option name="worktreeMode" value="WORKSPACE" />
       </template>
     </option>
   </component>
@@ -236,6 +251,7 @@
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "PHPUnit.Main.executor": "Run",
     "RunOnceActivity.MCP Project settings loaded": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
@@ -271,7 +287,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-6bbb74dbab74-com.jetbrains.php.sharedIndexes-PS-261.25134.104" />
+        <option value="bundled-php-predefined-a98d8de5180a-6bbb74dbab74-com.jetbrains.php.sharedIndexes-PS-261.26222.71" />
       </set>
     </attachedChunks>
   </component>
@@ -358,15 +374,10 @@
       <workItem from="1782573850167" duration="534000" />
       <workItem from="1782574404630" duration="14306000" />
       <workItem from="1782600811993" duration="48132000" />
-      <workItem from="1782884567348" duration="3002000" />
-    </task>
-    <task id="LOCAL-00111" summary="Fix the rebuild of the table when the HD is changed.">
-      <option name="closed" value="true" />
-      <created>1780152937747</created>
-      <option name="number" value="00111" />
-      <option name="presentableId" value="LOCAL-00111" />
-      <option name="project" value="LOCAL" />
-      <updated>1780152937747</updated>
+      <workItem from="1782884567348" duration="3947000" />
+      <workItem from="1782967754127" duration="17212000" />
+      <workItem from="1783048894398" duration="7526000" />
+      <workItem from="1783113226860" duration="16743000" />
     </task>
     <task id="LOCAL-00112" summary="Change the title of the CO and NL columns">
       <option name="closed" value="true" />
@@ -752,7 +763,15 @@
       <option name="project" value="LOCAL" />
       <updated>1782882493528</updated>
     </task>
-    <option name="localTasksCounter" value="160" />
+    <task id="LOCAL-00160" summary="Fix failed emeail for detection of missing NLPVoterAC">
+      <option name="closed" value="true" />
+      <created>1782966840313</created>
+      <option name="number" value="00160" />
+      <option name="presentableId" value="LOCAL-00160" />
+      <option name="project" value="LOCAL" />
+      <updated>1782966840314</updated>
+    </task>
+    <option name="localTasksCounter" value="161" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -804,7 +823,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Convert the request for the NLP Voter activist code to a Guzzle batch to improve performance for a turf." />
     <MESSAGE value="Create a CRON task to find, fix and report missing NLP Voter AC." />
     <MESSAGE value="Fix annotations in queueWorker" />
     <MESSAGE value="Fix tests" />
@@ -829,7 +847,8 @@
     <MESSAGE value="Fix the restoration of user credentials for sync of active NLs." />
     <MESSAGE value="Fix attachment of PDF when syncing a turf." />
     <MESSAGE value="Drupal migration" />
-    <option name="LAST_COMMIT_MESSAGE" value="Drupal migration" />
+    <MESSAGE value="Fix failed emeail for detection of missing NLPVoterAC" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix failed emeail for detection of missing NLPVoterAC" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
@@ -841,6 +860,11 @@
           <url>file://$PROJECT_DIR$/src/Form/CompareVanidsForm.php</url>
           <line>7</line>
           <option name="timeStamp" value="1" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="php">
+          <url>file://$PROJECT_DIR$/src/Form/DeleteTurfForm.php</url>
+          <line>101</line>
+          <option name="timeStamp" value="2" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

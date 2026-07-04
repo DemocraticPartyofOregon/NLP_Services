@@ -522,7 +522,7 @@ class NlpConfiguration
   public function getNotificationEmail(): string
   {
     $emailConfiguration = $this->nlpConfig->get('nlpservices-email-configuration');
-    return $emailConfiguration['notifications']['email'];
+    return $emailConfiguration['notifications']['email'] ?? '';
   }
 
   /**

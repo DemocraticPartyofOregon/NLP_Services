@@ -269,8 +269,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(101);
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context    = [];
+      $processor  = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
     }
 
     // -------------------------------------------------------------------------
@@ -290,20 +292,21 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfsMock->method('getTurf')
         ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
 
-      $acCalls = [];
-      $this->activistCodesMock->method('setApiActivistCode')
-        ->willReturnCallback(function (array $req) use (&$acCalls): bool {
-          $acCalls[] = $req['action'];
-          return TRUE;
+      $acSetActions = [];
+      $this->activistCodesMock->method('setApiActivistCodeBatch')
+        ->willReturnCallback(function (array $vanids, string $codeName, string $action = 'Apply') use (&$acSetActions): void {
+          $acSetActions[] = $action;
         });
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
 
-      $this->assertContains('Remove', $acCalls, 'Remove should be called to clear old turf AC');
-      $this->assertContains('Apply',  $acCalls, 'Apply should be called to set new turf AC');
-      $removePos = array_search('Remove', $acCalls);
-      $applyPos  = array_search('Apply',  $acCalls);
+      $this->assertContains('Remove', $acSetActions, 'setApiActivistCodeBatch Remove should be called to clear old turf AC');
+      $this->assertContains('Apply',  $acSetActions, 'setApiActivistCodeBatch Apply should be called to set new turf AC');
+      $removePos = array_search('Remove', $acSetActions);
+      $applyPos  = array_search('Apply',  $acSetActions);
       $this->assertLessThan($applyPos, $removePos, 'Remove must precede Apply');
     }
 
@@ -317,14 +320,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['downloadUrl' => $uri]);
       $this->stubForSuccess();
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
 
-      $this->assertSame('success', $context['results']['result']);
-      $this->assertSame(1,         $context['results']['turfCnt']);
+      $this->assertSame('success',    $context['results']['result']);
+      $this->assertSame(1,            $context['results']['turfCnt']);
       $this->assertSame('Elm Street', $context['results']['turfName']);
-      $this->assertSame('Alice',   $context['results']['nickname']);
-      $this->assertSame(7,         $context['results']['turfIndex']);
+      $this->assertSame('Alice',      $context['results']['nickname']);
+      $this->assertSame(7,            $context['results']['turfIndex']);
     }
 
     // -------------------------------------------------------------------------
@@ -344,8 +349,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfsMock->method('getTurf')
         ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame('success', $context['results']['result']);
       $this->assertArrayHasKey(101, $context['results']['movedVoters']);
@@ -367,8 +374,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->votersMock->expects($this->exactly(2))->method('createTurfVoter');
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame(2, $context['results']['turfCnt']);
     }
@@ -386,8 +395,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->awardsMock->expects($this->once())->method('nlParticipation')
         ->with(42, 'Turf synced');
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+      $processor->processBatch($this->baseArg($uri), $context);
     }
 
     // -------------------------------------------------------------------------
@@ -422,11 +433,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['downloadUrl' => $uri]);
       $this->stubForSuccess();
 
-      $context = [];
+      $context   = [];
       $processor = $this->buildProcessor();
 
       $processor->processBatch($this->baseArg($uri), $context);
       $this->assertSame(0.5, $context['finished']);
+
+      $processor->processBatch($this->baseArg($uri), $context);
+      $this->assertSame(0.99, $context['finished'], 'Second call should enter awaitingApply phase');
 
       $processor->processBatch($this->baseArg($uri), $context);
       $this->assertSame('success', $context['results']['result']);

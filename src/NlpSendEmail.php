@@ -48,6 +48,7 @@ class NlpSendEmail
     $this->htmlText->setHtml($message);
     $plainText = $this->htmlText->getText();
     $from = $this->nlpConfigurationObj->getNotificationEmail();
+    if (empty($from)) { return FALSE; }
 
     $params['subject'] = $subject;
     $params['headers']['List-Unsubscribe'] = "<mailto:$from?subject=unsubscribe>";

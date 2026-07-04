@@ -23,6 +23,7 @@ class NlpSyncTurfProcessor {
   protected NlpPaths $pathsObj;
   protected NlpTurfAssignments $turfAssignmentsObj;
   protected MessengerInterface $messenger;
+  protected NlpTurfStatus $turfStatusObj;
 
   public function __construct(
     $exportJobsObj,
@@ -37,7 +38,8 @@ class NlpSyncTurfProcessor {
     $reportsObj,
     $pathsObj,
     $turfAssignmentsObj,
-    $messenger
+    $messenger,
+    $turfStatusObj
   ) {
     $this->exportJobsObj      = $exportJobsObj;
     $this->savedListsObj      = $savedListsObj;
@@ -52,6 +54,7 @@ class NlpSyncTurfProcessor {
     $this->pathsObj           = $pathsObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
     $this->messenger          = $messenger;
+    $this->turfStatusObj      = $turfStatusObj;
   }
 
   public static function create(ContainerInterface $container): self {
@@ -69,9 +72,37 @@ class NlpSyncTurfProcessor {
       $container->get('nlpservices.paths'),
       $container->get('nlpservices.turf_assignments'),
       $container->get('messenger'),
+      $container->get('nlpservices.turf_status'),
     );
   }
 
+  /**
+   * processBatch
+   *
+   * Processes a batch of voters for the turf syncing operation.
+   *
+   * This method handles the synchronization of voter data for a specified turf,
+   * managing batch processing, processing duplicates, applying activist codes,
+   * updating voter statuses, and finalizing the operation. It interacts with
+   * multiple objects to download, validate, and process voter information.
+   *
+   * @param array $arg
+   *   An associative array containing necessary parameters for the process. Expected keys include:
+   *   - 'county': The county identifier.
+   *   - 'folderId': The folder ID associated with the turf.
+   *   - 'folderName': The name of the folder.
+   *   - 'turfId': The turf ID to be processed.
+   *   - 'turfName': The name of the turf.
+   *   - 'mcid': The unique ID of the neighborhood leader (NL) managing the turf.
+   *   - 'voterCount': The total count of voters in the turf.
+   * @param array &$context
+   *   A reference to the operation's context array, storing ongoing operation state. Keys include:
+   *   - 'sandbox': Temporary data used for current batch processing.
+   *   - 'finished': A flag or progress ratio indicating completion state.
+   *   - 'results': Finalized results or error messages for the operation.
+   * @return void
+   *   This method does not return a value. Results are stored in the context array.
+   */
   public function processBatch(array $arg, array &$context): void {
     $county     = $arg['county'];
     $folderId   = $arg['folderId'];
@@ -131,7 +162,7 @@ class NlpSyncTurfProcessor {
       }
       fclose($fh);
 
-      $context['sandbox']['batchCount']   = count($turfVoters);
+      $context['sandbox']['batchCount']    = count($turfVoters);
       $context['sandbox']['currentBatch'] = 0;
       $context['sandbox']['turfVoters']   = $turfVoters;
       $context['sandbox']['duplicates']   = [];
@@ -187,23 +218,38 @@ class NlpSyncTurfProcessor {
           'oldMcid'     => $duplicate['mcid'],
           'oldNlName'   => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
         ];
-        $request = ['vanid' => $vanid, 'codeName' => 'NLPVoterAC', 'action' => 'Remove'];
-        $this->activistCodesObj->setApiActivistCode($request);
+        Drupal::logger('nlpservices')->notice(
+          'Moved voter @firstName @lastName (VANID: @vanid) from turf "@oldTurfName" (NL: @oldNlName)',
+          [
+            '@firstName'   => $duplicate['firstName'],
+            '@lastName'    => $duplicate['lastName'],
+            '@vanid'       => $vanid,
+            '@oldTurfName' => $oldTurf['turfName'],
+            '@oldNlName'   => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
+          ]
+        );
+      }
+      $duplicateVanids = array_keys($duplicates);
+      $this->activistCodesObj->setApiActivistCodeBatch($duplicateVanids, 'NLPVoterAC', 'Remove');
+      foreach ($duplicateVanids as $vanid) {
         $this->votersObj->deleteVoterInTurf($vanid);
       }
       $context['sandbox']['movedVoters'] = $movedVoters;
+      if (count($movedVoters) > 6) {
+        $context['finished']             = 1;
+        $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count). Sync aborted.', ['@count' => count($movedVoters)])];
+        $context['results']['result']    = 'error';
+        $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
+        $context['results']['mcid']      = $context['sandbox']['mcid'];
+        $context['results']['county']    = $context['sandbox']['county'];
+        return;
+      }
     }
 
+    $applyVanids = [];
     foreach ($voters as $voter) {
-      $vanid   = $voter['vanid'];
-      $request = [
-        'vanid'    => $vanid,
-        'codeName' => 'NLPVoterAC',
-        'action'   => 'Apply',
-      ];
-      if (!$this->activistCodesObj->setApiActivistCode($request)) {
-        Drupal::logger('nlpservices')->warning('Failed to set NLPVoterAC for vanid @vanid during turf sync', ['@vanid' => $vanid]);
-      }
+      $vanid = $voter['vanid'];
+      $applyVanids[] = $vanid;
 
       $voter['address']['turfIndex'] = $turfIndex;
       $voter['address']['moved']     = NULL;
@@ -219,10 +265,17 @@ class NlpSyncTurfProcessor {
       $votersInTurf[$vanid] = $voter;
     }
 
+    $this->activistCodesObj->setApiActivistCodeBatch($applyVanids, 'NLPVoterAC');
+
     $currentBatch++;
     $context['sandbox']['currentBatch'] = $currentBatch;
+    $context['sandbox']['votersInTurf'] = $votersInTurf;
 
     if ($currentBatch >= $batchCount) {
+      $mcid         = $context['sandbox']['mcid'];
+      $county       = $context['sandbox']['county'];
+      $turfIndex    = $context['sandbox']['turfIndex'];
+
       foreach ($votersInTurf as $voter) {
         $turfVoter              = [];
         $turfVoter['mcid']      = $mcid;
@@ -236,25 +289,54 @@ class NlpSyncTurfProcessor {
       $this->awardsObj->nlParticipation($mcid, 'Turf synced');
       $this->finalizeTurf($arg, $context['sandbox']);
 
+      $voterCount = $arg['voterCount'];
+      $expirySecs = ($voterCount < 60)
+        ? NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS
+        : NlpTurfStatus::CREATED_EXPIRY_LARGE_SECS;
+      $now = time();
+      $this->turfStatusObj->createTurfStatus([
+        'folderName'     => $arg['folderName'],
+        'folderId'       => $arg['folderId'],
+        'turfName'       => $arg['turfName'],
+        'turfId'         => $arg['turfId'],
+        'createTime'     => date('c', $now),
+        'expirationTime' => date('c', $now + $expirySecs),
+        'status'         => NlpTurfStatus::TURF_CREATED,
+      ]);
+
       $nl = $this->nlsObj->getNlById($mcid);
 
       $context['results']['mcid']        = $mcid;
-      $context['results']['turfName']    = $turfName;
+      $context['results']['turfName']    = $arg['turfName'];
       $context['results']['county']      = $county;
       $context['results']['voterCount']  = $arg['voterCount'];
       $context['results']['turfCnt']     = count($votersInTurf);
       $context['results']['nickname']    = $nl['nickname'];
       $context['results']['result']      = 'success';
-      $context['results']['turfIndex']   = $context['sandbox']['turfIndex'];
+      $context['results']['turfIndex']   = $turfIndex;
       $context['results']['movedVoters'] = $context['sandbox']['movedVoters'];
-      $context['sandbox']['finished']   = 1;
+      $context['finished']               = 1;
       return;
     }
 
-    $context['finished']                = $currentBatch / $batchCount;
-    $context['sandbox']['votersInTurf'] = $votersInTurf;
+    $context['finished'] = $currentBatch / $batchCount;
   }
 
+  /**
+   * validateTurfPrecinct
+   *
+   * Validates the consistency of voters' precinct and legislative district data,
+   * and updates the legislative district information.
+   *
+   * @param array $legislativeDistricts An associative array containing the current legislative
+   *                                     district information, with keys such as 'precinct', 'hd', 'cd', and 'count'.
+   *                                     This parameter is passed by reference and will be updated if validation succeeds.
+   * @param array $voters An array of voters, where each voter is represented by an array that includes
+   *                                     'address' containing 'precinct', 'hd', and 'cd' keys.
+   * @return bool Returns TRUE if all voters belong to the same precinct and legislative districts as those specified
+   *              in the current `$legislativeDistricts`, or if `$legislativeDistricts` is empty and set successfully.
+   *              Returns FALSE if a mismatch is detected.
+   */
   private function validateTurfPrecinct(array &$legislativeDistricts, array $voters): bool {
     $vanids = array_keys($voters);
     if (empty($legislativeDistricts)) {
@@ -285,6 +367,14 @@ class NlpSyncTurfProcessor {
     return TRUE;
   }
 
+  /**
+   * getDuplicates
+   *
+   * Identifies and retrieves duplicate voters based on the provided voter data.
+   *
+   * @param array $voters An associative array of voters where the keys are voter IDs.
+   * @return array An array of duplicate voters with additional metadata such as 'mcid', 'turfIndex', and 'county'.
+   */
   private function getDuplicates(array $voters): array {
     $vanids        = array_keys($voters);
     $dupVoterTurfs = $this->votersObj->duplicateVoters($vanids);
@@ -299,6 +389,17 @@ class NlpSyncTurfProcessor {
     return $dupVoters;
   }
 
+  /**
+   * reloadVoterStatus
+   *
+   * Updates the voter status, including contact attempts, pledge to vote status, and movement status,
+   * and processes additional voter-related information based on the given parameters.
+   *
+   * @param array $voter An associative array containing voter data, including the 'vanid' and 'address' fields.
+   * @param int $turfIndex The index of the turf to which the voter belongs.
+   * @param int $mcid The MCID (Master Campaign ID) related to the voter for tracking purposes.
+   * @return void
+   */
   private function reloadVoterStatus(array $voter, int $turfIndex, int $mcid): void {
     $vanid = $voter['vanid'];
 
@@ -347,6 +448,33 @@ class NlpSyncTurfProcessor {
     $this->votersObj->updateTurfNote($turfIndex, $vanid, $comment['text'], $comment['reportIndex'], 0);
   }
 
+  /**
+   * finalizeTurf
+   *
+   * Finalizes and updates the details of a turf assignment based on the provided parameters.
+   *
+   * @param array $arg An associative array containing turf-related details, including:
+   *                   - 'county': The county associated with the turf.
+   *                   - 'folderId': The ID of the folder to which the turf belongs.
+   *                   - 'folderName': The name of the folder.
+   *                   - 'showLists': Indicates whether to show the list of voters.
+   *                   - 'mapRegionId': The ID of the map region.
+   *                   - 'mapRegionName': The name of the map region.
+   *                   - 'turfId': The unique identifier of the turf.
+   *                   - 'turfName': The name of the turf.
+   *                   - 'mcid': The ID of the managing coordinator.
+   *                   - 'walksheetInfo': Information about the walksheet file.
+   *                   - 'minivan': (Optional) Indicates if Minivan data is present.
+   *                   - 'minivanNumber': (Optional) The Minivan number associated with the turf.
+   *                   - 'minivanCreateDate': (Optional) The creation date of the Minivan entry.
+   *                   - 'voterCount': The number of voters in the turf.
+   *                   - 'doorCount': The number of doors in the turf.
+   * @param array $sandbox An associative array containing additional data related to the turf, including:
+   *                       - 'turfIndex': The index of the turf within the system.
+   *                       - 'legislativeDistricts': An array of legislative district details, such as 'hd', 'precinct', and 'cd'.
+   *
+   * @return void
+   */
   private function finalizeTurf(array $arg, array $sandbox): void {
     $county        = $arg['county'];
     $folderId      = $arg['folderId'];

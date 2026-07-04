@@ -20,6 +20,7 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
 use Drupal\nlpservices\ApiMapRegions;
 use Drupal\nlpservices\Batch\SyncTurfBatch;
+use Drupal\nlpservices\NlpTurfStatus;
 
 class SyncTurfForm extends FormBase {
   protected ApiSavedLists $savedListsObj;
@@ -32,11 +33,12 @@ class SyncTurfForm extends FormBase {
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpTurfListDisplayVoteBuilder $turfListDisplayObj;
   protected ApiMapRegions $mapRegionsObj;
+  protected NlpTurfStatus $turfStatusObj;
 
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
                                 $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
-                                $mapRegionsObj, $requestStack ) {
+                                $mapRegionsObj, $requestStack, $turfStatusObj ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -47,6 +49,7 @@ class SyncTurfForm extends FormBase {
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
     $this->mapRegionsObj = $mapRegionsObj;
+    $this->turfStatusObj = $turfStatusObj;
     $this->setRequestStack($requestStack);
   }
 
@@ -67,6 +70,7 @@ class SyncTurfForm extends FormBase {
       $container->get('nlpservices.turf_list_display_votebuilder'),
       $container->get('nlpservices.api_map_regions'),
       $container->get('request_stack'),
+      $container->get('nlpservices.turf_status'),
     );
   }
 
@@ -307,6 +311,14 @@ class SyncTurfForm extends FormBase {
         }
         if($voterCount > 75) {
           $messenger->addWarning("Turfs with more than 75 voters are discouraged.");
+        }
+
+        $folderOptions = $this->nlpSessionDataObj->get('folderOptions');
+        $folderId = $this->nlpSessionDataObj->get('folderId');
+        $folderName = $folderOptions[$folderId] ?? '';
+        $turfName = $turfOptions[$turfId]['turfName'];
+        if (!$this->turfStatusObj->turfStatusCheck($folderName, $turfName)) {
+          $form_state->setErrorByName('turf_submit', t('It is too soon to sync this turf. The activist codes from a recent turf change are still being processed. Please try again later.'));
         }
         return;
 
