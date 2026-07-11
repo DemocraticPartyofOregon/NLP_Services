@@ -31,7 +31,7 @@ Before installing the Drupal core, set up a database for your site.   Follow the
 
 Now install the core Drupal:
 
-Use your TTY app to redefine the public html directory (In the commands below, change Oregon to your state):
+Use your TTY app to redefine the public HTML directory (In the commands below, change Oregon to your state):
 
     mv ~/public_html ~/public_html_backup  
     ln -s ~/oregon/web/ ~/public_html
@@ -40,7 +40,7 @@ Then use composer to get the core:
 
     composer create-project drupal/recommended-project oregon
 
-Once composer has finished, go to your sites main page:  mysite.sfx, e.g. oregonnlp.org.
+Once the composer has finished, go to your site's main page: mysite.sfx, e.g., oregonnlp.org.
 
 There you will complete the installation of Drupal.   You will need the information about the email for the administrator and the Drupal database.
 
@@ -59,11 +59,11 @@ Use the Extend tab to install the NLP Services module.
 
 ## Configuring Drupal Theme
 
-NLP Services was developed and tested with the Bartik theme.  There should be no specific dependency on theme but the Bartik standard options produce pleasing NLP displays.
+NLP Services was developed and tested with the Bartik theme.  There should be no specific dependency on the theme, but the Bartik standard options produce pleasing NLP displays.
 
-The NLP Services pages all assume they have the full width to display information.  If the site has any blocks on either the right or left sidebars, suppress display of these sidebar blocks.  From the Admin menu, navigate to Structure, Block layout, find the sidebar blocks that are active.  Click on configure for each and set the "Show block on specific pages" to except and enter nlp*.
+The NLP Services pages all assume they have the full width to display information.  If the site has any blocks on either the right or left sidebars, suppress display of these sidebar blocks.  From the Admin menu, navigate to Structure, Block layout, find the sidebar blocks that are active.  Click on the "configure" link for each and set the "Show block on specific pages" to except and enter nlp*.
 
-From the menu bar, click Appearance, select Bartik as the default theme and then click Settings for the Bartik theme. Remove the selection for the default logo and use the one provided by NLP Services.  It can be found at modules/custom/nlpservices/img/nlp_logo.png.  Then unselect the favicon option and use this one:  modules/custom/nlpservices/img/nlp_favicon.ico.  Then click Save configuration.
+From the menu bar, click Appearance, select Bartik as the default theme, and then click Settings for the Bartik theme. Remove the selection for the default logo and use the one provided by NLP Services.  It can be found at modules/custom/nlpservices/img/nlp_logo.png.  Then unselect the favicon option and use this one: modules/custom/nlpservices/img/nlp_favicon.ico.  Then click Save configuration.
 
 From the menu bar, click Configuration and then click the Site Information link.   In Site Details set the Site name to NLP Services and the E-mail address to notifications@nmysite.sfx.
 
@@ -73,11 +73,11 @@ This version of NLP Services uses three additional modules: "SMTP Authentication
 
     composer require 'drupal/smtp:^1.2'  
     composer require 'drupal/autologout:^1.4'  
-    composer require 'drupal/user\_redirect:^2.0'
+    composer require 'drupal/key:^1.22'
     composer install
     composer require mpdf/mpdf
 
-The SMTP module must be configured to permit the nlpservices module to send emails.   You will have to get the SMTP information from the email vendor. To use the SMTP module you will have to set an email account.  This account is for sending emails and can be named notifications@nlpservices.org.  The email name is configurable and includes the actual name of the site, i.e. notifications@mysite.com. Your vendor hosting the site will provide an adequate service, and you should use it. When you create the email account, you will need to get the following from your vendor:
+The SMTP module must be configured to permit the nlpservices module to send emails.   You will have to get the SMTP information from the email vendor. To use the SMTP module, you will have to set an email account.  This account is for sending emails and can be named notifications@nlpservices.org.  The email name is configurable and includes the actual name of the site, i.e., notifications@mysite.com. Your vendor hosting the site will provide an adequate service, and you should use it. When you create the email account, you will need to get the following from your vendor:
 ```
 SMTP server -  typically mail.mysite.sfx  
 SMTP port - typically 25
@@ -94,7 +94,7 @@ Configure the editor so the NLP Admin and the NLP Coordinator have the "Full HTM
 The redirect module should not be installed at this time.  There is a fix needed to support the request for a new password.
 ## Configure NLP Services
 
-When logged in as the NLP Admin, click on the Drupal Configuration menu item then select the NLP Services Configuration.   The config functions are non-destructive and can be run multiple times.
+When logged in as the NLP Admin, click on the Drupal Configuration menu item, then select the NLP Services Configuration.   The config functions are non-destructive and can be run multiple times.
 
 ### Step 1: Create and prep file folders.
 
@@ -106,7 +106,7 @@ The first step is to create the file folders for information for the counties. A
 
 ### Step 2: Build the database for API keys.
 
-NLP Services reports voter contacts to VoteBuilder and this requires authorization for each committee.  A YAML formatted file is used to input the needed authorization credentials.   The credentials are provided by VANNGP and include the Url, App Name and API Key.  The format is as follows:
+NLP Services reports voter contacts to VoteBuilder, and this requires authorization for each committee.  A YAML formatted file is used to input the authorization credentials.   The credentials are provided by VANNGP and include the Url, App Name, and API Key.  The format is as follows:
 ```
 State Committee:  
   Url: "api.securevan.com/v4"  
@@ -133,11 +133,11 @@ Similarly, for response codes, the available list is displayed and a subset sele
 
 ### Step 5: Set up the election date and name.
 
-An election cycle has an identifier in the form of yyyy-mm-t, where t is G, P, S or U.  These signify General, Primary, Special and Undefined. Typically, U is for a ballot measure.  The election is also defined by the date, the date when early ballots are sent, and the date when NLs should be making voter contact and reporting results.  The purpose of these dates is to get the NL participation rate above 80%.
+An election cycle has an identifier in the form of yyyy-mm-t, where t is G, P, S, or U. These signify General, Primary, Special, and Undefined. Typically, U is for a ballot measure.  The election is also defined by the date, the date when early ballots are sent, and the date when NLs should be making voter contact and reporting results.  The purpose of these dates is to get the NL participation rate above 80%.
 
 ### Step 6: Select the survey question.
 
-The survey question provides a method of recording the "pledge to vote" question. The question is new for each election so this function provides a method for selection.
+The survey question provides a method of recording the "pledge to vote" question. The question is new for each election, so this function provides a method for selection.
 
 ### Step 7: Set up the email used by the site.
 
