@@ -1,0 +1,14 @@
+# State and county names for a site linked to the VoteBuilder.
+State: 'Mississippi'
+Forrest: [102,103,104]
+George: [93,105,107]
+Greene: [93,105,107]
+Hancock: [93,95,122]
+Harrison: [93,95,96,115,116,119]
+Jackson: [93,111,112,113,114,115]
+Jones: [86,87,88,89]
+Lamar: [87,101,106]
+Pearl River: [93,106,108]
+Perry: [93,105,106]
+Stone: [93,106,108]
+Wayne:  [86,87,105]
