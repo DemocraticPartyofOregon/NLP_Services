@@ -14,7 +14,7 @@ nlpservices.api_configuration_form:
   path: '/nlpservices-api-configuration'
   defaults:
     _form: Drupal\nlpservices\Config\ApiConfigurationForm
-    _title: 'API folders configuration'
+    _title: 'API key configuration'
   requirements:
     _permission: 'access content'
 
