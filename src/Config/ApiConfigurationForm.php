@@ -66,40 +66,54 @@ class ApiConfigurationForm extends FormBase {
         'Error generating suggested iv: ' . $e->getMessage());
     }
 
-    $form['secret_key'] = [
-      '#type' => 'password',
-      '#title' => $this->t('AES-256-CBC Secret Key'),
-      '#description' => $secret_key_exists
-        ? $this->t('A secret key is already saved. Leave blank to keep it or enter a new value to replace it (minimum 32 characters recommended).
-<strong>Suggested value: <code>@suggested_key</code></strong>', ['@suggested_key' => $suggested_key])
-        : $this->t('Enter the secret key for AES-256-CBC encryption (minimum 32 characters recommended).
-This field is required as no secret key has been saved yet. Use a mix of uppercase, lowercase, numbers, and special
-characters for better security. <strong>Suggested value: <code>@suggested_key</code></strong>',
-            ['@suggested_key' => $suggested_key]),
-      '#maxlength' => 128,
-      '#size' => 40,
-      '#required' => !$secret_key_exists,
+    $form['encryption_keys'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Encryption Keys'),
+      '#attached' => ['library' => ['nlpservices/info-boxes']],
+      '#prefix' => '<div class="form-box-medium">',
+      '#suffix' => '</div>',
     ];
 
-    $form['secret_iv'] = [
+    $form['encryption_keys']['secret_key_note'] = [
+      '#type' => 'markup',
+      '#markup' => $secret_key_exists
+        ? '<p>' . $this->t('A secret key and iv have already saved. Leave both blank to keep the current values 
+        or enter new values to replace them.') . '</p>'
+        : '<p>' . $this->t('These fields are both required.') . '</p>'
+    ];
+
+    $form['encryption_keys']['secret_key'] = [
       '#type' => 'password',
-      '#title' => $this->t('AES-256-CBC Secret IV'),
-      '#description' => $secret_iv_exists
-        ? $this->t('A secret IV is already saved. Leave blank to keep it or enter a new value to replace it (16+ characters recommended).
-<strong>Suggested value: <code>@suggested_iv</code></strong>', ['@suggested_iv' => $suggested_iv])
-        : $this->t('Enter the secret initialization vector for AES-256-CBC encryption (16+ characters
-recommended). This field is required as no secret IV has been saved yet. Use a mix of uppercase, lowercase, numbers,
-and special characters. <strong>Suggested value: <code>@suggested_iv</code></strong>',
-            ['@suggested_iv' => $suggested_iv]),
+      '#title' => $this->t('AES-256-CBC Secret Key'),
       '#maxlength' => 128,
       '#size' => 40,
-      '#required' => !$secret_iv_exists,
+    ];
+    $form['encryption_keys']['secret_key_description'] = [
+      '#type' => 'markup',
+      '#markup' =>
+        $this->t('Enter the secret key for AES-256-CBC encryption (minimum 32 characters recommended). 
+        Use a mix of uppercase, lowercase, numbers, and special characters for better security.') . '</p>'
+          . '<p><strong>' . $this->t('Suggested value:') . '</strong> <code>' .
+        htmlspecialchars($suggested_key, ENT_QUOTES, 'UTF-8') . '</code></p>',
+    ];
+    $form['encryption_keys']['secret_iv'] = [
+      '#type' => 'password',
+      '#title' => $this->t('AES-256-CBC Secret IV'),
+      '#maxlength' => 128,
+      '#size' => 40,
+    ];
+    $form['encryption_keys']['secret_iv_description'] = [
+      '#type' => 'markup',
+      '#markup' =>
+        $this->t('Enter the secret initialization vector for AES-256-CBC encryption (16+ characters recommended). 
+        Use a mix of uppercase, lowercase, numbers, and special characters.') . '</p>'
+          . '<p><strong>' . $this->t('Suggested value:') . '</strong> <code>' .
+        htmlspecialchars($suggested_iv, ENT_QUOTES, 'UTF-8') . '</code></p>',
     ];
 
     $form['api_keys'] = [
       '#type' => 'file',
-      '#title' => $this->t('YAML file with API keys'),
-      '#description' => $this->t('Please provide a file of API keys for the participating counties.'),
+      '#title' => $this->t('YAML file with API keys for the participating counties'),
     ];
 
     $form['button_link'] = [
@@ -122,6 +136,27 @@ and special characters. <strong>Suggested value: <code>@suggested_iv</code></str
   {
     $secret_key = $form_state->getValue('secret_key');
     $secret_iv  = $form_state->getValue('secret_iv');
+
+    $key_empty = empty($secret_key);
+    $iv_empty  = empty($secret_iv);
+
+    if ($key_empty !== $iv_empty) {
+      $form_state->setErrorByName('secret_key',
+        $this->t('The secret key and secret IV must both be provided or both left blank.'));
+      $form_state->setErrorByName('secret_iv',
+        $this->t('The secret key and secret IV must both be provided or both left blank.'));
+    }
+
+    if ($key_empty && $iv_empty) {
+      $key_saved = !empty($this->apiKeyManagementObj->getKey('secret_key'));
+      $iv_saved  = !empty($this->apiKeyManagementObj->getKey('secret_iv'));
+      if (!$key_saved || !$iv_saved) {
+        $form_state->setErrorByName('secret_key',
+          $this->t('No secret key or IV is saved yet. Both must be provided.'));
+        $form_state->setErrorByName('secret_iv',
+          $this->t('No secret key or IV is saved yet. Both must be provided.'));
+      }
+    }
 
     if (!empty($secret_key)) {
       if (strlen($secret_key) < 16) {
