@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpReports;
   use Drupal\nlpservices\NlpSyncTurfProcessor;
   use Drupal\nlpservices\NlpTurfAssignments;
+  use Drupal\nlpservices\NlpTurfStatus;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
@@ -34,6 +35,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpReports        $reportsMock;
     private NlpPaths          $pathsMock;
     private NlpTurfAssignments $turfAssignmentsMock;
+    private NlpTurfStatus $turfStatusMock;
     private MessengerInterface $messengerMock;
 
     private array $tempFiles = [];
@@ -52,6 +54,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->reportsMock         = $this->createMock(NlpReports::class);
       $this->pathsMock           = $this->createMock(NlpPaths::class);
       $this->turfAssignmentsMock = $this->createMock(NlpTurfAssignments::class);
+      $this->turfStatusMock      = $this->createMock(NlpTurfStatus::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
 
       $loggerMock = $this->getMockBuilder(\stdClass::class)
@@ -94,6 +97,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->pathsMock,
         $this->turfAssignmentsMock,
         $this->messengerMock,
+        $this->turfStatusMock,
       );
     }
 

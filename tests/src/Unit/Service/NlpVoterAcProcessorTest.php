@@ -5,8 +5,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\NlpCoordinators;
+  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpFileFunctions;
   use Drupal\nlpservices\NlpNls;
+  use Drupal\nlpservices\NlpSendEmail;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoterAcProcessor;
   use Drupal\nlpservices\NlpVoters;
@@ -18,8 +20,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private ApiActivistCodes $activistCodesMock;
     private NlpCoordinators $coordinatorsMock;
+    private NlpConfiguration $configurationMock;
     private NlpFileFunctions $fileFunctionsMock;
     private NlpNls $nlsMock;
+    private NlpSendEmail $sendEmailMock;
     private NlpTurfs $turfsMock;
     private NlpVoters $votersMock;
 
@@ -27,8 +31,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       parent::setUp();
       $this->activistCodesMock = $this->createMock(ApiActivistCodes::class);
       $this->coordinatorsMock  = $this->createMock(NlpCoordinators::class);
+      $this->configurationMock = $this->createMock(NlpConfiguration::class);
       $this->fileFunctionsMock = $this->createMock(NlpFileFunctions::class);
       $this->nlsMock           = $this->createMock(NlpNls::class);
+      $this->sendEmailMock     = $this->createMock(NlpSendEmail::class);
       $this->turfsMock         = $this->createMock(NlpTurfs::class);
       $this->votersMock        = $this->createMock(NlpVoters::class);
 
@@ -38,6 +44,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
+      $container->set('string_translation', $this->getStringTranslationStub());
       \Drupal::setContainer($container);
     }
 
@@ -50,8 +57,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return new NlpVoterAcProcessor(
         $this->activistCodesMock,
         $this->coordinatorsMock,
+        $this->configurationMock,
         $this->fileFunctionsMock,
         $this->nlsMock,
+        $this->sendEmailMock,
         $this->turfsMock,
         $this->votersMock,
       );
@@ -65,8 +74,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container = new ContainerBuilder();
       $container->set('nlpservices.activist_codes', $this->activistCodesMock);
       $container->set('nlpservices.coordinators', $this->coordinatorsMock);
+      $container->set('nlpservices.configuration', $this->configurationMock);
       $container->set('nlpservices.file_functions', $this->fileFunctionsMock);
       $container->set('nlpservices.nls', $this->nlsMock);
+      $container->set('nlpservices.send_email', $this->sendEmailMock);
       $container->set('nlpservices.turfs', $this->turfsMock);
       $container->set('nlpservices.voters', $this->votersMock);
 

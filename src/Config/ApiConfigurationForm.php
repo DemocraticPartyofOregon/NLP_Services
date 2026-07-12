@@ -49,7 +49,6 @@ class ApiConfigurationForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $secret_key_exists = !empty($this->apiKeyManagementObj->getKey('secret_key'));
-    $secret_iv_exists  = !empty($this->apiKeyManagementObj->getKey('secret_iv'));
 
     $suggested_key = '';
     try {
@@ -237,14 +236,12 @@ class ApiConfigurationForm extends FormBase {
       $this->apiKeyManagementObj->deleteKey('State Committee');
     }
     $committees = $this->nlpConfigurationObj->getCountyNames();
-    //nlp_debug_msg('$committees',$committees);
     foreach ($committees as $committee) {
       $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee);
-      nlp_debug_msg('$apiCredentials',$apiCredentials);
       if (empty($apiCredentials)) { continue; }
       $this->apiKeyManagementObj->deleteKey($committee);
     }
-    //nlp_debug_msg('$apiKeys',$apiKeys);
+
     foreach ($apiKeys as $committee => $committeeKey) {
       if (empty($committeeKey['API Key'])) { continue; }
       if (!preg_match('/^[a-zA-Z0-9_\- ]+$/', $committee)) { continue; }
@@ -252,11 +249,17 @@ class ApiConfigurationForm extends FormBase {
       $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
     }
 
-    //nlp_debug_msg('apiKeys', $apiKeys);
-
     $this->messenger()->addStatus($this->t('The API configuration has been saved.'));
   }
 
+  /**
+   * generateRandomIV
+   *
+   * Generates a random initialization vector (IV) of 16 characters
+   * using a predefined set of characters.
+   *
+   * @return string The generated random initialization vector.
+   */
   private function generateRandomIV(): string
   {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-=';
@@ -272,6 +275,14 @@ class ApiConfigurationForm extends FormBase {
     return $iv;
   }
 
+  /**
+   * generateRandomSecretKey
+   *
+   * Generates a random secret key consisting of alphanumeric characters
+   * and special symbols.
+   *
+   * @return string The generated random secret key.
+   */
   private function generateRandomSecretKey(): string
   {
     $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*_+-=';
@@ -288,6 +299,23 @@ class ApiConfigurationForm extends FormBase {
     return $key;
   }
 
+  /**
+   * hasMinimumSecurityRequirements
+   *
+   * Checks if the given string meets the minimum security requirements.
+   *
+   * The string must contain at least two of the following character categories:
+   * - Uppercase letters
+   * - Lowercase letters
+   * - Numbers
+   * - Special characters (!@#$%^&*_+-=)
+   *
+   * @param string $value
+   *   The string to evaluate.
+   *
+   * @return bool
+   *   TRUE if the string meets the minimum security requirements, FALSE otherwise.
+   */
   private function hasMinimumSecurityRequirements(string $value): bool
   {
     $categories = 0;

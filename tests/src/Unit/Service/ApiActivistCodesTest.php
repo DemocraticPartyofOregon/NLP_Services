@@ -214,7 +214,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
       $this->clientMock->method('request')
-        ->willReturn($this->createMock(ResponseInterface::class));
+        ->willReturn($this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
 
       $request = ['codeName' => 'NLPVoterAC', 'vanid' => 99999, 'action' => 'Apply'];
       $this->assertTrue($this->buildService()->setApiActivistCode($request));

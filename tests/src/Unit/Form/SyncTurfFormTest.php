@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
   use Drupal\nlpservices\ApiMapRegions;
+  use Drupal\nlpservices\NlpTurfStatus;
   use Drupal\nlpservices\Form\SyncTurfForm;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -33,6 +34,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpSessionData $sessionDataMock;
     private NlpTurfListDisplayVoteBuilder $turfListDisplayMock;
     private ApiMapRegions $mapRegionsMock;
+    private NlpTurfStatus $turfStatusMock;
     private MessengerInterface $messengerMock;
     private RequestStack $requestStackMock;
 
@@ -48,6 +50,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
       $this->turfListDisplayMock = $this->createMock(NlpTurfListDisplayVoteBuilder::class);
       $this->mapRegionsMock     = $this->createMock(ApiMapRegions::class);
+      $this->turfStatusMock     = $this->createMock(NlpTurfStatus::class);
+      $this->turfStatusMock->method('turfStatusCheck')->willReturn(TRUE);
       $this->messengerMock      = $this->createMock(MessengerInterface::class);
       $this->requestStackMock   = $this->createMock(RequestStack::class);
       $defaultRequest = Request::create('/test', 'GET');
@@ -92,6 +96,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->turfListDisplayMock,
         $this->mapRegionsMock,
         $this->requestStackMock,
+        $this->turfStatusMock,
       );
     }
 

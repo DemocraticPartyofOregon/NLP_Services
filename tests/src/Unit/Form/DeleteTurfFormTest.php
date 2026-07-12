@@ -12,6 +12,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfDisplay;
   use Drupal\nlpservices\NlpTurfs;
+  use Drupal\nlpservices\NlpTurfStatus;
   use Drupal\nlpservices\Form\DeleteTurfForm;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -25,6 +26,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpSessionData $sessionDataMock;
     private NlpConfiguration $configurationMock;
     private ApiFolders $foldersMock;
+    private NlpTurfStatus $turfStatusMock;
     private MessengerInterface $messengerMock;
 
     protected function setUp(): void {
@@ -36,6 +38,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock  = $this->createMock(NlpSessionData::class);
       $this->configurationMock = $this->createMock(NlpConfiguration::class);
       $this->foldersMock      = $this->createMock(ApiFolders::class);
+      $this->turfStatusMock   = $this->createMock(NlpTurfStatus::class);
+      $this->turfStatusMock->method('turfStatusCheck')->willReturn(TRUE);
       $this->messengerMock    = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
@@ -61,6 +65,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->sessionDataMock,
         $this->configurationMock,
         $this->foldersMock,
+        $this->turfStatusMock,
       );
     }
 

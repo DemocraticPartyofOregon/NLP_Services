@@ -8,7 +8,7 @@ use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class MagicWord {
-  
+
   const string MAGIC_WORD_TBL = 'nlp_magic_word';
 
   // These fields are used to detect and update credentials when a change is made.
@@ -32,7 +32,7 @@ class MagicWord {
       $container->get('nlpservices.encryption'),
     );
   }
-  
+
   /**
    * @return string - A manageable password for the NL.
    *
@@ -48,7 +48,7 @@ class MagicWord {
     $number = substr(str_shuffle('23456789'), 0, 1);
     return $word.$number;
   }
-  
+
   /**
    * setMagicWord
    *
@@ -76,7 +76,7 @@ class MagicWord {
     }
     return TRUE;
   }
-  
+
   /**
    * deleteMagicWord
    *
@@ -97,7 +97,7 @@ class MagicWord {
       nlp_debug_msg('deleteMagicWord', $error );
     }
   }
-  
+
   /**
    * getMagicWord
    *
@@ -125,7 +125,7 @@ class MagicWord {
     if(empty($magicWordRecord['magicWordEncrypted'])) {return '';}
     return $this->nlpEncryptObj->encrypt_decrypt('decrypt', $magicWordRecord['magicWordEncrypted']);
   }
-  
+
   /**
    * getKeys
    *
@@ -179,7 +179,7 @@ class MagicWord {
     ];
 
   }
-  
+
   /**
    * getCredentials
    *
@@ -211,7 +211,7 @@ class MagicWord {
         : '';  // The password has been forgotten, probably a symptom of a past bug.
       unset($credentials['magicWordEncrypted']);
     }
-    
+
     $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
     return $credentials;
   }
@@ -330,7 +330,7 @@ class MagicWord {
     foreach($credentials as $field => $value) {
       $current[$field] = $value;
     }
-    
+
     if(!empty($current['roles'])) {
       $current['roles'] = json_encode($current['roles']);
     }
@@ -498,7 +498,7 @@ class MagicWord {
     if(empty($inUse)) {return TRUE;}
     return FALSE;
   }
-  
+
   public function getColumnNames(): array
   {
     try {
@@ -517,7 +517,48 @@ class MagicWord {
     } while (TRUE);
     return $colNames;
   }
-  
+
+  public function reEncryptAll(string $oldSecretKey, string $oldSecretIv, string $newSecretKey, string $newSecretIv): bool
+  {
+    try {
+      $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
+      $query->addField('m', 'mcid');
+      $query->addField('m', 'magicWordEncrypted');
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('reEncryptAll', $e->getMessage());
+      return FALSE;
+    }
+    $method = 'AES-256-CBC';
+    $oldKey = hash('sha256', $oldSecretKey);
+    $oldIv  = substr(hash('sha256', $oldSecretIv), 0, 16);
+    $newKey = hash('sha256', $newSecretKey);
+    $newIv  = substr(hash('sha256', $newSecretIv), 0, 16);
+    while ($row = $result->fetchAssoc()) {
+      if (empty($row['magicWordEncrypted'])) {
+        continue;
+      }
+      $plain = openssl_decrypt(base64_decode($row['magicWordEncrypted']), $method, $oldKey, 0, $oldIv);
+      if ($plain === FALSE) {
+        nlp_debug_msg('reEncryptAll', 'Decrypt failed for mcid ' . $row['mcid']);
+        return FALSE;
+      }
+      $reEncrypted = base64_encode(openssl_encrypt($plain, $method, $newKey, 0, $newIv));
+      try {
+        $this->connection->update(self::MAGIC_WORD_TBL)
+          ->fields(['magicWordEncrypted' => $reEncrypted])
+          ->condition('mcid', $row['mcid'])
+          ->execute();
+      }
+      catch (Exception $e) {
+        nlp_debug_msg('reEncryptAll', $e->getMessage());
+        return FALSE;
+      }
+    }
+    return TRUE;
+  }
+
   public function removeCoordinatorRole($mcid): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);

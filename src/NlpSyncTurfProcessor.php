@@ -185,6 +185,55 @@ class NlpSyncTurfProcessor {
       $context['sandbox']['legislativeDistricts'] = [];
     }
 
+    if (!empty($context['sandbox']['awaitingApply'])) {
+      $mcid         = $context['sandbox']['mcid'];
+      $county       = $context['sandbox']['county'];
+      $turfIndex    = $context['sandbox']['turfIndex'];
+      $votersInTurf = $context['sandbox']['votersInTurf'];
+
+      foreach ($votersInTurf as $voter) {
+        $turfVoter              = [];
+        $turfVoter['mcid']      = $mcid;
+        $turfVoter['county']    = $county;
+        $turfVoter['turfIndex'] = $turfIndex;
+        $turfVoter['vanid']     = $voter['vanid'];
+        $this->votersObj->createTurfVoter($turfVoter);
+        $this->reloadVoterStatus($voter, $turfIndex, $mcid);
+      }
+
+      $this->awardsObj->nlParticipation($mcid, 'Turf synced');
+      $this->finalizeTurf($arg, $context['sandbox']);
+
+      $voterCount = $arg['voterCount'];
+      $expirySecs = ($voterCount < 60)
+        ? NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS
+        : NlpTurfStatus::CREATED_EXPIRY_LARGE_SECS;
+      $now = time();
+      $this->turfStatusObj->createTurfStatus([
+        'folderName'     => $arg['folderName'],
+        'folderId'       => $arg['folderId'],
+        'turfName'       => $arg['turfName'],
+        'turfId'         => $arg['turfId'],
+        'createTime'     => date('c', $now),
+        'expirationTime' => date('c', $now + $expirySecs),
+        'status'         => NlpTurfStatus::TURF_CREATED,
+      ]);
+
+      $nl = $this->nlsObj->getNlById($mcid);
+
+      $context['results']['mcid']        = $mcid;
+      $context['results']['turfName']    = $arg['turfName'];
+      $context['results']['county']      = $county;
+      $context['results']['voterCount']  = $arg['voterCount'];
+      $context['results']['turfCnt']     = count($votersInTurf);
+      $context['results']['nickname']    = $nl['nickname'];
+      $context['results']['result']      = 'success';
+      $context['results']['turfIndex']   = $turfIndex;
+      $context['results']['movedVoters'] = $context['sandbox']['movedVoters'];
+      $context['finished']               = 1;
+      return;
+    }
+
     $currentBatch         = $context['sandbox']['currentBatch'];
     $batchCount           = $context['sandbox']['batchCount'];
     $turfVoters           = $context['sandbox']['turfVoters'];
@@ -198,7 +247,8 @@ class NlpSyncTurfProcessor {
 
     if (!$onePrecinct) {
       $context['finished']              = 1;
-      $context['results']['message']    = [0 => t('The turf must be for one precinct. This error likely means the saved list is old and the map region should be refreshed.')];
+      $context['results']['message']    = [0 => t('The turf must be for one precinct. This error likely means 
+      the saved list is old and the map region should be refreshed.')];
       $context['results']['result']     = 'error';
       $context['results']['turfIndex']  = $context['sandbox']['turfIndex'];
       $context['results']['mcid']       = $context['sandbox']['mcid'];
@@ -272,50 +322,8 @@ class NlpSyncTurfProcessor {
     $context['sandbox']['votersInTurf'] = $votersInTurf;
 
     if ($currentBatch >= $batchCount) {
-      $mcid         = $context['sandbox']['mcid'];
-      $county       = $context['sandbox']['county'];
-      $turfIndex    = $context['sandbox']['turfIndex'];
-
-      foreach ($votersInTurf as $voter) {
-        $turfVoter              = [];
-        $turfVoter['mcid']      = $mcid;
-        $turfVoter['county']    = $county;
-        $turfVoter['turfIndex'] = $turfIndex;
-        $turfVoter['vanid']     = $voter['vanid'];
-        $this->votersObj->createTurfVoter($turfVoter);
-        $this->reloadVoterStatus($voter, $turfIndex, $mcid);
-      }
-
-      $this->awardsObj->nlParticipation($mcid, 'Turf synced');
-      $this->finalizeTurf($arg, $context['sandbox']);
-
-      $voterCount = $arg['voterCount'];
-      $expirySecs = ($voterCount < 60)
-        ? NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS
-        : NlpTurfStatus::CREATED_EXPIRY_LARGE_SECS;
-      $now = time();
-      $this->turfStatusObj->createTurfStatus([
-        'folderName'     => $arg['folderName'],
-        'folderId'       => $arg['folderId'],
-        'turfName'       => $arg['turfName'],
-        'turfId'         => $arg['turfId'],
-        'createTime'     => date('c', $now),
-        'expirationTime' => date('c', $now + $expirySecs),
-        'status'         => NlpTurfStatus::TURF_CREATED,
-      ]);
-
-      $nl = $this->nlsObj->getNlById($mcid);
-
-      $context['results']['mcid']        = $mcid;
-      $context['results']['turfName']    = $arg['turfName'];
-      $context['results']['county']      = $county;
-      $context['results']['voterCount']  = $arg['voterCount'];
-      $context['results']['turfCnt']     = count($votersInTurf);
-      $context['results']['nickname']    = $nl['nickname'];
-      $context['results']['result']      = 'success';
-      $context['results']['turfIndex']   = $turfIndex;
-      $context['results']['movedVoters'] = $context['sandbox']['movedVoters'];
-      $context['finished']               = 1;
+      $context['sandbox']['awaitingApply'] = TRUE;
+      $context['finished'] = 0.99;
       return;
     }
 
@@ -325,7 +333,7 @@ class NlpSyncTurfProcessor {
   /**
    * validateTurfPrecinct
    *
-   * Validates the consistency of voters' precinct and legislative district data,
+   * Validates the consistency of voters' precinct and legislative district data
    * and updates the legislative district information.
    *
    * @param array $legislativeDistricts An associative array containing the current legislative

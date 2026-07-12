@@ -57,7 +57,7 @@ class ImportTableForm extends FormBase
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, string $tableName=NULL): array
+  public function buildForm(array $form, FormStateInterface $form_state, string $tableName=''): array
   {
     $form_state->set('tableName',$tableName);
     $tableInfo = [
