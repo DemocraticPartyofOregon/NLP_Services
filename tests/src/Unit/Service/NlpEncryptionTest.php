@@ -2,10 +2,50 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
 
   class NlpEncryptionTest extends UnitTestCase {
+
+    private object $keyStorageMock;
+
+    protected function setUp(): void {
+      parent::setUp();
+
+      $secretKeyEntity = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['getKeyValue'])
+        ->getMock();
+      $secretKeyEntity->method('getKeyValue')->willReturn('test-secret-key-for-unit-tests');
+
+      $secretIvEntity = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['getKeyValue'])
+        ->getMock();
+      $secretIvEntity->method('getKeyValue')->willReturn('test-iv-for-unit');
+
+      $this->keyStorageMock = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['load'])
+        ->getMock();
+      $this->keyStorageMock->method('load')
+        ->willReturnMap([
+          ['secret_key', $secretKeyEntity],
+          ['secret_iv',  $secretIvEntity],
+        ]);
+
+      $entityTypeManagerMock = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['getStorage'])
+        ->getMock();
+      $entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
+
+      $container = new ContainerBuilder();
+      $container->set('entity_type.manager', $entityTypeManagerMock);
+      \Drupal::setContainer($container);
+    }
+
+    protected function tearDown(): void {
+      parent::tearDown();
+      \Drupal::setContainer(new ContainerBuilder());
+    }
 
     // -------------------------------------------------------------------------
     // Helpers
@@ -95,6 +135,28 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testUnknownActionReturnsEmptyString(): void {
       $this->assertSame('', $this->buildService()->encrypt_decrypt('invalid', 'hello'));
+    }
+
+    // -------------------------------------------------------------------------
+    // encrypt_decrypt — missing keys
+    // -------------------------------------------------------------------------
+
+    public function testReturnsEmptyStringWhenKeysNotConfigured(): void {
+      $keyStorageMock = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['load'])
+        ->getMock();
+      $keyStorageMock->method('load')->willReturn(NULL);
+
+      $entityTypeManagerMock = $this->getMockBuilder(\stdClass::class)
+        ->addMethods(['getStorage'])
+        ->getMock();
+      $entityTypeManagerMock->method('getStorage')->willReturn($keyStorageMock);
+
+      $container = new ContainerBuilder();
+      $container->set('entity_type.manager', $entityTypeManagerMock);
+      \Drupal::setContainer($container);
+
+      $this->assertSame('', $this->buildService()->encrypt_decrypt('encrypt', 'hello'));
     }
 
   }
