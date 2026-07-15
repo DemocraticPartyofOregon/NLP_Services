@@ -1,66 +1,7 @@
 <?php
 
-use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
-use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\field\Entity\FieldStorageConfig;
-use Drupal\node\Entity\Node;
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Implements hook_install().
- *
- * Install a home page for welcoming NLs to the site.  If a home page already exists,
- * it's deleted before creating a new home page.
- *
- * @noinspection PhpUnused
- */
-function nlpservices_install(): void
-{
-  // Remove any page with the title of Welcome.
-  $query = Drupal::entityQuery('node')
-    ->accessCheck(FALSE)
-    ->condition('type', 'page')
-    ->condition('title', 'Home');
-  $nids = $query->execute();
-  try {
-    $node_storage = Drupal::entityTypeManager()->getStorage('node');
-  } catch (InvalidPluginDefinitionException | PluginNotFoundException $e) {
-    nlp_debug_msg('nlpservices_install', $e->getMessage());
-    return;
-  }
-  $nodes = $node_storage->loadMultiple($nids);
-
-  if(!empty($nodes)) {
-    foreach ($nodes as $node) {
-      try {
-        $node->delete();
-      } catch (EntityStorageException $e) {
-        nlp_debug_msg('nlpservices_install', $e->getMessage());
-      }
-    }
-  }
-
-
-  // Create the Welcome page and stick to the front page.
-  $node = Node::create([
-    'type'        => 'page',
-    'title'       => 'Home',
-    'promote' => 1,
-    'sticky' => 1,
-    'status' => 1,
-  ]);
-  $node->set('body', [
-    'value' => '<p><span style="font-size:16px;">The Neighborhood Leader Program website.</span></p><!--break-->',
-    'format' => 'full_html',
-  ]);
-
-  try {
-    $node->save();
-  } catch (EntityStorageException $e) {
-    nlp_debug_msg('error', $e->getMessage());
-  }
-}
-
 
 /**
  * Implements hook_uninstall().

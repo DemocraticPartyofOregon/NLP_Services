@@ -25,11 +25,12 @@ Links for functions to configure NLP services.
 {% set enableDebug = path('nlpservices.enable_debug_form') %}
 {% set enableCronTasks = path('nlpservices.enable_cron_tasks_form') %}
 {% set documents = path('nlpservices.document_configuration_form') %}
+{% set welcome = path('nlpservices.welcome') %}
 
 {% trans %}
 
     <h1>New site or new election</h1>
-    <p>The following 7 steps are to create a new NLP Services site and set up a new election.   For just a new
+    <p>The following 9 steps are to create a new NLP Services site and set up a new election.   For just a new
         election, steps 3, 5 and 6 can be repeated with new information.</p>
 
     <ul>
@@ -41,7 +42,8 @@ Links for functions to configure NLP services.
         <li><a href={{ electionCycle }}>Step 5: Set up the election date and name.</a></li>
         <li><a href={{ surveyQuestion }}>Step 6: Select the survey question.</a></li>
         <li><a href={{ emails }}>Step 7: Set up the email used by the site.</a></li>
-        <li><a href={{ documents }}>Step 7: Set up the training documents.</a></li>
+        <li><a href={{ documents }}>Step 8: Set up the training documents.</a></li>
+        <li><a href={{ welcome }}>Step 9: Build the Welcome page.</a></li>
 
     </ul>
 
@@ -49,12 +51,12 @@ Links for functions to configure NLP services.
     <p>The next steps are needed if you are rebuilding a site for an existing NLP.</p>
 
     <ul>
-        <li><a href={{ importReports }}>Step 8: Import historical voter contact reports.</a></li>
-        <li><a href={{ importAwards }}>Step 9: Import NL Awards file.</a></li>
-        <li><a href={{ importUsers }}>Step 10: Import Drupal user accounts.</a></li>
-        <li><a href={{ importTurfAssignments }}>Step 11: Import turf assignments file.</a></li>
-        <li><a href={{ importCredentials }}>Step 12: Import NL credentials.</a></li>
-        <li><a href={{ documents }}>Step 13: Replace one of the default documents.</a></li>
+        <li><a href={{ importReports }}>Step 10: Import historical voter contact reports.</a></li>
+        <li><a href={{ importAwards }}>Step 11: Import NL Awards file.</a></li>
+        <li><a href={{ importUsers }}>Step 12: Import Drupal user accounts.</a></li>
+        <li><a href={{ importTurfAssignments }}>Step 13: Import turf assignments file.</a></li>
+        <li><a href={{ importCredentials }}>Step 14: Import NL credentials.</a></li>
+        <li><a href={{ documents }}>Step 15: Replace one of the default documents.</a></li>
     </ul>
 
     <h1>Enable Cron tasks</h1>

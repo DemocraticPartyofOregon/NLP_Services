@@ -1,5 +1,13 @@
 # NLP Services routes
 
+nlpservices.welcome:
+  path: '/nlpservices-welcome'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\WelcomeController::welcome
+    _title: 'Welcome'
+  requirements:
+    _permission: 'access content'
+
 # API
 
 nlpservices.activist_code_configuration_form:

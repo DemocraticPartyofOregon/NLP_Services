@@ -494,6 +494,22 @@ function nlpservices_custom_validation($form, FormStateInterface $form_state): v
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * Implements hook_node_view().
+ *
+ * Prevents the Welcome page node from being cached so that election
+ * date changes propagate immediately to all visitors.
+ *
+ * @noinspection PhpUnused
+ * @noinspection PhpUnusedParameterInspection
+ */
+function nlpservices_node_view(array &$build, Drupal\node\NodeInterface $node, Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, string $view_mode): void
+{
+  if ($node->bundle() === 'page' && $node->label() === 'Welcome') {
+    $build['#cache']['max-age'] = 0;
+  }
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * This converts a string to hex for debugging
  *
  * @param $string
