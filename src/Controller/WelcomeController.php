@@ -44,13 +44,27 @@ class WelcomeController extends ControllerBase {
     /** @var NodeStorageInterface $nodeStorage */
     try {
       $nodeStorage = $this->entityTypeManager->getStorage('node');
+      $nodeTypeStorage = $this->entityTypeManager->getStorage('node_type');
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
       nlp_debug_msg('WelcomeController', $e->getMessage());
       return ['#markup' => $this->t('Failed to access node storage.')];
     }
 
+    // D10 standard profile uses machine name 'page'; D11 has no defaults so
+    // sites typically create 'basic_page'. Fall back in that order.
+    $contentType = NULL;
+    foreach (['page', 'basic_page'] as $candidate) {
+      if ($nodeTypeStorage->load($candidate)) {
+        $contentType = $candidate;
+        break;
+      }
+    }
+    if ($contentType === NULL) {
+      return ['#markup' => $this->t('No suitable content type found. Create a content type with machine name "page" or "basic_page".')];
+    }
+
     $nids = $nodeStorage->getQuery()
-      ->condition('type', 'page')
+      ->condition('type', $contentType)
       ->condition('title', 'Welcome')
       ->range(0, 1)
       ->accessCheck(FALSE)
@@ -63,13 +77,25 @@ class WelcomeController extends ControllerBase {
       }
     } else {
       $node = Node::create([
-        'type' => 'page',
+        'type' => $contentType,
         'title' => 'Welcome',
         'status' => 1,
+        'promote' => 1,
+        'sticky' => 1,
       ]);
     }
 
-    $node->set('body', ['value' => $body, 'format' => 'full_html']);
+    // D10 built-in body base field is 'body'; user-created fields get 'field_body'.
+    if ($node->hasField('body')) {
+      $bodyField = 'body';
+    } elseif ($node->hasField('field_body')) {
+      $bodyField = 'field_body';
+    } else {
+      return ['#markup' => $this->t('No body field found on the "@type" content type. Add one via Structure > Content types > Manage fields.', ['@type' => $contentType])];
+    }
+
+    $node->set($bodyField, ['value' => $body, 'format' => 'full_html']);
+    $node->set('promote', TRUE);
     $node->set('sticky', TRUE);
 
     try {
