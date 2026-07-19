@@ -30,6 +30,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="a69090eb-91bf-4d8e-8938-9c8a7ca9350e" name="MississippiNLP" url="http://ftp.mississippinlp.org">
+        <fileTransfer host="ftp.mississippinlp.org" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

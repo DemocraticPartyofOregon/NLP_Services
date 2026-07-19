@@ -6,12 +6,13 @@
     "require": {
         "ext-json": "*",
         "ext-mbstring": "*",
+        "ext-imap": "*",
         "ext-openssl": "*",
-        "guzzlehttp/guzzle": "^7.0",
-        "symfony/dependency-injection": "^7.4"
+        "guzzlehttp/guzzle": "^7.0"
     },
     "require-dev": {
-        "phpunit/phpunit": "^10"
+        "phpunit/phpunit": "^10",
+        "drupal/core": "^11.4"
     },
     "autoload": {
         "psr-4": {
@@ -24,5 +25,11 @@
         }
     },
     "minimum-stability": "stable",
-    "prefer-stable": true
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "symfony/runtime": true,
+            "drupal/core-composer-scaffold": true
+        }
+    }
 }
