@@ -71,7 +71,6 @@ class NlpDocuments
    */
   public function createDocument(array $req): void
   {
-    nlp_debug_msg('$req',$req);
     try {
       $this->connection->merge(self::DOCUMENTS_TBL)
         ->keys([
