@@ -5,7 +5,6 @@ namespace Drupal\nlpservices\Form;
 use Drupal;
 use Drupal\Core\Form\ConfigFormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\nlpservices\Config\ElectionConfigurationForm;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpTargetVoterCrosstabCounts;
 
@@ -16,18 +15,19 @@ class ImportTargetVoterCrosstabsForm extends ConfigFormBase
 {
   protected NlpTargetVoterCrosstabCounts $targetVoterCrosstabsObj;
 
-  public function __construct($config_factory, $targetVoterCrosstabsObj) {
-    parent::__construct($config_factory);
+  public function __construct($config_factory, $typed_config_manager, $targetVoterCrosstabsObj) {
+    parent::__construct($config_factory, $typed_config_manager);
     $this->targetVoterCrosstabsObj = $targetVoterCrosstabsObj;
   }
 
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): ElectionConfigurationForm|ConfigFormBase|static
+  public static function create(ContainerInterface $container): static
   {
     return new static(
       $container->get('config.factory'),
+      $container->get('config.typed'),
       $container->get('nlpservices.target_voter_crosstab_counts'),
     );
   }
