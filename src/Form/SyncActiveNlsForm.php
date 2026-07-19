@@ -91,9 +91,9 @@ class SyncActiveNlsForm extends FormBase
     // value here.
     $database = 1;
     $folderInfo = $this->folders->getApiFolders($county, $database);
-    $folderIdFound = NULL;
+    $folderIdFound = 0;
     $countyFolderName = $county . self::DD_FOLDER_SUFFIX;
-    $folderId = NULL;
+    $folderId = 0;
     foreach ($folderInfo as $folderId => $folderName) {
       if ($folderName == $countyFolderName) {
         $folderIdFound = $folderId;
@@ -108,7 +108,7 @@ the NLP Services Admin.</p>',
       return $form;
     }
     // Get a list of saved lists in the county folder.
-    $lists = $this->savedLists->getSavedLists($county, $database, $folderId);
+    $lists = $this->savedLists->getSavedLists( $county, $database, $folderId );
     if (empty($lists)) {
       $form['no-lists'] = [
         '#markup' => '<p>There are no lists saved in the county folder.</p>',
