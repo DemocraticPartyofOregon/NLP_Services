@@ -182,21 +182,12 @@ class ApiVoter
     $voter['lastName'] = $result['lastName'];
     $voter['nickname'] = $result['nickname'];
     $dateOfBirth = $result['dateOfBirth'];
-    $birthDay = explode("T", $dateOfBirth);
-    $birthDate = explode("-", $birthDay[0]);
-    $birthDate['year'] = $birthDate[0];
-    $birthDate['month'] = $birthDate[1];
-    $birthDate['day'] = $birthDate[2];
-    $birthTime = mktime(0, 0, 0, $birthDate['month'], $birthDate['day'], $birthDate['year']);
-    $birthUDate = date("U", $birthTime);
-    $age = (date("md", $birthUDate) > date("md")
-      ? ((date("Y") - $birthDate['year']) - 1)
-      : (date("Y") - $birthDate['year']));
+    $age = $this->convertDateOfBirthToAge($dateOfBirth);
     $voter['age'] = $age;
     $voter['party'] = $result['party'];
     $voter['sex'] = $result['sex'];
-    $voterAddress['city'] = $voterAddress['streetName'] = $voterAddress['streetPrefix'] = $voterAddress['streetNo'] = NULL;
-    $voterAddress['mZip'] = $voterAddress['mCity'] = $voterAddress['mAddress'] = NULL;
+    $voterAddress['city'] = $voterAddress['streetName'] = $voterAddress['streetPrefix'] = $voterAddress['streetNo'] = '';
+    $voterAddress['mZip'] = $voterAddress['mCity'] = $voterAddress['mAddress'] = '';
     if (!empty($result['addresses'])) {
       foreach ($result['addresses'] as $address) {
         $type = $address['type'];
@@ -519,5 +510,26 @@ class ApiVoter
     }
     if(empty($results)) {return [];}
     return $results;
+  }
+
+  /**
+   * convertDateOfBirthToAge
+   *
+   * @param string $dateOfBirth
+   * @return string
+   */
+  private function convertDateOfBirthToAge( string $dateOfBirth ): string
+  {
+    if(empty($dateOfBirth)) {return '';}
+    $birthDay = explode("T", $dateOfBirth);
+    $birthDate = explode("-", $birthDay[0]);
+    $birthDate['year'] = $birthDate[0];
+    $birthDate['month'] = $birthDate[1];
+    $birthDate['day'] = $birthDate[2];
+    $birthTime = mktime(0, 0, 0, $birthDate['month'], $birthDate['day'], $birthDate['year']);
+    $birthUDate = date("U", $birthTime);
+    return (date("md", $birthUDate) > date("md")
+      ? ((date("Y") - $birthDate['year']) - 1)
+      : (date("Y") - $birthDate['year']));
   }
 }
