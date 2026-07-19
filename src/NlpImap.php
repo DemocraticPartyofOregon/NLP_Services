@@ -26,6 +26,9 @@ class NlpImap
     'nlpresponsesexport' => 'survey' ,
     'nlpcontactsexport' => 'canvass',
     'nlpactivistcodesexport' => 'activist',
+    'nlp survey' => 'survey' ,
+    'nlp contacts' => 'canvass',
+    'nlp activist' => 'activist',
   ];
 
   public array $matchbackSubject = ['matchback' => 'matchback',];
@@ -199,7 +202,7 @@ class NlpImap
         $day = $dateObj->format('j');
         $month = $dateObj->format('M');
 
-        $fileType = NULL;
+        $fileType = '';
         foreach ($subjects as $emailSubject => $fileTypeName) {
           $pos = strpos($subject, $emailSubject);
           if($pos !== FALSE) {
