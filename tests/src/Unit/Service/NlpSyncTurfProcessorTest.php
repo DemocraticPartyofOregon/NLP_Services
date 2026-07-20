@@ -276,7 +276,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $context    = [];
       $processor  = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
-      $processor->processBatch($this->baseArg($uri), $context);
     }
 
     // -------------------------------------------------------------------------
@@ -305,7 +304,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $context   = [];
       $processor = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
-      $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertContains('Remove', $acSetActions, 'setApiActivistCodeBatch Remove should be called to clear old turf AC');
       $this->assertContains('Apply',  $acSetActions, 'setApiActivistCodeBatch Apply should be called to set new turf AC');
@@ -326,7 +324,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $context   = [];
       $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
       $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame('success',    $context['results']['result']);
@@ -356,7 +353,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $context   = [];
       $processor = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
-      $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame('success', $context['results']['result']);
       $this->assertArrayHasKey(101, $context['results']['movedVoters']);
@@ -381,7 +377,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $context   = [];
       $processor = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
-      $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame(2, $context['results']['turfCnt']);
     }
@@ -401,7 +396,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $context   = [];
       $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
       $processor->processBatch($this->baseArg($uri), $context);
     }
 
@@ -444,9 +438,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(0.5, $context['finished']);
 
       $processor->processBatch($this->baseArg($uri), $context);
-      $this->assertSame(0.99, $context['finished'], 'Second call should enter awaitingApply phase');
-
-      $processor->processBatch($this->baseArg($uri), $context);
+      $this->assertSame(1, $context['finished'], 'Second call should finalise');
       $this->assertSame('success', $context['results']['result']);
     }
 

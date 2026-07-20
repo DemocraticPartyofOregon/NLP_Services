@@ -7,10 +7,7 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update ReadMe">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" afterDir="false" />
-    </list>
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the training manual configuration so the download link work." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -103,61 +100,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
+      <entry key="MS100" value="1.0009634054859062" />
+      <entry key="MS500" value="1.3125569216292279" />
+      <entry key="S2" value="3.1118011686810485" />
+      <entry key="S5" value="6.200116013362094" />
+      <entry key="S10" value="9.286330223893538" />
+      <entry key="S30" value="13.118931772288553" />
+      <entry key="S60" value="14.455999507877221" />
+      <entry key="M2" value="15.199959552291203" />
+      <entry key="M5" value="15.672953177261991" />
+      <entry key="M10" value="15.835278714296289" />
+      <entry key="M15" value="15.889917682266868" />
+      <entry key="M30" value="15.945099796384463" />
+      <entry key="H1" value="15.995861639647211" />
+      <entry key="H2" value="16.23483645502235" />
+      <entry key="H4" value="18.831691961483973" />
+      <entry key="D1" value="115.93373210741485" />
+      <entry key="W1" value="626.568854818017" />
+    </decayedCancelled>
+    <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="5.438735615752155E-300" />
-      <entry key="S10" value="3.0860515326099595E-150" />
-      <entry key="S30" value="2.2725164440281985E-50" />
-      <entry key="S60" value="2.127279914720589E-25" />
-      <entry key="M2" value="6.519142104865809E-13" />
-      <entry key="M5" value="2.0241247328426194E-5" />
-      <entry key="M10" value="0.006362446554723245" />
-      <entry key="M15" value="0.043260412398348484" />
-      <entry key="M30" value="0.29414351108526965" />
-      <entry key="H1" value="0.7672469696625045" />
-      <entry key="H2" value="1.421303639389114" />
-      <entry key="H4" value="6.786548871667346" />
-      <entry key="D1" value="115.56007550502906" />
-      <entry key="W1" value="623.3726180151473" />
-    </decayedCancelled>
-    <decayedSelected>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.00000000622189" />
-      <entry key="S5" value="1.000521877925396" />
-      <entry key="S10" value="1.0228446476312505" />
-      <entry key="S30" value="1.2837449589561598" />
-      <entry key="S60" value="1.5326771620373756" />
-      <entry key="M2" value="1.729847530323185" />
-      <entry key="M5" value="1.8836640920543242" />
-      <entry key="M10" value="1.9919573198158447" />
-      <entry key="M15" value="2.136454812261953" />
-      <entry key="M30" value="2.6547005511952504" />
-      <entry key="H1" value="3.3853921432709306" />
-      <entry key="H2" value="4.032349376640269" />
-      <entry key="H4" value="4.498228251150042" />
-      <entry key="D1" value="5.478620251982308" />
-      <entry key="W1" value="13.123782316098845" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="2.5542006814198173E-182" />
+      <entry key="S60" value="2.1619160153422658E-91" />
+      <entry key="M2" value="6.4968358233313934E-46" />
+      <entry key="M5" value="1.2731544299157968E-18" />
+      <entry key="M10" value="1.6376415254679925E-9" />
+      <entry key="M15" value="1.8749351618333748E-6" />
+      <entry key="M30" value="0.0024869199776899127" />
+      <entry key="H1" value="0.103617263260266" />
+      <entry key="H2" value="0.7054556589757233" />
+      <entry key="H4" value="1.8814698909085343" />
+      <entry key="D1" value="4.737841152569707" />
+      <entry key="W1" value="12.854229827255585" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="2.3085601593386243E-14" />
-      <entry key="MS500" value="0.0018735627330571576" />
-      <entry key="S2" value="0.2080496855935562" />
-      <entry key="S5" value="0.533988452258531" />
-      <entry key="S10" value="0.7485716557068061" />
-      <entry key="S30" value="1.1629399714117443" />
-      <entry key="S60" value="1.4611791415336957" />
-      <entry key="M2" value="1.6898309630328145" />
-      <entry key="M5" value="1.8663613636458392" />
-      <entry key="M10" value="1.989199573211836" />
-      <entry key="M15" value="2.1731488070346723" />
-      <entry key="M30" value="2.944476488275246" />
-      <entry key="H1" value="4.149579568587009" />
-      <entry key="H2" value="5.451704087293981" />
-      <entry key="H4" value="11.283547956528178" />
-      <entry key="D1" value="121.03788089262025" />
-      <entry key="W1" value="636.4958567805885" />
+      <entry key="MS100" value="0.9735414630870037" />
+      <entry key="MS500" value="1.3020372409571364" />
+      <entry key="S2" value="3.1031440444844685" />
+      <entry key="S5" value="6.192724414597027" />
+      <entry key="S10" value="9.28068724815021" />
+      <entry key="S30" value="13.116250153684572" />
+      <entry key="S60" value="14.454519529875622" />
+      <entry key="M2" value="15.199180888219214" />
+      <entry key="M5" value="15.67263188184871" />
+      <entry key="M10" value="15.835116381976789" />
+      <entry key="M15" value="15.889810950448684" />
+      <entry key="M30" value="15.947528134232792" />
+      <entry key="H1" value="16.09935796592936" />
+      <entry key="H2" value="16.939937492341265" />
+      <entry key="H4" value="20.712640897902226" />
+      <entry key="D1" value="120.67086743650015" />
+      <entry key="W1" value="639.4225520959902" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -438,15 +435,7 @@
       <workItem from="1783915320442" duration="11084000" />
       <workItem from="1784123394172" duration="32601000" />
       <workItem from="1784294041337" duration="24933000" />
-      <workItem from="1784432001919" duration="16784000" />
-    </task>
-    <task id="LOCAL-00131" summary="Convert the request for the NLP Voter activist code to a Guzzle batch to improve performance for a turf.">
-      <option name="closed" value="true" />
-      <created>1781828232274</created>
-      <option name="number" value="00131" />
-      <option name="presentableId" value="LOCAL-00131" />
-      <option name="project" value="LOCAL" />
-      <updated>1781828232275</updated>
+      <workItem from="1784432001919" duration="17140000" />
     </task>
     <task id="LOCAL-00132" summary="Create a CRON task to find, fix and report missing NLP Voter AC.">
       <option name="closed" value="true" />
@@ -832,7 +821,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784436635300</updated>
     </task>
-    <option name="localTasksCounter" value="180" />
+    <task id="LOCAL-00180" summary="Fix the training manual configuration so the download link work.">
+      <option name="closed" value="true" />
+      <created>1784521353261</created>
+      <option name="number" value="00180" />
+      <option name="presentableId" value="LOCAL-00180" />
+      <option name="project" value="LOCAL" />
+      <updated>1784521353261</updated>
+    </task>
+    <option name="localTasksCounter" value="181" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -884,7 +881,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add tests for various services" />
     <MESSAGE value="Add tests for various forms" />
     <MESSAGE value="Make tests run on both the D10 and D11 sites" />
     <MESSAGE value="Fix the restoration of user credentials for sync of active NLs." />
@@ -909,7 +905,8 @@
     <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
     <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
     <MESSAGE value="Update ReadMe" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update ReadMe" />
+    <MESSAGE value="Fix the training manual configuration so the download link work." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the training manual configuration so the download link work." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
