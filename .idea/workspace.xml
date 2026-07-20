@@ -7,17 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add generic email subjects for MiniVAN reports.">
-      <change beforePath="$PROJECT_DIR$/.gitattributes" beforeDir="false" afterPath="$PROJECT_DIR$/.gitattributes" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update ReadMe">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/readme.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTargetVoterCrosstabsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/DocumentConfigurationForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,61 +103,61 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000774679974065" />
-      <entry key="MS500" value="1.219686138881304" />
-      <entry key="S2" value="2.59921556336261" />
-      <entry key="S5" value="4.2021650825222014" />
-      <entry key="S10" value="6.176099817782783" />
-      <entry key="S30" value="10.329506943009742" />
-      <entry key="S60" value="12.57515075753355" />
-      <entry key="M2" value="15.194287732784929" />
-      <entry key="M5" value="20.61948097058626" />
-      <entry key="M10" value="27.253346177104735" />
-      <entry key="M15" value="32.77657725440754" />
-      <entry key="M30" value="45.677031110008706" />
-      <entry key="H1" value="61.29978017075106" />
-      <entry key="H2" value="77.07904044104902" />
-      <entry key="H4" value="92.11095196095803" />
-      <entry key="D1" value="154.86358198001167" />
-      <entry key="W1" value="631.220100443323" />
-    </decayedCancelled>
-    <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
       <entry key="S2" value="0.0" />
-      <entry key="S5" value="4.397488825376081E-252" />
-      <entry key="S10" value="2.097019033145879E-126" />
-      <entry key="S30" value="1.2799729472525204E-42" />
-      <entry key="S60" value="1.1313588940970587E-21" />
-      <entry key="M2" value="3.3635678885627675E-11" />
-      <entry key="M5" value="6.467256397094824E-5" />
-      <entry key="M10" value="0.00804192538954126" />
-      <entry key="M15" value="0.0401396295167586" />
-      <entry key="M30" value="0.20034876969115295" />
-      <entry key="H1" value="0.44760336201949197" />
-      <entry key="H2" value="0.6690316599530185" />
-      <entry key="H4" value="0.8179435554832741" />
-      <entry key="D1" value="0.9876989453230415" />
-      <entry key="W1" value="8.79086484595914" />
+      <entry key="S5" value="5.438735615752155E-300" />
+      <entry key="S10" value="3.0860515326099595E-150" />
+      <entry key="S30" value="2.2725164440281985E-50" />
+      <entry key="S60" value="2.127279914720589E-25" />
+      <entry key="M2" value="6.519142104865809E-13" />
+      <entry key="M5" value="2.0241247328426194E-5" />
+      <entry key="M10" value="0.006362446554723245" />
+      <entry key="M15" value="0.043260412398348484" />
+      <entry key="M30" value="0.29414351108526965" />
+      <entry key="H1" value="0.7672469696625045" />
+      <entry key="H2" value="1.421303639389114" />
+      <entry key="H4" value="6.786548871667346" />
+      <entry key="D1" value="115.56007550502906" />
+      <entry key="W1" value="623.3726180151473" />
+    </decayedCancelled>
+    <decayedSelected>
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.00000000622189" />
+      <entry key="S5" value="1.000521877925396" />
+      <entry key="S10" value="1.0228446476312505" />
+      <entry key="S30" value="1.2837449589561598" />
+      <entry key="S60" value="1.5326771620373756" />
+      <entry key="M2" value="1.729847530323185" />
+      <entry key="M5" value="1.8836640920543242" />
+      <entry key="M10" value="1.9919573198158447" />
+      <entry key="M15" value="2.136454812261953" />
+      <entry key="M30" value="2.6547005511952504" />
+      <entry key="H1" value="3.3853921432709306" />
+      <entry key="H2" value="4.032349376640269" />
+      <entry key="H4" value="4.498228251150042" />
+      <entry key="D1" value="5.478620251982308" />
+      <entry key="W1" value="13.123782316098845" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9660116614697982" />
-      <entry key="MS500" value="1.211372207090624" />
-      <entry key="S2" value="2.594593344016753" />
-      <entry key="S5" value="4.199063061784819" />
-      <entry key="S10" value="6.173781742391895" />
-      <entry key="S30" value="10.328188957831005" />
-      <entry key="S60" value="12.574343827882934" />
-      <entry key="M2" value="15.193774528876606" />
-      <entry key="M5" value="20.61849520049604" />
-      <entry key="M10" value="27.25929673757743" />
-      <entry key="M15" value="32.814060681323824" />
-      <entry key="M30" value="45.873880135887184" />
-      <entry key="H1" value="61.743689892952204" />
-      <entry key="H2" value="77.74493058335793" />
-      <entry key="H4" value="92.926560877892" />
-      <entry key="D1" value="155.85034093983404" />
-      <entry key="W1" value="640.0104252112609" />
+      <entry key="MS100" value="2.3085601593386243E-14" />
+      <entry key="MS500" value="0.0018735627330571576" />
+      <entry key="S2" value="0.2080496855935562" />
+      <entry key="S5" value="0.533988452258531" />
+      <entry key="S10" value="0.7485716557068061" />
+      <entry key="S30" value="1.1629399714117443" />
+      <entry key="S60" value="1.4611791415336957" />
+      <entry key="M2" value="1.6898309630328145" />
+      <entry key="M5" value="1.8663613636458392" />
+      <entry key="M10" value="1.989199573211836" />
+      <entry key="M15" value="2.1731488070346723" />
+      <entry key="M30" value="2.944476488275246" />
+      <entry key="H1" value="4.149579568587009" />
+      <entry key="H2" value="5.451704087293981" />
+      <entry key="H4" value="11.283547956528178" />
+      <entry key="D1" value="121.03788089262025" />
+      <entry key="W1" value="636.4958567805885" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -446,31 +438,7 @@
       <workItem from="1783915320442" duration="11084000" />
       <workItem from="1784123394172" duration="32601000" />
       <workItem from="1784294041337" duration="24933000" />
-      <workItem from="1784432001919" duration="4219000" />
-    </task>
-    <task id="LOCAL-00128" summary="Add comments">
-      <option name="closed" value="true" />
-      <created>1781444939555</created>
-      <option name="number" value="00128" />
-      <option name="presentableId" value="LOCAL-00128" />
-      <option name="project" value="LOCAL" />
-      <updated>1781444939555</updated>
-    </task>
-    <task id="LOCAL-00129" summary="Add comments">
-      <option name="closed" value="true" />
-      <created>1781445151527</created>
-      <option name="number" value="00129" />
-      <option name="presentableId" value="LOCAL-00129" />
-      <option name="project" value="LOCAL" />
-      <updated>1781445151527</updated>
-    </task>
-    <task id="LOCAL-00130" summary="Verify a sync of active NLs does not allow two records pointing to the same VFID.">
-      <option name="closed" value="true" />
-      <created>1781619344425</created>
-      <option name="number" value="00130" />
-      <option name="presentableId" value="LOCAL-00130" />
-      <option name="project" value="LOCAL" />
-      <updated>1781619344426</updated>
+      <workItem from="1784432001919" duration="16784000" />
     </task>
     <task id="LOCAL-00131" summary="Convert the request for the NLP Voter activist code to a Guzzle batch to improve performance for a turf.">
       <option name="closed" value="true" />
@@ -840,7 +808,31 @@
       <option name="project" value="LOCAL" />
       <updated>1784435890601</updated>
     </task>
-    <option name="localTasksCounter" value="177" />
+    <task id="LOCAL-00177" summary="Fix form type for targetVoterCrosstabForm">
+      <option name="closed" value="true" />
+      <created>1784436368912</created>
+      <option name="number" value="00177" />
+      <option name="presentableId" value="LOCAL-00177" />
+      <option name="project" value="LOCAL" />
+      <updated>1784436368912</updated>
+    </task>
+    <task id="LOCAL-00178" summary="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining.">
+      <option name="closed" value="true" />
+      <created>1784436591127</created>
+      <option name="number" value="00178" />
+      <option name="presentableId" value="LOCAL-00178" />
+      <option name="project" value="LOCAL" />
+      <updated>1784436591127</updated>
+    </task>
+    <task id="LOCAL-00179" summary="Update ReadMe">
+      <option name="closed" value="true" />
+      <created>1784436635300</created>
+      <option name="number" value="00179" />
+      <option name="presentableId" value="LOCAL-00179" />
+      <option name="project" value="LOCAL" />
+      <updated>1784436635300</updated>
+    </task>
+    <option name="localTasksCounter" value="180" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -892,9 +884,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Update unit tests" />
-    <MESSAGE value="Add unit tests for remaining api files" />
-    <MESSAGE value="Replace curl calls with guzzle for API requests" />
     <MESSAGE value="Add tests for various services" />
     <MESSAGE value="Add tests for various forms" />
     <MESSAGE value="Make tests run on both the D10 and D11 sites" />
@@ -917,7 +906,10 @@
     <MESSAGE value="Code review ActivistCodeConfigurationForm" />
     <MESSAGE value="Remove debug code" />
     <MESSAGE value="Add generic email subjects for MiniVAN reports." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add generic email subjects for MiniVAN reports." />
+    <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
+    <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
+    <MESSAGE value="Update ReadMe" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update ReadMe" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

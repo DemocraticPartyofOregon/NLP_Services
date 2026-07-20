@@ -2,10 +2,11 @@
 
 namespace Drupal\nlpservices\Config;
 
-use Drupal;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpDocuments;
+use Drupal\nlpservices\NlpPaths;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -14,9 +15,13 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class DocumentConfigurationForm extends FormBase {
 
   protected NlpDocuments $documentsObj;
+  protected NlpPaths $pathsObj;
+  protected FileSystemInterface $filesystem;
 
-  public function __construct($documentsObj) {
+  public function __construct($documentsObj, $pathsObj, $filesystem) {
     $this->documentsObj = $documentsObj;
+    $this->pathsObj = $pathsObj;
+    $this->filesystem = $filesystem;
   }
 
   /**
@@ -26,6 +31,8 @@ class DocumentConfigurationForm extends FormBase {
   {
     return new static(
       $container->get('nlpservices.documents'),
+      $container->get('nlpservices.paths'),
+      $container->get('file_system'),
     );
   }
 
@@ -69,51 +76,56 @@ class DocumentConfigurationForm extends FormBase {
     $this->messenger()->addStatus($this->t('The configuration options have been saved.'));
   }
 
+  /**
+   * prepareDocuments
+   *
+   * @return void
+   */
   private function prepareDocuments(): void
   {
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $sourceDir = DRUPAL_ROOT . '/' . $this->pathsObj->getPath('DEFAULT_DOCS');
+    $destUri = $this->pathsObj->getPath('DOCS');
+
     $defaultDocuments = $this->documentsObj->nameList;
-    $currentDocuments = $this->documentsObj->getDocuments();
-    foreach ($currentDocuments as $currentDocument) {
-      if (isset($defaultDocuments[$currentDocument['name']])) {
-        unset($defaultDocuments[$currentDocument['name']]);
-      }
-    }
-    $documentFiles = scandir($modulePath . '/docs/');
 
+    $documentFiles = scandir($sourceDir);
     if ($documentFiles === FALSE) {
-      $this->messenger()->addWarning($this->t('Default documents are missing'));
-      return;
-    }
-
-    foreach ($documentFiles as $index => $documentFile) {
-      if ($documentFile == '.' || $documentFile == '..') {
-        unset($documentFiles[$index]);
-      }
-    }
-    if (empty($documentFiles)) {
       $this->messenger()->addWarning($this->t('Default documents are missing'));
       return;
     }
 
     $defaultFiles = [];
     foreach ($documentFiles as $documentFile) {
-      if (!is_dir($modulePath . '/docs/' . $documentFile)) {
-        $pathParts = pathinfo($documentFile);
-        if ($pathParts['extension'] == 'docx') {
-          $filename = $pathParts['filename'];
-          $filenameParts = explode('-', $filename);
-          $fileNameIndex = $filenameParts[0];
-          $defaultFiles[$fileNameIndex] = $filename;
+      if ($documentFile == '.' || $documentFile == '..') { continue; }
+      if (is_dir($sourceDir . $documentFile)) { continue; }
+      $pathParts = pathinfo($documentFile);
+      if (strtolower($pathParts['extension'] ?? '') !== 'docx') { continue; }
+      $stem = $pathParts['filename'];
+      foreach ($this->documentsObj->nameList as $info) {
+        $defaultRoot = $info['defaultFilename'];
+        if (stripos($stem, $defaultRoot) === 0) {
+          $defaultFiles[$defaultRoot] = $stem;
+          break;
         }
       }
     }
+
+    if (empty($defaultFiles)) {
+      $this->messenger()->addWarning($this->t('Default documents are missing'));
+      return;
+    }
+
+    $this->filesystem->prepareDirectory($destUri, FileSystemInterface::CREATE_DIRECTORY | FileSystemInterface::MODIFY_PERMISSIONS);
 
     foreach ($defaultDocuments as $name => $defaultDocument) {
       $defaultFilename = $defaultDocument['defaultFilename'];
       if (isset($defaultFiles[$defaultFilename])) {
         $doc = $defaultFiles[$defaultFilename].'.docx';
         $pdf = $defaultFiles[$defaultFilename].'.pdf';
+        $this->filesystem->copy($sourceDir.$doc, $destUri.$doc, \Drupal\Core\File\FileExists::Replace);
+        if (file_exists($sourceDir.$pdf)) {
+          $this->filesystem->copy($sourceDir.$pdf, $destUri.$pdf, \Drupal\Core\File\FileExists::Replace);
+        }
         $document = [
           'name' => $name,
           'weight' => $defaultDocument['weight'],
