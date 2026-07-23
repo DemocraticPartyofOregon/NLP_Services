@@ -240,6 +240,8 @@ class ActiveNlsDisplayForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
     $form['#attached']['library'][] = 'nlpservices/search-boxes';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/unsaved-changes';
+    $form['#attributes']['class'][] = 'js-form-changed';
     return $form;
   }
 
