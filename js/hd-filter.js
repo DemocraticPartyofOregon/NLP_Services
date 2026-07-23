@@ -10,6 +10,7 @@
         el.addEventListener('change', function () {
           var url = new URL(window.location.href);
           url.searchParams.set('hd_index', el.value);
+          url.searchParams.set('pct_index', '0');
           window.location.href = url.toString();
         });
       });

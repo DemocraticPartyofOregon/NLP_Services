@@ -8,7 +8,8 @@
         "ext-mbstring": "*",
         "ext-imap": "*",
         "ext-openssl": "*",
-        "guzzlehttp/guzzle": "^7.0"
+        "guzzlehttp/guzzle": "^7.0",
+        "smalot/pdfparser": "^2.0"
     },
     "require-dev": {
         "phpunit/phpunit": "^10",

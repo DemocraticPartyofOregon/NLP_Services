@@ -9,19 +9,19 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpNlsListDisplay
 {
-  
+
   protected DrupalUser $drupalUserObj;
   protected NlpCoordinators $coordinatorsObj;
   protected NlpNls $nlsObj;
-  
+
   private array $header = [];
-  
+
   public function __construct( $drupalUserObj, $coordinatorsObj, $nlsObj ) {
     $this->drupalUserObj = $drupalUserObj;
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpNlsListDisplay
   {
     return new static(
@@ -30,7 +30,7 @@ class NlpNlsListDisplay
       $container->get('nlpservices.nls'),
     );
   }
-  
+
   /**
    * createTableArray
    *
@@ -70,11 +70,11 @@ class NlpNlsListDisplay
       if($brief) {
         $row['cb'] = ['type' => 'cb', 'rowCount' => $rowCount, 'mcid' => $mcid ];
       }
-      
+
       $row['hd'] = $nlRecord['hd'];
-      
+
       $row['precinct'] = $nlRecord['precinct'];
-      
+
       $coordinator = $this->coordinatorsObj->getAssignedCoordinator($nlRecord);
       if(empty($coordinator)) {
         $coordinator = "<i>Coordinator&nbsp;not&nbsp;assigned</i>";
@@ -87,13 +87,13 @@ class NlpNlsListDisplay
       $lastName = $nlRecord['lastName'];
       $nlName = "<b>$lastName,&nbsp;$firstName</b>";
       $row['name'] = "$nlName<br>$mcid<br>$coordinator";
-      
+
       $row['address'] = $nlRecord['address'];
-      
+
       $row['email'] = $nlRecord['email'].'<br>'.$nlRecord['phone'].'<br>'.$nlRecord['vfid'];
-      
+
       if(!$brief) {
-        
+
         $noteText = $nlRecord['status']['notes'];
         $notesWrap = 150;
         $wrap = '';
@@ -101,27 +101,27 @@ class NlpNlsListDisplay
           $wrap = wordwrap($noteText,$notesWrap,"\n",true);
         }
         $row['notes'] = ['type'=>'ta','text'=>$wrap, 'mcid'=>$mcid];
-        
+
         $askOptions = $this->nlsObj->askOptions;
         $currentAsk = $nlRecord['status']['asked'];
         $defaultAsk = array_search($currentAsk,$askOptions);
         $row['nl'] = ['type'=>'se','options'=>$askOptions, 'default'=>$defaultAsk, 'mcid'=>$mcid ];
-        
+
         $default = ($nlRecord['status']['turfCut']=='Y')?1:0;
         $row['tc'] = ['type'=>'tc','default'=>$default, 'mcid'=>$mcid];
-        
+
         $default = ($nlRecord['status']['turfDelivered']=='Y')?1:0;
         $row['td'] = ['type'=>'td','default'=>$default, 'mcid'=>$mcid];
-        
+
         $contact = $this->nlsObj->contactList;
         $currentContact = $nlRecord['status']['contact'];
         $defaultContact = array_search($currentContact,$contact);
         $row['co'] = ['type'=>'se','options'=>$contact,'default'=>$defaultContact, 'mcid'=>$mcid];
-        
+
         $user = $this->drupalUserObj->getUserByMcid($mcid);
         $access = (empty($user['access']))?'':$user['access'];
         $row['lastAccess'] = (empty($access))?'never':date('Y-m-d',$access);
-        
+
         $attempts = $contacts = $voterCount = $doorCount = 0;
         if(!empty($nlRecord['progress'])) {
           $progress = $nlRecord['progress'];
@@ -130,14 +130,14 @@ class NlpNlsListDisplay
           $voterCount = (!empty($progress['voterCount']))?$progress['voterCount']:0;
           $doorCount = (!empty($progress['doorCount']))?$progress['doorCount']:0;
         }
-        
+
         $row['voterCount'] = "$voterCount<br>$doorCount";
-        
+
         $row['attempts'] = "$attempts<br>$contacts";
       }
       $rowCount++;
       $rows[$nlRecord['mcid']] = $row;
-      
+
     }
     return $rows;
   }
@@ -151,7 +151,7 @@ class NlpNlsListDisplay
    * @param array $rows
    * @param bool $brief - see headerBuild() for details.
    * @param string $type - Identifier for a page with more than one display of NLs for selection.
-   * @param string $callback
+   * @param string $callback - Unused; retained for call-site compatibility.
    * @return array - $form - form elements for the table.
    */
   public function buildNlsTable(array $rows, bool $brief=FALSE, string $type='contacts', string $callback='nlsForm'): array
@@ -177,6 +177,7 @@ class NlpNlsListDisplay
       $url  = Url::fromRoute('<current>', [], ['query' => ['sort' => $nextSort, 'order' => $label]]);
       $href = Html::escape($url->toString());
       $cell['data'] = Markup::create('<a href="' . $href . '">' . $label . '</a>');
+      unset($cell['field']);
     }
     unset($cell);
 
@@ -185,7 +186,7 @@ class NlpNlsListDisplay
       '#header'     => $this->header,
       '#attributes' => ['class' => ['nlp-nls-table']],
     ];
-    
+
     foreach ($rows as $rowNumber => $row) {
       foreach($row as $columnName => $columnValue) {
         $mcid = empty($columnValue['mcid'])?0:$columnValue['mcid'];
@@ -201,14 +202,9 @@ class NlpNlsListDisplay
             case 'tc':
               $mcid = $columnValue['mcid'];
               $default = ($columnValue['default']==1)?"cb_turfCut_$mcid":'';
-              
               $form_element[$type][$rowNumber][$columnName] = [
                 '#type' => 'checkbox',
                 '#return_value' => "cb_turfCut_$mcid",
-                '#ajax' => [
-                  'callback' => '::checkboxCallback',
-                  'wrapper' => $callback."Div",
-                ],
                 '#default_value' => $default,
               ];
               break;
@@ -218,10 +214,6 @@ class NlpNlsListDisplay
               $form_element[$type][$rowNumber][$columnName] = [
                 '#type' => 'checkbox',
                 '#return_value' => "cb_turfDelivered_$mcid",
-                '#ajax' => [
-                  'callback' => '::selectboxCallback',
-                  'wrapper' => $callback."Div",
-                ],
                 '#default_value' => $default,
               ];
               break;
@@ -232,10 +224,6 @@ class NlpNlsListDisplay
                 '#cols' => 10,
                 '#rows' => 2,
                 '#resizable' => FALSE,
-                '#ajax' => [
-                  'callback' => '::selectboxCallback',
-                  'wrapper' => $callback."Div",
-                ],
                 '#default_value' => $columnValue['text'],
               ];
               break;
@@ -248,10 +236,6 @@ class NlpNlsListDisplay
               $form_element[$type][$rowNumber][$columnName] = [
                 '#type' => 'select',
                 '#options' => $columnValue['options'],
-                '#ajax' => [
-                  'callback' => '::selectboxCallback',
-                  'wrapper' => $callback."Div",
-                ],
                 '#default_value' => $columnValue['default'],
               ];
               break;
@@ -265,7 +249,7 @@ class NlpNlsListDisplay
     }
     return $form_element;
   }
-  
+
   /**
    * headerBuild
    *
@@ -328,7 +312,7 @@ class NlpNlsListDisplay
     }
     return $selections;
   }
-  
+
   /**
    * getSortField
    *
@@ -350,7 +334,7 @@ class NlpNlsListDisplay
     }
     return '';
   }
-  
+
   /**
    * sortNlsTable
    *
@@ -368,5 +352,5 @@ class NlpNlsListDisplay
     $column = array_column($nlsTable, $sortColumn);
     array_multisort($column, $sortOrder, $nlsTable);
   }
-  
+
 }

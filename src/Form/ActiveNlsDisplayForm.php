@@ -36,7 +36,8 @@ class ActiveNlsDisplayForm extends FormBase
   protected ApiActivistCodes $apiActivistCodesObj;
   public function __construct( $votersObj, $reportsObj, $nlsObj, $turfsObj,
                                $searchBarObj, $nlsListDisplayObj, $awardsObj, $sessionDataObj,
-                               $nlpConfigurationObj, $apiSurveyQuestionObj ,$apiActivistCodesObj) {
+                               $nlpConfigurationObj, $apiSurveyQuestionObj, $apiActivistCodesObj,
+                               $requestStack) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->nlsObj = $nlsObj;
@@ -48,8 +49,9 @@ class ActiveNlsDisplayForm extends FormBase
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
     $this->apiActivistCodesObj = $apiActivistCodesObj;
+    $this->requestStack = $requestStack;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -67,9 +69,10 @@ class ActiveNlsDisplayForm extends FormBase
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.survey_question'),
       $container->get('nlpservices.activist_codes'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -77,7 +80,7 @@ class ActiveNlsDisplayForm extends FormBase
   {
     return 'nlpservices_active_nls_display_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -85,13 +88,13 @@ class ActiveNlsDisplayForm extends FormBase
   {
     if(empty($form_state->get('page'))) {
       $form_state->set('page','data_entry');
-      
+
       $county = $this->sessionDataObj->getCounty();
       $form_state->set('county',$county);
-      
+
       $allNlRecords = $this->nlsObj->getNls($county, 'All');
       $nlCount = count($allNlRecords);
-      
+
       $hdOptions = $this->nlsObj->getHdList($county);
       if($nlCount<$this->nlsObj::NLS_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
@@ -99,7 +102,7 @@ class ActiveNlsDisplayForm extends FormBase
       $form_state->set('hdOptions',$hdOptions);
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
-  
+
     $county = $form_state->get('county');
     if(empty($county)) {
       $messenger = Drupal::messenger();
@@ -107,24 +110,43 @@ class ActiveNlsDisplayForm extends FormBase
       return [];
     }
     $page = $form_state->get('page');
-    //nlp_debug_msg('buildForm',"Page: $page, County: $county");
     $form = [];
     // Select the HD to display.
     if ($page == 'data_entry') {
       $hdOptions = $this->sessionDataObj->getHdOptions();
       $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
       $currentHd = $this->sessionDataObj->getSavedHd();
-    
-      // Add the line for selecting an HD and CSV download.
-      $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
-      
+
+      // Build the precinct list for the selected HD (0 means all precincts).
+      $hdValue = ($currentHd === 'All' || empty($currentHd)) ? 0 : (int)$currentHd;
+      $rawPctList = $this->nlsObj->getPctList($county, $hdValue);
+      $pctOptions = array_merge(['All'], $rawPctList);
+      $this->sessionDataObj->setNewDistricts($hdOptions, $pctOptions);
+      $currentPctIndex = $this->sessionDataObj->getSavedPrecinctIndex();
+
+      // Wrap the search bar and a right-aligned Save Changes button in a
+      // position:relative container so the button can be pinned to the right
+      // edge of the full-width table using position:absolute.
+      $form['options_row'] = [
+        '#type'       => 'container',
+        '#attributes' => ['style' => ['position:relative;']],
+      ];
+      $form['options_row']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex, $pctOptions, $currentPctIndex);
+      $form['options_row']['save-top'] = [
+        '#type'       => 'submit',
+        '#value'      => t('Save Changes'),
+        '#name'       => 'save_changes',
+        '#attributes' => ['style' => 'position:absolute; right:0; top:50%; transform:translateY(-50%);'],
+      ];
+
       // Fetch the list of NL names and contact information.
       $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
         $form_state->set('search-needle', NULL);
         $nlRecords = $this->nlsObj->searchNls($county,$needle);
       } else {
-        $nlRecords = $this->nlsObj->getNls($county, $currentHd);
+        $currentPct = $this->sessionDataObj->getSavedPct();
+        $nlRecords = $this->nlsObj->getNls($county, $currentHd, $currentPct);
       }
       if(!empty($nlRecords)) {
         $nlKeys = array_keys($nlRecords);
@@ -144,10 +166,10 @@ class ActiveNlsDisplayForm extends FormBase
               $this->nlsObj->setNlsStatus($nlStatus);
             }
           }
-          
+
           $contactMethod = $nlStatus['contact'];
           $preferredContactMethod = (!empty($awardRecord['preferredContactMethod']))?
-                                                    $awardRecord['preferredContactMethod']:'canvass';
+            $awardRecord['preferredContactMethod']:'canvass';
           if($contactMethod != $preferredContactMethod) {
             if(empty($preferredContactMethod)) {
               $awardRecord['preferredContactMethod'] = $contactMethod;
@@ -158,20 +180,44 @@ class ActiveNlsDisplayForm extends FormBase
               $this->nlsObj->setNlsStatus($nlStatus);
             }
           }
-          
+
           $nlRecords[$mcid]['nlParticipationDisplay'] = $this->awardsObj->nlParticipationDisplay($mcid);
           $awardRecord['preferredContactMethod'] = $contactMethod;
-          
+
         }
       }
       $nlsTable = $this->nlsListDisplayObj->createTableArray($nlRecords);
-      $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
+
+      // Record the original field values so submitForm can skip unchanged cells.
+      $originalValues = [];
+      foreach ($nlsTable as $mcid => $row) {
+        $orig = [];
+        if (isset($row['notes'])) {
+          $orig["notes-$mcid"] = $row['notes']['text'];
+        }
+        if (isset($row['nl'])) {
+          $orig["nl-$mcid"] = $row['nl']['default'];
+        }
+        if (isset($row['tc'])) {
+          $orig["tc-$mcid"] = ($row['tc']['default'] == 1) ? "cb_turfCut_$mcid" : '';
+        }
+        if (isset($row['td'])) {
+          $orig["td-$mcid"] = ($row['td']['default'] == 1) ? "cb_turfDelivered_$mcid" : '';
+        }
+        if (isset($row['co'])) {
+          $orig["co-$mcid"] = $row['co']['default'];
+        }
+        $originalValues[$mcid] = $orig;
+      }
+      $form_state->set('original_values', $originalValues);
+
+      $request = $this->requestStack->getCurrentRequest();
+      $sort = $request->query->get('sort', '');
       if(!empty($sort)) {
-        $order = $_GET['order'];
+        $order = $request->query->get('order', '');
         $this->nlsListDisplayObj->sortNlsTable($nlsTable,$sort,$order);
       }
-      
-      // Create the AJAX wrapper for updating the form changes.
+
       $form['nlsForm'] = [
         '#prefix' => '<div id="nlsFormDiv">',
         '#suffix' => '</div>',
@@ -180,9 +226,15 @@ class ActiveNlsDisplayForm extends FormBase
           'style' => ['background-image:none;border:0px;padding:0px;margin:0px;background-color:rgb(255,255,255);'],
         ],
       ];
-      
+
       // Build the table of NLs names and status.
       $form['nlsForm']['nls_table'] = $this->nlsListDisplayObj->buildNlsTable($nlsTable);
+
+      $form['nlsForm']['save'] = [
+        '#type'  => 'submit',
+        '#value' => t('Save Changes'),
+        '#name'  => 'save_changes',
+      ];
 
     }
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
@@ -190,85 +242,15 @@ class ActiveNlsDisplayForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
-    $county = $form_state->get('county');
-    $triggeringElement = $form_state->getTriggeringElement();
-    $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('validateForm',"Element clicked: $elementClicked");
-    switch ($elementClicked) {
-      
-      case 'hd-select':
-        $currentHdIndex = $form_state->getValue('hd-select');
-        // The user changed the HD to display.
-        $this->sessionDataObj->saveHdIndex($currentHdIndex);
-        break;
-        
-      case 'search_submit':
-        break;
-        
-      default:
-        $mcid = 0;
-        $column = '';
-        $parents = $triggeringElement['#parents'];
-        if(!empty($parents) AND $parents[0]=='contacts') {
-          $mcid = $parents[1];
-          $column  = $parents[2];
-          $status = $this->nlsObj->getNlsStatus($mcid,$county);
-        }
-     
-        $value = $triggeringElement['#value'];
-        // Process the checkbox, select or text box for this NL.
-        switch ($column) {
-          case 'td':  // Turf Delivered.
-            // If the turf-delivered status is set, update the date the turf was delivered.
-            if($value) {
-              $this->turfsObj->setAllTurfsDelivered($mcid,$county);
-            }
-            $cellDisplay = ($value)?'Y':'';
-            $status['turfDelivered'] = $cellDisplay;
-            $this->nlsObj->setNlsStatus($status);
-            break;
-          case 'tc':  // Turf cut.
-            $cellDisplay = ($value)?'Y':'';
-            $status['turfCut'] = $cellDisplay;
-            $this->nlsObj->setNlsStatus($status);
-            break;
-          case 'notes':  // Notes (text box).
-            $trunc = (strlen($value) > $this->nlsObj::NOTES_MAX) ?
-              substr($value,0,$this->nlsObj::NOTES_MAX).'...' : $value;
-            $safe = htmlentities($trunc, ENT_QUOTES);
-            $status['notes'] = $safe;
-            $this->nlsObj->setNlsStatus($status);
-            
-            $awardRecord = $this->awardsObj->getAward($mcid);
-            $awardRecord['notes'] = $safe;
-            $this->awardsObj->mergeAward($awardRecord);
-            break;
-          case 'co':  // Contact type (select); canvass, post card, phone.
-            $contactList = $this->nlsObj->contactList;
-            $status['contact'] = $contactList[$value];
-            $this->nlsObj->setNlsStatus($status);
-            
-            $awardRecord = $this->awardsObj->getAward($mcid);
-            $awardRecord['preferredContactMethod'] = $contactList[$value];
-            $this->awardsObj->mergeAward($awardRecord);
-            
-            break;
-          case 'nl':  // Ask type (select); Default(NULL), Asked, Yes, No, Quit.
-            $askList = $this->nlsObj->askList;
-            $nlProgress = $askList[$value];
-            $this->processAsk($mcid,$nlProgress);
-            break;
-        }
-        break;
-    }
+    // Saving is handled in submitForm; nothing to validate here.
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -277,13 +259,84 @@ class ActiveNlsDisplayForm extends FormBase
     $form_state->setRebuild();
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    //nlp_debug_msg('submitForm',"Element clicked: $elementClicked");
-    if($elementClicked=='search_submit') {
+
+    if ($elementClicked == 'search_submit') {
       $needle = $form_state->getValue('search-needle');
       $form_state->set('search-needle', $needle);
+      return;
+    }
+
+    if ($elementClicked == 'save_changes') {
+      $county = $form_state->get('county');
+      $contacts = $form_state->getValue('contacts');
+      $originalValues = $form_state->get('original_values') ?? [];
+      if (!empty($contacts)) {
+        foreach ($contacts as $mcid => $columns) {
+          $originals = $originalValues[$mcid] ?? [];
+          // phpcs:ignore -- loose == intentional: int/string mismatch from form API
+          $changed = array_filter($columns, fn($v, $k) => !isset($originals[$k]) || $v != $originals[$k], ARRAY_FILTER_USE_BOTH);
+          if (!empty($changed)) {
+            $this->saveNlRow($mcid, $county, $changed);
+          }
+        }
+      }
+      Drupal::messenger()->addStatus(t('Changes saved.'));
     }
   }
-  
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * saveNlRow
+   *
+   * Save all editable column values for a single NL row.
+   * Called from submitForm when the user clicks "Save Changes".
+   *
+   * @param $mcid
+   * @param string $county
+   * @param array $columns  Keyed by "{column}-{mcid}", values are form element values.
+   */
+  private function saveNlRow($mcid, string $county, array $columns): void
+  {
+    $status = $this->nlsObj->getNlsStatus($mcid, $county);
+    foreach ($columns as $columnKey => $value) {
+      $column = explode('-', $columnKey)[0];
+      switch ($column) {
+        case 'td':
+          if ($value) {
+            $this->turfsObj->setAllTurfsDelivered($mcid, $county);
+          }
+          $status['turfDelivered'] = $value ? 'Y' : '';
+          break;
+        case 'tc':
+          $status['turfCut'] = $value ? 'Y' : '';
+          break;
+        case 'notes':
+          $trunc = strlen($value) > $this->nlsObj::NOTES_MAX
+            ? substr($value, 0, $this->nlsObj::NOTES_MAX) . '...'
+            : $value;
+          $status['notes'] = htmlentities($trunc, ENT_QUOTES);
+          $awardRecord = $this->awardsObj->getAward($mcid);
+          $awardRecord['notes'] = $status['notes'];
+          $this->awardsObj->mergeAward($awardRecord);
+          break;
+        case 'co':
+          $contactList = $this->nlsObj->contactList;
+          $status['contact'] = $contactList[$value];
+          $awardRecord = $this->awardsObj->getAward($mcid);
+          $awardRecord['preferredContactMethod'] = $contactList[$value];
+          $this->awardsObj->mergeAward($awardRecord);
+          break;
+        case 'nl':
+          $askList = $this->nlsObj->askList;
+          $nlProgress = $askList[$value];
+          $this->processAsk($mcid, $nlProgress);
+          // processAsk saves asked via its own setNlsStatus; keep local copy in sync
+          $status['asked'] = $nlProgress;
+          break;
+      }
+    }
+    $this->nlsObj->setNlsStatus($status);
+  }
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * processAsk
    *
@@ -299,51 +352,29 @@ class ActiveNlsDisplayForm extends FormBase
     $status['asked'] = $askStatus;
     $this->nlsObj->setNlsStatus($status);
     $this->awardsObj->nlParticipation($mcid,$askStatus);
-    //$database = 1;
     $request = [
       'vanid' => $mcid,
-      //'contactTypeCode' => $contactMethodId,
       'codeName' => 'NLPDropoutAC',
-      //'action' => ($report['value'])?'Apply':'Remove',
     ];
     if ($askStatus == 'Dropout') {
       $request['action'] = 'Apply';
       $this->apiActivistCodesObj->setApiActivistCode($request);
-      //$this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC');
     } elseif($currentStatus['asked'] == 'Dropout') {
       $request['action'] = 'Remove';
       $this->apiActivistCodesObj->setApiActivistCode($request);
-      //$this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC','Remove');
     }
-    
-    //$this->apiActivistCodesObj->setApiActivistCode($request);
-    
-    /*
-    if ($askStatus == 'Dropout') {
-      $this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC');
-    } elseif($currentStatus['asked'] == 'Dropout') {
-      $this->apiActivistCodesObj->setActivistCode($database,$mcid,'NLPDropoutAC','Remove');
+    // '—' is the "not set" sentinel; it has no VAN survey response equivalent.
+    if ($askStatus !== NlpNls::DASH) {
+      $surveyResponse = [
+        'type' => 'nlParticipation',
+        'vanid' => $mcid,
+        'responseName' => $askStatus,
+        'dateCanvassed' => date(DATE_ATOM, time()),
+      ];
+      $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
     }
-    */
-    
-    /*
-    $canvassDate = date(DATE_ATOM, time());
-    $surveyQuestion = [
-      'type' => 'nlParticipation',
-      'dateCanvassed' => $canvassDate,
-      'responseName' => $askStatus,
-    ];
-    */
-    //$this->apiSurveyQuestionObj->setSurveyResponse($mcid,$surveyQuestion);
-    $surveyResponse = [
-      'type' => 'nlParticipation',
-      'vanid' => $mcid,
-      'responseName' => $askStatus,
-      'dateCanvassed' => date(DATE_ATOM, time()),
-    ];
-    $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * getProgress
    *
@@ -360,13 +391,13 @@ class ActiveNlsDisplayForm extends FormBase
     // Get the voters assigned to this NL for all the turfs.
     $vanids= $this->votersObj->fetchVanIdsByNl($mcid);
     if(empty($vanids)) {return $progress;}
-    
+
     $turfs = $this->turfsObj->getTurfsById($mcid);
     $doorCount = 0;
     foreach ($turfs as $turf) {
       $doorCount += $turf['doorCount'];
     }
-    
+
     $voterCount = count($vanids);
     if ($voterCount == 0) {return $progress;}
     // Now get all the reports from this NL for this cycle.
@@ -405,61 +436,5 @@ class ActiveNlsDisplayForm extends FormBase
     $progress['doorCount'] = $doorCount;
     return $progress;
   }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * checkboxCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnusedParameterInspection
-   * @noinspection PhpUnused
-   */
-  function checkboxCallback($form, $unused): array
-  {
-    return $form['nlsForm'];
-  }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * textboxCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnusedParameterInspection
-   * @noinspection PhpUnused
-   */
-  function textboxCallback($form, $unused): array
-  {
-    return $form['nlsForm'];
-  }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * selectboxCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnusedParameterInspection
-   * @noinspection PhpUnused
-   */
-  function selectboxCallback($form, $unused): array
-  {
-    return $form['nlsForm'];
-  }
-  
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * nlsFormCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnusedParameterInspection
-   * @noinspection PhpUnused
-   */
-  function nlsFormCallback($form, $unused): array
-  {
-    return $form['nlsForm'];
-  }
-  
+
 }

@@ -190,13 +190,30 @@ class NlpSessionData
 
   /**
    * Returns the index of the selected precinct saved in the session.
+   * If a pct_index query parameter is present in the current request it is
+   * saved to session first, so URL-driven precinct selection takes effect immediately.
    *
    * @return int
    */
   public function getSavedPrecinctIndex(): int
   {
+    $pctIndexFromQuery = $this->requestStack->getCurrentRequest()->query->get('pct_index');
+    if ($pctIndexFromQuery !== NULL) {
+      $this->savePrecinctIndex((int)$pctIndexFromQuery);
+    }
     $districts = $this->get('selectedDistricts');
     return empty($districts['selectedPrecinctIndex']) ? 0 : $districts['selectedPrecinctIndex'];
+  }
+
+  public function getSavedPct(): string
+  {
+    $savedDistricts = $this->get('selectedDistricts');
+    if (!empty($savedDistricts['pctList'])) {
+      $pctIndex = $savedDistricts['selectedPrecinctIndex'] ?? 0;
+      $pct = $savedDistricts['pctList'][$pctIndex] ?? 'All';
+      return ($pct === 'All') ? '' : $pct;
+    }
+    return '';
   }
 
   /**

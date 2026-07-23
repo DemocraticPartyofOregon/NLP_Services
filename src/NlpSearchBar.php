@@ -8,9 +8,11 @@ class NlpSearchBar
   /**
    * @param array $hdOptions
    * @param int $hdIndex
+   * @param array $pctOptions
+   * @param int $pctIndex
    * @return array
    */
-  public function searchBar(array $hdOptions=[], int $hdIndex=0): array
+  public function searchBar(array $hdOptions=[], int $hdIndex=0, array $pctOptions=[], int $pctIndex=0): array
   {
     $divClass = (!empty($hdOptions)) ? '<div class="search-bar">' : '<div class="search-bar-small">';
 
@@ -32,6 +34,23 @@ class NlpSearchBar
       ];
 
       $formElement['bar-box']['hd-select-end'] = [
+        '#markup' => '</div>',
+      ];
+    }
+
+    if (!empty($pctOptions)) {
+      $formElement['#attached']['library'][] = 'nlpservices/pct-filter';
+      $formElement['bar-box']['pct-select-box'] = [
+        '#markup' => '<div class="search-pct-select-left">',
+      ];
+      $formElement['bar-box']['pct-select'] = [
+        '#type'          => 'select',
+        '#title'         => 'Precinct select.',
+        '#options'       => $pctOptions,
+        '#default_value' => $pctIndex,
+        '#attributes'    => ['class' => ['no-white', 'nlp-pct-select']],
+      ];
+      $formElement['bar-box']['pct-select-end'] = [
         '#markup' => '</div>',
       ];
     }

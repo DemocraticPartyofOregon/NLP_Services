@@ -12,6 +12,13 @@ hd-filter:
   dependencies:
     - core/drupal
 
+pct-filter:
+  version: "1.0.0"
+  js:
+    js/pct-filter.js: {}
+  dependencies:
+    - core/drupal
+
 info-boxes:
   version: "1.0.0"
   css:

@@ -139,8 +139,12 @@ class ApiSurveyQuestion
       // MyCampaign database.
       case 'nlParticipation':
         $nlParticipationQuestion = $this->nlpConfigurationObj->getNlParticipationQuestion();
+        if (empty($nlParticipationQuestion)) {
+          nlp_debug_msg('reportSurveyResponse', 'NL participation survey question is not configured.');
+          return;
+        }
         $qid = (int) $nlParticipationQuestion['surveyQuestionId'];
-        $surveyResponseList = $nlParticipationQuestion['responses'];
+        $surveyResponseList = $nlParticipationQuestion['responses'] ?? [];
         $cid = $canvassResponseCodes['Walk']['code'];
 
         foreach ($surveyResponseList as $surveyResponseItem) {
@@ -149,7 +153,12 @@ class ApiSurveyQuestion
             break;
           }
         }
-        if(empty($rid)) {return;}
+        if(empty($rid)) {
+          nlp_debug_msg('reportSurveyResponse',
+            'No survey response ID matched "' . $surveyResponse['responseName']
+            . '". Check the NL participation survey question configuration.');
+          return;
+        }
         $database = 1; // MyCampaign
         $type = self::SURVEY_RESPONSE;
         break;
