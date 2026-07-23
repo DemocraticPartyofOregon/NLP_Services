@@ -197,7 +197,8 @@ class NlpSessionData
    */
   public function getSavedPrecinctIndex(): int
   {
-    $pctIndexFromQuery = $this->requestStack->getCurrentRequest()->query->get('pct_index');
+    $request = $this->requestStack->getCurrentRequest();
+    $pctIndexFromQuery = $request?->query->get('pct_index');
     if ($pctIndexFromQuery !== NULL) {
       $this->savePrecinctIndex((int)$pctIndexFromQuery);
     }
