@@ -242,6 +242,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildService()->reportSurveyResponse($sr);
     }
 
+    public function testReportSurveyResponseNlParticipationSkipsPostWhenQuestionNotConfigured(): void {
+      $this->stubKeyValues();
+      $this->stubCanvassResponseCodes();
+      $this->configurationMock->method('getNlParticipationQuestion')->willReturn([]);
+      $this->clientMock->expects($this->never())->method('request');
+
+      $sr = $this->baseSurveyResponse('nlParticipation');
+      $sr['responseName'] = 'Canvassed';
+      $this->buildService()->reportSurveyResponse($sr);
+    }
+
     public function testReportSurveyResponseNlParticipationSkipsPostWhenResponseNameNotFound(): void {
       $this->stubKeyValues();
       $this->stubCanvassResponseCodes();

@@ -23,6 +23,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Database\Connection;
   use Drupal\Core\File\FileSystemInterface;
   use Drupal\Tests\UnitTestCase;
+  use Symfony\Component\HttpFoundation\RequestStack;
 
   class ActiveNlsDisplayFormTest extends UnitTestCase {
 
@@ -37,6 +38,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpConfiguration $configurationMock;
     private ApiSurveyQuestion $apiSurveyQuestionMock;
     private ApiActivistCodes $apiActivistCodesMock;
+    private RequestStack $requestStackMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -51,6 +53,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->configurationMock     = $this->createMock(NlpConfiguration::class);
       $this->apiSurveyQuestionMock = $this->createMock(ApiSurveyQuestion::class);
       $this->apiActivistCodesMock  = $this->createMock(ApiActivistCodes::class);
+      $this->requestStackMock      = $this->createMock(RequestStack::class);
     }
 
     // -------------------------------------------------------------------------
@@ -70,6 +73,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->configurationMock,
         $this->apiSurveyQuestionMock,
         $this->apiActivistCodesMock,
+        $this->requestStackMock,
       );
     }
 
@@ -176,6 +180,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->buildForm()->processAsk(42, 'Asked');
     }
 
+    public function testProcessAskDashSkipsReportSurveyResponse(): void {
+      $this->nlsMock->method('getNlsStatus')->willReturn(['asked' => 'Asked']);
+      $this->awardsMock->method('nlParticipation');
+      $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
+      $this->buildForm()->processAsk(42, NlpNls::DASH);
+    }
+
     // -------------------------------------------------------------------------
     // submitForm
     // -------------------------------------------------------------------------
@@ -197,38 +208,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formStateMock->expects($this->never())->method('set');
       $form = [];
       $this->buildForm()->submitForm($form, $formStateMock);
-    }
-
-    // -------------------------------------------------------------------------
-    // Callbacks (each just returns $form['nlsForm'])
-    // -------------------------------------------------------------------------
-
-    public function testCheckboxCallbackReturnsNlsFormElement(): void {
-      $form = ['nlsForm' => ['#type' => 'fieldset']];
-      $formStateMock = $this->createMock(FormStateInterface::class);
-      $result = $this->buildForm()->checkboxCallback($form, $formStateMock);
-      $this->assertSame($form['nlsForm'], $result);
-    }
-
-    public function testTextboxCallbackReturnsNlsFormElement(): void {
-      $form = ['nlsForm' => ['#type' => 'fieldset']];
-      $formStateMock = $this->createMock(FormStateInterface::class);
-      $result = $this->buildForm()->textboxCallback($form, $formStateMock);
-      $this->assertSame($form['nlsForm'], $result);
-    }
-
-    public function testSelectboxCallbackReturnsNlsFormElement(): void {
-      $form = ['nlsForm' => ['#type' => 'fieldset']];
-      $formStateMock = $this->createMock(FormStateInterface::class);
-      $result = $this->buildForm()->selectboxCallback($form, $formStateMock);
-      $this->assertSame($form['nlsForm'], $result);
-    }
-
-    public function testNlsFormCallbackReturnsNlsFormElement(): void {
-      $form = ['nlsForm' => ['#type' => 'fieldset']];
-      $formStateMock = $this->createMock(FormStateInterface::class);
-      $result = $this->buildForm()->nlsFormCallback($form, $formStateMock);
-      $this->assertSame($form['nlsForm'], $result);
     }
 
   }

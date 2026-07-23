@@ -58,8 +58,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       );
     }
 
-    private function mockRequest(?string $hdIndex = NULL): void {
-      $params = $hdIndex !== NULL ? ['hd_index' => $hdIndex] : [];
+    private function mockRequest(?string $hdIndex = NULL, ?string $pctIndex = NULL): void {
+      $params = [];
+      if ($hdIndex !== NULL) { $params['hd_index'] = $hdIndex; }
+      if ($pctIndex !== NULL) { $params['pct_index'] = $pctIndex; }
       $request = Request::create('/test', 'GET', $params);
       $this->requestStackMock->method('getCurrentRequest')->willReturn($request);
     }
@@ -207,6 +209,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testSetNewDistrictsDefaultPrecinctIndexIsZero(): void {
+      $this->mockRequest();
       $service = $this->buildService();
       $service->setNewDistricts(['HD1'], ['Pct1', 'Pct2']);
 
@@ -247,6 +250,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testSetNewDistrictsRestoresPreviousPrecinctWhenStillPresent(): void {
+      $this->mockRequest();
       $service = $this->buildService();
       $service->setNewDistricts(['HD1'], ['Pct1', 'Pct2', 'Pct3']);
       $service->savePrecinctIndex(2); // was on Pct3
@@ -257,6 +261,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testSetNewDistrictsResetsPrecinctIndexWhenPreviousPrecinctGone(): void {
+      $this->mockRequest();
       $service = $this->buildService();
       $service->setNewDistricts(['HD1'], ['Pct1', 'Pct2']);
       $service->savePrecinctIndex(1); // was on Pct2
@@ -319,6 +324,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testSaveAndGetPrecinctIndex(): void {
+      $this->mockRequest();
       $service = $this->buildService();
       $service->setNewDistricts(['HD1'], ['Pct1', 'Pct2', 'Pct3']);
       $service->savePrecinctIndex(2);
@@ -327,9 +333,46 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetSavedPrecinctIndexReturnsZeroWhenNotSet(): void {
+      $this->mockRequest();
       $service = $this->buildService();
 
       $this->assertSame(0, $service->getSavedPrecinctIndex());
+    }
+
+    public function testGetSavedPrecinctIndexUsesQueryParamWhenPresent(): void {
+      $this->mockRequest(NULL, '2');
+      $service = $this->buildService();
+      $service->setNewDistricts(['HD1'], ['Pct1', 'Pct2', 'Pct3']);
+
+      $this->assertSame(2, $service->getSavedPrecinctIndex());
+    }
+
+    // -------------------------------------------------------------------------
+    // getSavedPct()
+    // -------------------------------------------------------------------------
+
+    public function testGetSavedPctReturnsEmptyStringWhenNoPctListSet(): void {
+      $service = $this->buildService();
+
+      $this->assertSame('', $service->getSavedPct());
+    }
+
+    public function testGetSavedPctReturnsEmptyStringWhenAllSelected(): void {
+      $this->mockRequest();
+      $service = $this->buildService();
+      $service->setNewDistricts(['HD1'], ['All', 'Pct1', 'Pct2']);
+      // default index 0 → 'All'
+
+      $this->assertSame('', $service->getSavedPct());
+    }
+
+    public function testGetSavedPctReturnsPrecinctValueWhenNonAllSelected(): void {
+      $this->mockRequest();
+      $service = $this->buildService();
+      $service->setNewDistricts(['HD1'], ['All', 'Pct1', 'Pct2']);
+      $service->savePrecinctIndex(2);
+
+      $this->assertSame('Pct2', $service->getSavedPct());
     }
 
     // -------------------------------------------------------------------------

@@ -136,6 +136,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('search_submit', $form['bar-box']['search-nl']['search-submit']['#name']);
     }
 
+    public function testSearchBarWithPctOptionsIncludesSelectElement(): void {
+      $form = $this->bar()->searchBar([], 0, ['All', 'Pct1', 'Pct2'], 0);
+      $this->assertArrayHasKey('pct-select', $form['bar-box']);
+      $this->assertSame('select', $form['bar-box']['pct-select']['#type']);
+    }
+
+    public function testSearchBarWithPctOptionsSetsDefaultIndex(): void {
+      $form = $this->bar()->searchBar([], 0, ['All', 'Pct1', 'Pct2'], 2);
+      $this->assertSame(2, $form['bar-box']['pct-select']['#default_value']);
+    }
+
+    public function testSearchBarWithPctOptionsAttachesLibrary(): void {
+      $form = $this->bar()->searchBar([], 0, ['All', 'Pct1'], 0);
+      $this->assertContains('nlpservices/pct-filter', $form['#attached']['library']);
+    }
+
+    public function testSearchBarWithoutPctOptionsOmitsPctSelectElement(): void {
+      $form = $this->bar()->searchBar();
+      $this->assertArrayNotHasKey('pct-select', $form['bar-box']);
+    }
+
   }
 
 }
