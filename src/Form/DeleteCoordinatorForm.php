@@ -19,7 +19,7 @@ use Drupal\nlpservices\NlpConfiguration;
  */
 class DeleteCoordinatorForm extends FormBase
 {
-  
+
   protected NlpCoordinators $coordinatorsObj;
   protected NlpNls $nlsObj;
   protected DrupalUser $drupalUserObj;
@@ -27,7 +27,7 @@ class DeleteCoordinatorForm extends FormBase
   protected NlpSessionData $sessionDataObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  
+
   public function __construct( $coordinatorsObj, $nlsObj, $drupalUserObj, $coordinatorsListDisplayObj,
                                $sessionDataObj, $searchBarObj, $nlpConfigurationObj )
   {
@@ -39,7 +39,7 @@ class DeleteCoordinatorForm extends FormBase
     $this->searchBarObj = $searchBarObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -55,7 +55,7 @@ class DeleteCoordinatorForm extends FormBase
       $container->get('nlpservices.configuration'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -63,7 +63,7 @@ class DeleteCoordinatorForm extends FormBase
   {
     return 'nlpservices_delete_coordinator_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -79,10 +79,10 @@ class DeleteCoordinatorForm extends FormBase
         return [];
       }
       $form_state->set('county',$county);
-      
+
       $allNlRecords = $this->nlsObj->getNls($county, 'All');
       $nlCount = count($allNlRecords);
-      
+
       $hdOptions = $this->nlsObj->getHdList($county);
       if($nlCount<$this->nlsObj::NLS_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
@@ -90,9 +90,9 @@ class DeleteCoordinatorForm extends FormBase
       $form_state->set('hdOptions',$hdOptions);
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
-    
+
     $county = $form_state->get('county');
-    
+
     $sortRequest  = [];
     $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
     if(!empty($sort)) {
@@ -100,8 +100,8 @@ class DeleteCoordinatorForm extends FormBase
       $sortRequest = ['sort'=>$sort,'order'=>$order];
       nlp_debug_msg('sort', "sort=.$sort, order=$order");
     }
-    
-    
+
+
     // Get all the coordinators assigned for this county.
     $assignedCoordinators = $this->coordinatorsObj->getCoordinators($county);
     $mcidsOfCoordinators = array_keys($assignedCoordinators);
@@ -116,21 +116,21 @@ class DeleteCoordinatorForm extends FormBase
         $assignedCoordinators[$mcid]['uid'] = $drupalUser['uid'];
       }
     }
-    
+
     //nlp_debug_msg('$assignedCoordinators',$assignedCoordinators);
     $form_state->set('assignedCoordinators',$assignedCoordinators);
     // Get the Drupal users with the coordinator role for this county.
     //$usersWithCoordinatorRole = $this->drupalUserObj->getCoordinators($county);
     //nlp_debug_msg('$usersWithCoordinatorRole',$usersWithCoordinatorRole);
-    
+
     $form['manageCoordinators'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="coordinator-div">',
       '#suffix' => '</div>',
     ];
-    
+
     /* --- Remove coordinator assignment --- */
-    
+
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
       $form_state->set('search-needle', NULL);
@@ -149,7 +149,7 @@ class DeleteCoordinatorForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -161,14 +161,14 @@ class DeleteCoordinatorForm extends FormBase
     $elementClicked = $triggeringElement['#name'];
     //nlp_debug_msg('$element_clicked',$elementClicked);
     switch ($elementClicked) {
-      
+
       case 'hd-select-remove':
         $currentHdIndex = $form_state->getValue($elementClicked);
         //nlp_debug_msg('$currentHdIndex',$currentHdIndex);
         // The user changed the HD to display.
         $this->sessionDataObj->saveHdIndex($currentHdIndex);
         break;
-      
+
       case 'delete_current_coordinator':
         //$results = $this->validateNlSelection($values, 'remove');
         $contacts = $form_state->getValue('contacts');
@@ -179,10 +179,10 @@ class DeleteCoordinatorForm extends FormBase
         }
         $form_state->set('selectionsToDelete', $selections);
         break;
-        
+
     }
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -196,18 +196,18 @@ class DeleteCoordinatorForm extends FormBase
     $elementClicked = $triggeringElement['#name'];
     //nlp_debug_msg('$element_clicked',$element_clicked);
     switch ($elementClicked) {
-      
+
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
-      
+
       case 'delete_current_coordinator':
         $selectionsToDelete = $form_state->get('selectionsToDelete');
         $coordinators = $form_state->get('assignedCoordinators');
         //nlp_debug_msg('$selectionsToDelete',$selectionsToDelete);
         //nlp_debug_msg('$coordinators',$coordinators);
-        
+
         foreach ($selectionsToDelete as $selectionToDelete) {
           $mcid = $selectionToDelete['mcid'];
           $cIndex = $coordinators[$mcid]['cIndex'];
@@ -216,7 +216,7 @@ class DeleteCoordinatorForm extends FormBase
         break;
     }
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildRemoveAssignment
    *
@@ -227,21 +227,21 @@ class DeleteCoordinatorForm extends FormBase
   {
     $hdOptions = $this->sessionDataObj->getHdOptions();
     $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
-    
+
     $assignedCoordinators = $currentInfo['assignedCoordinators'];
-    
+
     $form['note2h'] = [
       '#type' => 'markup',
       '#markup' => '<br><hr><h2>Remove volunteers who are no longer coordinators.</h2>',
       '#prefix' => '<div class="coordinator-box" >',
     ];
-    
+
     $form['current'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div class="coordinator-option-box">',
       '#suffix' => '</div>',
     ];
-    
+
     $form['current']['note2'] = [
       '#type' => 'markup',
       '#markup' => '
@@ -249,32 +249,31 @@ class DeleteCoordinatorForm extends FormBase
 to help NLs.</p>',
       '#prefix' => '<div class="coordinator-box" >',
     ];
-    
-    $form['current']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex,
-      'coordinator','remove');
-    
+
+    $form['current']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+
     $form['current']['nl-select-header'] = [
       '#markup' => '<b>Check one or more boxes to select coordinators to be removed.</b>',
     ];
-    
+
     $tableArray = $this->coordinatorsListDisplayObj->buildCoordinatorTableArray('remove', $assignedCoordinators);
-    
+
     $sortRequest = $currentInfo['sortRequest'];
     if(!empty($sortRequest)) {
       $this->coordinatorsListDisplayObj->sortNlsTable($tableArray,$sortRequest['sort'],$sortRequest['order'],'remove');
     }
-    
+
     $form['current']['editing'] = $this->coordinatorsListDisplayObj->buildCoordinatorsTable('remove',$tableArray);
-    
+
     $form['current']['delete-coordinator'] = [
       '#type' => 'submit',
       '#value' => 'Remove the selected coordinators.',
       '#name' => 'delete_current_coordinator',
     ];
-    
+
     return $form;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * coordinatorCallback
    *
@@ -289,5 +288,5 @@ to help NLs.</p>',
     //nlp_debug_msg('coordinatorCallback');
     return $form['manageCoordinators'];
   }
-  
+
 }

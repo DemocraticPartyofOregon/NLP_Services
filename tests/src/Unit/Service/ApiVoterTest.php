@@ -120,7 +120,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
-      $expectedAge = (string) ((int) date('Y') - 1980 - (date('md') < '0101' ? 1 : 0));
+      $expectedAge = (int) date('Y') - 1980 - (date('md') < '0101' ? 1 : 0);
       $this->assertSame($expectedAge, $result['age']);
     }
 
