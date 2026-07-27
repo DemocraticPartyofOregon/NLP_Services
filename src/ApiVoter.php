@@ -30,17 +30,17 @@ class ApiVoter
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * parseAddress
-   * 
+   *
    * @param $address
    * @return array - array of address fields.
    *
    * This function parses the address into its component parts.
    * It returns an array with the following keys:
    * streetNo, streetPrefix, streetName, streetSuffix, streetType, aptNo, aptType.
-   * 
+   *
    * The address is expected to be in the format:
    *  "1234 NW Main St Apt 567" or "1234 NW Main St #567" or "1234 NW Main St 567"
    *  The street number is always
@@ -105,7 +105,7 @@ class ApiVoter
         $partEnd = $partEnd-2;
       }
     }
-    
+
     $addressFields['streetSuffix'] = NULL;
     if($partEnd-$partIndex>0) {
       if(in_array($fields[$partEnd], $prefixTypes)) {
@@ -113,7 +113,7 @@ class ApiVoter
         $partEnd--;
       }
     }
-    
+
     $addressFields['streetType'] = NULL;
     if($partEnd-$partIndex>0) {
       if(in_array($fields[$partEnd], $streetTypes)) {
@@ -128,7 +128,7 @@ class ApiVoter
     $addressFields['streetName'] = $streetName;
     return $addressFields;
   }
-  
+
   /**
    * getApiVoter
    *
@@ -154,8 +154,8 @@ class ApiVoter
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    
-    $expandOptions = '?$expand=phones,addresses,districts,electionRecords';
+
+    $expandOptions = '?$expand=phones,addresses,districts,electionRecords,externalIds';
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
     try {
       $request = $this->client->request('GET',$url);
@@ -366,7 +366,7 @@ class ApiVoter
       $year = $year-2;
       $electionArrays[$year.'1'] = ['type'=>'G','year'=>$twoDigitYear-4,'participation'=>'@N'];
     }
-    
+
     $mostRecent = [];
     foreach ($electionRecords as $election) {
       $electionRecordType = $election['electionRecordType'];
@@ -391,10 +391,10 @@ class ApiVoter
       $mostRecent[$electionIndex] = $electionArray;
       if ($yearCount++ == 3) {break;}
     }
-   
+
     return $mostRecent;
   }
-  
+
   /**
    * getVoters
    *
@@ -448,7 +448,7 @@ class ApiVoter
 
     return $failed ? [] : $voters;
   }
-  
+
   /**
    * voterExists
    *
@@ -480,14 +480,14 @@ class ApiVoter
     }
     return TRUE;
   }
-  
+
   public function getVotersByAddress(array $address, string $committee=''): array
   {
     $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    
+
     $baseUrl = "https://$user:$apiKey|0@$apiURL";
     $url = "$baseUrl/people?"
       . "streetAddress=" . urlencode($address['addressLine1'])
@@ -515,10 +515,10 @@ class ApiVoter
   /**
    * convertDateOfBirthToAge
    *
-   * @param string $dateOfBirth
-   * @return string
+   * @param string|null $dateOfBirth
+   * @return int|string
    */
-  private function convertDateOfBirthToAge( string $dateOfBirth ): string
+  private function convertDateOfBirthToAge( ?string $dateOfBirth ): int|string
   {
     if(empty($dateOfBirth)) {return '';}
     $birthDay = explode("T", $dateOfBirth);
