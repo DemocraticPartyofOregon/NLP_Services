@@ -26,12 +26,6 @@ function exportVoterContactReportsBatch($arg,&$context): void
 
   $removeInactive = $arg['removeInactive'];
 
-  $nlpEncrypt = Drupal::service('nlpservices.encryption');
-  $config = Drupal::service('config.factory')->get('nlpservices.configuration');
-  $apiKeys = $config->get('nlpservices-api-keys');
-  $committeeKey = $apiKeys['State Committee'];
-  $committeeKey['API Key'] = $nlpEncrypt->encrypt_decrypt('decrypt', $committeeKey['API Key']);
-
   // Open the input file and position for writing at the end.
   $fh = fopen($reportsUri, "a");
   if (!$fh) {
