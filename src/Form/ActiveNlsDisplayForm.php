@@ -373,7 +373,8 @@ class ActiveNlsDisplayForm extends FormBase
         'responseName' => $askStatus,
         'dateCanvassed' => date(DATE_ATOM, time()),
       ];
-      $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
+      $county = $this->sessionDataObj->getCounty();
+      $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$county);
     }
   }
 
