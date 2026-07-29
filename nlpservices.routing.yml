@@ -1,5 +1,13 @@
 # NLP Services routes
 
+nlpservices.import_county_early_voting_form:
+  path: '/nlpservices-import-county-early-voting'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportCountyEarlyVotingForm
+    _title: 'Import County Early Voting'
+  requirements:
+    _permission: 'access content'
+
 nlpservices.welcome:
   path: '/nlpservices-welcome'
   defaults:

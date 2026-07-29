@@ -17,6 +17,9 @@ if (!class_exists('NlpTestGlobals')) {
 if (!function_exists('nlp_debug_msg')) {
   function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
 }
+if (!function_exists('nlp_debug_msg_safe')) {
+  function nlp_debug_msg_safe($msg, $values = 'EMPTY'): void {}
+}
 if (!function_exists('t')) {
   function t($string, array $args = [], array $options = []): string { return $string; }
 }

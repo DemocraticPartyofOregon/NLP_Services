@@ -19,14 +19,14 @@ class ManageCountyForm extends FormBase {
   protected DrupalUser $drupalUserObj;
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  
+
   public function __construct($privateTempstoreObj, $drupalUserObj, $sessionDataObj, $nlpConfigurationObj) {
     $this->privateTempstoreObj = $privateTempstoreObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -39,7 +39,7 @@ class ManageCountyForm extends FormBase {
       $container->get('nlpservices.configuration'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -47,7 +47,7 @@ class ManageCountyForm extends FormBase {
   {
     return 'manage_county_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -59,25 +59,25 @@ class ManageCountyForm extends FormBase {
       $this->messenger()->addWarning($this->t('The county is not specified. Please set the County field in your user login record.'));
     }
     $form_state->set('county',$county);
-    
+
     // A user with the administrator role can change the committee.
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $userRoles = $currentUser['roles'];
     $isAdmin = in_array('administrator',$userRoles);
-    
+
     $form['known_county'] = [
       '#prefix' => '<div id="county-wrapper">',
       '#suffix' => '</div>',
       '#type' => 'fieldset',
     ];
-    
-    
+
+
     $form['known_county']['county-name'] = [
       '#markup' => '<h1>' . htmlspecialchars($county, ENT_QUOTES, 'UTF-8') . ' County</h1>',
     ];
-    
+
     if($isAdmin) {
-      
+
       $form['known_county']['count_change_note'] = [
         '#markup' => $this->t('As a site administrator, you can change the county to be managed.'),
       ];
@@ -95,39 +95,43 @@ class ManageCountyForm extends FormBase {
         ],
       ];
     }
-    
+
     $output = "<h1>Set up the site for your county</h1>";
-    
+
     $output .= '
         <ul>
           <li><a href="/nlpservices-upload_instructions">Upload the PDF of the instructions for NLs.</a></li>
           <li><a href="/nlpservices-coordinators">Identify the coordinators who provide help to NLs.</a></li>
           <li><a href="/nlpservices-remove-coordinator-role">Remove a coordinator role.</a></li>
           <li><a href="/nlpservices-turf-delivery-message">Edit the body of the email to deliver a turf to an NL.</a></li>
-          <li><a href="/nlpservices-document-list">Download the manuals for managing NLP.</a></li>
-        </ul>';
-    
-    
-    
+          <li><a href="/nlpservices-document-list">Download the manuals for managing NLP.</a></li>'
+        ;
+    $stateName = $this->nlpConfigurationObj->getStateName();
+    if(!empty($stateName) && $stateName == 'Mississippi') {
+      $output .= '<li><a href="/nlpservices-import-county-early-voting">Upload early voting PDF.</a></li>';
+    }
+
+    $output .= '</ul>';
+
     $output .= "<h1>Correct move status</h1>";
-    
+
     $output .= "<p>An NL can mark a voter as moved, and this status is reported to VoteBuilder.  Unfortunately, there is
     no API function to correct an erroneous report of moved.   The NL has to ask for help.  First, use the function
     here to remove the status from NLP Services.   Then use VoteBuilder to restore the address in the VoterFile.</p>";
-    
+
     $output .= '
       <ul>
           <li><a href="/nlp-cancel-moved-report">Cancel an incorrect report that a voter moved.</a></li>
       </ul>';
-    
+
     $form['known_county']['links'] = [
       '#markup' => $output,
     ];
-    
+
     return $form;
   }
-  
-  
+
+
   /**
    * {@inheritdoc}
    */
@@ -150,18 +154,18 @@ class ManageCountyForm extends FormBase {
       nlp_debug_msg('Temp store save error', $e->getMessage());
       $form_state->setErrorByName('county_select', $this->t('Temp store save error'));
     }
-    
+
   }
-  
-  
+
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-  
+
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * countySelectedCallback
    *
@@ -177,5 +181,5 @@ class ManageCountyForm extends FormBase {
   {
     return $form['known_county'];
   }
-  
+
 }

@@ -3,24 +3,25 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
+use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
-use Exception;
 //use stdClass;
 
 class AwakeForm extends FormBase {
-  
+
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
-  
-  public function __construct(  $nlpConfigurationObj, $nlpSessionDataObj ) {
+
+  public function __construct(  $nlpConfigurationObj, $nlpSessionDataObj, $requestStack ) {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -29,9 +30,10 @@ class AwakeForm extends FormBase {
     return new static(
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -39,33 +41,35 @@ class AwakeForm extends FormBase {
   {
     return 'nlpservices_sync_turf_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
 
-    $userObj = Drupal::service('nlpservices.drupal_user');
+    $form['file'] = [
+      '#type'              => 'managed_file',
+      '#title'             => t('Voted File'),
+      '#upload_location'   => 'temporary://',
+      '#upload_validators' => ['file_validate_extensions' => ['csv']],
+    ];
+
+
+
+/*
+    $apiVoterObj = Drupal::service('nlpservices.api_voter');
     $county = 'Jefferson';
     $listId = 509011;
     $exportJobsObj = Drupal::service('nlpservices.export_jobs');
     $database = 1;
-    $activistCodes = ['NLPNotRegisteredAC', 'NLPDropoutAC', ];
-    $exportJob = $exportJobsObj->getExportJobs( $county, $database, $listId, $activistCodes );
-    nlp_debug_msg('$exportJob',$exportJob);
 
-    $remoteUrl = $exportJob['downloadUrl'];
-    $fh = fopen($remoteUrl, 'r');
-    if (!$fh) {
-      nlp_debug_msg('remoteUrl open failed', $remoteUrl);
-    } else {
-      while (($record = fgetcsv($fh, escape: '')) !== FALSE) {
-        nlp_debug_msg('record', $record);
-      }
-    }
-    fclose($fh);
-    
+    $vanid= 4005764;
+
+    $voter = $apiVoterObj->getApiVoter($vanid);
+    nlp_debug_msg('$voter',$voter);
+*/
+
     $form['submit'] = [
       '#type' => 'submit',
       '#value' => $this->t('Submit'),
@@ -77,7 +81,7 @@ class AwakeForm extends FormBase {
     $form['#attached']['library'][] = 'nlpservices/table-helper';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -85,43 +89,78 @@ class AwakeForm extends FormBase {
   {
     //$form_state->set('reenter', TRUE);
     //$form_state->setRebuild();
-    $values = $form_state->getValues();
-    nlp_debug_msg('$values',$values);
-    
+    //$values = $form_state->getValues();
+    //nlp_debug_msg('$values',$values);
+
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $form_state->set('reenter',TRUE);
-    $form_state->setRebuild();
-    
-    $values = $form_state->getValues();
-    nlp_debug_msg('$values',$values);
-    
-    $files = $_FILES;
-    nlp_debug_msg('$files',$files);
-    
-      
-    
-  }
-  
-  function mergeAward($award): bool
-  {
-    $connection = Drupal::getContainer()->get('database');
-    
-    try {
-      $connection->merge('nlp_awards')
-        ->keys(['mcid' => $award['mcid']])
-        ->fields($award)
-        ->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('mergeAward', $e->getMessage() );
-      return FALSE;
+    $fieldsOfInterest = ['Mapping Value','FIRST_NAME','LAST_NAME','PRECINCT_NAME','STATUS','DATE_VOTED','RES_COUNTY','VOTED_DATE'];
+    $activeCounties = ['Forrest','Lamar'];
+    $dateRange = ['start_date'=>'2026-3-1','end_date'=>'2026-3-30'];
+
+    $fids = $form_state->getValue('file');
+    $fid  = reset($fids);
+    if (!$fid) {
+      $this->messenger()->addError($this->t('No file was uploaded.'));
+      return;
     }
-    return TRUE;
+    /** @var \Drupal\file\FileInterface $file */
+    $file     = Drupal::entityTypeManager()->getStorage('file')->load($fid);
+    $filePath = Drupal::service('file_system')->realpath($file->getFileUri());
+
+    $fh = fopen($filePath, 'r');
+    if (!$fh) {
+      $this->messenger()->addError($this->t('Could not open the uploaded file.'));
+      return;
+    }
+
+    // Build column-index map from header row; capture the byte offset after it.
+    $header = fgetcsv($fh);
+    if ($header === FALSE) {
+      fclose($fh);
+      $this->messenger()->addError($this->t('The CSV file is empty.'));
+      return;
+    }
+    $colIndex = [];
+    foreach ($header as $index => $colName) {
+      $colName = trim($colName);
+      if (in_array($colName, $fieldsOfInterest)) {
+        $colIndex[$colName] = $index;
+      }
+    }
+    $headerOffset = ftell($fh);
+    fclose($fh);
+
+    $startTimestamp = strtotime($dateRange['start_date']);
+    $endTimestamp   = strtotime($dateRange['end_date']);
+
+    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $batchBuilder = (new BatchBuilder())
+      ->setTitle(t('Processing voted file.'))
+      ->setFile($modulePath . '/src/Form/AwakeBatch.php')
+      ->setFinishCallback('awakeFinished')
+      ->setInitMessage(t('Awake processing is starting.'))
+      ->setProgressMessage(t('Processed @percentage% of the voted file.'))
+      ->setErrorMessage(t('Awake processing encountered an error.'))
+      ->addOperation('awakeBatch', [[
+        'filePath'       => $filePath,
+        'fid'            => $fid,
+        'headerOffset'   => $headerOffset,
+        'colIndex'       => $colIndex,
+        'activeCounties' => $activeCounties,
+        'startTimestamp' => $startTimestamp,
+        'endTimestamp'   => $endTimestamp,
+      ]]);
+
+    batch_set($batchBuilder->toArray());
+
   }
-  
+
+
+
 }

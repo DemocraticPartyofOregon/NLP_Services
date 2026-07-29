@@ -1,6 +1,13 @@
 #file: noinspection ComposeUnknownKeys
 services:
 
+  nlpservices.early_voting:
+    class: Drupal\nlpservices\NlpEarlyVoting
+    arguments: [ '@database' ]
+
+  nlpservices.pdf_parser:
+    class: Drupal\nlpservices\NlpPdfParser
+
   # API Services
 
   nlpservices.activist_codes:

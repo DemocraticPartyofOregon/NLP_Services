@@ -58,7 +58,7 @@ class DataEntryForm extends FormBase
     $this->dataEntryReportsObj = $dataEntryReportsObj;
     $this->mapRegionsObj = $mapRegionsObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -69,11 +69,11 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.session_data'),
-      
+
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.data_entry_voters'),
-      
+
       $container->get('nlpservices.data_entry_date_bar'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
@@ -81,7 +81,7 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.api_map_regions')
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -89,9 +89,9 @@ class DataEntryForm extends FormBase
   {
     return 'nlpservices_data_entry_form';
   }
-  
+
   const int DE_PAGE_SIZE = 10;
-  
+
   /**
    * {@inheritdoc}
    */
@@ -108,7 +108,7 @@ class DataEntryForm extends FormBase
       $this->sessionDataObj->set('canvassDate', $canvassDate);
       $form_state->set('page','voters');
     }
-    
+
     if(!$this->initializeDataReporting($form_state)) {
       return $form;
     }
@@ -117,7 +117,7 @@ class DataEntryForm extends FormBase
     if(!$form_state->get('reenter')) {
       $this->updateMinivanInfo($turfIndex);
     }
-    
+
     $page = $form_state->get('page');
     switch ($page) {
       case 'unreportedChanges':
@@ -127,24 +127,24 @@ class DataEntryForm extends FormBase
         $form['postcardsList'] = $this->displayVoterList($turfIndex);
         return $form;
     }
-    
+
     if($form_state->get('unreportedChanges')) {
       $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
       return $form;
     }
-    
+
     $canvassDate = $this->sessionDataObj->get('canvassDate');
     $canvassDate   = (empty($canvassDate))?'':$canvassDate;
     $mcid = $form_state->get('mcid');
-    
+
     $form_state->set('defaultValues',NULL);
-    
+
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
-    
+
     $pageCount = (int) ceil(count($voters)/$this::DE_PAGE_SIZE);
-    
+
     $currentPage = $this->sessionDataObj->get('currentPage');
-    
+
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
     $defaultVoterContactMethod = $this->sessionDataObj->get('defaultVoterContactMethod');
     $preferredContactMethod = 0;
@@ -152,60 +152,60 @@ class DataEntryForm extends FormBase
       $preferredContactMethod = array_search($defaultVoterContactMethod, $contactMethods);
     }
     $this->sessionDataObj->set('preferredContactMethod',$preferredContactMethod);
-    
+
     $form['dateBar'] = $this->dataEntryDateBarObj->createDateBar(
              $canvassDate, $turfIndex, $mcid, $currentPage, $pageCount);
-    
+
     $vanidKeys = array_keys($voters);
     $start = $currentPage * $this::DE_PAGE_SIZE;
     $end = min(($start + $this::DE_PAGE_SIZE), count($vanidKeys));
-    
+
     $voterArrays = [];
     for ($vanidKey = $start; $vanidKey < $end; $vanidKey++) {
       $voter = $voters[$vanidKeys[$vanidKey]];
       $voterArray = $this->dataEntryVoterListDisplayObj->buildDataEntryVoterArray($voter);
       $voterArrays[$voter['vanid']] = $voterArray;
     }
-    
+
     $form['dataEntryTable'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="data-entry-div">',
       '#suffix' => '</div>',
     ];
-    
+
     $form_state->set('voterArrays', $voterArrays);
     $form_state->setValue('dataEntry', NULL);
     $user_input = $form_state->getUserInput() ?? [];
     unset($user_input['dataEntry']);
     $form_state->setUserInput($user_input);
-    
+
     $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable($voterArrays);
 
     $form['navigate'] = $this->dataEntryDateBarObj->navigate($pageCount,$currentPage);
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    
+
     if(str_contains($elementClicked, 'line_2_2_2')) {
-      
+
       $form_state->setRebuild();
       $form_state->set('reenter',TRUE);
-      
+
       $rowPos = strpos($elementClicked,'row_2_');
       $vanidEnd = strpos($elementClicked,']',$rowPos+6);
       $vanid = substr($elementClicked,$rowPos+6,$vanidEnd-$rowPos-6);
-      
+
       $chosenMethodCode = $triggeringElement['#value'];
       $contactMethods = $this->nlpConfigurationObj->getContactMethods();
-      
+
       $values =
         array (
           'vanid' => $vanid,
@@ -213,10 +213,10 @@ class DataEntryForm extends FormBase
           'code' => $chosenMethodCode,
         );
       $this->sessionDataObj->setVoterContactMethod($values);
-      
+
     }
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -225,14 +225,14 @@ class DataEntryForm extends FormBase
     $form_state->setRebuild();
     $form_state->set('reenter',TRUE);
     $messenger = Drupal::messenger();
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    
+
     $values = $form_state->getValues();
     //nlp_debug_msg('$values',$values);
     $newCanvassDate = (!empty($values['canvassDate']))?$values['canvassDate']:'';
-    
+
     $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
     if(!empty($newCanvassDate) AND $canvassDate != $newCanvassDate) {
       $this->sessionDataObj->set('canvassDate',$newCanvassDate);
@@ -248,23 +248,23 @@ class DataEntryForm extends FormBase
         $messenger->addStatus('Thanks for acknowledging the changes to your turf.  Now click the
         My turf tab to see your turf.');
         return;
-      
+
       case 'postcardSubmit':
         $form_state->set('page','postcardsSent');
         return;
-        
+
       case 'postcardSelect':
         $form_state->set('page','voters');
         $postcardsSent = $form_state->getValue('postcardsSentList');
         $this->processPostcardsSent($form_state->get('turfIndex'),$postcardsSent,$form_state->get('mcid'),$canvassDate);
         return;
     }
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     $navButtonParts = explode('-',$elementClicked);
     switch ($navButtonParts[0]) {
-      
+
       case 'save_reports':
         break;
       case 'pageSelect':
@@ -286,19 +286,19 @@ class DataEntryForm extends FormBase
         }
         break;
     }
-    
+
     $voterArrays = $form_state->get('voterArrays' );
     $dataEntry = $form_state->getValue('dataEntry') ?? [];
     $selections = $this->dataEntryVoterListDisplayObj->validateDataEntrySelection($dataEntry);
     $actions = $this->dataEntryVoterListDisplayObj->whatChanged($selections,$voterArrays);
-    
+
     $mcid = $form_state->get('mcid');
     $nlsInfo = $this->nlsObj->getNlById($mcid);
-    
+
     $county = $this->sessionDataObj->getCounty();
     $canvassDate = date('Y-m-d');
     $voterArrays = $form_state->get('voterArrays');
-    
+
     foreach ($actions as $vanid => $actionSet) {
       foreach ($actionSet as $action) {
         $report = [
@@ -314,7 +314,7 @@ class DataEntryForm extends FormBase
           'contactId' => 0,
         ];
         $contactMethods = $this->nlpConfigurationObj->getContactMethods();
-        
+
         $type = $action['type'];
         switch ($type) {
           case 'surveyResponse':
@@ -349,7 +349,7 @@ class DataEntryForm extends FormBase
           case 'updateContact':
             $action['firstName'] = $voterArrays[$vanid]['firstName'];
             $action['lastName'] = $voterArrays[$vanid]['lastName'];
-            
+
             $updateContact = $action['updateContact']['contactChange'];
             switch ($updateContact) {
               case 'BC':  // Bad cell number.
@@ -395,7 +395,7 @@ class DataEntryForm extends FormBase
                 $report['cycle'] = $this->nlpConfigurationObj->getCycle();
                 $report['type'] = 'Change';
                 $this->reportsObj->setNlReport($report);
-                
+
                 $newPhoneNumber = [
                   'cellPhone' => $cellPhone,
                   'cellPhoneId' => NULL
@@ -420,19 +420,19 @@ class DataEntryForm extends FormBase
                 $report['type'] = 'Change';
                 //nlp_debug_msg('result',$report);
                 $this->reportsObj->setNlReport($report);
-                
+
                 $newPhoneNumber = [
                   'homePhone' => $homePhone,
                   'homePhoneId' => NULL
                 ];
                 $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
-                
+
                 break;
-              
+
               case 'NE': // New email.
                 $messenger = Drupal::messenger();
                 $email = $action['updateContact']['newContact'];                $voterName = $action['firstName'] . ' ' . $action['lastName'];
-                
+
                 //nlp_debug_msg('$email',$email);
                 if(empty($email))  {
                   $messenger->addWarning('You must enter a new email, Voter is '.$voterName);
@@ -442,7 +442,7 @@ class DataEntryForm extends FormBase
                   $messenger->addWarning('You must enter a valid email address , Voter is '.$voterName);
                   break;
                 }
-                
+
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'New email';
                 $report['text'] = $email;
@@ -460,7 +460,7 @@ class DataEntryForm extends FormBase
       }
     }
   }
-  
+
   /**
    * unreportedChangesDisplay
    *
@@ -475,7 +475,7 @@ class DataEntryForm extends FormBase
   public function unreportedChangesDisplay(int $turfIndex): array
   {
     $changeHistory = $this->turfsObj->getChangeHistory($turfIndex);
-    
+
     $form['changesTitle'] = [
       '#type' => 'markup',
       '#markup' => "<p>
@@ -483,7 +483,7 @@ The list below reveals the voters added to or deleted from your turf since it wa
 for you.   If you were provided a PDF walksheet or are using the MiniVAN app, those lists will be </br>
 different.  Please review the changes before you attempt voter contact.</p>",
     ];
-    
+
     $changeDisplay = '';
     foreach ($changeHistory as $date=>$change) {
       $changeDisplay .= "<h4><b>Date changes were made: $date</b></h4>";
@@ -498,18 +498,18 @@ different.  Please review the changes before you attempt voter contact.</p>",
         $changeDisplay .= "</ul>";
       }
     }
-    
+
     $form['changesDisplay'] = [
       '#type' => 'markup',
       '#markup' => $changeDisplay,
     ];
-    
+
     $form['changesAcknowledgementRequest'] = [
       '#type' => 'markup',
       '#markup' => '<p>
 Please acknowledge that you have reviewed these changes.</p>',
     ];
-    
+
     $form['acknowledgeUnreportedChanges'] = [
       '#type' => 'submit',
       '#name' => 'acknowledgeUnreportedChanges',
@@ -517,7 +517,7 @@ Please acknowledge that you have reviewed these changes.</p>',
     ];
     return $form;
   }
-  
+
   /**
    * displayVoterList
    *
@@ -541,7 +541,7 @@ Please acknowledge that you have reviewed these changes.</p>',
       }
       $voterDisplay[$vanid] = $voter['lastName'].', '.$voter['firstName'];
     }
-    
+
     $form['postcardNote'] = [
       '#markup' => '<div class="form-box-medium">
 <h2>Report the mailing of postcards</h2>
@@ -556,16 +556,16 @@ not checked have already received a postcard for this election.</p></div>',
       '#default_value' => $postcardsSent,
       '#title' => t('Check each voter that you want to report that you sent a postcard.'),
     ];
-  
+
     $form['postcardSelect'] = [
       '#type' => 'submit',
       '#name' => 'postcardSelect',
       '#value' => 'Submit',
     ];
-    
+
     return $form;
   }
-  
+
   /**
    * processPostcardsSent
    *
@@ -584,7 +584,7 @@ not checked have already received a postcard for this election.</p></div>',
     $nls = $this->nlsObj->getNlById($mcid);
     $county = $this->sessionDataObj->getCounty();
     $contactMethodName = 'Postcard';
-    
+
     $rid =$this->nlpConfigurationObj->getResponseId('Postcard','Mailed');
     $cid = $this->nlpConfigurationObj->getContactId('Postcard');
     $action = [
@@ -592,7 +592,7 @@ not checked have already received a postcard for this election.</p></div>',
       'notContacted' => $rid,
       'turfIndex' => $turfIndex,
     ];
-    
+
     $report  = [
       'mcid' => $mcid,
       'county' => $county,
@@ -610,9 +610,9 @@ not checked have already received a postcard for this election.</p></div>',
       $report['vanid'] = $vanid;
       $this->dataEntryReportsObj->noContactResponse($report,$action);
     }
-    
+
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * initializeDataReporting
    *
@@ -622,13 +622,13 @@ not checked have already received a postcard for this election.</p></div>',
   function initializeDataReporting(FormStateInterface $form_state): bool
   {
     $messenger = Drupal::messenger();
-    
+
     $county = $this->sessionDataObj->getCounty();
     $form_state->set('county',$county);
-    
+
     $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
     $this->sessionDataObj->setNewDistricts($hdOptions);
-    
+
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];
     if(empty($mcid)) {
@@ -637,7 +637,7 @@ not checked have already received a postcard for this election.</p></div>',
     }
     $form_state->set('mcid', $mcid);
     $turfIndex = $this->sessionDataObj->get('turfIndex');
-    
+
     //Do we have a turf?
     $turfArray = $this->turfsObj->turfExists($mcid,$county);
     $form_state->set('turfArray', $turfArray);
@@ -656,7 +656,7 @@ not checked have already received a postcard for this election.</p></div>',
     // flag if turf has changes from an update of VoteBuilder with new voter
     // registrations and the user has not yet acknowledged the changes.
     $form_state->set('unreportedChanges',$this->turfsObj->unreportedChanges($turfIndex));
-  
+
     // Verify we know this NL.
     $nlsInfo = $this->nlsObj->getNlById($mcid);
     // Stop if we don't have this person in the database.
@@ -665,7 +665,7 @@ not checked have already received a postcard for this election.</p></div>',
                    Leaders, contact your coordinator.');
       return FALSE;
     }
-    
+
     // For the display of voters for the contact report, what page are we on?
     $currentPage = $this->sessionDataObj->get('currentPage');
     if(empty($currentPage)) {
@@ -674,7 +674,7 @@ not checked have already received a postcard for this election.</p></div>',
     $this->sessionDataObj->set('changePage', FALSE);
     return TRUE;
   }
-  
+
   /**
    * validatePhoneNumber
    *
@@ -688,7 +688,7 @@ not checked have already received a postcard for this election.</p></div>',
     // Comprehensive phone number validation
     return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
   }
-  
+
   /**
    * updateMinivanInfo
    *
@@ -706,7 +706,7 @@ not checked have already received a postcard for this election.</p></div>',
     $county = $this->sessionDataObj->getCounty();
     $turfArray[$turf['turfIndex']] = $turf;
     $this->mapRegionsObj->updateMinivanInfo($county, $turfArray);
-    
+
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {
       $minivanNumber = $turf['minivanNumber'];
@@ -719,7 +719,7 @@ not checked have already received a postcard for this election.</p></div>',
       $this->turfsObj->updateTurfFields($turfIndex, $fields);
     }
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * formCallback
    *
@@ -729,7 +729,7 @@ not checked have already received a postcard for this election.</p></div>',
   function formCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * formCallback
    *
@@ -739,5 +739,5 @@ not checked have already received a postcard for this election.</p></div>',
   function selectionCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
   }
-  
+
 }

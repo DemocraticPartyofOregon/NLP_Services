@@ -7,7 +7,19 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the training manual configuration so the download link work." />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Require submit for changes to the active nls form.">
+      <change afterPath="$PROJECT_DIR$/src/Form/ImportCountyEarlyVotingForm.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NlpEarlyVoting.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/NlpPdfParser.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ManageCountyForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ManageCountyForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/bootstrap.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/bootstrap.php" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -63,7 +75,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="2039" />
+    <option name="cachedIndexableFilesCount" value="26288" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -100,23 +112,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0009634054859062" />
-      <entry key="MS500" value="1.3125569216292279" />
-      <entry key="S2" value="3.1118011686810485" />
-      <entry key="S5" value="6.200116013362094" />
-      <entry key="S10" value="9.286330223893538" />
-      <entry key="S30" value="13.118931772288553" />
-      <entry key="S60" value="14.455999507877221" />
-      <entry key="M2" value="15.199959552291203" />
-      <entry key="M5" value="15.672953177261991" />
-      <entry key="M10" value="15.835278714296289" />
-      <entry key="M15" value="15.889917682266868" />
-      <entry key="M30" value="15.945099796384463" />
-      <entry key="H1" value="15.995861639647211" />
-      <entry key="H2" value="16.23483645502235" />
-      <entry key="H4" value="18.831691961483973" />
-      <entry key="D1" value="115.93373210741485" />
-      <entry key="W1" value="626.568854818017" />
+      <entry key="MS100" value="1.0000000000003544" />
+      <entry key="MS500" value="1.003235041645838" />
+      <entry key="S2" value="1.2384898890391458" />
+      <entry key="S5" value="1.564097034797816" />
+      <entry key="S10" value="1.7871053650336162" />
+      <entry key="S30" value="2.6332922524589644" />
+      <entry key="S60" value="4.0119914631558125" />
+      <entry key="M2" value="6.878643437305876" />
+      <entry key="M5" value="13.860255979760794" />
+      <entry key="M10" value="20.854173961252656" />
+      <entry key="M15" value="25.394941177001716" />
+      <entry key="M30" value="34.02786939600051" />
+      <entry key="H1" value="42.18628232596074" />
+      <entry key="H2" value="48.26713921242043" />
+      <entry key="H4" value="52.78627916315289" />
+      <entry key="D1" value="72.1802990893698" />
+      <entry key="W1" value="469.9512649392458" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -124,37 +136,37 @@
       <entry key="S2" value="0.0" />
       <entry key="S5" value="0.0" />
       <entry key="S10" value="0.0" />
-      <entry key="S30" value="2.5542006814198173E-182" />
-      <entry key="S60" value="2.1619160153422658E-91" />
-      <entry key="M2" value="6.4968358233313934E-46" />
-      <entry key="M5" value="1.2731544299157968E-18" />
-      <entry key="M10" value="1.6376415254679925E-9" />
-      <entry key="M15" value="1.8749351618333748E-6" />
-      <entry key="M30" value="0.0024869199776899127" />
-      <entry key="H1" value="0.103617263260266" />
-      <entry key="H2" value="0.7054556589757233" />
-      <entry key="H4" value="1.8814698909085343" />
-      <entry key="D1" value="4.737841152569707" />
-      <entry key="W1" value="12.854229827255585" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="0.0" />
+      <entry key="M10" value="7.719393631880512E-171" />
+      <entry key="M15" value="5.604429477702218E-114" />
+      <entry key="M30" value="4.089391049508923E-57" />
+      <entry key="H1" value="1.106850147629885E-28" />
+      <entry key="H2" value="1.8224344344895476E-14" />
+      <entry key="H4" value="2.3796232008708943E-7" />
+      <entry key="D1" value="0.4314831956529117" />
+      <entry key="W1" value="14.325320948148807" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9735414630870037" />
-      <entry key="MS500" value="1.3020372409571364" />
-      <entry key="S2" value="3.1031440444844685" />
-      <entry key="S5" value="6.192724414597027" />
-      <entry key="S10" value="9.28068724815021" />
-      <entry key="S30" value="13.116250153684572" />
-      <entry key="S60" value="14.454519529875622" />
-      <entry key="M2" value="15.199180888219214" />
-      <entry key="M5" value="15.67263188184871" />
-      <entry key="M10" value="15.835116381976789" />
-      <entry key="M15" value="15.889810950448684" />
-      <entry key="M30" value="15.947528134232792" />
-      <entry key="H1" value="16.09935796592936" />
-      <entry key="H2" value="16.939937492341265" />
-      <entry key="H4" value="20.712640897902226" />
-      <entry key="D1" value="120.67086743650015" />
-      <entry key="W1" value="639.4225520959902" />
+      <entry key="MS100" value="8.255895782200788E-8" />
+      <entry key="MS500" value="0.03850015877616861" />
+      <entry key="S2" value="0.5592954239362053" />
+      <entry key="S5" value="1.1457647622513931" />
+      <entry key="S10" value="1.5323817386381542" />
+      <entry key="S30" value="2.5063070730445234" />
+      <entry key="S60" value="3.9254715571734775" />
+      <entry key="M2" value="6.820224510141602" />
+      <entry key="M5" value="13.82808177197777" />
+      <entry key="M10" value="20.835456007321213" />
+      <entry key="M15" value="25.381648174590456" />
+      <entry key="M30" value="34.0206291254294" />
+      <entry key="H1" value="42.182426724786595" />
+      <entry key="H2" value="48.26509726952335" />
+      <entry key="H4" value="52.78509358628877" />
+      <entry key="D1" value="72.61137477788257" />
+      <entry key="W1" value="484.27613933381514" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -293,37 +305,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "PHPUnit.Main.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "NLP__Services__V7__2__1",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "settings.php.frameworks",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;PHPUnit.Main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__2__1&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;settings.php.frameworks&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\src\Config" />
@@ -338,7 +352,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-ff90ddd8021d-com.jetbrains.php.sharedIndexes-PS-262.8665.265" />
+        <option value="bundled-php-predefined-a98d8de5180a-ff90ddd8021d-com.jetbrains.php.sharedIndexes-PS-262.8665.325" />
       </set>
     </attachedChunks>
   </component>
@@ -435,87 +449,11 @@
       <workItem from="1783915320442" duration="11084000" />
       <workItem from="1784123394172" duration="32601000" />
       <workItem from="1784294041337" duration="24933000" />
-      <workItem from="1784432001919" duration="17140000" />
-    </task>
-    <task id="LOCAL-00132" summary="Create a CRON task to find, fix and report missing NLP Voter AC.">
-      <option name="closed" value="true" />
-      <created>1781838400495</created>
-      <option name="number" value="00132" />
-      <option name="presentableId" value="LOCAL-00132" />
-      <option name="project" value="LOCAL" />
-      <updated>1781838400495</updated>
-    </task>
-    <task id="LOCAL-00133" summary="Fix annotations in queueWorker">
-      <option name="closed" value="true" />
-      <created>1781838658415</created>
-      <option name="number" value="00133" />
-      <option name="presentableId" value="LOCAL-00133" />
-      <option name="project" value="LOCAL" />
-      <updated>1781838658415</updated>
-    </task>
-    <task id="LOCAL-00134" summary="Fix tests">
-      <option name="closed" value="true" />
-      <created>1781845785377</created>
-      <option name="number" value="00134" />
-      <option name="presentableId" value="LOCAL-00134" />
-      <option name="project" value="LOCAL" />
-      <updated>1781845785377</updated>
-    </task>
-    <task id="LOCAL-00135" summary="Fix tests">
-      <option name="closed" value="true" />
-      <created>1781845812434</created>
-      <option name="number" value="00135" />
-      <option name="presentableId" value="LOCAL-00135" />
-      <option name="project" value="LOCAL" />
-      <updated>1781845812435</updated>
-    </task>
-    <task id="LOCAL-00136" summary="Prepare for Drupal 11">
-      <option name="closed" value="true" />
-      <created>1781845861986</created>
-      <option name="number" value="00136" />
-      <option name="presentableId" value="LOCAL-00136" />
-      <option name="project" value="LOCAL" />
-      <updated>1781845861986</updated>
-    </task>
-    <task id="LOCAL-00137" summary="Refactor matchback processing to avoid cron timeout">
-      <option name="closed" value="true" />
-      <created>1781913587333</created>
-      <option name="number" value="00137" />
-      <option name="presentableId" value="LOCAL-00137" />
-      <option name="project" value="LOCAL" />
-      <updated>1781913587333</updated>
-    </task>
-    <task id="LOCAL-00138" summary="Refactor minivan and missingAc processing to avoid cron timeout">
-      <option name="closed" value="true" />
-      <created>1781915870100</created>
-      <option name="number" value="00138" />
-      <option name="presentableId" value="LOCAL-00138" />
-      <option name="project" value="LOCAL" />
-      <updated>1781915870100</updated>
-    </task>
-    <task id="LOCAL-00139" summary="Fix the search/sort for the display of NLs.">
-      <option name="closed" value="true" />
-      <created>1781968562838</created>
-      <option name="number" value="00139" />
-      <option name="presentableId" value="LOCAL-00139" />
-      <option name="project" value="LOCAL" />
-      <updated>1781968562839</updated>
-    </task>
-    <task id="LOCAL-00140" summary="Fix the search/sort for various table displays.">
-      <option name="closed" value="true" />
-      <created>1782018842063</created>
-      <option name="number" value="00140" />
-      <option name="presentableId" value="LOCAL-00140" />
-      <option name="project" value="LOCAL" />
-      <updated>1782018842063</updated>
-    </task>
-    <task id="LOCAL-00141" summary="Fix the search/sort for sync turf table displays.">
-      <option name="closed" value="true" />
-      <created>1782404789188</created>
-      <option name="number" value="00141" />
-      <option name="presentableId" value="LOCAL-00141" />
-      <option name="project" value="LOCAL" />
-      <updated>1782404789189</updated>
+      <workItem from="1784432001919" duration="48896000" />
+      <workItem from="1784728484278" duration="3060000" />
+      <workItem from="1784731779140" duration="43258000" />
+      <workItem from="1784903141786" duration="16778000" />
+      <workItem from="1785368103255" duration="488000" />
     </task>
     <task id="LOCAL-00142" summary="Fix the missing county parameter for lists.">
       <option name="closed" value="true" />
@@ -829,7 +767,87 @@
       <option name="project" value="LOCAL" />
       <updated>1784521353261</updated>
     </task>
-    <option name="localTasksCounter" value="181" />
+    <task id="LOCAL-00181" summary="Fix the tests for changes to age and awaitingReply">
+      <option name="closed" value="true" />
+      <created>1784522563979</created>
+      <option name="number" value="00181" />
+      <option name="presentableId" value="LOCAL-00181" />
+      <option name="project" value="LOCAL" />
+      <updated>1784522563979</updated>
+    </task>
+    <task id="LOCAL-00182" summary="Fix type error in map regions">
+      <option name="closed" value="true" />
+      <created>1784769017604</created>
+      <option name="number" value="00182" />
+      <option name="presentableId" value="LOCAL-00182" />
+      <option name="project" value="LOCAL" />
+      <updated>1784769017605</updated>
+    </task>
+    <task id="LOCAL-00183" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
+      <option name="closed" value="true" />
+      <created>1784782427189</created>
+      <option name="number" value="00183" />
+      <option name="presentableId" value="LOCAL-00183" />
+      <option name="project" value="LOCAL" />
+      <updated>1784782427189</updated>
+    </task>
+    <task id="LOCAL-00184" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
+      <option name="closed" value="true" />
+      <created>1784830028226</created>
+      <option name="number" value="00184" />
+      <option name="presentableId" value="LOCAL-00184" />
+      <option name="project" value="LOCAL" />
+      <updated>1784830028226</updated>
+    </task>
+    <task id="LOCAL-00185" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
+      <option name="closed" value="true" />
+      <created>1784836599981</created>
+      <option name="number" value="00185" />
+      <option name="presentableId" value="LOCAL-00185" />
+      <option name="project" value="LOCAL" />
+      <updated>1784836599981</updated>
+    </task>
+    <task id="LOCAL-00186" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
+      <option name="closed" value="true" />
+      <created>1784836655332</created>
+      <option name="number" value="00186" />
+      <option name="presentableId" value="LOCAL-00186" />
+      <option name="project" value="LOCAL" />
+      <updated>1784836655332</updated>
+    </task>
+    <task id="LOCAL-00187" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
+      <option name="closed" value="true" />
+      <created>1784840826984</created>
+      <option name="number" value="00187" />
+      <option name="presentableId" value="LOCAL-00187" />
+      <option name="project" value="LOCAL" />
+      <updated>1784840826984</updated>
+    </task>
+    <task id="LOCAL-00188" summary="Handle empty date of birth for a voter.">
+      <option name="closed" value="true" />
+      <created>1785129289398</created>
+      <option name="number" value="00188" />
+      <option name="presentableId" value="LOCAL-00188" />
+      <option name="project" value="LOCAL" />
+      <updated>1785129289399</updated>
+    </task>
+    <task id="LOCAL-00189" summary="Remove dead code that causes a fatal error in export contact reports">
+      <option name="closed" value="true" />
+      <created>1785246268805</created>
+      <option name="number" value="00189" />
+      <option name="presentableId" value="LOCAL-00189" />
+      <option name="project" value="LOCAL" />
+      <updated>1785246268805</updated>
+    </task>
+    <task id="LOCAL-00190" summary="Require submit for changes to the active nls form.">
+      <option name="closed" value="true" />
+      <created>1785248997039</created>
+      <option name="number" value="00190" />
+      <option name="presentableId" value="LOCAL-00190" />
+      <option name="project" value="LOCAL" />
+      <updated>1785248997039</updated>
+    </task>
+    <option name="localTasksCounter" value="191" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -839,6 +857,21 @@
     <option name="OPEN_GENERIC_TABS">
       <map>
         <entry key="8da61a28-d596-421e-afa6-169a9f973092" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="RECENT_FILTERS">
+      <map>
+        <entry key="Branch">
+          <value>
+            <list>
+              <RecentGroup>
+                <option name="FILTER_VALUES">
+                  <option value="HEAD" />
+                </option>
+              </RecentGroup>
+            </list>
+          </value>
+        </entry>
       </map>
     </option>
     <option name="TAB_STATES">
@@ -851,7 +884,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/NLP_Services_V7_0_2" />
+                        <option value="HEAD" />
                       </list>
                     </value>
                   </entry>
@@ -868,7 +901,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="origin/NLP_Services_V7_0_2" />
+                        <option value="HEAD" />
                       </list>
                     </value>
                   </entry>
@@ -881,12 +914,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add tests for various forms" />
-    <MESSAGE value="Make tests run on both the D10 and D11 sites" />
-    <MESSAGE value="Fix the restoration of user credentials for sync of active NLs." />
-    <MESSAGE value="Fix attachment of PDF when syncing a turf." />
-    <MESSAGE value="Drupal migration" />
-    <MESSAGE value="Fix failed emeail for detection of missing NLPVoterAC" />
     <MESSAGE value="Add guard rails for sync and delete of turf to allow propagation of the change of the activist code." />
     <MESSAGE value="Correct title for API key configuration form" />
     <MESSAGE value="Update readme file" />
@@ -906,7 +933,13 @@
     <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
     <MESSAGE value="Update ReadMe" />
     <MESSAGE value="Fix the training manual configuration so the download link work." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fix the training manual configuration so the download link work." />
+    <MESSAGE value="Fix the tests for changes to age and awaitingReply" />
+    <MESSAGE value="Fix type error in map regions" />
+    <MESSAGE value="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes." />
+    <MESSAGE value="Handle empty date of birth for a voter." />
+    <MESSAGE value="Remove dead code that causes a fatal error in export contact reports" />
+    <MESSAGE value="Require submit for changes to the active nls form." />
+    <option name="LAST_COMMIT_MESSAGE" value="Require submit for changes to the active nls form." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
