@@ -450,6 +450,31 @@ class DataEntryForm extends FormBase
                 $report['type'] = 'Change';
                 $this->reportsObj->setNlReport($report);
                 break;
+
+              case 'LS': // Wants lawn sign.
+                $messenger = Drupal::messenger();
+                $voterName = $action['firstName'] . ' ' . $action['lastName'];
+                $candidates = $action['updateContact']['newContact'];
+                if(empty($candidates)) {
+                  $messenger->addWarning(t('You must enter candidate name(s) for the lawn sign request, Voter is :name', [':name' => $voterName]));
+                  break;
+                }
+                $report['contactType'] = 'Walk';
+                $report['value'] = 'Wants lawn sign';
+                $report['text'] = $candidates;
+                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
+                $report['type'] = 'Change';
+                $this->reportsObj->setNlReport($report);
+                break;
+
+              case 'RTP': // Needs ride to polls.
+                $report['contactType'] = 'Walk';
+                $report['value'] = 'Needs ride to polls';
+                $report['text'] = '';
+                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
+                $report['type'] = 'Change';
+                $this->reportsObj->setNlReport($report);
+                break;
             }
             break;
           case 'note':

@@ -585,12 +585,41 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
   public function testBuildDataEntryVoterArrayAlwaysIncludesNcNhNe(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getStateName')->willReturn('Washington');
 
     $result = $this->service->buildDataEntryVoterArray($this->baseVoter());
 
     $this->assertArrayHasKey('NC', $result['contactUpdateOptions']);
     $this->assertArrayHasKey('NH', $result['contactUpdateOptions']);
     $this->assertArrayHasKey('NE', $result['contactUpdateOptions']);
+  }
+
+  /**
+   * @covers ::buildDataEntryVoterArray
+   */
+  public function testBuildDataEntryVoterArrayIncludesLawnSignAndRideWhenNotOregon(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getStateName')->willReturn('Washington');
+
+    $result = $this->service->buildDataEntryVoterArray($this->baseVoter());
+
+    $this->assertArrayHasKey('LS', $result['contactUpdateOptions']);
+    $this->assertArrayHasKey('RTP', $result['contactUpdateOptions']);
+  }
+
+  /**
+   * @covers ::buildDataEntryVoterArray
+   */
+  public function testBuildDataEntryVoterArrayExcludesLawnSignAndRideWhenOregon(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getStateName')->willReturn('Oregon');
+
+    $result = $this->service->buildDataEntryVoterArray($this->baseVoter());
+
+    $this->assertArrayNotHasKey('LS', $result['contactUpdateOptions']);
+    $this->assertArrayNotHasKey('RTP', $result['contactUpdateOptions']);
   }
 
   /**

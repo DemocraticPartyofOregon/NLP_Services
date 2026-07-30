@@ -119,6 +119,10 @@ class NlpDataEntryVoterListDisplay
     $contactUpdate['NC'] = 'New Cell Number';
     $contactUpdate['NH'] = 'New Home Number';
     $contactUpdate['NE'] = 'New Email';
+    if($this->nlpConfigurationObj->getStateName() !== 'Oregon') {
+      $contactUpdate['LS'] = 'Wants lawn sign';
+      $contactUpdate['RTP'] = 'Needs ride to polls';
+    }
     $voterArray['contactUpdateOptions'] = $contactUpdate;
     // Historical contact information.
     $voterArray['historical'] = $voter['historic']['display'];

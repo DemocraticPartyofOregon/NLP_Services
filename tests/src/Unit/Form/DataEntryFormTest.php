@@ -784,6 +784,48 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormLawnSignWithCandidatesSavesReport(): void {
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->reportsMock->expects($this->once())->method('setNlReport');
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'LS', 'newContact' => 'Jane Smith'],
+    ]);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormLawnSignWithoutCandidatesShowsWarningAndSkipsReport(): void {
+    $this->messengerMock->expects($this->once())->method('addWarning');
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'LS', 'newContact' => ''],
+    ]);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormRideToPollsSavesReport(): void {
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->reportsMock->expects($this->once())->method('setNlReport');
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'RTP', 'newContact' => ''],
+    ]);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
   // ---------------------------------------------------------------------------
   // validatePhoneNumber
   // ---------------------------------------------------------------------------
