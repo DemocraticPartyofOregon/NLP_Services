@@ -33,7 +33,7 @@ function nlpservices_mail_alter(&$message): void
         "<mailto: notifications@nlpservices.org?subject=unsubscribe>";
       break;
     case 'user':
-      
+
       if ($message['key'] == 'status_activated') {
         $userObj = Drupal::service('nlpservices.drupal_user');
         $currentUser = $userObj->getCurrentUser();
@@ -43,7 +43,7 @@ function nlpservices_mail_alter(&$message): void
         $email = $currentUser['email'];
         $messageAddition = t("This email was sent to you by: @name.  If you do not know your password, contact your county NLP coordinator.  <br>Email:@email",
           ['@name' => $fullName, '@email' => $email]);
-        
+
         $message['body'][] = $messageAddition;
         $message['reply-to'] = $email;
       }
@@ -112,7 +112,7 @@ function nlpservices_user_login(Drupal\user\Entity\User $account): void
   $factory = Drupal::service('tempstore.private');
   $storeObj = $factory->get('nlpservices.session_data');
   $storeObj->set('County',$county);
- 
+
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -128,14 +128,14 @@ function nlp_debug_msg($msg, mixed $values='EMPTY'): void
   $file = $frame['file'] ?? __FILE__;
   $file_name = basename($file);
   $messenger = Drupal::messenger();
-  
+
   $fnp = str_replace('.php','', $file_name);
   $caller =  str_replace('nlp_','', $fnp);
   $line = (int) ($frame['line'] ?? 0);
   $location = '@mod @line ';
-  
+
   $location .= $msg.' = ';
-  
+
   if(is_string($values) OR is_scalar($values) OR empty($values)) {
     if(!empty($values)) {
       if(is_bool($values)) {
@@ -172,7 +172,7 @@ function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
   $debug = $nlpConfigurationObj->getDebug();
   if($admin AND $debug) {
     nlp_debug_msg($msg,  $values);
-    
+
     $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
     if(empty($backTrace)) {return;}
     $messenger = Drupal::messenger();
@@ -225,7 +225,7 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
   $pass = $values['pass'];
   $userName = $values['name'];
   //nlp_debug_msg('user',$userName.' '.$pass);
-  
+
   $userObj = Drupal::service('nlpservices.drupal_user');
   $user = $userObj->getUserByName($userName);
   //nlp_debug_msg('$user',$user);
@@ -276,8 +276,8 @@ function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
       }
     }
   }
-  
-  
+
+
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -307,15 +307,23 @@ function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
  */
 function nlpservices_cron (): void
 {
+  $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+
   $nlpConfigObj = Drupal::service('config.factory')->get('nlpservices.configuration');
   $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
-  
+
   // Check for emails with MiniVAN reports.
   $enableMinivan = !empty($cronConfiguration['enableMinivan']);
   if($enableMinivan) {
     $minivanObj = Drupal::service('nlpservices.minivan');
     $startTime = time();
-    $counts = $minivanObj->processMinivanEmails();
+    //$counts = $minivanObj->processMinivanEmails();
+    try {
+      $counts = $minivanObj->processMinivanEmails();
+    } catch (\Exception $e) {
+      Drupal::logger('nlpservices')->error('Minivan cron error: @msg', ['@msg' => $e->getMessage()]);
+    }
+
     if ($counts['recordCount'] > 0) {
       $elapsed = time() - $startTime;
       $h = floor($elapsed / 3600);
@@ -330,7 +338,7 @@ function nlpservices_cron (): void
       Drupal::logger('nlpservices')->notice($msg);
     }
   }
-  
+
   // Check for emails with matchback reports.
   $enableMatchback = !empty($cronConfiguration['enableMatchback']);
   if($enableMatchback) {
@@ -345,7 +353,7 @@ function nlpservices_cron (): void
       $queue->createItem(['filePath' => $filePath]);
     }
   }
-  
+
   // Check for emails sent to notifications that should have been sent to the coordinator.
   $enableEmailRedirect = !empty($cronConfiguration['enableEmailRedirect']);
   if($enableEmailRedirect) {
@@ -353,24 +361,19 @@ function nlpservices_cron (): void
     $notificationRepliesObj = Drupal::service('nlpservices.email_replies');
     $notificationRepliesObj->emailForward();
   }
-  
+
   // Check if turf resync is enabled but run the check only at night, assumes standard 3-hour cron frequency.
   $enableTurfResync = !empty($cronConfiguration['enableTurfResync']);
-  if($enableTurfResync) {
+  $hour = (int) date('G');
+  $resyncCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
+  if($enableTurfResync && $resyncCheckTime) {
     $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
-    
-    $debug = $nlpConfigurationObj->getDebug();
-    $hour = (int)date('G'); // 0-23, midnight is 0
-    if (!($hour >= 0 && $hour < 3) && !$debug) {
-      // The time is not between midnight and 3am, so skip the resyncing.
-      Drupal::logger('nlpservices')->notice("Turf resync skipped, current hour: $hour");
-      return;
-    }
+
     $resyncTurfObj = Drupal::service('nlpservices.resync_turf');
     $turfsObj = Drupal::service('nlpservices.turfs');
     $countiesWithTurfs = $turfsObj->getCountyNames();
     $queue = Drupal::queue('nlpservices_resync_turfs_queue');
-    
+
     $startTime = time();
     $queueStart = TRUE;
     foreach ($countiesWithTurfs as $county) {
@@ -383,14 +386,14 @@ function nlpservices_cron (): void
         $queueItems[0]['queueStart'] = 'start';
         $queueStart = FALSE;
       }
-      
+
       foreach ($queueItems as $queueItem) {
         $queue->createItem($queueItem);
         $turfCount = $turfCount + count($queueItem['turfIndexes']);
       }
       Drupal::logger('nlpservices')->notice("Resync turf check for county: $county turf count: $turfCount");
     }
-    
+
     // If there was at least one turf to check, add a final item to mark the end of the queue.
     if(!$queueStart) {
       $queueItem = [
@@ -400,7 +403,7 @@ function nlpservices_cron (): void
       ];
       $queue->createItem($queueItem);
     }
-    
+
     $queueTime = time() - $startTime;
     $hours = floor($queueTime / 3600);
     $minutes = floor(($queueTime % 3600) / 60);
@@ -412,24 +415,18 @@ function nlpservices_cron (): void
 
   // Check for missing NLP Voter activist codes, run only at night between midnight and 3am.
   $enableVoterAcCheck = !empty($cronConfiguration['enableVoterAcCheck']);
-  if ($enableVoterAcCheck) {
+  $hour = (int) date('G');
+  $acCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
+  if ( $enableVoterAcCheck && $acCheckTime ) {
     $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
-    $debug = $nlpConfigurationObj->getDebug();
-    $hour = (int) date('G');
-    if (!($hour >= 0 && $hour < 3) && !$debug) {
-      Drupal::logger('nlpservices')->notice("Voter AC check skipped, current hour: $hour");
-      return;
-    }
     $turfsObj = Drupal::service('nlpservices.turfs');
-    $detailedCronLogging = Drupal::config('system.cron')->get('logging');
-    if ($detailedCronLogging) {
-      $counties = $turfsObj->getCountyNames();
-      foreach ($counties as $county) {
-        $countyTurfCount = $turfsObj->getCountyTurfCount($county);
-        Drupal::logger('nlpservices')->notice("Voter AC check turf count for $county: $countyTurfCount");
-      }
+
+    try {
+      $syncedCounties = $turfsObj->getSyncedCountyNames();
+    } catch (\Exception $e) {
+      Drupal::logger('nlpservices')->error('getSyncedCountyNames cron error: @msg', ['@msg' => $e->getMessage()]);
     }
-    $syncedCounties = $turfsObj->getSyncedCountyNames();
+
     $queue = Drupal::queue('nlpservices_voter_ac_queue');
     $queue->deleteQueue();
     $queue->createQueue();
@@ -448,7 +445,11 @@ function nlpservices_cron (): void
   $enableTurfAcCheck = !empty($cronConfiguration['enableTurfAcCheck']);
   if ($enableTurfAcCheck) {
     $turfStatusObj = Drupal::service('nlpservices.turf_status');
-    $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
+    try {
+      $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
+    } catch (\Exception $e) {
+      Drupal::logger('nlpservices')->error('enableTurfAcCheck cron error: @msg', ['@msg' => $e->getMessage()]);
+    }
     if (!empty($expiredRecords)) {
       $queue = Drupal::queue('nlpservices_turf_ac_check_queue');
       foreach ($expiredRecords as $record) {
