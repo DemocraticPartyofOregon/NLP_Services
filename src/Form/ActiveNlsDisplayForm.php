@@ -143,7 +143,7 @@ class ActiveNlsDisplayForm extends FormBase
       $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
         $form_state->set('search-needle', NULL);
-        $nlRecords = $this->nlsObj->searchNls($county,$needle);
+        $nlRecords = $this->nlsObj->searchNls($needle,$county);
       } else {
         $currentPct = $this->sessionDataObj->getSavedPct();
         $nlRecords = $this->nlsObj->getNls($county, $currentHd, $currentPct);
