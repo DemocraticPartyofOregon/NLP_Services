@@ -176,7 +176,7 @@ class SyncTurfForm extends FormBase {
 
         break;
 
-        // Display a page to select an NL.
+      // Display a page to select an NL.
       case 'nl_select':
         $turfId = $form_state->get('turfId');
         // Check if the turf has been assigned to an NL in the past.  This gives the most likely option for that
@@ -236,14 +236,14 @@ class SyncTurfForm extends FormBase {
         $form['nl_select']['nl_district'] = $this->syncTurfBuilderObj->buildNlSearchByDistrict($nlsTable);
         $form_state->set('nlList',$nlList);
         break;
-      }
-      $form['#attached']['library'][] = 'nlpservices/nlp-table';
-      $form['#attached']['library'][] = 'nlpservices/turf-sync';
-      $form['#attached']['library'][] = 'nlpservices/walksheet-form';
-      $form['#attached']['library'][] = 'nlpservices/hint-note';
-      $form['#attached']['library'][] = 'nlpservices/table-helper';
-      return $form;
     }
+    $form['#attached']['library'][] = 'nlpservices/nlp-table';
+    $form['#attached']['library'][] = 'nlpservices/turf-sync';
+    $form['#attached']['library'][] = 'nlpservices/walksheet-form';
+    $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/table-helper';
+    return $form;
+  }
 
   /**
    * {@inheritdoc}
@@ -286,18 +286,24 @@ class SyncTurfForm extends FormBase {
         return;
       // A turf was selected from the list of turfs.
       case 'turf_submit':
+        if(empty($form_state->getValue('contacts'))) {
+          $form_state->setErrorByName('turf_submit',"You must select a turf");
+          return;
+        }
         $selections = $this->turfListDisplayObj->
-                    validateTurfSelection($form_state->getValue('contacts'));
+        validateTurfSelection($form_state->getValue('contacts'));
         $turfSelection = reset($selections);
         $form_state->set('turfSelection',$turfSelection);
         if(empty($selections) OR count($selections) > 1) {
           $form_state->setErrorByName('turf_submit',"You must select one turf");
+          return;
         }
 
         $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
         $turfId = $turfSelection['turfId'];
         if(!empty($turfOptions[$turfId]['turfAssigned'])) {
           $form_state->setErrorByName('turf_submit', "The selected turf is already assigned. You must delete it before you can reassign it.");
+          return;
         }
         if(empty($turfOptions[$turfId]['turfName'])) {
           $form_state->setErrorByName('turf_submit',"The turf name is missing.");
@@ -308,6 +314,7 @@ class SyncTurfForm extends FormBase {
         $voterCount = $turfOptions[$turfId]['voterCount'];
         if ($voterCount > 100) {
           $form_state->setErrorByName('turf_submit',"The turf must have 100 voters or less.");
+          return;
         }
         if($voterCount > 75) {
           $messenger->addWarning("Turfs with more than 75 voters are discouraged.");
@@ -365,7 +372,7 @@ class SyncTurfForm extends FormBase {
       // An NL was selected from the result of a search, typically by name.
       case 'search_select':
         $selections = $this->nlsListDisplayObj->
-                        validateNlSelection($form_state->getValue('search') ?? []);
+        validateNlSelection($form_state->getValue('search') ?? []);
         $nlSelection = reset($selections);
         $form_state->set('nlSelection',$nlSelection);
         if(count($selections)!=1) {
@@ -414,121 +421,121 @@ class SyncTurfForm extends FormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
-    {
-      $form_state->set('reenter',TRUE);
-      $form_state->setRebuild();
-      $syncTurf = FALSE;
-      $triggeringElement = $form_state->getTriggeringElement();
-      $elementClicked = $triggeringElement['#name'];
-      switch ($elementClicked) {
+  {
+    $form_state->set('reenter',TRUE);
+    $form_state->setRebuild();
+    $syncTurf = FALSE;
+    $triggeringElement = $form_state->getTriggeringElement();
+    $elementClicked = $triggeringElement['#name'];
+    switch ($elementClicked) {
 
-        case 'turf_submit':
-          $form_state->set('page', 'nl_select');
-          $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
-          $turfSelection = $form_state->get('turfSelection');
-          $form_state->set('turfId',$turfSelection['turfId']);
-          break;
+      case 'turf_submit':
+        $form_state->set('page', 'nl_select');
+        $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
+        $turfSelection = $form_state->get('turfSelection');
+        $form_state->set('turfId',$turfSelection['turfId']);
+        break;
 
-        case 'previously_assigned_nl':
-          $previouslyAssignedMcid = $form_state->get('previouslyAssignedMcid');
-          $form_state->set('mcid',$previouslyAssignedMcid);
-          $syncTurf = TRUE;
-          break;
+      case 'previously_assigned_nl':
+        $previouslyAssignedMcid = $form_state->get('previouslyAssignedMcid');
+        $form_state->set('mcid',$previouslyAssignedMcid);
+        $syncTurf = TRUE;
+        break;
 
-        case 'nl_search_by_name':
-          $form_state->set('page', 'nl_search_by_name');
-          $this->nlpSessionDataObj->set('syncTurfPage', 'nl_search_by_name');
-          break;
+      case 'nl_search_by_name':
+        $form_state->set('page', 'nl_search_by_name');
+        $this->nlpSessionDataObj->set('syncTurfPage', 'nl_search_by_name');
+        break;
 
-        case 'nl_search_by_district':
-          $form_state->set('page', 'nl_search_by_district');
-          $this->nlpSessionDataObj->set('syncTurfPage', 'nl_search_by_district');
-          break;
+      case 'nl_search_by_district':
+        $form_state->set('page', 'nl_search_by_district');
+        $this->nlpSessionDataObj->set('syncTurfPage', 'nl_search_by_district');
+        break;
 
-        case 'search_goback':
-          $form_state->set('page', 'nl_select');
-          $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
-          break;
+      case 'search_goback':
+        $form_state->set('page', 'nl_select');
+        $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
+        break;
 
-        case 'search_submit':  //  Search needle provided.
-          break;
+      case 'search_submit':  //  Search needle provided.
+        break;
 
-        case 'search_select':  // NL selected from the result of a search, typically by name.
-        case 'add_selected':  //  NL selected from the list by district.
-          $nlSelection =  $form_state->get('nlSelection');
-          $mcid = $nlSelection['mcid'];
-          $form_state->set('mcid',$mcid);
-          $syncTurf = TRUE;
-          break;
-
-      }
-
-      //  This turf can be synced.
-      if($syncTurf) {
-        $mcid = $form_state->get('mcid');
-        $county = $form_state->get('county');
-
-        // PHP deletes uploaded temp files at end of request. Move the walksheet
-        // to persistent storage now so the batch (a later request) can access it.
-        $walksheetInfo = $form_state->get('walksheetInfo');
-        if (!empty($walksheetInfo['tempName'])) {
-          /** @var FileSystemInterface $fileSystem */
-          $fileSystem = Drupal::service('file_system');
-          $stagingDir = 'public://temp';
-          $fileSystem->prepareDirectory($stagingDir, FileSystemInterface::CREATE_DIRECTORY);
-          $stagingUri = $stagingDir . '/nlp_ws_' . uniqid() . '.' . $walksheetInfo['fileType'];
-          $fileSystem->moveUploadedFile($walksheetInfo['tempName'], $stagingUri);
-          $walksheetInfo['tempName'] = $fileSystem->realpath($stagingUri);
-          $form_state->set('walksheetInfo', $walksheetInfo);
-        }
-
-        $folderId = $this->nlpSessionDataObj->get('folderId');
-        $folderOptions = $this->nlpSessionDataObj->get('folderOptions');
-        $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
-        $turfId = $form_state->get('turfId');
-
-        if(empty($turfOptions[$turfId]['turfName'])) {
-          $messenger = Drupal::messenger();
-          $messenger->addWarning("The turf name is missing.  The turf cannot be synced.");
-          $form_state->set('page', 'turf_select');
-          $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
-          return;
-        }
-        $showLists = $form_state->get('showLists');
-
-        $args = [
-          'county' => $county,
-          'folderId' => $folderId,
-          'folderName' => $folderOptions[$folderId],
-          'turfId' => $turfId,
-          'turfName' => $turfOptions[$turfId]['turfName'],
-          'mcid' => $mcid,
-          'voterCount' => $turfOptions[$turfId]['voterCount'],
-          'doorCount' => $turfOptions[$turfId]['doorCount'],
-          'showLists' => $showLists,
-          'mapRegionId' => $turfOptions[$turfId]['mapRegionId'],
-          'mapRegionName' => $turfOptions[$turfId]['mapRegionName'],
-          'minivanNumber' => $turfOptions[$turfId]['minivanNumber'],
-          'minivanCreateDate' => $turfOptions[$turfId]['minivanCreateDate'],
-          'walksheetInfo' => $form_state->get('walksheetInfo'),
-
-        ];
-        $form_state->set('page', 'turf_select');
-        $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
-
-        $batch = [
-          'operations'       => [[[SyncTurfBatch::class, 'process'], [$args]]],
-          'finished'         => [SyncTurfBatch::class, 'finished'],
-          'title'            => t('Processing Sync Turf Batch.'),
-          'init_message'     => t('Sync Turf Batch is starting.'),
-          'progress_message' => t('Processed @percentage % of Sync Turf Batch.'),
-          'error_message'    => t('Sync Turf Batch has encountered an error.'),
-        ];
-        batch_set($batch);
-
-      }
+      case 'search_select':  // NL selected from the result of a search, typically by name.
+      case 'add_selected':  //  NL selected from the list by district.
+        $nlSelection =  $form_state->get('nlSelection');
+        $mcid = $nlSelection['mcid'];
+        $form_state->set('mcid',$mcid);
+        $syncTurf = TRUE;
+        break;
 
     }
+
+    //  This turf can be synced.
+    if($syncTurf) {
+      $mcid = $form_state->get('mcid');
+      $county = $form_state->get('county');
+
+      // PHP deletes uploaded temp files at end of request. Move the walksheet
+      // to persistent storage now so the batch (a later request) can access it.
+      $walksheetInfo = $form_state->get('walksheetInfo');
+      if (!empty($walksheetInfo['tempName'])) {
+        /** @var FileSystemInterface $fileSystem */
+        $fileSystem = Drupal::service('file_system');
+        $stagingDir = 'public://temp';
+        $fileSystem->prepareDirectory($stagingDir, FileSystemInterface::CREATE_DIRECTORY);
+        $stagingUri = $stagingDir . '/nlp_ws_' . uniqid() . '.' . $walksheetInfo['fileType'];
+        $fileSystem->moveUploadedFile($walksheetInfo['tempName'], $stagingUri);
+        $walksheetInfo['tempName'] = $fileSystem->realpath($stagingUri);
+        $form_state->set('walksheetInfo', $walksheetInfo);
+      }
+
+      $folderId = $this->nlpSessionDataObj->get('folderId');
+      $folderOptions = $this->nlpSessionDataObj->get('folderOptions');
+      $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
+      $turfId = $form_state->get('turfId');
+
+      if(empty($turfOptions[$turfId]['turfName'])) {
+        $messenger = Drupal::messenger();
+        $messenger->addWarning("The turf name is missing.  The turf cannot be synced.");
+        $form_state->set('page', 'turf_select');
+        $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
+        return;
+      }
+      $showLists = $form_state->get('showLists');
+
+      $args = [
+        'county' => $county,
+        'folderId' => $folderId,
+        'folderName' => $folderOptions[$folderId],
+        'turfId' => $turfId,
+        'turfName' => $turfOptions[$turfId]['turfName'],
+        'mcid' => $mcid,
+        'voterCount' => $turfOptions[$turfId]['voterCount'],
+        'doorCount' => $turfOptions[$turfId]['doorCount'],
+        'showLists' => $showLists,
+        'mapRegionId' => $turfOptions[$turfId]['mapRegionId'],
+        'mapRegionName' => $turfOptions[$turfId]['mapRegionName'],
+        'minivanNumber' => $turfOptions[$turfId]['minivanNumber'],
+        'minivanCreateDate' => $turfOptions[$turfId]['minivanCreateDate'],
+        'walksheetInfo' => $form_state->get('walksheetInfo'),
+
+      ];
+      $form_state->set('page', 'turf_select');
+      $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
+
+      $batch = [
+        'operations'       => [[[SyncTurfBatch::class, 'process'], [$args]]],
+        'finished'         => [SyncTurfBatch::class, 'finished'],
+        'title'            => t('Processing Sync Turf Batch.'),
+        'init_message'     => t('Sync Turf Batch is starting.'),
+        'progress_message' => t('Processed @percentage % of Sync Turf Batch.'),
+        'error_message'    => t('Sync Turf Batch has encountered an error.'),
+      ];
+      batch_set($batch);
+
+    }
+
+  }
 
   public function validateWalksheet(string $name): array
   {
@@ -679,42 +686,42 @@ class SyncTurfForm extends FormBase {
    * @return array - The form array for the page.
    */
   public function previouslyAssignedNl(int $turfId, int &$mcid): array
-    {
-      $form = [];
-      $turfAssignment = $this->turfsObj->getTurfAssignment($turfId);
-      if(!empty($turfAssignment)) {
-        $form['previously_assigned_title'] = [
-          '#markup' => '<div class="big-ts-select-box" id="turf-sync-previous-title"><hr>
+  {
+    $form = [];
+    $turfAssignment = $this->turfsObj->getTurfAssignment($turfId);
+    if(!empty($turfAssignment)) {
+      $form['previously_assigned_title'] = [
+        '#markup' => '<div class="big-ts-select-box" id="turf-sync-previous-title"><hr>
                             <h2>Select the NL previously assigned to this turf.</h2></div>',
+      ];
+      $form['previously_assigned'] = [
+        '#type' => 'fieldset',
+        '#prefix' => " \n" . '<div class="big-ts-select-box" id="turf-sync-previous-box">' . " \n",
+        '#suffix' => " \n" . '</div>' . " \n",
+      ];
+      $mcid = $turfAssignment['mcid'];
+      $nl = $this->nlsObj->getNlById($mcid);
+      if (!empty($nl)) {
+        $msg = "&#x2714; " . Html::escape($nl['firstName']) . ' ' . Html::escape($nl['lastName'])
+          . ' [' . Html::escape($nl['mcid']) . '] - '
+          . ' HD: ' . Html::escape($nl['hd']) . ' Precinct: ' . Html::escape($nl['precinct']) . '<br>';
+        $form['previously_assigned']['previously_assigned_nl_note'] = [
+          '#markup' => Markup::create($msg),
         ];
-        $form['previously_assigned'] = [
-          '#type' => 'fieldset',
-          '#prefix' => " \n" . '<div class="big-ts-select-box" id="turf-sync-previous-box">' . " \n",
-          '#suffix' => " \n" . '</div>' . " \n",
+        $form['previously_assigned']['walksheet'] = $this->syncTurfBuilderObj->walksheet('pa');
+        $form['previously_assigned']['previously_assigned_nl'] = [
+          '#type' => 'submit',
+          '#name' => 'previously_assigned_nl',
+          '#value' => 'Use the previously assigned NL',
         ];
-        $mcid = $turfAssignment['mcid'];
-        $nl = $this->nlsObj->getNlById($mcid);
-        if (!empty($nl)) {
-          $msg = "&#x2714; " . Html::escape($nl['firstName']) . ' ' . Html::escape($nl['lastName'])
-            . ' [' . Html::escape($nl['mcid']) . '] - '
-            . ' HD: ' . Html::escape($nl['hd']) . ' Precinct: ' . Html::escape($nl['precinct']) . '<br>';
-          $form['previously_assigned']['previously_assigned_nl_note'] = [
-            '#markup' => Markup::create($msg),
-          ];
-          $form['previously_assigned']['walksheet'] = $this->syncTurfBuilderObj->walksheet('pa');
-          $form['previously_assigned']['previously_assigned_nl'] = [
-            '#type' => 'submit',
-            '#name' => 'previously_assigned_nl',
-            '#value' => 'Use the previously assigned NL',
-          ];
-        } else {
-          $form['previously_assigned']['inactive_nl'] = [
-            '#markup' => "The NL must be in the active NL list to sync a turf."
-          ];
-        }
+      } else {
+        $form['previously_assigned']['inactive_nl'] = [
+          '#markup' => "The NL must be in the active NL list to sync a turf."
+        ];
       }
-      return $form;
     }
+    return $form;
+  }
 
   /**
    * Builds the page to select a turf to sync.
@@ -724,34 +731,34 @@ class SyncTurfForm extends FormBase {
    * @return array - The form array for the page.
    */
   public function buildTurfSelectPage(bool $showLists): array
-    {
+  {
 
-      $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
-      $mapRegionOptions = $this->nlpSessionDataObj->get('mapRegionOptions');
-      $emptyDisplay = '';
-      if($showLists) {
-        if(empty($turfOptions)) {
-          $emptyDisplay = "There are no saved lists in this folder.";
-        }
-      } elseif (empty($turfOptions)) {
-        if(empty($mapRegionOptions)) {
-          $emptyDisplay = "There are no map regions in the folder.";
-        } else {
-          $emptyDisplay = "There are no turfs in the map region.";
-        }
+    $turfOptions = $this->nlpSessionDataObj->get('turfOptions');
+    $mapRegionOptions = $this->nlpSessionDataObj->get('mapRegionOptions');
+    $emptyDisplay = '';
+    if($showLists) {
+      if(empty($turfOptions)) {
+        $emptyDisplay = "There are no saved lists in this folder.";
       }
-      if($emptyDisplay) {
-        $form['turf_select']['turf-empty'] = [
-          '#markup' => "<p><b><br>$emptyDisplay</b></p>",
-        ];
+    } elseif (empty($turfOptions)) {
+      if(empty($mapRegionOptions)) {
+        $emptyDisplay = "There are no map regions in the folder.";
       } else {
-        // Display a list of turfs in VoteBuilder for the user to select one.
-        $form['turf_select']['table'] =
-          $this->turfListDisplayObj->displayVoteBuilderTurfs($turfOptions,$showLists);
+        $emptyDisplay = "There are no turfs in the map region.";
       }
-
-      return $form;
     }
+    if($emptyDisplay) {
+      $form['turf_select']['turf-empty'] = [
+        '#markup' => "<p><b><br>$emptyDisplay</b></p>",
+      ];
+    } else {
+      // Display a list of turfs in VoteBuilder for the user to select one.
+      $form['turf_select']['table'] =
+        $this->turfListDisplayObj->displayVoteBuilderTurfs($turfOptions,$showLists);
+    }
+
+    return $form;
+  }
 
   /**
    * Builds the page for selecting an NL to sync a turf to.
@@ -759,40 +766,40 @@ class SyncTurfForm extends FormBase {
    * @return array - The form array for the page.
    */
   public function buildNlSelectPage(): array
-    {
-      $form = [];
+  {
+    $form = [];
 
-      $form['name_search_note'] = [
-        '#markup' => '<div class="big-ts-select-box" ><hr><h2>Search by name</h2><div>For a new turf or for a turf to be assigned to a different
+    $form['name_search_note'] = [
+      '#markup' => '<div class="big-ts-select-box" ><hr><h2>Search by name</h2><div>For a new turf or for a turf to be assigned to a different
 NL, you can search for the NL by name.  The search needle can be a fragment of text, and
 the fields for first name, last name, email and MCID are searched for a match.</div>',
-      ];
+    ];
 
-      $form['nl_search_by_name'] = [
-        '#type' => 'submit',
-        '#name' => 'nl_search_by_name',
-        '#value' => 'Search for an NL by name',
-        '#prefix' => '<div>',
-        '#suffix' => '</div></div>',
-        ];
+    $form['nl_search_by_name'] = [
+      '#type' => 'submit',
+      '#name' => 'nl_search_by_name',
+      '#value' => 'Search for an NL by name',
+      '#prefix' => '<div>',
+      '#suffix' => '</div></div>',
+    ];
 
-      $form['district_search_note'] = [
-        '#markup' => '<div class="big-ts-select-box" ><br><hr><h2>Search by district</h2>
+    $form['district_search_note'] = [
+      '#markup' => '<div class="big-ts-select-box" ><br><hr><h2>Search by district</h2>
 <div>You can also look for an NL to assign from a list
 of NLs in a House District or a Precinct.  When the lists are long, this is a good way to
 find an NL when working on a specific Precinct. </div>',
-      ];
+    ];
 
-      $form['nl_search_by_district'] = [
-        '#type' => 'submit',
-        '#name' => 'nl_search_by_district',
-        '#value' => 'Search for an NL by House District or Precinct',
-        '#prefix' => '<div>',
-        '#suffix' => '</div></div>',
-        ];
+    $form['nl_search_by_district'] = [
+      '#type' => 'submit',
+      '#name' => 'nl_search_by_district',
+      '#value' => 'Search for an NL by House District or Precinct',
+      '#prefix' => '<div>',
+      '#suffix' => '</div></div>',
+    ];
 
-      return $form;
-    }
+    return $form;
+  }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * folderSelectedCallback
