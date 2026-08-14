@@ -12,8 +12,14 @@
 
       let formChanged = false;
 
-      form.addEventListener('change', function () { formChanged = true; });
-      form.addEventListener('input', function () { formChanged = true; });
+      form.addEventListener('change', function (e) {
+        if (e.target.classList.contains('nlp-hd-select') || e.target.classList.contains('nlp-pct-select')) { return; }
+        formChanged = true;
+      });
+      form.addEventListener('input', function (e) {
+        if (e.target.classList.contains('nlp-hd-select') || e.target.classList.contains('nlp-pct-select')) { return; }
+        formChanged = true;
+      });
 
       // Any form submission (Save, Next, Previous, etc.) means the data was processed.
       form.addEventListener('submit', function () { formChanged = false; });
