@@ -234,7 +234,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetStateNameReturnsConfiguredState(): void {
       $this->setupNlpConfigGet([
         ['nlpservices_canvass_response_codes', null],
-        ['nlpservices-county-names', ['State' => 'Oregon', 'Multnomah' => [6, 7]]],
+        ['nlpservices-state-name', 'Oregon'],
       ]);
       $this->assertSame('Oregon', $this->buildConfiguration()->getStateName());
     }
@@ -265,15 +265,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $this->buildConfiguration()->getCountyNames());
     }
 
-    public function testGetCountyNamesReturnsArrayOfKeys(): void {
-      $counties = ['State' => 'Oregon', 'Multnomah' => [6, 7], 'Washington' => [8, 9]];
+    public function testGetCountyNamesReturnsIndexedArray(): void {
+      $counties = ['Multnomah', 'Washington'];
       $this->setupNlpConfigGet([
         ['nlpservices_canvass_response_codes', null],
         ['nlpservices-county-names', $counties],
       ]);
-      $result = $this->buildConfiguration()->getCountyNames();
-      $this->assertContains('Multnomah', $result);
-      $this->assertContains('Washington', $result);
+      $this->assertSame($counties, $this->buildConfiguration()->getCountyNames());
     }
 
     // -------------------------------------------------------------------------
