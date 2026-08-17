@@ -3,10 +3,11 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\nlpservices\DrupalUser;
 
@@ -15,23 +16,26 @@ use Drupal\nlpservices\DrupalUser;
  */
 class TurfDeliveryMessageForm extends FormBase
 {
-  protected ConfigFactoryInterface $config;
+  protected NlpConfiguration $nlpConfiguration;
+  protected NlpSessionData $sessionData;
   protected NlpTurfDeliveryMessage $turfMsg;
   protected DrupalUser $drupalUser;
-  
-  public function __construct($config, $turfMsg, $drupalUser) {
-    $this->config = $config;
+
+  public function __construct($nlpConfiguration, $sessionData, $turfMsg, $drupalUser) {
+    $this->nlpConfiguration = $nlpConfiguration;
+    $this->sessionData = $sessionData;
     $this->turfMsg = $turfMsg;
     $this->drupalUser = $drupalUser;
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public static function create(ContainerInterface $container): TurfDeliveryMessageForm
   {
     return new static(
-      $container->get('config.factory'),
+      $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_delivery_message'),
       $container->get('nlpservices.drupal_user'),
     );
@@ -51,45 +55,27 @@ class TurfDeliveryMessageForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     if (empty($form_state->get('reenter'))) {
-
-      $factory = Drupal::service('tempstore.private');
-      $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('County');
-      $form_state->set('county',$county);
-  
-      $config = $this->config('nlpservices.configuration');
-      
-      $countyNames = $config->get('nlpservices-county-names');
-      $form_state->set('countyNames',array_keys($countyNames));
-      $form_state->set('state',$countyNames['State']);
-  
       if($this->drupalUser->isNlpAdminUser()) {
-        $form_state->set('page','county_select');
-        $form_state->set('admin',TRUE);
+        $form_state->set('page', 'county_select');
+        $form_state->set('admin', TRUE);
       } else {
-        $form_state->set('page','edit_county');
-        $form_state->set('admin',FALSE);
-        $form_state->set('county_selected',$county);
-  
+        $county = $this->sessionData->getCounty();
+        $form_state->set('page', 'edit_county');
+        $form_state->set('admin', FALSE);
+        $form_state->set('county_selected', $county);
         $countyMsg = $this->turfMsg->getTurfMsg($county);
         $form_state->set('countyMsg', $countyMsg);
       }
-      
     }
-    $county = $form_state->get('county');
-    
-    $state = $form_state->get('state');
-    $countyNames = $form_state->get('countyNames');
-    
+
     $page = $form_state->get('page');
     switch ($page) {
-    
+
       case 'county_select':
-        
         $form['county_select'] = array(
           '#type' => 'select',
           '#title' => t('State/County'),
-          '#options' => $countyNames,
+          '#options' => $this->nlpConfiguration->getCountyNames(),
           '#description' => t('Select either the state or a specify county.'),
         );
         $form['county_select_submit'] = array(
@@ -98,21 +84,18 @@ class TurfDeliveryMessageForm extends FormBase
           '#value' => t('Create the email message. >>'),
         );
         break;
-    
+
       case 'edit_state':
-        
+        $state = $this->nlpConfiguration->getStateName();
         $form['edit-box'] = [
           '#type' => 'fieldset',
           '#prefix' => " \n" . '<div class="edit-text">' . " \n",
           '#suffix' => " \n" . '</div>' . " \n",
         ];
-
         $form['edit-box']['state-name'] = [
           '#markup' => "<h1>Default email message for ".$state."</h1>",
         ];
-        
         $form['edit-box']['help'] = $this->editHelp();
-        
         $form['edit-box']['body'] = [
           '#type' => 'text_format',
           '#title' => $state.' Email Template',
@@ -121,29 +104,24 @@ class TurfDeliveryMessageForm extends FormBase
           '#rows' => 25,
           '#description' => t('Template for the state email for turf delivery.'),
         ];
-      
         $form['edit-box']['state_edit'] = [
           '#type' => 'submit',
           '#name' => 'state-edit',
           '#value' => t('Create or update the state email message. >>'),
         ];
-        
         break;
-    
+
       case 'edit_county':
-        
+        $county = $this->sessionData->getCounty();
         $form['edit-box'] = [
           '#type' => 'fieldset',
           '#prefix' => " \n" . '<div class="edit-text">' . " \n",
           '#suffix' => " \n" . '</div>' . " \n",
         ];
-        
         $form['edit-box']['county-name'] = [
           '#markup' => "<h1>Edit the turf-delivery message for ".$county." County.</h1>",
         ];
-        
         $form['edit-box']['help'] = $this->editHelp();
-        
         $countySelected = $form_state->get('county_selected');
         $form['edit-box']['body'] = [
           '#type' => 'text_format',
@@ -153,13 +131,11 @@ class TurfDeliveryMessageForm extends FormBase
           '#rows' => 25,
           '#description' => t('Template for the county email for turf delivery.'),
         ];
-      
         $form['edit-box']['county_edit'] = [
           '#type' => 'submit',
           '#name' => 'county-edit',
           '#value' => t('Create or update the '.$countySelected.' County email message. >>'),
         ];
-        
         break;
     }
     $form['#attached']['library'][] = 'nlpservices/turf-delivery-message';
@@ -175,14 +151,12 @@ class TurfDeliveryMessageForm extends FormBase
     $form_state->setRebuild();
     $messenger = Drupal::messenger();
   
-    $countyNames = $form_state->get('countyNames');
-    
     $page = $form_state->get('page');
     switch ($page) {
-    
+
       case 'county_select':
         $countySelect = $form_state->getValue('county_select');
-        $countySelected = $countyNames[$countySelect];
+        $countySelected = $this->nlpConfiguration->getCountyNames()[$countySelect];
        
         if($countySelected == 'State') {
           $stateMsg = $this->turfMsg->getTurfMsg();

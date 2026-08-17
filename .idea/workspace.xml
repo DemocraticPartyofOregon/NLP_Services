@@ -7,17 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update version number">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.links.menu.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.links.menu.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportNlsStatusForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportNlsStatusForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteCoordinatorFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteCoordinatorFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ExportNlsStatusFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ExportNlsStatusFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the display of NLP Configuration and Administration">
+      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -111,23 +104,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0026067551243305" />
-      <entry key="MS500" value="1.4532088826853435" />
-      <entry key="S2" value="3.320750011766704" />
-      <entry key="S5" value="4.92219666702041" />
-      <entry key="S10" value="5.81033120531143" />
-      <entry key="S30" value="6.563056538308567" />
-      <entry key="S60" value="6.775969856074196" />
-      <entry key="M2" value="6.886553598675132" />
-      <entry key="M5" value="6.954726202587319" />
-      <entry key="M10" value="6.998379780956" />
-      <entry key="M15" value="7.061551519833578" />
-      <entry key="M30" value="7.274687289885067" />
-      <entry key="H1" value="7.937154896200372" />
-      <entry key="H2" value="11.696047793895449" />
-      <entry key="H4" value="20.380299567640513" />
-      <entry key="D1" value="49.0530175960385" />
-      <entry key="W1" value="343.821324055672" />
+      <entry key="MS100" value="1.0000027925921078" />
+      <entry key="MS500" value="1.0891370327456944" />
+      <entry key="S2" value="2.0643974203826145" />
+      <entry key="S5" value="3.194633753734839" />
+      <entry key="S10" value="4.711284145307648" />
+      <entry key="S30" value="13.063052966693842" />
+      <entry key="S60" value="21.844169620753256" />
+      <entry key="M2" value="29.527630836090797" />
+      <entry key="M5" value="35.850903558365545" />
+      <entry key="M10" value="38.51018395842172" />
+      <entry key="M15" value="39.83139982990331" />
+      <entry key="M30" value="42.278376597903176" />
+      <entry key="H1" value="44.89949456513933" />
+      <entry key="H2" value="49.4385817390587" />
+      <entry key="H4" value="58.43132891321075" />
+      <entry key="D1" value="88.82525525948849" />
+      <entry key="W1" value="383.5956328337539" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -140,32 +133,32 @@
       <entry key="M2" value="0.0" />
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
-      <entry key="M15" value="4.01529155834E-312" />
-      <entry key="M30" value="3.4613975396514146E-156" />
-      <entry key="H1" value="3.220217802389745E-78" />
-      <entry key="H2" value="3.1084946363949425E-39" />
-      <entry key="H4" value="9.8278223931764E-20" />
-      <entry key="D1" value="0.0037235346878520276" />
-      <entry key="W1" value="7.2651737672889105" />
+      <entry key="M15" value="3.6628234823E-313" />
+      <entry key="M30" value="1.0454443807969944E-156" />
+      <entry key="H1" value="1.7697420602783459E-78" />
+      <entry key="H2" value="2.304424507791511E-39" />
+      <entry key="H4" value="8.4618141178991E-20" />
+      <entry key="D1" value="0.0036318098396702875" />
+      <entry key="W1" value="7.239332669976554" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9162139609843856" />
-      <entry key="MS500" value="1.4282730310176266" />
-      <entry key="S2" value="3.308440895417912" />
-      <entry key="S5" value="4.915267245203256" />
-      <entry key="S10" value="5.806305779298122" />
-      <entry key="S30" value="6.561555281352576" />
-      <entry key="S60" value="6.7751965926219935" />
-      <entry key="M2" value="6.886161081678905" />
-      <entry key="M5" value="6.9545677102512755" />
-      <entry key="M10" value="6.998299304344251" />
-      <entry key="M15" value="7.0614960607060535" />
-      <entry key="M30" value="7.274656303690509" />
-      <entry key="H1" value="7.937134622525132" />
-      <entry key="H2" value="11.696024087649201" />
-      <entry key="H4" value="20.380271635803137" />
-      <entry key="D1" value="49.056714200556506" />
-      <entry key="W1" value="351.08624841390815" />
+      <entry key="MS100" value="0.9592667796555516" />
+      <entry key="MS500" value="1.0800121594605225" />
+      <entry key="S2" value="2.0598088650323514" />
+      <entry key="S5" value="3.1917578539260423" />
+      <entry key="S10" value="4.709156470657566" />
+      <entry key="S30" value="13.060928913066837" />
+      <entry key="S60" value="21.842349082955344" />
+      <entry key="M2" value="29.526388272628527" />
+      <entry key="M5" value="35.85029712199144" />
+      <entry key="M10" value="38.50985720820969" />
+      <entry key="M15" value="39.831173401005955" />
+      <entry key="M30" value="42.27825397760864" />
+      <entry key="H1" value="44.89942613503073" />
+      <entry key="H2" value="49.43853535467877" />
+      <entry key="H4" value="58.43129041690263" />
+      <entry key="D1" value="88.82885838893222" />
+      <entry key="W1" value="390.834716636842" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -460,23 +453,7 @@
       <workItem from="1786544815489" duration="312000" />
       <workItem from="1786545208291" duration="506000" />
       <workItem from="1786636878532" duration="419000" />
-      <workItem from="1786736016791" duration="13013000" />
-    </task>
-    <task id="LOCAL-00149" summary="Add unit tests for remaining api files">
-      <option name="closed" value="true" />
-      <created>1782512011078</created>
-      <option name="number" value="00149" />
-      <option name="presentableId" value="LOCAL-00149" />
-      <option name="project" value="LOCAL" />
-      <updated>1782512011078</updated>
-    </task>
-    <task id="LOCAL-00150" summary="Replace curl calls with guzzle for API requests">
-      <option name="closed" value="true" />
-      <created>1782512418812</created>
-      <option name="number" value="00150" />
-      <option name="presentableId" value="LOCAL-00150" />
-      <option name="project" value="LOCAL" />
-      <updated>1782512418812</updated>
+      <workItem from="1786736016791" duration="14590000" />
     </task>
     <task id="LOCAL-00151" summary="Add tests for various services">
       <option name="closed" value="true" />
@@ -854,7 +831,23 @@
       <option name="project" value="LOCAL" />
       <updated>1786925294756</updated>
     </task>
-    <option name="localTasksCounter" value="198" />
+    <task id="LOCAL-00198" summary="Remove the use of configured HD names in favor of using dynamic values based on active NLs.">
+      <option name="closed" value="true" />
+      <created>1786928359818</created>
+      <option name="number" value="00198" />
+      <option name="presentableId" value="LOCAL-00198" />
+      <option name="project" value="LOCAL" />
+      <updated>1786928359819</updated>
+    </task>
+    <task id="LOCAL-00199" summary="Move the display of NLP Configuration and Administration">
+      <option name="closed" value="true" />
+      <created>1786928404659</created>
+      <option name="number" value="00199" />
+      <option name="presentableId" value="LOCAL-00199" />
+      <option name="project" value="LOCAL" />
+      <updated>1786928404659</updated>
+    </task>
+    <option name="localTasksCounter" value="200" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -921,8 +914,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Convert empty integer fields to 0" />
-    <MESSAGE value="Protect from a null date of birth" />
     <MESSAGE value="Fix migration of WelcomeController for D11 migrations." />
     <MESSAGE value="Remove dead code" />
     <MESSAGE value="Code review ActivistCodeConfigurationForm" />
@@ -946,7 +937,9 @@
     <MESSAGE value="Code Review" />
     <MESSAGE value="Inhibit form change popup if the only change it the HD select." />
     <MESSAGE value="Update version number" />
-    <option name="LAST_COMMIT_MESSAGE" value="Update version number" />
+    <MESSAGE value="Remove the use of configured HD names in favor of using dynamic values based on active NLs." />
+    <MESSAGE value="Move the display of NLP Configuration and Administration" />
+    <option name="LAST_COMMIT_MESSAGE" value="Move the display of NLP Configuration and Administration" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

@@ -5,15 +5,13 @@ declare(strict_types=1);
 namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal;
-use Drupal\Core\Config\ConfigFactoryInterface;
-use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\TempStore\PrivateTempStore;
-use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\Form\TurfDeliveryMessageForm;
+use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\Tests\UnitTestCase;
 
@@ -23,43 +21,29 @@ use Drupal\Tests\UnitTestCase;
  */
 class TurfDeliveryMessageFormTest extends UnitTestCase {
 
-  private ConfigFactoryInterface $configFactoryMock;
-  private ImmutableConfig $configMock;
+  private NlpConfiguration $nlpConfigurationMock;
+  private NlpSessionData $sessionDataMock;
   private NlpTurfDeliveryMessage $turfMsgMock;
   private DrupalUser $drupalUserMock;
-  private PrivateTempStoreFactory $tempStoreFactoryMock;
-  private PrivateTempStore $tempStoreMock;
   private MessengerInterface $messengerMock;
 
   protected function setUp(): void {
     parent::setUp();
 
-    $this->configMock = $this->createMock(ImmutableConfig::class);
-    $this->configMock->method('get')
-      ->with('nlpservices-county-names')
-      ->willReturn(['State' => 'Oregon', 'TestCounty' => 'TestCounty']);
+    $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
+    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['State', 'TestCounty']);
+    $this->nlpConfigurationMock->method('getStateName')->willReturn('Oregon');
 
-    $this->configFactoryMock = $this->createMock(ConfigFactoryInterface::class);
-    $this->configFactoryMock->method('get')
-      ->with('nlpservices.configuration')
-      ->willReturn($this->configMock);
+    $this->sessionDataMock = $this->createMock(NlpSessionData::class);
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
 
     $this->turfMsgMock    = $this->createMock(NlpTurfDeliveryMessage::class);
     $this->drupalUserMock = $this->createMock(DrupalUser::class);
     $this->messengerMock  = $this->createMock(MessengerInterface::class);
 
-    $this->tempStoreMock = $this->createMock(PrivateTempStore::class);
-    $this->tempStoreMock->method('get')->with('County')->willReturn('TestCounty');
-
-    $this->tempStoreFactoryMock = $this->createMock(PrivateTempStoreFactory::class);
-    $this->tempStoreFactoryMock->method('get')
-      ->with('nlpservices.session_data')
-      ->willReturn($this->tempStoreMock);
-
     $container = new ContainerBuilder();
     $container->set('messenger', $this->messengerMock);
     $container->set('string_translation', $this->getStringTranslationStub());
-    $container->set('tempstore.private', $this->tempStoreFactoryMock);
     Drupal::setContainer($container);
   }
 
@@ -74,11 +58,11 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
   private function buildFormInstance(): TurfDeliveryMessageForm {
     $form = new TurfDeliveryMessageForm(
-      $this->configFactoryMock,
+      $this->nlpConfigurationMock,
+      $this->sessionDataMock,
       $this->turfMsgMock,
       $this->drupalUserMock,
     );
-    $form->setConfigFactory($this->configFactoryMock);
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
     return $form;
@@ -91,9 +75,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $state = new FormState();
     $state->set('reenter', TRUE);
     $state->set('page', $page);
-    $state->set('county', 'TestCounty');
-    $state->set('state', 'Oregon');
-    $state->set('countyNames', ['State', 'TestCounty']);
     foreach ($extras as $k => $v) {
       $state->set($k, $v);
     }
@@ -140,42 +121,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
 
     $this->assertTrue($formState->get('admin'));
-  }
-
-  /**
-   * @covers ::buildForm
-   */
-  public function testBuildFormFirstRenderAdminSetsCountyFromTempStore(): void {
-    $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-
-    $formState = new FormState();
-    $this->buildFormInstance()->buildForm([], $formState);
-
-    $this->assertSame('TestCounty', $formState->get('county'));
-  }
-
-  /**
-   * @covers ::buildForm
-   */
-  public function testBuildFormFirstRenderAdminStoresCountyNamesAsKeys(): void {
-    $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-
-    $formState = new FormState();
-    $this->buildFormInstance()->buildForm([], $formState);
-
-    $this->assertSame(['State', 'TestCounty'], $formState->get('countyNames'));
-  }
-
-  /**
-   * @covers ::buildForm
-   */
-  public function testBuildFormFirstRenderAdminStoresStateValue(): void {
-    $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-
-    $formState = new FormState();
-    $this->buildFormInstance()->buildForm([], $formState);
-
-    $this->assertSame('Oregon', $formState->get('state'));
   }
 
   // -------------------------------------------------------------------------
@@ -327,7 +272,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
       ->getMock();
     $formState->expects($this->once())->method('setRebuild');
     $formState->set('page', 'county_select');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('county_select', 1);
 
     $this->turfMsgMock->method('getTurfMsg')->willReturn('');
@@ -349,7 +293,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'county_select');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('county_select', 0);
 
     $form = [];
@@ -370,7 +313,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'county_select');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('county_select', 1);
 
     $form = [];
@@ -390,7 +332,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'edit_state');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => '<p>No tag here</p>']);
 
     $form = [];
@@ -406,7 +347,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'edit_state');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => '<p>No tag here</p>']);
 
     $form = [];
@@ -424,7 +364,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'edit_state');
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => $msg]);
 
     $form = [];
@@ -444,7 +383,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $formState->set('page', 'edit_county');
     $formState->set('county_selected', 'TestCounty');
     $formState->set('admin', TRUE);
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => '<p>No tag here</p>']);
 
     $form = [];
@@ -464,7 +402,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $formState->set('page', 'edit_county');
     $formState->set('county_selected', 'TestCounty');
     $formState->set('admin', TRUE);
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => $msg]);
 
     $form = [];
@@ -482,7 +419,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $formState->set('page', 'edit_county');
     $formState->set('county_selected', 'TestCounty');
     $formState->set('admin', TRUE);
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => $msg]);
 
     $form = [];
@@ -502,7 +438,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $formState->set('page', 'edit_county');
     $formState->set('county_selected', 'TestCounty');
     $formState->set('admin', FALSE);
-    $formState->set('countyNames', ['State', 'TestCounty']);
     $formState->setValue('body', ['value' => $msg]);
 
     $form = [];
