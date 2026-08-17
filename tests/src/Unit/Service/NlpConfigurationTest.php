@@ -277,45 +277,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getHDNames
-    // -------------------------------------------------------------------------
-
-    public function testGetHDNamesReturnsEmptyWhenCommitteeNotFound(): void {
-      $this->setupNlpConfigGet([
-        ['nlpservices_canvass_response_codes', null],
-        ['nlpservices-county-names', ['Multnomah' => [6, 7]]],
-      ]);
-      $this->assertSame([], $this->buildConfiguration()->getHDNames('Unknown'));
-    }
-
-    public function testGetHDNamesIncludesAllOptionByDefault(): void {
-      $this->setupNlpConfigGet([
-        ['nlpservices_canvass_response_codes', null],
-        ['nlpservices-county-names', ['Multnomah' => [6, 7]]],
-      ]);
-      $result = $this->buildConfiguration()->getHDNames('Multnomah');
-      $this->assertArrayHasKey('All', $result);
-    }
-
-    public function testGetHDNamesExcludesAllOptionWhenFlagFalse(): void {
-      $this->setupNlpConfigGet([
-        ['nlpservices_canvass_response_codes', null],
-        ['nlpservices-county-names', ['Multnomah' => [6, 7]]],
-      ]);
-      $result = $this->buildConfiguration()->getHDNames('Multnomah', FALSE);
-      $this->assertArrayNotHasKey('All', $result);
-    }
-
-    public function testGetHDNamesReturnsHdValuesAsKeysAndValues(): void {
-      $this->setupNlpConfigGet([
-        ['nlpservices_canvass_response_codes', null],
-        ['nlpservices-county-names', ['Multnomah' => [6, 7]]],
-      ]);
-      $result = $this->buildConfiguration()->getHDNames('Multnomah', FALSE);
-      $this->assertSame([6 => 6, 7 => 7], $result);
-    }
-
-    // -------------------------------------------------------------------------
     // getPledgeSurveyQuestion
     // -------------------------------------------------------------------------
 

@@ -4,13 +4,12 @@ namespace Drupal\nlpservices\Form;
 
 use Drupal;
 use Drupal\Component\Utility\Html;
-use Drupal\Core\File\FileExists;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\DrupalUser;
-use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpFileFunctions;
+use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpExportNlsStatus;
 
@@ -19,17 +18,19 @@ use Drupal\nlpservices\NlpExportNlsStatus;
  */
 class ExportNlsStatusForm extends FormBase
 {
-  protected NlpConfiguration $nlpConfigurationObj;
+  protected NlpNls $nlsObj;
   protected NlpSessionData $nlpSessionObj;
   protected NlpExportNlsStatus $nlpExportNlsStatusObj;
   protected DrupalUser $drupalUserObj;
+  protected NlpFileFunctions $fileFunctionsObj;
 
-  public function __construct($nlpSessionObj, $nlpConfigurationObj, $nlpExportNlsStatusObj, $drupalUserObj)
+  public function __construct($nlpSessionObj, $nlsObj, $nlpExportNlsStatusObj, $drupalUserObj, $fileFunctionsObj)
   {
     $this->nlpSessionObj = $nlpSessionObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
+    $this->nlsObj = $nlsObj;
     $this->nlpExportNlsStatusObj = $nlpExportNlsStatusObj;
     $this->drupalUserObj = $drupalUserObj;
+    $this->fileFunctionsObj = $fileFunctionsObj;
   }
 
   /**
@@ -39,9 +40,10 @@ class ExportNlsStatusForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.nls'),
       $container->get('nlpservices.export_nls_status'),
       $container->get('nlpservices.drupal_user'),
+      $container->get('nlpservices.file_functions'),
     );
   }
 
@@ -59,11 +61,7 @@ class ExportNlsStatusForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     if (empty($form_state->get('reenter'))) {
-      $currentUser = $this->drupalUserObj->getCurrentUser();
-      $admin = in_array('administrator', $currentUser['roles']) || in_array('nlp_admin', $currentUser['roles']);
-      $form_state->set('admin', $admin);
-
-      if ($admin) {
+      if ($this->drupalUserObj->isNlpAdminUser()) {
         $county = 'all';
       } else {
         $county = $this->nlpSessionObj->getCounty();
@@ -71,7 +69,10 @@ class ExportNlsStatusForm extends FormBase
           $this->messenger()->addError($this->t('The county is missing'));
           return [];
         }
-        $hdNames = $this->nlpConfigurationObj->getHDNames($county);
+        $hdNames = ['All' => 'All'];
+        foreach ($this->nlsObj->getHdList($county) as $hd) {
+          $hdNames[$hd] = $hd;
+        }
         $form['districtSelect'] = [
           '#type' => 'select',
           '#options' => $hdNames,
@@ -86,8 +87,7 @@ class ExportNlsStatusForm extends FormBase
     } else {
       $tempFileName = $form_state->get('fileName');
       $county = $form_state->get('county');
-      $admin = $form_state->get('admin');
-      if ($admin) {
+      if ($this->drupalUserObj->isNlpAdminUser()) {
         $page = '<h2>' . $this->t('Export of NLs status for all counties.') . '</h2>';
       } else {
         $hd = $form_state->get('hd');
@@ -114,25 +114,19 @@ class ExportNlsStatusForm extends FormBase
     $form_state->setRebuild();
     $form_state->set('reenter', TRUE);
 
-    $admin = $form_state->get('admin');
     $county = $form_state->get('county');
-    $hd = $admin ? 0 : (int) $form_state->getValue('districtSelect');
+    $hd = $this->drupalUserObj->isNlpAdminUser() ? 0 : (int) $form_state->getValue('districtSelect');
     $form_state->set('hd', $hd);
 
-    $tempDir = 'public://temp';
-    $contactDate = date('Y-m-d-H-i-s');
-    $tempFileName = "$tempDir/nls-status-$contactDate.csv";
-    $form_state->set('fileName', $tempFileName);
-
-    $file = Drupal::service('file.repository')->writeData('', $tempFileName, FileExists::Replace);
-    $file->setTemporary();
-    try {
-      $file->save();
-    } catch (Exception $e) {
-      nlp_debug_msg('ExportNlsStatusForm', $e->getMessage());
-      $this->messenger()->addError($this->t("Can't set file as temporary."));
+    $tempFile = $this->fileFunctionsObj->createTempCsvFile('nls-status');
+    if ($tempFile === false) {
+      $this->messenger()->addError($this->t("Can't create temporary file."));
       return;
     }
+    fclose($tempFile['fh']);
+    $tempFileName = $tempFile['uri'];
+    $form_state->set('fileName', $tempFileName);
+
     $this->nlpExportNlsStatusObj->createNlsStatusFile($tempFileName, $county, $hd);
   }
 }

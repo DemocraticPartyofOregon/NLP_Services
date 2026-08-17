@@ -13,7 +13,6 @@ use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\MagicWord;
 use Drupal\nlpservices\NlpCoordinatorsListDisplay;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpConfiguration;
 
 /**
  * @noinspection PhpUnused
@@ -28,8 +27,7 @@ class CoordinatorsForm extends FormBase
   protected NlpCoordinatorsListDisplay $coordinatorsListDisplayObj;
   protected NlpSessionData $sessionDataObj;
   protected NlpSearchBar $searchBarObj;
-  protected NlpConfiguration $nlpConfigurationObj;
-  
+
   private array $scopeOptions = [
     'choose'=>'Select scope',
     'none' => 'None',
@@ -39,7 +37,7 @@ class CoordinatorsForm extends FormBase
   ];
   
   public function __construct( $coordinatorsObj,$nlsObj,$drupalUserObj,$magicWordObj,
-                               $coordinatorsListDisplayObj, $sessionDataObj, $searchBarObj, $nlpConfigurationObj )
+                               $coordinatorsListDisplayObj, $sessionDataObj, $searchBarObj )
   {
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;
@@ -48,7 +46,6 @@ class CoordinatorsForm extends FormBase
     $this->coordinatorsListDisplayObj = $coordinatorsListDisplayObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->searchBarObj = $searchBarObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
   
   /**
@@ -64,7 +61,6 @@ class CoordinatorsForm extends FormBase
       $container->get('nlpservices.coordinators_display'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.search_bar'),
-      $container->get('nlpservices.configuration'),
     );
   }
   
@@ -234,7 +230,8 @@ coordinator and not to the NLP Site admin.</p>"),
               $form_state->setErrorByName('hd-assigned',t('You must select an HD to be managed.'));
               break;
             }
-            $hdOptions = $this->nlpConfigurationObj->getHDNames($county,FALSE);
+            $hdList = $this->nlsObj->getHdList($county);
+            $hdOptions = array_combine($hdList, $hdList);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
             $precinctList = $form_state->getValue('pct-list');
@@ -252,7 +249,8 @@ coordinator and not to the NLP Site admin.</p>"),
           case 'hd':
             
             $hdSelect = $form_state->getValue('hd-assigned');
-            $hdOptions = $this->nlpConfigurationObj->getHDNames($county,FALSE);
+            $hdList = $this->nlsObj->getHdList($county);
+            $hdOptions = array_combine($hdList, $hdList);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
             //nlp_debug_msg('$hd',$hd);
@@ -542,7 +540,8 @@ coordinator to groups of NLs.</p>',
       $this->coordinatorsListDisplayObj->buildCoordinatorsTable('add',$tableArray);
     
     $county = $this->sessionDataObj->getCounty();
-    $hdOptions = $this->nlpConfigurationObj->getHDNames($county,FALSE);
+    $hdList = $this->nlsObj->getHdList($county);
+    $hdOptions = array_combine($hdList, $hdList);
     $form['assignment']['scope_selection'] =
       $this->buildScope($scope, $this->scopeOptions,$hdOptions);
     

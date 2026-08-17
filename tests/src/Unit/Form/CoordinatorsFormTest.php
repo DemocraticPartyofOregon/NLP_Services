@@ -11,7 +11,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\Form\CoordinatorsForm;
 use Drupal\nlpservices\MagicWord;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpCoordinators;
 use Drupal\nlpservices\NlpCoordinatorsListDisplay;
 use Drupal\nlpservices\NlpNls;
@@ -33,7 +32,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   private NlpCoordinatorsListDisplay $listDisplayMock;
   private NlpSessionData $sessionDataMock;
   private NlpSearchBar $searchBarMock;
-  private NlpConfiguration $nlpConfigurationMock;
   private MessengerInterface $messengerMock;
   private object $emailValidatorMock;
 
@@ -47,7 +45,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock      = $this->createMock(NlpCoordinatorsListDisplay::class);
     $this->sessionDataMock      = $this->createMock(NlpSessionData::class);
     $this->searchBarMock        = $this->createMock(NlpSearchBar::class);
-    $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
     $this->messengerMock        = $this->createMock(MessengerInterface::class);
 
     $this->emailValidatorMock = $this->getMockBuilder(\stdClass::class)
@@ -79,7 +76,6 @@ class CoordinatorsFormTest extends UnitTestCase {
       $this->listDisplayMock,
       $this->sessionDataMock,
       $this->searchBarMock,
-      $this->nlpConfigurationMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
@@ -103,7 +99,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1', 'HD2']);
   }
 
   /**
@@ -120,7 +115,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1', 'HD2']);
   }
 
   private function baseNlRecord(): array {
@@ -277,7 +271,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn([]);
 
     $this->coordinatorsMock->method('getCoordinators')->willReturn([
       ['mcid' => 10, 'firstName' => 'Bob'],
@@ -315,7 +308,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn([]);
 
     // First call returns the HD-filtered display list; second returns all NLs for search.
     $this->nlsMock->method('getCountyNls')->willReturnOnConsecutiveCalls([], $allNls);
@@ -453,11 +445,10 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
     $this->coordinatorsMock->method('duplicateScope')->willReturn(FALSE);
-    // getHDNames returns ['HD1','HD2']; after unshift: [0=>'Select an HD', 1=>'HD1', 2=>'HD2']
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1', 'HD2']);
+    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
 
     $captured = [];
-    $formState = $this->addCoordinatorFormState('hd', [['hd-assigned', NULL, 1]]);
+    $formState = $this->addCoordinatorFormState('hd', [['hd-assigned', NULL, 'HD1']]);
     $formState->expects($this->never())->method('setErrorByName');
     $formState->method('set')->willReturnCallback(
       function ($key, $value) use (&$captured): void { $captured[$key] = $value; }
@@ -477,9 +468,9 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
     $this->coordinatorsMock->method('duplicateScope')->willReturn(TRUE);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1', 'HD2']);
+    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
 
-    $formState = $this->addCoordinatorFormState('hd', [['hd-assigned', NULL, 1]]);
+    $formState = $this->addCoordinatorFormState('hd', [['hd-assigned', NULL, 'HD1']]);
     $formState->method('set');
     $formState->expects($this->atLeastOnce())
       ->method('setErrorByName')
@@ -496,11 +487,11 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
     $this->coordinatorsMock->method('duplicateScope')->willReturn(FALSE);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1']);
+    $this->nlsMock->method('getHdList')->willReturn(['HD1']);
 
     $formState = $this->addCoordinatorFormState('precinct', [
       ['pct-list', NULL, ''],     // empty — triggers error
-      ['hd-assigned', NULL, 1],
+      ['hd-assigned', NULL, 'HD1'],
     ]);
     $formState->method('set');
 
@@ -546,11 +537,11 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
     $this->coordinatorsMock->method('duplicateScope')->willReturn(TRUE);
-    $this->nlpConfigurationMock->method('getHDNames')->willReturn(['HD1']);
+    $this->nlsMock->method('getHdList')->willReturn(['HD1']);
 
     $formState = $this->addCoordinatorFormState('precinct', [
       ['pct-list', NULL, '101'],
-      ['hd-assigned', NULL, 1],
+      ['hd-assigned', NULL, 'HD1'],
     ]);
     $formState->method('set');
 

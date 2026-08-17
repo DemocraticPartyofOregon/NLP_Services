@@ -9,27 +9,29 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\ExportNlsStatusForm;
-  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpExportNlsStatus;
+  use Drupal\nlpservices\NlpFileFunctions;
+  use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\Tests\UnitTestCase;
-  use Exception;
 
   class ExportNlsStatusFormTest extends UnitTestCase {
 
     private NlpSessionData $sessionDataMock;
-    private NlpConfiguration $configurationMock;
+    private NlpNls $nlsMock;
     private NlpExportNlsStatus $exportNlsStatusMock;
     private DrupalUser $drupalUserMock;
+    private NlpFileFunctions $fileFunctionsMock;
     private MessengerInterface $messengerMock;
 
     protected function setUp(): void {
       parent::setUp();
-      $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
-      $this->configurationMock  = $this->createMock(NlpConfiguration::class);
+      $this->sessionDataMock     = $this->createMock(NlpSessionData::class);
+      $this->nlsMock             = $this->createMock(NlpNls::class);
       $this->exportNlsStatusMock = $this->createMock(NlpExportNlsStatus::class);
-      $this->drupalUserMock     = $this->createMock(DrupalUser::class);
-      $this->messengerMock      = $this->createMock(MessengerInterface::class);
+      $this->drupalUserMock      = $this->createMock(DrupalUser::class);
+      $this->fileFunctionsMock   = $this->createMock(NlpFileFunctions::class);
+      $this->messengerMock       = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
       $container->set('messenger', $this->messengerMock);
@@ -49,46 +51,35 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private function buildForm(): ExportNlsStatusForm {
       $form = new ExportNlsStatusForm(
         $this->sessionDataMock,
-        $this->configurationMock,
+        $this->nlsMock,
         $this->exportNlsStatusMock,
         $this->drupalUserMock,
+        $this->fileFunctionsMock,
       );
       $form->setStringTranslation($this->getStringTranslationStub());
       $form->setMessenger($this->messengerMock);
       return $form;
     }
 
-    /** Builds a file mock with setTemporary() and save() and registers it with file.repository. */
-    private function setupFileRepo(bool $saveThrows = false): void {
-      $fileMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['setTemporary', 'save'])
-        ->getMock();
-      if ($saveThrows) {
-        $fileMock->method('save')->willThrowException(new Exception('save failed'));
+    /** Stubs createTempCsvFile to succeed or fail. */
+    private function setupFileFunctions(bool $fails = false): void {
+      if ($fails) {
+        $this->fileFunctionsMock->method('createTempCsvFile')->willReturn(false);
+      } else {
+        $fh = fopen('php://memory', 'w');
+        $this->fileFunctionsMock->method('createTempCsvFile')
+          ->willReturn(['uri' => 'public://temp/nls-status-2024-01-01-00-00-00.csv', 'fh' => $fh]);
       }
-
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
-      $repo->method('writeData')->willReturn($fileMock);
-
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/nls-status.csv');
-
-      $container = new ContainerBuilder();
-      $container->set('messenger', $this->messengerMock);
-      $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file.repository', $repo);
-      $container->set('file_url_generator', $fileUrlMock);
-      Drupal::setContainer($container);
     }
 
-    private function setupFileRepoThatThrowsOnWrite(): void {
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
-      $repo->method('writeData')->willThrowException(new \Exception('write failed'));
-
+    /** Builds a container with file_url_generator registered (needed for reenter buildForm). */
+    private function setupFileUrlContainer(): void {
+      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
+      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
       $container = new ContainerBuilder();
       $container->set('messenger', $this->messengerMock);
       $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file.repository', $repo);
+      $container->set('file_url_generator', $fileUrlMock);
       Drupal::setContainer($container);
     }
 
@@ -101,28 +92,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // buildForm — first render, admin user (administrator role)
+    // buildForm — first render, admin user
     // -------------------------------------------------------------------------
 
     public function testBuildFormAdminUserShowsSaveButtonWithoutDistrictSelect(): void {
-      $this->drupalUserMock->method('getCurrentUser')
-        ->willReturn(['roles' => ['administrator']]);
-
-      $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->with('reenter')->willReturn(NULL);
-
-      $result = $this->buildForm()->buildForm([], $formState);
-      $this->assertArrayHasKey('save', $result);
-      $this->assertArrayNotHasKey('districtSelect', $result);
-    }
-
-    // -------------------------------------------------------------------------
-    // buildForm — first render, admin user (nlp_admin role)
-    // -------------------------------------------------------------------------
-
-    public function testBuildFormNlpAdminRoleShowsSaveButtonWithoutDistrictSelect(): void {
-      $this->drupalUserMock->method('getCurrentUser')
-        ->willReturn(['roles' => ['nlp_admin']]);
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->with('reenter')->willReturn(NULL);
@@ -137,8 +111,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNonAdminNoCountyAddsErrorAndReturnsEmpty(): void {
-      $this->drupalUserMock->method('getCurrentUser')
-        ->willReturn(['roles' => ['authenticated']]);
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->sessionDataMock->method('getCounty')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addError');
 
@@ -154,11 +127,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNonAdminWithCountyShowsDistrictSelectAndSave(): void {
-      $this->drupalUserMock->method('getCurrentUser')
-        ->willReturn(['roles' => ['authenticated']]);
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
-      $this->configurationMock->method('getHDNames')->with('Denver')
-        ->willReturn([1 => 'HD 01', 2 => 'HD 02']);
+      $this->nlsMock->method('getHdList')->with('Denver')->willReturn(['HD 01', 'HD 02']);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->with('reenter')->willReturn(NULL);
@@ -173,20 +144,14 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterAdminShowsAllCountiesHeading(): void {
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
-      $container = new ContainerBuilder();
-      $container->set('messenger', $this->messengerMock);
-      $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file_url_generator', $fileUrlMock);
-      Drupal::setContainer($container);
+      $this->setupFileUrlContainer();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->willReturnMap([
-        ['reenter',   TRUE],
-        ['fileName',  'public://temp/nls-status.csv'],
-        ['county',    'all'],
-        ['admin',     TRUE],
+        ['reenter',  TRUE],
+        ['fileName', 'public://temp/nls-status.csv'],
+        ['county',   'all'],
       ]);
 
       $result = $this->buildForm()->buildForm([], $formState);
@@ -199,21 +164,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterNonAdminShowsCountyAndHdHeading(): void {
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
-      $container = new ContainerBuilder();
-      $container->set('messenger', $this->messengerMock);
-      $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file_url_generator', $fileUrlMock);
-      Drupal::setContainer($container);
+      $this->setupFileUrlContainer();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->willReturnMap([
-        ['reenter',   TRUE],
-        ['fileName',  'public://temp/nls-status.csv'],
-        ['county',    'Denver'],
-        ['admin',     FALSE],
-        ['hd',        '42'],
+        ['reenter',  TRUE],
+        ['fileName', 'public://temp/nls-status.csv'],
+        ['county',   'Denver'],
+        ['hd',       '42'],
       ]);
 
       $result = $this->buildForm()->buildForm([], $formState);
@@ -226,21 +185,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterNonAdminEmptyHdDefaultsToAll(): void {
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
-      $container = new ContainerBuilder();
-      $container->set('messenger', $this->messengerMock);
-      $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file_url_generator', $fileUrlMock);
-      Drupal::setContainer($container);
+      $this->setupFileUrlContainer();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->willReturnMap([
-        ['reenter',   TRUE],
-        ['fileName',  'public://temp/nls-status.csv'],
-        ['county',    'Denver'],
-        ['admin',     FALSE],
-        ['hd',        ''],
+        ['reenter',  TRUE],
+        ['fileName', 'public://temp/nls-status.csv'],
+        ['county',   'Denver'],
+        ['hd',       ''],
       ]);
 
       $result = $this->buildForm()->buildForm([], $formState);
@@ -252,21 +205,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterMarkupContainsDownloadLink(): void {
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
-      $container = new ContainerBuilder();
-      $container->set('messenger', $this->messengerMock);
-      $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('file_url_generator', $fileUrlMock);
-      Drupal::setContainer($container);
+      $this->setupFileUrlContainer();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->willReturnMap([
-        ['reenter',   TRUE],
-        ['fileName',  'public://temp/nls-status.csv'],
-        ['county',    'Denver'],
-        ['admin',     FALSE],
-        ['hd',        '01'],
+        ['reenter',  TRUE],
+        ['fileName', 'public://temp/nls-status.csv'],
+        ['county',   'Denver'],
+        ['hd',       '01'],
       ]);
 
       $result = $this->buildForm()->buildForm([], $formState);
@@ -279,13 +226,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testSubmitFormAdminCallsCreateNlsStatusFileWithAllAndZero(): void {
-      $this->setupFileRepo();
+      $this->setupFileFunctions();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
       $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->willReturnMap([
-        ['admin',  TRUE],
-        ['county', 'all'],
-      ]);
+      $formState->method('get')->with('county')->willReturn('all');
 
       $this->exportNlsStatusMock->expects($this->once())
         ->method('createNlsStatusFile')
@@ -300,13 +245,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testSubmitFormNonAdminPassesHdFromFormValue(): void {
-      $this->setupFileRepo();
+      $this->setupFileFunctions();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->willReturnMap([
-        ['admin',  FALSE],
-        ['county', 'Denver'],
-      ]);
+      $formState->method('get')->with('county')->willReturn('Denver');
       $formState->method('getValue')->with('districtSelect')->willReturn('3');
 
       $this->exportNlsStatusMock->expects($this->once())
@@ -318,17 +261,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // submitForm — file save() throws → addError called, createNlsStatusFile skipped
+    // submitForm — createTempCsvFile fails → addError, createNlsStatusFile skipped
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormSaveExceptionAddsErrorAndSkipsExport(): void {
-      $this->setupFileRepo(saveThrows: true);
+    public function testSubmitFormFileCreateFailureAddsErrorAndSkipsExport(): void {
+      $this->setupFileFunctions(fails: true);
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->willReturnMap([
-        ['admin',  FALSE],
-        ['county', 'Denver'],
-      ]);
+      $formState->method('get')->with('county')->willReturn('Denver');
       $formState->method('getValue')->willReturn('1');
 
       $this->messengerMock->expects($this->once())->method('addError');
@@ -343,13 +284,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testSubmitFormSetsReenterAndRebuild(): void {
-      $this->setupFileRepo();
+      $this->setupFileFunctions();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
       $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->willReturnMap([
-        ['admin',  TRUE],
-        ['county', 'all'],
-      ]);
+      $formState->method('get')->with('county')->willReturn('all');
       $formState->expects($this->once())->method('setRebuild');
       $formState->expects($this->atLeastOnce())->method('set')
         ->with($this->logicalOr(

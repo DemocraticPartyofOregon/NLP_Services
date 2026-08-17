@@ -257,31 +257,6 @@ class NlpConfiguration
   }
 
   /**
-   * getHDNames
-   *
-   * Get the list of house districts in the requested county. This text is
-   * configured in the election setup.  The house districts are assumed to be
-   * numbers, and the name and index are the same.
-   *
-   * @param string $committee
-   *   The name of the county to get.
-   * @param bool $all
-   *  If TRUE, include an "All" option in the list of house districts.
-   *
-   * @return array
-   *   Returns an array of house districts in the county.
-   */
-  public function getHDNames(string $committee, bool $all = TRUE): array {
-    $counties = $this->nlpConfig->get('nlpservices-county-names');
-    if (empty($counties[$committee])) { return []; }
-    $hdNames = ($all) ? ['All' => 'All'] : [];
-    foreach ($counties[$committee] as $hd) {
-      $hdNames[$hd] = $hd;
-    }
-    return $hdNames;
-  }
-
-  /**
    * getPledgeSurveyQuestion
    *
    * Get the pledge-to-vote survey question. This is configured in the election setup.

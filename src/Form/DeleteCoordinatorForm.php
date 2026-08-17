@@ -12,7 +12,6 @@ use Drupal\nlpservices\NlpCoordinators;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpCoordinatorsListDisplay;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpConfiguration;
 
 /**
  * @noinspection PhpUnused
@@ -26,10 +25,9 @@ class DeleteCoordinatorForm extends FormBase
   protected NlpCoordinatorsListDisplay $coordinatorsListDisplayObj;
   protected NlpSessionData $sessionDataObj;
   protected NlpSearchBar $searchBarObj;
-  protected NlpConfiguration $nlpConfigurationObj;
 
   public function __construct( $coordinatorsObj, $nlsObj, $drupalUserObj, $coordinatorsListDisplayObj,
-                               $sessionDataObj, $searchBarObj, $nlpConfigurationObj )
+                               $sessionDataObj, $searchBarObj )
   {
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;
@@ -37,7 +35,6 @@ class DeleteCoordinatorForm extends FormBase
     $this->coordinatorsListDisplayObj = $coordinatorsListDisplayObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->searchBarObj = $searchBarObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
 
   /**
@@ -52,7 +49,6 @@ class DeleteCoordinatorForm extends FormBase
       $container->get('nlpservices.coordinators_display'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.search_bar'),
-      $container->get('nlpservices.configuration'),
     );
   }
 
