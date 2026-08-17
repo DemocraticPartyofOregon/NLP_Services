@@ -7,10 +7,21 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the display of NLP Configuration and Administration">
-      <change beforePath="$PROJECT_DIR$/nlpservices.module" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.module" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Use NlpConfiguration for state, county and countyNames.">
+      <change afterPath="$PROJECT_DIR$/src/NlpFolderSetup.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/FoldersConfigurationForm.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/county_names_florida.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/county_names_mississippi.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/county_names_montana.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/county_names_oregon.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/county_names_west_florida.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpEncryption.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpEncryption.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,23 +115,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000027925921078" />
-      <entry key="MS500" value="1.0891370327456944" />
-      <entry key="S2" value="2.0643974203826145" />
-      <entry key="S5" value="3.194633753734839" />
-      <entry key="S10" value="4.711284145307648" />
-      <entry key="S30" value="13.063052966693842" />
-      <entry key="S60" value="21.844169620753256" />
-      <entry key="M2" value="29.527630836090797" />
-      <entry key="M5" value="35.850903558365545" />
-      <entry key="M10" value="38.51018395842172" />
-      <entry key="M15" value="39.83139982990331" />
-      <entry key="M30" value="42.278376597903176" />
-      <entry key="H1" value="44.89949456513933" />
-      <entry key="H2" value="49.4385817390587" />
-      <entry key="H4" value="58.43132891321075" />
-      <entry key="D1" value="88.82525525948849" />
-      <entry key="W1" value="383.5956328337539" />
+      <entry key="MS100" value="1.0000040060833202" />
+      <entry key="MS500" value="1.1163177409749396" />
+      <entry key="S2" value="2.6447411010952333" />
+      <entry key="S5" value="5.470483780030232" />
+      <entry key="S10" value="7.994335411115078" />
+      <entry key="S30" value="10.904643790016666" />
+      <entry key="S60" value="11.88460492156967" />
+      <entry key="M2" value="12.429812834342242" />
+      <entry key="M5" value="13.943851513982196" />
+      <entry key="M10" value="19.864842080901738" />
+      <entry key="M15" value="25.681674251280956" />
+      <entry key="M30" value="36.8903985288872" />
+      <entry key="H1" value="46.75970962260416" />
+      <entry key="H2" value="55.87179251701629" />
+      <entry key="H4" value="67.41382061649597" />
+      <entry key="D1" value="100.77743375381878" />
+      <entry key="W1" value="395.9463003673869" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -133,32 +144,32 @@
       <entry key="M2" value="0.0" />
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
-      <entry key="M15" value="3.6628234823E-313" />
-      <entry key="M30" value="1.0454443807969944E-156" />
-      <entry key="H1" value="1.7697420602783459E-78" />
-      <entry key="H2" value="2.304424507791511E-39" />
-      <entry key="H4" value="8.4618141178991E-20" />
-      <entry key="D1" value="0.0036318098396702875" />
-      <entry key="W1" value="7.239332669976554" />
+      <entry key="M15" value="1.17344984213E-313" />
+      <entry key="M30" value="5.917322006868395E-157" />
+      <entry key="H1" value="1.3314415565005565E-78" />
+      <entry key="H2" value="1.998796374296174E-39" />
+      <entry key="H4" value="7.880731201437082E-20" />
+      <entry key="D1" value="0.0035890012250209386" />
+      <entry key="W1" value="7.227080500346031" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9592667796555516" />
-      <entry key="MS500" value="1.0800121594605225" />
-      <entry key="S2" value="2.0598088650323514" />
-      <entry key="S5" value="3.1917578539260423" />
-      <entry key="S10" value="4.709156470657566" />
-      <entry key="S30" value="13.060928913066837" />
-      <entry key="S60" value="21.842349082955344" />
-      <entry key="M2" value="29.526388272628527" />
-      <entry key="M5" value="35.85029712199144" />
-      <entry key="M10" value="38.50985720820969" />
-      <entry key="M15" value="39.831173401005955" />
-      <entry key="M30" value="42.27825397760864" />
-      <entry key="H1" value="44.89942613503073" />
-      <entry key="H2" value="49.43853535467877" />
-      <entry key="H4" value="58.43129041690263" />
-      <entry key="D1" value="88.82885838893222" />
-      <entry key="W1" value="390.834716636842" />
+      <entry key="MS100" value="0.9592679362607973" />
+      <entry key="MS500" value="1.1070381257310575" />
+      <entry key="S2" value="2.638378378567846" />
+      <entry key="S5" value="5.464372135928026" />
+      <entry key="S10" value="7.989680260557855" />
+      <entry key="S30" value="10.902486526496464" />
+      <entry key="S60" value="11.883425367755077" />
+      <entry key="M2" value="12.429195135434043" />
+      <entry key="M5" value="13.943577606033445" />
+      <entry key="M10" value="19.86465465286245" />
+      <entry key="M15" value="25.68151599118054" />
+      <entry key="M30" value="36.890286130349104" />
+      <entry key="H1" value="46.75963660933224" />
+      <entry key="H2" value="55.87174151060087" />
+      <entry key="H4" value="67.4137793747434" />
+      <entry key="D1" value="100.78099351424201" />
+      <entry key="W1" value="403.1731322936785" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -453,15 +464,7 @@
       <workItem from="1786544815489" duration="312000" />
       <workItem from="1786545208291" duration="506000" />
       <workItem from="1786636878532" duration="419000" />
-      <workItem from="1786736016791" duration="14590000" />
-    </task>
-    <task id="LOCAL-00151" summary="Add tests for various services">
-      <option name="closed" value="true" />
-      <created>1782538498100</created>
-      <option name="number" value="00151" />
-      <option name="presentableId" value="LOCAL-00151" />
-      <option name="project" value="LOCAL" />
-      <updated>1782538498101</updated>
+      <workItem from="1786736016791" duration="23842000" />
     </task>
     <task id="LOCAL-00152" summary="Add tests for various services">
       <option name="closed" value="true" />
@@ -847,7 +850,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786928404659</updated>
     </task>
-    <option name="localTasksCounter" value="200" />
+    <task id="LOCAL-00200" summary="Use NlpConfiguration for state, county and countyNames.">
+      <option name="closed" value="true" />
+      <created>1786929881759</created>
+      <option name="number" value="00200" />
+      <option name="presentableId" value="LOCAL-00200" />
+      <option name="project" value="LOCAL" />
+      <updated>1786929881759</updated>
+    </task>
+    <option name="localTasksCounter" value="201" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -914,7 +925,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix migration of WelcomeController for D11 migrations." />
     <MESSAGE value="Remove dead code" />
     <MESSAGE value="Code review ActivistCodeConfigurationForm" />
     <MESSAGE value="Remove debug code" />
@@ -939,7 +949,8 @@
     <MESSAGE value="Update version number" />
     <MESSAGE value="Remove the use of configured HD names in favor of using dynamic values based on active NLs." />
     <MESSAGE value="Move the display of NLP Configuration and Administration" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move the display of NLP Configuration and Administration" />
+    <MESSAGE value="Use NlpConfiguration for state, county and countyNames." />
+    <option name="LAST_COMMIT_MESSAGE" value="Use NlpConfiguration for state, county and countyNames." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
