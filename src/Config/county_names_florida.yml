@@ -1,6 +1,0 @@
-# State abd county names for testing a site linked to the VoteBuilder sandbox.
-State: 'Florida'
-Jefferson: [9,10]
-Levy: [10,22,43]
-Orange: [9,32,33,35,36,37,38,39,40,41,49,79]
-Washington: [5]

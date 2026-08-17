@@ -2,11 +2,13 @@
 
 namespace Drupal\nlpservices\Config;
 
+use Drupal;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\ApiKeyManagement;
 use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpFolderSetup;
 use Exception;
 use Random\RandomException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -18,10 +20,12 @@ class ApiConfigurationForm extends FormBase {
 
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
+  protected NlpFolderSetup $folderSetupObj;
 
-  public function __construct( $nlpConfigurationObj, $apiKeyManagementObj ) {
+  public function __construct( $nlpConfigurationObj, $apiKeyManagementObj, $folderSetupObj ) {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
+    $this->folderSetupObj = $folderSetupObj;
   }
 
   /**
@@ -32,6 +36,7 @@ class ApiConfigurationForm extends FormBase {
     return new static(
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.api_key_management'),
+      $container->get('nlpservices.folder_setup'),
     );
   }
 
@@ -144,16 +149,17 @@ class ApiConfigurationForm extends FormBase {
         $this->t('The secret key and secret IV must both be provided or both left blank.'));
       $form_state->setErrorByName('secret_iv',
         $this->t('The secret key and secret IV must both be provided or both left blank.'));
+      return;
     }
 
     if ($key_empty && $iv_empty) {
       $key_saved = !empty($this->apiKeyManagementObj->getKey('secret_key'));
-      $iv_saved  = !empty($this->apiKeyManagementObj->getKey('secret_iv'));
-      if (!$key_saved || !$iv_saved) {
+      if (!$key_saved) {
         $form_state->setErrorByName('secret_key',
           $this->t('No secret key or IV is saved yet. Both must be provided.'));
         $form_state->setErrorByName('secret_iv',
           $this->t('No secret key or IV is saved yet. Both must be provided.'));
+        return;
       }
     }
 
@@ -161,10 +167,12 @@ class ApiConfigurationForm extends FormBase {
       if (strlen($secret_key) < 16) {
         $form_state->setErrorByName('secret_key',
           $this->t('Secret key must be at least 16 characters long for security.'));
+        return;
       }
       if (!$this->hasMinimumSecurityRequirements($secret_key)) {
         $form_state->setErrorByName('secret_key',
           $this->t('Secret key should contain a mix of uppercase letters, lowercase letters, numbers, and special characters for better security.'));
+        return;
       }
     }
 
@@ -212,7 +220,7 @@ class ApiConfigurationForm extends FormBase {
       if (!empty($existing)) {
         $this->apiKeyManagementObj->deleteKey('secret_iv');
       }
-      $this->apiKeyManagementObj->createKey('secret_iv', 'AES-256-CBC Secret IV', $secret_iv);
+      $this->apiKeyManagementObj->createKeyWithValues('secret_iv', 'AES-256-CBC Secret IV', ['value' => $secret_iv]);
     }
 
     $uploadedFile = ($this->getRequest()->files->get('files') ?? [])['api_keys'] ?? NULL;
@@ -242,12 +250,24 @@ class ApiConfigurationForm extends FormBase {
       $this->apiKeyManagementObj->deleteKey($committee);
     }
 
+    $countyNames = [];
     foreach ($apiKeys as $committee => $committeeKey) {
       if (empty($committeeKey['API Key'])) { continue; }
       if (!preg_match('/^[a-zA-Z0-9_\- ]+$/', $committee)) { continue; }
+      if ($committee === 'State Committee') {
+        $stateName = $committeeKey['Name'] ?? '';
+        $this->nlpConfigurationObj->setStateName($stateName);
+        continue;
+      }
       $this->apiKeyManagementObj->deleteKey($committee);
       $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
+      $countyNames[] = $committee;
     }
+    sort($countyNames);
+    $iConfig = Drupal::configFactory()->getEditable('nlpservices.configuration');
+    $iConfig->set('nlpservices-county-names', $countyNames)->save();
+
+    $this->folderSetupObj->initializeFolders($countyNames);
 
     $this->messenger()->addStatus($this->t('The API configuration has been saved.'));
   }

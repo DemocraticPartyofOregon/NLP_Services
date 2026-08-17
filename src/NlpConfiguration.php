@@ -202,8 +202,8 @@ class NlpConfiguration
    */
   public function getStateName(): string
   {
-    $committeeNames = $this->nlpConfig->get('nlpservices-county-names');
-    return (!empty($committeeNames['State']))?$committeeNames['State']:'';
+    $counties = $this->nlpConfig->get('nlpservices-county-names');
+    return !empty($counties) ? ($counties['State'] ?? '') : '';
   }
 
   public function setStateName(string $stateName): void
@@ -252,8 +252,8 @@ class NlpConfiguration
   public function getCountyNames(): array
   {
     $counties = $this->nlpConfig->get('nlpservices-county-names');
-    $counties = (!empty($counties)) ? $counties : [];
-    return array_keys($counties);
+    if (empty($counties)) { return []; }
+    return array_values(array_filter(array_keys($counties), fn($k) => $k !== 'State'));
   }
 
   /**

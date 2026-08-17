@@ -32,8 +32,13 @@ class NlpEncryption
       /** @var Key $ivEntity */
       $ivEntity  = $storage->load('secret_iv');
       if (!$keyEntity || !$ivEntity) { return ''; }
-      $key = hash('sha256', $keyEntity->getKeyValue());
-      $iv  = substr(hash('sha256', $ivEntity->getKeyValue()), 0, 16);
+      $key    = hash('sha256', $keyEntity->getKeyValue());
+      $rawIv  = $ivEntity->getKeyValue();
+      $decoded = json_decode($rawIv, TRUE);
+      if (json_last_error() === JSON_ERROR_NONE && is_array($decoded) && isset($decoded['value'])) {
+        $rawIv = $decoded['value'];
+      }
+      $iv = substr(hash('sha256', $rawIv), 0, 16);
     } catch (Exception) {
       return '';
     }

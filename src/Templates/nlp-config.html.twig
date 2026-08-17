@@ -2,7 +2,6 @@
 Links for functions to configure NLP services.
 #}
 
-{% set folders = path('nlpservices.folders_configuration_form') %}
 {% set keys = path('nlpservices.api_configuration_form') %}
 {% set keysVerification = path('nlpservices.key_validate_form') %}
 {% set activistCode = path('nlpservices.activist_code_configuration_form') %}
@@ -34,9 +33,8 @@ Links for functions to configure NLP services.
         election, steps 3, 5 and 6 can be repeated with new information.</p>
 
     <ul>
-        <li><a href={{ folders }}>Step 1: Create and prep file folders.</a></li>
-        <li><a href={{ keys }}>Step 2: Build the database for API keys.</a></li>
-        <li><a href={{ keysVerification }}>Step 2a: Verify the API keys work.</a></li>
+        <li><a href={{ keys }}>Step 1: Build the database for API keys.</a></li>
+        <li><a href={{ keysVerification }}>Step 2: Verify the API keys work.</a></li>
         <li><a href={{ activistCode }}>Step 3: Set up the activist codes.</a></li>
         <li><a href={{ responseCodes }}>Step 4: Set up the canvass response codes.</a></li>
         <li><a href={{ electionCycle }}>Step 5: Set up the election date and name.</a></li>
@@ -54,7 +52,7 @@ Links for functions to configure NLP services.
         <li><a href={{ importReports }}>Step 10: Import historical voter contact reports.</a></li>
         <li><a href={{ importAwards }}>Step 11: Import NL Awards file.</a></li>
         <li><a href={{ importUsers }}>Step 12: Import Drupal user accounts.</a></li>
-        <li><a href={{ importTurfAssignments }}>Step 13: Import turf assignments file.</a></li>
+        <li><a href={{ importTurfAssignments }}>Step 13: Import the turf assignments file.</a></li>
         <li><a href={{ importCredentials }}>Step 14: Import NL credentials.</a></li>
         <li><a href={{ documents }}>Step 15: Replace one of the default documents.</a></li>
     </ul>

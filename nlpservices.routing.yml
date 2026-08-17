@@ -34,13 +34,6 @@ nlpservices.api_configuration_form:
   requirements:
     _permission: 'access content'
 
-nlpservices.folders_configuration_form:
-  path: '/nlpservices-folders-configuration'
-  defaults:
-    _form: Drupal\nlpservices\Config\FoldersConfigurationForm
-    _title: 'NLP folders configuration'
-  requirements:
-    _permission: 'access content'
 
 nlpservices.response_code_configuration_form:
   path: '/nlpservices-response-code-configuration'

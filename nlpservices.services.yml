@@ -104,6 +104,11 @@ services:
     class: Drupal\nlpservices\NlpImap
     arguments: [ '@nlpservices.configuration' ]
 
+  nlpservices.folder_setup:
+    class: Drupal\nlpservices\NlpFolderSetup
+    arguments: [ '@nlpservices.configuration', '@nlpservices.paths', '@file_system',
+                 '@messenger', '@extension.list.module', '@string_translation' ]
+
   nlpservices.paths:
     class: Drupal\nlpservices\NlpPaths
     arguments: ['@file_system']
