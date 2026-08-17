@@ -7,10 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove the configuration of HD names and use structure based on the API keys.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix the method of retrieving state name and county names">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ManageCountyForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ManageCountyForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,23 +103,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0002155136988808" />
-      <entry key="MS500" value="1.2127082034925192" />
-      <entry key="S2" value="2.796529747988023" />
-      <entry key="S5" value="5.295416750054335" />
-      <entry key="S10" value="7.9402118006121345" />
-      <entry key="S30" value="14.0806859352807" />
-      <entry key="S60" value="17.626083676444278" />
-      <entry key="M2" value="20.027866139075904" />
-      <entry key="M5" value="21.73374941049875" />
-      <entry key="M10" value="22.353143346759037" />
-      <entry key="M15" value="22.565645849850686" />
-      <entry key="M30" value="22.781248860834364" />
-      <entry key="H1" value="22.896696888167885" />
-      <entry key="H2" value="23.60221303585958" />
-      <entry key="H4" value="30.283891268247693" />
-      <entry key="D1" value="92.58944033087194" />
-      <entry key="W1" value="398.54790545040396" />
+      <entry key="MS100" value="1.0021484171488217" />
+      <entry key="MS500" value="1.4719229514008823" />
+      <entry key="S2" value="2.9616637682209794" />
+      <entry key="S5" value="4.6873045417832175" />
+      <entry key="S10" value="7.31689773495391" />
+      <entry key="S30" value="15.986803653995961" />
+      <entry key="S60" value="22.62585967764676" />
+      <entry key="M2" value="27.814494076543223" />
+      <entry key="M5" value="31.83597727310733" />
+      <entry key="M10" value="33.36471078297471" />
+      <entry key="M15" value="33.897566394031244" />
+      <entry key="M30" value="34.44255977540451" />
+      <entry key="H1" value="34.72613305351922" />
+      <entry key="H2" value="35.51460317313679" />
+      <entry key="H4" value="42.22961833985651" />
+      <entry key="D1" value="104.56416024017673" />
+      <entry key="W1" value="410.53290745651435" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -134,31 +133,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="1.1327717411973783E-164" />
-      <entry key="H1" value="1.8421742585091042E-82" />
-      <entry key="H2" value="2.3511094861340804E-41" />
-      <entry key="H4" value="8.547097636519492E-21" />
-      <entry key="D1" value="0.0024784621920366083" />
-      <entry key="W1" value="6.854767126776835" />
+      <entry key="M30" value="1.1186953301769567E-164" />
+      <entry key="H1" value="1.830692569748067E-82" />
+      <entry key="H2" value="2.343771173486101E-41" />
+      <entry key="H4" value="8.53374855745777E-21" />
+      <entry key="D1" value="0.0024778166173577837" />
+      <entry key="W1" value="6.854512028608085" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9203454180349925" />
-      <entry key="MS500" value="1.184727813123627" />
-      <entry key="S2" value="2.7792302798036967" />
-      <entry key="S5" value="5.284880211253507" />
-      <entry key="S10" value="7.933323169066455" />
-      <entry key="S30" value="14.07715109848057" />
-      <entry key="S60" value="17.623948564298402" />
-      <entry key="M2" value="20.02667232285166" />
-      <entry key="M5" value="21.73323572931805" />
-      <entry key="M10" value="22.35287991596134" />
-      <entry key="M15" value="22.56546871994115" />
-      <entry key="M30" value="22.781159529652697" />
-      <entry key="H1" value="22.89665201872676" />
-      <entry key="H2" value="23.602189957506507" />
-      <entry key="H4" value="30.28387554394179" />
-      <entry key="D1" value="92.59189672326433" />
-      <entry key="W1" value="405.40243654059884" />
+      <entry key="MS100" value="0.9350782217256651" />
+      <entry key="MS500" value="1.452773503158844" />
+      <entry key="S2" value="2.9524476640837096" />
+      <entry key="S5" value="4.681301825228817" />
+      <entry key="S10" value="7.311253625330311" />
+      <entry key="S30" value="15.981856736488417" />
+      <entry key="S60" value="22.62232861452415" />
+      <entry key="M2" value="27.812336681290606" />
+      <entry key="M5" value="31.834996347498866" />
+      <entry key="M10" value="33.36419821940408" />
+      <entry key="M15" value="33.89721957403039" />
+      <entry key="M30" value="34.44238375801156" />
+      <entry key="H1" value="34.72604437300941" />
+      <entry key="H2" value="35.514558073102606" />
+      <entry key="H4" value="42.22959158113903" />
+      <entry key="D1" value="104.56661414789673" />
+      <entry key="W1" value="417.3871831937337" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -455,15 +454,7 @@
       <workItem from="1786636878532" duration="419000" />
       <workItem from="1786736016791" duration="24010000" />
       <workItem from="1786976776194" duration="666000" />
-      <workItem from="1786978638391" duration="868000" />
-    </task>
-    <task id="LOCAL-00154" summary="Add tests for various forms">
-      <option name="closed" value="true" />
-      <created>1782625519829</created>
-      <option name="number" value="00154" />
-      <option name="presentableId" value="LOCAL-00154" />
-      <option name="project" value="LOCAL" />
-      <updated>1782625519830</updated>
+      <workItem from="1786978638391" duration="1748000" />
     </task>
     <task id="LOCAL-00155" summary="Add tests for various forms">
       <option name="closed" value="true" />
@@ -849,7 +840,15 @@
       <option name="project" value="LOCAL" />
       <updated>1786976084616</updated>
     </task>
-    <option name="localTasksCounter" value="203" />
+    <task id="LOCAL-00203" summary="Fix the method of retrieving state name and county names">
+      <option name="closed" value="true" />
+      <created>1786979560185</created>
+      <option name="number" value="00203" />
+      <option name="presentableId" value="LOCAL-00203" />
+      <option name="project" value="LOCAL" />
+      <updated>1786979560186</updated>
+    </task>
+    <option name="localTasksCounter" value="204" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -916,7 +915,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Code review ActivistCodeConfigurationForm" />
     <MESSAGE value="Remove debug code" />
     <MESSAGE value="Add generic email subjects for MiniVAN reports." />
     <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
@@ -941,7 +939,8 @@
     <MESSAGE value="Move the display of NLP Configuration and Administration" />
     <MESSAGE value="Use NlpConfiguration for state, county and countyNames." />
     <MESSAGE value="Remove the configuration of HD names and use structure based on the API keys." />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove the configuration of HD names and use structure based on the API keys." />
+    <MESSAGE value="Fix the method of retrieving state name and county names" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the method of retrieving state name and county names" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

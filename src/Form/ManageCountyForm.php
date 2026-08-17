@@ -81,7 +81,7 @@ class ManageCountyForm extends FormBase {
       $form['known_county']['count_change_note'] = [
         '#markup' => $this->t('As a site administrator, you can change the county to be managed.'),
       ];
-      $countyNames[0] = "Select County";
+      array_unshift($countyNames, "Select County");
       $form_state->set('countyNames',$countyNames);
       $form['known_county']['county_select'] = [
         '#type' => 'select',
