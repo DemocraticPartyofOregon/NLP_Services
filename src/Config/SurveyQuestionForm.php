@@ -148,7 +148,7 @@ class SurveyQuestionForm extends FormBase
   {
     $form_element[$type . '_question'] = [
       '#type' => 'fieldset',
-      '#title' => $this->t('Selection of the @cycle @type survey question.', ['@cycle' => $cycle, '@type' => $type]),
+      '#title' => $this->t('Selection of the @cycle @type survey questions.', ['@cycle' => $cycle, '@type' => $type]),
     ];
     $currentQuestion = '';
     if ($type == 'pledge') {

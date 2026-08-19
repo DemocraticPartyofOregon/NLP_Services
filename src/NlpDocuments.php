@@ -36,6 +36,8 @@ class NlpDocuments
       'defaultFilename' => 'CommitteeCoordinator'],
     'editEmail' => ['description' =>'Edit turf delivery email','weight'=>70,
       'defaultFilename' => 'EditTurfEmail'],
+    'nlpConfiguration' => ['description' =>'NLP Configuration','weight'=>80,
+      'defaultFilename' => 'NlpConfiguration'],
   ];
 
   protected Connection $connection;

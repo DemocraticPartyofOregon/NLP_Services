@@ -45,8 +45,7 @@ class ElectionConfigurationForm extends FormBase {
         'nlp_election_cycle'   => '',
         'nlp_cycle_name'       => '',
         'nlp_election_date'    => '',
-        'nlp_ballot_drop_date' => '',
-        'nlp_local_election'   => FALSE,
+        'nlp_early_voting_start_date' => '',
       ];
     }
 
@@ -86,22 +85,15 @@ class ElectionConfigurationForm extends FormBase {
       '#required' => TRUE,
     ];
 
-    $form['nlp_ballot_drop_date'] = [
+    $form['nlp_early_voting_start_date'] = [
       '#type' => 'textfield',
-      '#id' => 'ballot_drop_date',
-      '#title' => $this->t('Date of Ballot Drop'),
-      '#default_value' => $electionConfiguration['nlp_ballot_drop_date'],
+      '#id' => 'early_voting_start_date',
+      '#title' => $this->t('Start of Early Voting Date'),
+      '#default_value' => $electionConfiguration['nlp_early_voting_start_date'],
       '#size' => 16,
       '#maxlength' => 16,
-      '#description' => $this->t('Date the ballots drop:  yyyy-mm-dd format'),
+      '#description' => $this->t('Start date of early voting:  yyyy-mm-dd format'),
       '#required' => TRUE,
-    ];
-
-    $form['nlp_local_election'] = [
-      '#type' => 'checkbox',
-      '#title' => $this->t('Local election'),
-      '#default_value' => $electionConfiguration['nlp_local_election'] ?? FALSE,
-      '#description' => $this->t('Check if this is a local (non-partisan) election.'),
     ];
 
     $form['button_link'] = [
@@ -132,8 +124,8 @@ class ElectionConfigurationForm extends FormBase {
       $form_state->setErrorByName('nlp_election_date',
         $this->t('The date must be in the form:  yyyy-mm-dd '));
     }
-    if (!empty($values['nlp_ballot_drop_date']) && !$this->checkDate($values['nlp_ballot_drop_date'])) {
-      $form_state->setErrorByName('nlp_ballot_drop_date',
+    if (!empty($values['nlp_early_voting_start_date']) && !$this->checkDate($values['nlp_early_voting_start_date'])) {
+      $form_state->setErrorByName('nlp_early_voting_start_date',
         $this->t('The date must be in the form:  yyyy-mm-dd '));
     }
   }
@@ -147,9 +139,8 @@ class ElectionConfigurationForm extends FormBase {
     $electionDates = [
       'nlp_election_cycle'   => $values['nlp_election_cycle'],
       'nlp_election_date'    => $values['nlp_election_date'],
-      'nlp_ballot_drop_date' => $values['nlp_ballot_drop_date'],
+      'nlp_early_voting_start_date' => $values['nlp_early_voting_start_date'],
       'nlp_cycle_name'       => $values['nlp_cycle_name'],
-      'nlp_local_election'   => $values['nlp_local_election'],
     ];
 
     $this->configFactory->getEditable('nlpservices.configuration')
