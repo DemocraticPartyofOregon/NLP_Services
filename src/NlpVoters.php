@@ -8,17 +8,17 @@ use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpVoters {
-  
+
   const string VOTER_TBL = 'nlp_voter';
   const string VOTER_TURF_TBL = 'nlp_voter_turf';
   const string VOTER_STATUS_TBL = 'nlp_voter_status';
   const string VOTER_ADDRESS_TBL = 'nlp_voter_address';
 
   private array $statusList = ['vanid','cycle','deceased','hostile','voter','voted',];
-  
+
   public array $addressFields = ['streetNo','streetPrefix','streetName','streetType','streetSuffix',
     'aptType','aptNo', 'city'];
-  
+
   protected Connection $connection;
   protected NlpMatchbacks $matchbacksObj;
   protected NlpReports $reportsObj;
@@ -30,7 +30,7 @@ class NlpVoters {
     $this->reportsObj = $reportsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpVoters
   {
     return new static(
@@ -40,12 +40,12 @@ class NlpVoters {
       $container->get('nlpservices.configuration'),
     );
   }
-  
+
   /**
    * fetchVanIdsByNl
-   * 
+   *
    * Get the voter records for all voters associated with a given NL.
-   * 
+   *
    * @param int $mcid
    * @return array - Array of vanids for the voters in the NL.  The key and the
    * value are both the vanId from the VoterFile.
@@ -70,12 +70,12 @@ class NlpVoters {
     } while (TRUE);
     return $voters;
   }
-  
+
   /**
    * getVoterCountByNl
-   * 
+   *
    * Get the number of voters in all turfs assigned to an NL.
-   * 
+   *
    * @param int $mcid
    * @return int - the number of voters assigned to the NL.
    */
@@ -93,14 +93,14 @@ class NlpVoters {
     }
     return (int) $voterCount;
   }
-  
-  
+
+
   /**
    * duplicateVoters
-   * 
-   * Get the voter turf records for all voters in the given array of vanIds that are 
+   *
+   * Get the voter turf records for all voters in the given array of vanIds that are
    * already in another turf.   Voters assigned to an NL cannot be assigned to another turf.
-   * 
+   *
    * @param array $vanIds - array of vanids to fetch.
    * @return array - Array of voter records keyed by vanid.  The normal case is to return an
    * empty array.
@@ -127,12 +127,12 @@ class NlpVoters {
     } while (TRUE);
     return $dupVoters;
   }
-  
+
   /**
    * getVotersInList
-   * 
+   *
    * Get the voter records for all voters in the given array of vanIds.
-   * 
+   *
    * @param $vanIds - array of vanids to fetch.
    * @return array - array of voter records keyed by vanid.
    */
@@ -152,14 +152,14 @@ class NlpVoters {
     do {
       $voter = $result->fetchAssoc();
       if(empty($voter)) {break;}
-      
+
       $voter['address'] = $this->fetchVoterAddress($voter['vanid']);
-      
+
       $voters[$voter['vanid']] = $voter;
     } while (TRUE);
     return $voters;
   }
-  
+
   /**
    * nullVoterStatus
    *
@@ -176,7 +176,7 @@ class NlpVoters {
     $null['cycle'] = $this->nlpConfigurationObj->getCycle();
     return $null;
   }
-  
+
   /**
    * getVoterStatus
    *
@@ -212,7 +212,7 @@ class NlpVoters {
     }
     return $status;
   }
-  
+
   /**
    * setVoterStatus
    *
@@ -241,7 +241,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * createVoter
    *
@@ -278,7 +278,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * createTurfVoter
    *
@@ -302,7 +302,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * updateTurfVoter
    *
@@ -329,7 +329,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * getVotersInTurf
    *
@@ -359,7 +359,7 @@ class NlpVoters {
     } while (TRUE);
     return $voters;
   }
-  
+
   /**
    * fetchVotersByTurf
    *
@@ -406,7 +406,7 @@ class NlpVoters {
     } while (TRUE);
     return $voters;
   }
-  
+
   /**
    * getTurfVoter
    *
@@ -430,7 +430,7 @@ class NlpVoters {
 
     return $result->fetchAssoc();
   }
-  
+
   /**
    * deleteVotersInTurf
    *
@@ -449,7 +449,7 @@ class NlpVoters {
       nlp_debug_msg('deleteVotersInTurf', $e->getMessage() );
     }
   }
-  
+
   /**
    * deleteAddressesInTurf
    *
@@ -469,7 +469,7 @@ class NlpVoters {
       nlp_debug_msg('deleteAddressesInTurf', $e->getMessage() );
     }
   }
-  
+
   /**
    * deleteVoterInTurf
    *
@@ -489,7 +489,7 @@ class NlpVoters {
       nlp_debug_msg('deleteVoterInTurf', $e->getMessage() );
     }
   }
-  
+
   /**
    * deleteAddressInTurf
    *
@@ -509,7 +509,7 @@ class NlpVoters {
       nlp_debug_msg('deleteAddressInTurf', $e->getMessage() );
     }
   }
-  
+
   /**
    * updateTurfNote
    *
@@ -542,7 +542,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * fetchVoterAddress
    *
@@ -566,7 +566,7 @@ class NlpVoters {
     if(empty($address = $result->fetchAssoc())) {return [];}
     return $address;
   }
-  
+
   /**
    * addressCompare
    *
@@ -587,7 +587,7 @@ class NlpVoters {
     }
     return TRUE;
   }
-  
+
   /**
    * addressExtract
    *
@@ -606,7 +606,7 @@ class NlpVoters {
     }
     return $simpleAddress;
   }
-  
+
   /**
    * setMovedStatus
    *
@@ -631,7 +631,7 @@ class NlpVoters {
       return;
     }
   }
-  
+
   /**
    * updateVoterPhone
    *
@@ -661,7 +661,7 @@ class NlpVoters {
       return;
     }
   }
-  
+
   /**
    * getVoterById
    *
@@ -687,7 +687,7 @@ class NlpVoters {
     $voter['address'] = $this->fetchVoterAddress($vanid);
     return $voter;
   }
-  
+
   /**
    * getVoterCd
    *
@@ -702,7 +702,7 @@ class NlpVoters {
     $address = $this->fetchVoterAddress($vanid);
     return (!empty($address['cd']))?$address['cd']:0;
   }
-  
+
   /**
    * getVotersInCounty
    *
@@ -730,7 +730,7 @@ class NlpVoters {
     }
     return $keys;
   }
-  
+
   /**
    * getVotersInCd
    *
@@ -759,7 +759,7 @@ class NlpVoters {
     }
     return $keys;
   }
-  
+
   /**
    * getParticipatingCounties
    *
@@ -791,7 +791,7 @@ class NlpVoters {
     } while (TRUE);
     return $countyNames;
   }
-  
+
   /**
    * getVoterAddresses
    *
@@ -820,7 +820,7 @@ class NlpVoters {
     } while (TRUE);
     return $addresses;
   }
-  
+
   /**
    * getTurfIndexByVanid
    *
@@ -846,7 +846,7 @@ class NlpVoters {
     if(empty($nl)) {return 0;}
     return (!empty($nl['turfIndex']))?$nl['turfIndex']:0;
   }
-  
+
   /**
    * getMcidByVanid
    *
@@ -871,7 +871,7 @@ class NlpVoters {
     if(empty($nl)) {return 0;}
     return (!empty($nl['mcid']))?$nl['mcid']:0;
   }
-  
+
   /**
    * searchVoters
    *
@@ -924,7 +924,7 @@ class NlpVoters {
     } while (TRUE);
     return $voterRecords;
   }
-  
+
   /**
    * assembleAddress
    *
@@ -945,7 +945,7 @@ class NlpVoters {
     }
     return $assembledAddress;
   }
-  
+
   /**
    * getDoorCount
    *
@@ -978,6 +978,57 @@ class NlpVoters {
       }
     }
     return $doorCount;
+  }
+
+  /**
+   * getVanidByStateId
+   *
+   * Retrieve the VAN ID associated with the given state file ID. This method queries the voter table
+   * to find a matching VAN ID based on the provided state file ID.
+   * If no corresponding record is found, or if an error occurs during the query, the method will return 0.
+   *
+   * @param int $stateFileId The state file ID provided by the SOS.
+   * @return int The VAN ID corresponding to the provided state file ID, or 0 if no match is found or on error.
+   */
+  public function getVanidByStateId( int $stateFileId ): int
+  {
+    try {
+      $query = $this->connection->select(self::VOTER_TBL, 'v');
+      $query->addField('v','vanid');
+      $query->condition('stateFileId',$stateFileId);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('getVanidByStateId', $e->getMessage() );
+      return 0;
+    }
+    $voter = $result->fetchAssoc();
+    if(empty($voter)) {return 0;}  // Voter is not known.
+    return $voter['vanid'] ?? 0;
+  }
+
+  /**
+   * updateVoter
+   *
+   * Update a voter record in the voter table. This is used to modify a specific field with a new value for a given voter.
+   *
+   * @param int $vanid The unique identifier for the voter being updated.
+   * @param string $field The field in the voter table to update.
+   * @param mixed $value The new value to assign to the specified field.
+   * @return void
+   */
+  public function updateVoter( int $vanid, string $field, mixed $value ): void
+  {
+    try {
+      $this->connection->merge(self::VOTER_TBL)
+        ->keys(['vanid' => $vanid])
+        ->fields([$field => $value])
+        ->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('updateVoter', $e->getMessage() );
+      return;
+    }
   }
 
 }

@@ -12,6 +12,7 @@ Links for functions to create reports.
 {% set turfStatus = path('nlpservices.export_report', {'statusType': 'nlp_turf_status' } ) %}
 {% set turfList = path('nlpservices.export_table', {'tableName': 'nlp_turf' , 'option': 'county'}) %}
 {% set exportTurfAssignments = path('nlpservices.export_table', {'tableName': 'nlp_turf_assignment' , 'option': 'county'}) %}
+{% set importStateEarlyVoting = path('nlpservices.import_state_early_voting_form') %}
 
 {% trans %}
 
@@ -33,6 +34,7 @@ Links for functions to create reports.
         <li><a href={{ importCrosstabs }}>Import the crosstabs file.</a></li>
         <li><a href={{ importMatchbacks }}>Import the matchbacks file.</a></li>
         <li><a href={{ minivan }}>Import the NLP reports from Minivan users.</a></li>
+        <li><a href={{ importStateEarlyVoting }}>Import the state early voting file (Montana).</a></li>
     </ul>
 
 {% endtrans %}
