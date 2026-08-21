@@ -12,6 +12,11 @@ class NlpEarlyVoting
   const string VOTER_TBL = 'nlp_voter';
   const string VOTER_ADDRESS_TBL = 'nlp_voter_address';
 
+  private array $stateEarlyVotingHdr = [
+    'stateFileId' => ['name' => 'AssignedVoterID', 'err' => 'Assigned Voter ID missing.'],
+    'date' => ['name' => 'BallotReceivedDate', 'err' => 'Ballot Received Date missing.'],
+  ];
+
   protected Connection $connection;
 
   public function __construct($connection)
@@ -101,6 +106,38 @@ class NlpEarlyVoting
     }
 
     return $matched;
+  }
+
+  /**
+   * decodeStateEarlyVotingHdr
+   *
+   * Verify that the "Assigned Voter ID" and "Ballot Received Date" columns needed
+   * for the state early voting file are present and save the column number.
+   *
+   * Returns an array for finding the column value in the following records. The keys are:
+   *   pos - array with the column number for each field
+   *   err - array of error messages for the fields not present
+   *   ok - true if all fields are present
+   *
+   * @param array $fileHdr
+   * @return array
+   */
+  public function decodeStateEarlyVotingHdr(array $fileHdr): array
+  {
+    $hdrErr = $hdrPos = [];
+    foreach ($this->stateEarlyVotingHdr as $nlpKey => $vanField) {
+      foreach ($fileHdr as $fileCol => $fileColName) {
+        $fileColName = preg_replace('/[^A-Za-z0-9\-]/', '', $fileColName);
+        if (trim($fileColName) == $vanField['name']) {
+          $hdrPos[$nlpKey] = $fileCol;
+          break;
+        }
+      }
+      if (!isset($hdrPos[$nlpKey])) {
+        $hdrErr[$nlpKey] = $this->stateEarlyVotingHdr[$nlpKey]['err'];
+      }
+    }
+    return ['pos' => $hdrPos, 'err' => $hdrErr, 'ok' => empty($hdrErr)];
   }
 
   /**

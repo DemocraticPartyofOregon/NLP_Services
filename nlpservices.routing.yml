@@ -207,6 +207,14 @@ nlpservices.import_matchbacks_form:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.import_state_early_voting_form:
+  path: '/nlpservices-import-state-early-voting'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImportStateEarlyVotingForm
+    _title: 'Import State Early Voting'
+  requirements:
+    _permission: 'nlp tools access'
+
 nlpservices.import_minivan_form:
   path: '/nlpservices-import-minivan'
   defaults:

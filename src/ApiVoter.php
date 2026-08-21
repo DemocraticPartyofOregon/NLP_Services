@@ -284,6 +284,17 @@ class ApiVoter
       $voting .= $election['type'] . $election['year'] . ':' . $election['participation'] . ' ';
     }
     $voter['votingHistory'] = $voting;
+
+    if(!empty($result['identifiers'])) {
+      foreach ($result['identifiers'] as $identifier) {
+        $type = $identifier['type'];
+        if($type == 'StateFileID') {
+          $voter['stateFileId'] = $identifier['externalId'];
+          break;
+        }
+      }
+    }
+
     return $voter;
   }
 
@@ -414,7 +425,7 @@ class ApiVoter
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
     $state = $this->nlpConfigurationObj->getStateName();
-    $expandOptions = '?$expand=phones,addresses,districts,electionRecords';
+    $expandOptions = '?$expand=phones,addresses,districts,electionRecords,externalIds';
 
     $requests = function() use ($listVoters, $user, $apiKey, $apiURL, $expandOptions) {
       foreach ($listVoters as $vanid) {

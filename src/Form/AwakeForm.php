@@ -6,9 +6,11 @@ use Drupal;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
+use Exception;
 //use stdClass;
 
 class AwakeForm extends FormBase {
@@ -47,28 +49,34 @@ class AwakeForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-
-    $form['file'] = [
-      '#type'              => 'managed_file',
-      '#title'             => t('Voted File'),
-      '#upload_location'   => 'temporary://',
-      '#upload_validators' => ['file_validate_extensions' => ['csv']],
-    ];
-
-
-
-/*
     $apiVoterObj = Drupal::service('nlpservices.api_voter');
-    $county = 'Jefferson';
-    $listId = 509011;
-    $exportJobsObj = Drupal::service('nlpservices.export_jobs');
-    $database = 1;
 
-    $vanid= 4005764;
+    $apiKeyManagementObj = Drupal::service('nlpservices.api_key_management');
+    $client = Drupal::service('http_client');
 
-    $voter = $apiVoterObj->getApiVoter($vanid);
-    nlp_debug_msg('$voter',$voter);
-*/
+
+    $turfsObj = Drupal::service('nlpservices.turfs');
+    $votersObj = Drupal::service('nlpservices.voters');
+    $counties = $turfsObj->getCountyNames();
+    foreach ($counties as $county) {
+      $turfs = $turfsObj->getCountyTurfs($county);
+      foreach ($turfs as $turfIndex => $turf) {
+        $voters = $votersObj->fetchVotersByTurf($turfIndex);
+        foreach ($voters as $vanid => $voter) {
+          $stateFileId = $voter['stateFileId'] ?? NULL;
+          if (empty($stateFileId)) {
+            $apiVoter = $apiVoterObj->getApiVoter($vanid);
+            $stateFileId = $apiVoter['stateFileId'] ?? NULL;
+            nlp_debug_msg('stateFileId',$stateFileId);
+            if (!empty($stateFileId)) {
+              $apiVoter = $apiVoterObj->getApiVoter($vanid);
+              $votersObj->updateVoter($vanid, 'stateFileId', $apiVoter['stateFileId'] ?? NULL);
+            }
+          }
+
+        }
+      }
+    }
 
     $form['submit'] = [
       '#type' => 'submit',
