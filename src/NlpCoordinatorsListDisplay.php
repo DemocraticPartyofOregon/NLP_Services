@@ -122,11 +122,14 @@ class NlpCoordinatorsListDisplay
    * It checks the 'cb' value of each contact and builds an array of selected coordinators.
    * The 'cb' value is expected to be in the format 'CB_cIndex_mcid'.
    *
-   * @param array $contacts
+   * @param mixed $contacts
    * @return array
    */
-  public function validateCoordinatorSelection( array $contacts ):array
+  public function validateCoordinatorSelection( mixed $contacts ):array
   {
+    if(!is_array($contacts)) {
+      return [];
+    }
     $selections = [];
     foreach($contacts as $contact) {
       if(!empty($contact['cb'])) {
