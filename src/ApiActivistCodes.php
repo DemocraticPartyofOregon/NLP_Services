@@ -249,6 +249,10 @@ class ApiActivistCodes
     $apiKey = $stateCommitteeKey['API Key'];
     $apiURL = $stateCommitteeKey['Url'];
     $user   = $stateCommitteeKey['App Name'];
+    if (empty($apiKey) || empty($apiURL) || empty($user)) {
+      Drupal::logger('nlpservices')->error('hasApiActivistCodeBatch: missing State Committee API credentials.');
+      return $vanids;
+    }
 
     $hasCode = [];
     $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL) {
@@ -308,6 +312,10 @@ class ApiActivistCodes
     $apiKey = $stateCommitteeKey['API Key'];
     $apiURL = $stateCommitteeKey['Url'];
     $user   = $stateCommitteeKey['App Name'];
+    if (empty($apiKey) || empty($apiURL) || empty($user)) {
+      Drupal::logger('nlpservices')->error('setApiActivistCodeBatch: missing State Committee API credentials.');
+      return;
+    }
 
     $responseObj = new stdClass();
     $responseObj->type = self::ACTIVIST_CODE;

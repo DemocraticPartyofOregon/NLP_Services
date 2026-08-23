@@ -160,13 +160,18 @@ class ApiKeyManagement
       /** @var Drupal\key\Entity\Key $key */
       $key = Drupal::entityTypeManager()->getStorage('key')->load($id);
       if (!$key) {
+        Drupal::logger('nlpservices')->error('getKeyValues: no key entity found for id @id.', ['@id' => $id]);
         return [];
       }
       $apiCredentials = json_decode($key->getKeyValue(), TRUE);
-      if(empty($apiCredentials)) { return []; }
+      if(empty($apiCredentials)) {
+        Drupal::logger('nlpservices')->error('getKeyValues: key value for id @id is empty or not valid JSON.', ['@id' => $id]);
+        return [];
+      }
       $apiCredentials['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('decrypt', $apiCredentials['API Key']);
       return $apiCredentials;
     } catch (Exception $e) {
+      Drupal::logger('nlpservices')->error('getKeyValues: exception retrieving id @id: @message', ['@id' => $id, '@message' => $e->getMessage()]);
       nlp_debug_msg('getKeyValues', $e->getMessage());
       return [];
     }
