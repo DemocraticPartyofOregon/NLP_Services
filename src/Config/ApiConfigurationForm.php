@@ -257,6 +257,7 @@ class ApiConfigurationForm extends FormBase {
       if ($committee === 'State Committee') {
         $stateName = $committeeKey['Name'] ?? '';
         $this->nlpConfigurationObj->setStateName($stateName);
+        $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
         continue;
       }
       $this->apiKeyManagementObj->deleteKey($committee);
