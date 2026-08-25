@@ -187,22 +187,33 @@ class NlpNlsListDisplay
       '#attributes' => ['class' => ['nlp-nls-table']],
     ];
 
-    foreach ($rows as $rowNumber => $row) {
+    foreach ($rows as $row) {
+      // Identify the row by the mcid embedded in its cell data rather than
+      // by its position in $rows -- sortNlsTable() re-indexes $rows with
+      // sequential integer keys, so the array key can no longer be trusted
+      // to be the mcid once the table has been sorted.
+      $rowMcid = 0;
+      foreach ($row as $columnValue) {
+        if (is_array($columnValue) && !empty($columnValue['mcid'])) {
+          $rowMcid = $columnValue['mcid'];
+          break;
+        }
+      }
       foreach($row as $columnName => $columnValue) {
         $mcid = empty($columnValue['mcid'])?0:$columnValue['mcid'];
         $columnName = "$columnName-$mcid";
         if(is_array($columnValue)) {
           switch ($columnValue['type']) {
             case 'cb':
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#type' => 'checkbox',
-                '#return_value' => 'CB_'.$rowNumber.'_'.$columnValue['mcid'],
+                '#return_value' => 'CB_'.$rowMcid.'_'.$columnValue['mcid'],
               ];
               break;
             case 'tc':
               $mcid = $columnValue['mcid'];
               $default = ($columnValue['default']==1)?"cb_turfCut_$mcid":'';
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#type' => 'checkbox',
                 '#return_value' => "cb_turfCut_$mcid",
                 '#default_value' => $default,
@@ -211,14 +222,14 @@ class NlpNlsListDisplay
             case 'td':
               $mcid = $columnValue['mcid'];
               $default = ($columnValue['default']==1)?"cb_turfDelivered_$mcid":'';
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#type' => 'checkbox',
                 '#return_value' => "cb_turfDelivered_$mcid",
                 '#default_value' => $default,
               ];
               break;
             case 'ta':
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#type' => 'textarea',
                 '#attributes' => ['class' => ['textarea-width', 'no-white', 'nl-notes-textarea']],
                 '#cols' => 10,
@@ -228,12 +239,12 @@ class NlpNlsListDisplay
               ];
               break;
             case 'nl':
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#markup' => 'NL',
               ];
               break;
             case 'se':
-              $form_element[$type][$rowNumber][$columnName] = [
+              $form_element[$type][$rowMcid][$columnName] = [
                 '#type' => 'select',
                 '#options' => $columnValue['options'],
                 '#default_value' => $columnValue['default'],
@@ -241,7 +252,7 @@ class NlpNlsListDisplay
               break;
           }
         } else {
-          $form_element[$type][$rowNumber][$columnName] = [
+          $form_element[$type][$rowMcid][$columnName] = [
             '#markup' => $columnValue,
           ];
         }

@@ -354,9 +354,13 @@ class ActiveNlsDisplayForm extends FormBase
     $status['asked'] = $askStatus;
     $this->nlsObj->setNlsStatus($status);
     $this->awardsObj->nlParticipation($mcid,$askStatus);
+    // NLPDropoutAC is a MyCampaign activist code, and MyCampaign records
+    // belong to a specific county committee rather than the state committee.
+    $county = $this->sessionDataObj->getCounty();
     $request = [
       'vanid' => $mcid,
       'codeName' => 'NLPDropoutAC',
+      'committee' => $county,
     ];
     if ($askStatus == 'Dropout') {
       $request['action'] = 'Apply';
@@ -373,7 +377,6 @@ class ActiveNlsDisplayForm extends FormBase
         'responseName' => $askStatus,
         'dateCanvassed' => date(DATE_ATOM, time()),
       ];
-      $county = $this->sessionDataObj->getCounty();
       $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$county);
     }
   }

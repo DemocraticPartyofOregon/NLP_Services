@@ -4,10 +4,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\File\FileSystemInterface;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
   use Exception;
+  use Psr\Log\LoggerInterface;
 
   class ApiKeyManagementTest extends UnitTestCase {
 
@@ -29,8 +31,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->getMock();
       $this->entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
 
+      $loggerMock        = $this->createMock(LoggerInterface::class);
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+
       $this->container = new ContainerBuilder();
       $this->container->set('entity_type.manager', $this->entityTypeManagerMock);
+      $this->container->set('logger.factory', $loggerFactoryMock);
       \Drupal::setContainer($this->container);
     }
 

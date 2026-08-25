@@ -8,8 +8,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add upload of state early voting using the stateFileId">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpCoordinatorsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/reports.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/reports.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -66,7 +70,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26299" />
+    <option name="cachedIndexableFilesCount" value="26303" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -103,23 +107,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0012280923254329" />
-      <entry key="MS500" value="1.3216858404136018" />
-      <entry key="S2" value="2.905432646030542" />
-      <entry key="S5" value="8.097335138418734" />
-      <entry key="S10" value="20.287665132371142" />
-      <entry key="S30" value="54.747016578533184" />
-      <entry key="S60" value="75.00803333850618" />
-      <entry key="M2" value="88.91744488457175" />
-      <entry key="M5" value="102.07423276910411" />
-      <entry key="M10" value="113.17088116267674" />
-      <entry key="M15" value="119.58119577597037" />
-      <entry key="M30" value="128.46816943129974" />
-      <entry key="H1" value="134.19170443287172" />
-      <entry key="H2" value="138.03961715045727" />
-      <entry key="H4" value="146.14997489412508" />
-      <entry key="D1" value="209.72975593509446" />
-      <entry key="W1" value="516.0745365721061" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0" />
+      <entry key="M10" value="1.0" />
+      <entry key="M15" value="1.0" />
+      <entry key="M30" value="1.0000000000002442" />
+      <entry key="H1" value="1.0000058524087108" />
+      <entry key="H2" value="1.0288275832892435" />
+      <entry key="H4" value="3.1120344111081026" />
+      <entry key="D1" value="104.5087567417437" />
+      <entry key="W1" value="467.5525633980554" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -129,35 +133,35 @@
       <entry key="S10" value="0.0" />
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="0.0" />
-      <entry key="M30" value="7.709889993261689E-165" />
-      <entry key="H1" value="1.5197900504530333E-82" />
-      <entry key="H2" value="2.135498631975918E-41" />
-      <entry key="H4" value="8.145765190620581E-21" />
-      <entry key="D1" value="0.0024586752451793595" />
-      <entry key="W1" value="6.846922325832305" />
+      <entry key="M2" value="1.1871917908681974E-211" />
+      <entry key="M5" value="4.26391318761634E-85" />
+      <entry key="M10" value="6.529864613922972E-43" />
+      <entry key="M15" value="7.526668430684575E-29" />
+      <entry key="M30" value="8.675637400609004E-15" />
+      <entry key="H1" value="9.314310173388582E-8" />
+      <entry key="H2" value="3.051935479886261E-4" />
+      <entry key="H4" value="0.017469789580548074" />
+      <entry key="D1" value="0.5106005435037995" />
+      <entry key="W1" value="7.098032336005026" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9604259690153432" />
-      <entry key="MS500" value="1.3099353050805378" />
-      <entry key="S2" value="2.896741533756757" />
-      <entry key="S5" value="8.079750009057763" />
-      <entry key="S10" value="20.262905432233637" />
-      <entry key="S30" value="54.724920519819605" />
-      <entry key="S60" value="74.99310131477561" />
-      <entry key="M2" value="88.90867282088796" />
-      <entry key="M5" value="102.07025578715411" />
-      <entry key="M10" value="113.16871114954289" />
-      <entry key="M15" value="119.57968107933861" />
-      <entry key="M30" value="128.46736545974306" />
-      <entry key="H1" value="134.19128754099273" />
-      <entry key="H2" value="138.03940393456844" />
-      <entry key="H4" value="146.1498631679784" />
-      <entry key="D1" value="209.73217650513632" />
-      <entry key="W1" value="522.9212208133397" />
+      <entry key="MS100" value="0.5" />
+      <entry key="MS500" value="0.8705505632961241" />
+      <entry key="S2" value="0.9659363289248456" />
+      <entry key="S5" value="0.9862327044933592" />
+      <entry key="S10" value="0.9930924954370359" />
+      <entry key="S30" value="0.9976921765270234" />
+      <entry key="S60" value="0.9988454217380301" />
+      <entry key="M2" value="0.9994225441413808" />
+      <entry key="M5" value="0.9997689776295918" />
+      <entry key="M10" value="0.9998844821426083" />
+      <entry key="M15" value="0.9999229866122876" />
+      <entry key="M30" value="0.9999614925649857" />
+      <entry key="H1" value="0.9999866915595782" />
+      <entry key="H2" value="1.0291229888678035" />
+      <entry key="H4" value="3.12949443954957" />
+      <entry key="D1" value="105.01932147784946" />
+      <entry key="W1" value="474.65037625551844" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -459,14 +463,6 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-    </task>
-    <task id="LOCAL-00157" summary="Fix the restoration of user credentials for sync of active NLs.">
-      <option name="closed" value="true" />
-      <created>1782741308521</created>
-      <option name="number" value="00157" />
-      <option name="presentableId" value="LOCAL-00157" />
-      <option name="project" value="LOCAL" />
-      <updated>1782741308521</updated>
     </task>
     <task id="LOCAL-00158" summary="Fix attachment of PDF when syncing a turf.">
       <option name="closed" value="true" />
@@ -852,7 +848,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787098366583</updated>
     </task>
-    <option name="localTasksCounter" value="206" />
+    <task id="LOCAL-00206" summary="Fix the loss of the State Credentials when a subsequent update of keys occurs.">
+      <option name="closed" value="true" />
+      <created>1787525739042</created>
+      <option name="number" value="00206" />
+      <option name="presentableId" value="LOCAL-00206" />
+      <option name="project" value="LOCAL" />
+      <updated>1787525739042</updated>
+    </task>
+    <option name="localTasksCounter" value="207" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -919,7 +923,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
     <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
     <MESSAGE value="Update ReadMe" />
     <MESSAGE value="Fix the training manual configuration so the download link work." />
@@ -944,7 +947,8 @@
     <MESSAGE value="Fix the method of retrieving state name and county names" />
     <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
     <MESSAGE value="Add document for configuring NLP Services." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add document for configuring NLP Services." />
+    <MESSAGE value="Fix the loss of the State Credentials when a subsequent update of keys occurs." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the loss of the State Credentials when a subsequent update of keys occurs." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
