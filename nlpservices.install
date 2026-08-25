@@ -20,7 +20,7 @@ function nlpservices_uninstall($is_syncing): void
     //'shared_email',
     //'turf_access',
   ];
-  
+
   foreach ($fields as $field) {
     $fieldName = 'field_'.$field;
     $fieldStorage = FieldStorageConfig::loadByName('user', $fieldName);
@@ -45,7 +45,7 @@ function nlpservices_uninstall($is_syncing): void
 function nlpservices_schema(): array
 {
   $schema = [];
-  
+
   $schema['nlp_awards'] = [
     'description' => 'Participation award status.',
     'fields' => [
@@ -76,7 +76,7 @@ function nlpservices_schema(): array
       'county' => [ 'cd', 'county', ],
     ],
   ];
- 
+
   $schema['nlp_target_voter_count'] = [
     'description' => 'Target voter ballot status counts from VoteBuilder crosstab export.',
     'fields' => [
@@ -159,7 +159,7 @@ function nlpservices_schema(): array
     ],
     'primary key' => [ 'eventId', ],
   ];
-  
+
   $schema['nlp_instructions'] = [
     'description' => 'Keeps track of the instructions for the counties.',
     'fields' => [
@@ -217,7 +217,7 @@ function nlpservices_schema(): array
       'vfid' => [ 'vfid', ],
     ],
   ];
-  
+
   $schema['nlp_matchback'] = [
     'description' => 'Records the date ballots are received.',
     'fields' => [
@@ -304,7 +304,7 @@ function nlpservices_schema(): array
     ],
     'primary key' => [ 'reportIndex', ],
   ];
- 
+
   $schema['nlp_turf'] = [
     'description' => 'Turf description.',
     'fields' => [
@@ -341,7 +341,7 @@ function nlpservices_schema(): array
     ],
     'primary key' => [ 'turfIndex', ],
   ];
-  
+
   $schema['nlp_turf_assignment'] = [
     'description' => 'The association of a turf to an NL.',
     'fields' => [
@@ -358,7 +358,7 @@ function nlpservices_schema(): array
       'lastName' => [ 'type' => 'varchar', 'length' => 32,  ],
       'county' => [ 'type' => 'varchar', 'length' => 32,  ],
       'dateAssigned' => [ 'mysql_type' => 'date', ],
-    
+
     ],
     'primary key' => [ 'turfId', ],
     'indexes' => [
@@ -366,7 +366,7 @@ function nlpservices_schema(): array
       'turfName' => [ 'turfName', ],
       ],
   ];
-  
+
   $schema['nlp_turf_status'] = [
     'description' => 'Tracks turf creation and deletion events.',
     'fields' => [
@@ -391,7 +391,7 @@ function nlpservices_schema(): array
       'folderName' => [ 'type' => 'varchar', 'length' => 256, ],],
     'primary key' => [ 'mapRegionId', ],
   ];
-  
+
     $schema['nlp_voter'] = [
     'description' => 'Contact information about a voter.',
     'fields' => [
@@ -409,6 +409,7 @@ function nlpservices_schema(): array
       'smsOptInStatus' => [ 'type' => 'char', 'length' => 16, ],
       'preferredPhoneType' => [ 'type' => 'char', 'length' => 8, ],
       'votingHistory' => [ 'type' => 'varchar', 'length' => 64, 'description' => 'Voting history - last 4 general/primary.', ],
+      'stateFileId' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, ],
     ],
     'primary key' => [ 'vanid', ],
   ];

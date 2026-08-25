@@ -82,18 +82,22 @@ class ApiActivistCodes
    * getApiVoterActivistCodes
    *
    * Returns an array of activist code IDs (integers) currently applied to the
-   * given voter in the VoterFile database.
+   * given voter in the VoterFile or MyCampaign database.
    *
    * @param int $vanid
+   * @param int $database - 0=VoterFile, 1=MyCampaign
+   * @param string $committee - The committee whose key should be used; empty
+   *   string uses the State Committee key. MyCampaign records belong to a
+   *   specific county committee, so callers checking a MyCampaign activist
+   *   code must pass that county.
    * @return array
    */
-  public function getApiVoterActivistCodes(int $vanid): array
+  public function getApiVoterActivistCodes(int $vanid, int $database = 0, string $committee = ''): array
   {
-    $database = $this->supportedActivistCodes['NLPVoterAC'];
-    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
-    $apiKey = $stateCommitteeKey['API Key'];
-    $apiURL = $stateCommitteeKey['Url'];
-    $user = $stateCommitteeKey['App Name'];
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
     try {
       $request = $this->client->request('GET', $url);
@@ -108,9 +112,11 @@ class ApiActivistCodes
       return $codes;
     } catch (GuzzleException $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
     } catch (Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
     }
   }
@@ -122,15 +128,19 @@ class ApiActivistCodes
    *
    * @param int $vanid
    * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $committee - The committee whose key should be used; empty
+   *   string uses the State Committee key. Must match the committee the code
+   *   was applied under for MyCampaign codes.
    * @return bool
    */
-  public function hasApiActivistCode(int $vanid, string $codeName): bool
+  public function hasApiActivistCode(int $vanid, string $codeName, string $committee = ''): bool
   {
     $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
     if (empty($rid)) {
       return FALSE;
     }
-    return in_array($rid, $this->getApiVoterActivistCodes($vanid));
+    $database = $this->supportedActivistCodes[$codeName];
+    return in_array($rid, $this->getApiVoterActivistCodes($vanid, $database, $committee));
   }
 
   /**
@@ -142,6 +152,10 @@ class ApiActivistCodes
    *   - vanid - the person's VAN ID
    *   - activistCodeName - name of the activist code, like 'NLPVoterAC'.
    *   - action - default is 'Apply'; another option is 'Remove'
+   *   - committee - optional; the committee whose key should be used. Empty
+   *     uses the State Committee key. MyCampaign codes belong to a specific
+   *     county committee, so callers setting a MyCampaign code must pass
+   *     that county here.
    *
    * @param array $request
    * @return bool - TRUE on success, FALSE if the activist code ID is unknown or the API call fails.
@@ -153,16 +167,17 @@ class ApiActivistCodes
     if(empty($rid)) {return FALSE;}
     $vanid  = $request['vanid'];
     $action = $request['action'];
+    $committee = $request['committee'] ?? '';
     $database = $this->supportedActivistCodes[$activistCodeName];
 
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
     $canvassResponseObj = new stdClass();
 
-    $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
-    $apiKey = $stateCommitteeKey['API Key'];
-    $apiURL = $stateCommitteeKey['Url'];
-    $user = $stateCommitteeKey['App Name'];
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
 
     $responseObj->type = self::ACTIVIST_CODE;
@@ -193,7 +208,7 @@ class ApiActivistCodes
       return FALSE;
     }
 
-    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName);
+    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName, $committee);
     $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
     if ($verified) {
       return TRUE;
@@ -213,7 +228,7 @@ class ApiActivistCodes
       return FALSE;
     }
 
-    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName);
+    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName, $committee);
     $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
     if (!$verified) {
       Drupal::logger('nlpservices')->error(
