@@ -192,7 +192,17 @@ class NlpSyncTurfProcessor {
     $votersInTurf         = $context['sandbox']['votersInTurf'];
     $legislativeDistricts = $context['sandbox']['legislativeDistricts'];
 
-    $voters      = $this->apiVoterObj->getVoters($turfVoters[$currentBatch]);
+    $voters = $this->apiVoterObj->getVoters($turfVoters[$currentBatch]);
+    if (empty($voters)) {
+      $context['finished']              = 1;
+      $context['results']['message']    = [0 => t('No voter data was returned for this turf. Please try the sync again.')];
+      $context['results']['result']     = 'error';
+      $context['results']['turfIndex']  = $context['sandbox']['turfIndex'];
+      $context['results']['mcid']       = $context['sandbox']['mcid'];
+      $context['results']['county']     = $context['sandbox']['county'];
+      return;
+    }
+
     $onePrecinct = $this->validateTurfPrecinct($legislativeDistricts, $voters);
     $context['sandbox']['legislativeDistricts'] = $legislativeDistricts;
 
