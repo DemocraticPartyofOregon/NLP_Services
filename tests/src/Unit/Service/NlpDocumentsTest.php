@@ -109,7 +109,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testDisplayListReturnsOneEntryPerNameListItem(): void {
-      $this->assertCount(7, $this->buildService()->displayList());
+      $this->assertCount(8, $this->buildService()->displayList());
     }
 
     public function testDisplayListReturnsStringDescriptions(): void {
@@ -344,7 +344,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testVerifyDefaultDocumentsReturnsEmptyWhenAllPresentInDb(): void {
       $dbRows = array_map(
         fn($name) => $this->baseRecord(['name' => $name]),
-        ['nlInstruct', 'nlPostcard', 'nlList', 'cutTurf', 'deliverTurf', 'committeeCoordinator', 'editEmail']
+        ['nlInstruct', 'nlPostcard', 'nlList', 'cutTurf', 'deliverTurf', 'committeeCoordinator', 'editEmail', 'nlpConfiguration']
       );
       $this->connectionMock->method('select')
         ->willReturn($this->buildSelectMock(new \ArrayObject($dbRows)));
@@ -353,12 +353,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $this->buildService()->verifyDefaultDocuments());
     }
 
-    public function testVerifyDefaultDocumentsAllSevenMissingWithNoDbRowsAndNoFiles(): void {
+    public function testVerifyDefaultDocumentsAllEightMissingWithNoDbRowsAndNoFiles(): void {
       $this->connectionMock->method('select')
         ->willReturn($this->buildSelectMock(new \ArrayObject([])));
       $tempDir = $this->createTempDocsDir([]);
       $this->setupContainerWithModuleList($tempDir);
-      $this->assertCount(7, $this->buildService()->verifyDefaultDocuments());
+      $this->assertCount(8, $this->buildService()->verifyDefaultDocuments());
     }
 
     public function testVerifyDefaultDocumentsFilesOnDiskFulfillMissingDbEntries(): void {
@@ -372,6 +372,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'TurfDelivery_2024.docx',
         'CommitteeCoordinator_2024.docx',
         'EditTurfEmail_2024.docx',
+        'NlpConfiguration_2024.docx',
       ];
       $tempDir = $this->createTempDocsDir($files);
       $this->setupContainerWithModuleList($tempDir);

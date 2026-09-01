@@ -479,9 +479,8 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
     $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
 
-    $this->apiKeyMock->expects($this->never())
-      ->method('createKeyWithValues')
-      ->with('NoKeyCounty', $this->anything(), $this->anything());
+    $this->apiKeyMock->method('createKeyWithValues')
+      ->with($this->logicalNot($this->identicalTo('NoKeyCounty')), $this->anything(), $this->anything());
 
     $data = [
       'State Committee' => ['API Key' => 'key'],

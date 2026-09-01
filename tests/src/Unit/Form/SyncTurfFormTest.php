@@ -390,7 +390,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formState->method('getValue')->willReturn([101 => 1]);
       $formState->expects($this->once())
         ->method('setErrorByName')
-        ->with('turf_submit', $this->stringContains('turf name is missing'));
+        ->with('turf_submit', $this->callback(
+          fn($message) => str_contains((string) $message, 'list of turfs has changed')
+        ));
 
       $form = [];
       $this->buildForm()->validateForm($form, $formState);
