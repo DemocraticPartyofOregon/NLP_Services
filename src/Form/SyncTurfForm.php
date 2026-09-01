@@ -306,9 +306,9 @@ class SyncTurfForm extends FormBase {
           return;
         }
         if(empty($turfOptions[$turfId]['turfName'])) {
-          $form_state->setErrorByName('turf_submit',"The turf name is missing.");
+          $form_state->setErrorByName('turf_submit', t('The list of turfs has changed since this page was loaded. Please reselect the turf from the updated list below.'));
           $msg = var_export($turfOptions, true);
-          Drupal::logger('nlpservices')->notice('Turf ID is wrong: '.$msg);
+          Drupal::logger('nlpservices')->notice('Turf ID @turfId not found in turf options: @msg', ['@turfId' => $turfId, '@msg' => $msg]);
           return;
         }
         $voterCount = $turfOptions[$turfId]['voterCount'];
@@ -496,7 +496,9 @@ class SyncTurfForm extends FormBase {
 
       if(empty($turfOptions[$turfId]['turfName'])) {
         $messenger = Drupal::messenger();
-        $messenger->addWarning("The turf name is missing.  The turf cannot be synced.");
+        $messenger->addWarning(t('The list of turfs has changed since this turf was selected. Please reselect the turf from the updated list.'));
+        $msg = var_export($turfOptions, true);
+        Drupal::logger('nlpservices')->notice('Turf ID @turfId not found in turf options: @msg', ['@turfId' => $turfId, '@msg' => $msg]);
         $form_state->set('page', 'turf_select');
         $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
         return;
