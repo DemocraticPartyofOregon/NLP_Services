@@ -19,11 +19,17 @@ use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\CoordinatorsForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\CoordinatorsForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorsForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorsForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorsForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorsForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorsForm::class, 'createCoordinatorAccount')]
+#[Group('nlpservices')]
 class CoordinatorsFormTest extends UnitTestCase {
 
   private NlpCoordinators $coordinatorsMock;
@@ -173,9 +179,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_coordinators_form', $this->buildFormInstance()->getFormId());
   }
@@ -184,9 +187,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyMissing(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->nlsMock->method('getNls')->willReturn([]);
@@ -198,9 +198,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsExpectedKeysWhenCountyIsSet(): void {
     $this->configureBuildFormMocks();
 
@@ -211,9 +208,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('manageCoordinators', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureBuildFormMocks();
 
@@ -225,9 +219,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/search-boxes', $libraries);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterScopeAndCountyOnFirstCall(): void {
     $this->configureBuildFormMocks();
 
@@ -239,9 +230,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsNlInitialisationWhenReenterAlreadySet(): void {
     $this->configureBuildFormReenterMocks();
     $this->nlsMock->expects($this->never())->method('getNls');
@@ -254,9 +242,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormEnrichesAssignedCoordinatorsWithRolesAndUid(): void {
     // Set up mocks directly (not via configureBuildFormMocks) so that the
     // coordinators stub below is the only one registered for that method.
@@ -291,9 +276,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertSame([], $assigned[1]['roles']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersAvailableNlsByNeedleWhenNeedleIsSet(): void {
     // Set up mocks directly (not via a helper) so that getCountyNls is only
     // configured once, allowing willReturnOnConsecutiveCalls to work correctly.
@@ -328,9 +310,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // validateForm — hd-select-add
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectAddSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(3);
 
@@ -347,9 +326,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // validateForm — add_coordinator_assignment
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorNoSelectionSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([]);
 
@@ -362,9 +338,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorMultipleSelectionsSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')
       ->willReturn([['mcid' => 1], ['mcid' => 2]]);
@@ -378,9 +351,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorUnknownScopeSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn([]);
@@ -395,9 +365,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorCountyScopeNoDuplicateSetsAssignmentRole(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -418,9 +385,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertNull($captured['assignmentRole']['hd']);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorCountyScopeDuplicateSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')
@@ -437,9 +401,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorHdScopeNoDuplicateSetsHdInAssignmentRole(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -460,9 +421,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertSame('hd', $captured['assignmentRole']['scope']);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorHdScopeDuplicateSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -479,9 +437,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorPrecinctScopeMissingPctListSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -505,9 +460,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertContains('pct-list', $errors);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorPrecinctScopeMissingHdSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -529,9 +481,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertContains('hd-assigned', $errors);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorPrecinctScopeDuplicateSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -555,9 +504,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertContains('scope', $errors);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormAddCoordinatorInvalidAltEmailSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([['mcid' => 42]]);
     $this->coordinatorsMock->method('getAllCoordinators')->willReturn(['TestCounty' => []]);
@@ -584,9 +530,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // validateForm — remove_coordinator_assignment
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormRemoveCoordinatorNoSelectionSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([]);
 
@@ -603,9 +546,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormRemoveCoordinatorValidSelectionStoresSelections(): void {
     $selections = [['cIndex' => 5, 'mcid' => 42]];
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn($selections);
@@ -630,9 +570,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // validateForm — scope-select
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormScopeSelectUpdatesScopeInFormState(): void {
     $captured = [];
     $formState = $this->createMock(FormStateInterface::class);
@@ -653,9 +590,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // submitForm — search_submit
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedleAndSetsRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -674,9 +608,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // submitForm — remove_coordinator_assignment
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormRemoveCoordinatorDeletesEachSelectedCoordinator(): void {
     $deleted = [];
     $this->coordinatorsMock->expects($this->exactly(2))
@@ -700,9 +631,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // submitForm — add_coordinator_assignment
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddCoordinatorNoEmailAddsWarningAndSkipsCreate(): void {
     $nl = array_merge($this->baseNlRecord(), ['email' => '']);
     $this->nlsMock->method('getNlById')->willReturn($nl);
@@ -722,9 +650,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddCoordinatorUsesAltEmailOverNlEmail(): void {
     $this->nlsMock->method('getNlById')->willReturn($this->baseNlRecord());
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
@@ -757,9 +682,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->assertSame('alt@example.com', $capturedReq['email']);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddCoordinatorUsesNicknameOverFirstName(): void {
     $this->nlsMock->method('getNlById')->willReturn($this->baseNlRecord()); // nickname='Ali', firstName='Alice'
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
@@ -796,9 +718,6 @@ class CoordinatorsFormTest extends UnitTestCase {
   // createCoordinatorAccount
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountAddsWarningWhenEmailMissing(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->drupalUserMock->expects($this->never())->method('getUserByMcid');
@@ -807,9 +726,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($coordinator);
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountDoesNothingWhenUserAlreadyHasRole(): void {
     // The form checks in_array(NLP_COORDINATOR_ROLE_ID, $roles) which tests VALUES.
     $this->drupalUserMock->method('getUserByMcid')->willReturn([
@@ -824,9 +740,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountAddsRoleAndStatusWhenUserLacksIt(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([
       'uid' => 10, 'mcid' => 42, 'roles' => [],
@@ -837,9 +750,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountAddsWarningOnMcidMismatch(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([
       'uid' => 10, 'mcid' => 99, 'roles' => [],   // mcid 99 ≠ 42
@@ -850,9 +760,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountFallsBackToEmailLookup(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->drupalUserMock->expects($this->once())
@@ -866,9 +773,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountFallsBackToNameLookupWhenEmailEmpty(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
@@ -883,9 +787,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountCreatesNewAccountAndAddsStatus(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
@@ -900,9 +801,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountAddsErrorWhenNewAccountFails(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
@@ -915,9 +813,6 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->buildFormInstance()->createCoordinatorAccount($this->baseCoordinatorArg());
   }
 
-  /**
-   * @covers ::createCoordinatorAccount
-   */
   public function testCreateCoordinatorAccountAddsErrorWhenUsernameAlreadyExists(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->drupalUserMock->method('getUserByEmail')->willReturn([]);

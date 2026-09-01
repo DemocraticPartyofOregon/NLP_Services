@@ -17,11 +17,16 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DeleteCoordinatorForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DeleteCoordinatorForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteCoordinatorForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteCoordinatorForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteCoordinatorForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteCoordinatorForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class DeleteCoordinatorFormTest extends UnitTestCase {
 
   private NlpCoordinators $coordinatorsMock;
@@ -106,9 +111,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_delete_coordinator_form', $this->buildFormInstance()->getFormId());
   }
@@ -117,9 +119,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyMissing(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->nlsMock->method('getNls')->willReturn([]);
@@ -131,9 +130,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterScopeAndCountyOnFirstRender(): void {
     $this->configureBuildFormMocks();
 
@@ -145,9 +141,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
     $this->configureBuildFormReenterMocks();
     $this->nlsMock->expects($this->never())->method('getNls');
@@ -160,9 +153,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsManageCoordinatorsFieldset(): void {
     $this->configureBuildFormMocks();
 
@@ -171,9 +161,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertArrayHasKey('manageCoordinators', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureBuildFormMocks();
 
@@ -184,9 +171,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/search-boxes', $form['#attached']['library']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormEnrichesCoordinatorsWithRolesAndUid(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->nlsMock->method('getNls')->willReturn([]);
@@ -217,9 +201,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertSame([], $assigned[11]['roles']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersCoordinatorsBySearchNeedle(): void {
     $allCoordinators = [
       10 => ['mcid' => 10, 'firstName' => 'Alice'],
@@ -254,9 +235,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormClearsSearchNeedleAfterFiltering(): void {
     $this->configureBuildFormReenterMocks();
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
@@ -277,9 +255,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // validateForm — hd-select-remove
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectRemoveSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(2);
 
@@ -295,9 +270,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // validateForm — delete_current_coordinator
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormDeleteCoordinatorNoSelectionSetsError(): void {
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn([]);
 
@@ -313,9 +285,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormDeleteCoordinatorValidSelectionStoresSelections(): void {
     $selections = [['mcid' => 42, 'cIndex' => 7]];
     $this->listDisplayMock->method('validateCoordinatorSelection')->willReturn($selections);
@@ -339,9 +308,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // submitForm — search_submit
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedleAndSetsRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -356,9 +322,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertSame('Jones', $formState->get('search-needle'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitSetsReenter(): void {
     $formState = new FormState();
     $formState->setValue('search-needle', 'Smith');
@@ -374,9 +337,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
   // submitForm — delete_current_coordinator
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteCoordinatorCallsDeleteForEachSelection(): void {
     $deleted = [];
     $this->coordinatorsMock->expects($this->exactly(2))
@@ -403,9 +363,6 @@ class DeleteCoordinatorFormTest extends UnitTestCase {
     $this->assertSame([5, 9], $deleted);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteCoordinatorSetsReenterAndCallsSetRebuild(): void {
     $this->coordinatorsMock->method('deleteCoordinator');
 

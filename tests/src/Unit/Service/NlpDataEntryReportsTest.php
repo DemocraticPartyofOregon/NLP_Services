@@ -14,11 +14,19 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpVoters;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\NlpDataEntryReports
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\NlpDataEntryReports::class)]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'hostileVoter')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'deceasedVoter')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'noContactResponse')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'badPhone')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'addNote')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'voterMoved')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'pledgeToVote')]
+#[Group('nlpservices')]
 class NlpDataEntryReportsTest extends UnitTestCase {
 
   protected $reportsMock;
@@ -85,9 +93,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // hostileVoter
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::hostileVoter
-   */
   public function testHostileVoterAppliesActivistCodeWhenHostile(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -101,9 +106,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->hostileVoter($this->baseReport(), $this->baseAction(['hostile' => TRUE]));
   }
 
-  /**
-   * @covers ::hostileVoter
-   */
   public function testHostileVoterRemovesActivistCodeWhenNotHostile(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -117,9 +119,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->hostileVoter($this->baseReport(), $this->baseAction(['hostile' => FALSE]));
   }
 
-  /**
-   * @covers ::hostileVoter
-   */
   public function testHostileVoterMergesReportAndUpdatesVoterStatus(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -134,9 +133,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->hostileVoter($this->baseReport(), $this->baseAction(['hostile' => TRUE]));
   }
 
-  /**
-   * @covers ::hostileVoter
-   */
   public function testHostileVoterReportsResultsAndNlParticipation(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -153,9 +149,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // deceasedVoter
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterCallsSetNlReport(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -165,9 +158,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterReportsSurveyResponseToVoteBuilder(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -181,9 +171,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterSubstitutesSocialMediaWithPhone(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Social Media');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -198,9 +185,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterUpdatesTurfVoterAndReportsResults(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -221,9 +205,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // noContactResponse
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseCallsSetNlReport(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -237,9 +218,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseReportsSurveyResponse(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -257,9 +235,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseIncludesCellPhoneWhenAvailable(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -280,9 +255,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseSkipsPhoneContactForWalkMethod(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -302,9 +274,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseUpdatesTurfVoterAndReportsResults(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -329,9 +298,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // badPhone
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::badPhone
-   */
   public function testBadPhoneRecordsCorrectPhoneTypeInReport(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
@@ -348,9 +314,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::badPhone
-   */
   public function testBadPhoneClearsPhoneFromVoterRecord(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
@@ -369,9 +332,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::badPhone
-   */
   public function testBadPhoneReportsSurveyResponseToVoteBuilder(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(4);
@@ -395,9 +355,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // addNote
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::addNote
-   */
   public function testAddNoteCreatesNewNoteWhenNoReportIndex(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
 
@@ -411,9 +368,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::addNote
-   */
   public function testAddNoteUpdatesExistingNoteWhenReportIndexSet(): void {
     $this->reportsMock->expects($this->never())->method('setNlReport');
     $this->reportsMock->expects($this->once())
@@ -426,9 +380,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::addNote
-   */
   public function testAddNoteTruncatesNotesExceedingMaxLength(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $longNote = str_repeat('A', NlpReports::MAX_COMMENT + 50);
@@ -445,9 +396,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::addNote
-   */
   public function testAddNoteSanitizesHtmlTags(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
 
@@ -463,9 +411,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::addNote
-   */
   public function testAddNoteReplacesNewlinesWithBrTags(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
 
@@ -485,9 +430,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // voterMoved
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::voterMoved
-   */
   public function testVoterMovedReportsSurveyResponseWhenAddressIsSame(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -505,9 +447,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->voterMoved($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::voterMoved
-   */
   public function testVoterMovedSkipsSurveyResponseWhenAddressDiffers(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -523,9 +462,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->voterMoved($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::voterMoved
-   */
   public function testVoterMovedCallsSetNlReportAndSetsMovedStatus(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -546,9 +482,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->voterMoved($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::voterMoved
-   */
   public function testVoterMovedReportsResultsAndNlParticipation(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -569,9 +502,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // pledgeToVote
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::pledgeToVote
-   */
   public function testPledgeToVoteCallsSetNlReport(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -589,9 +519,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::pledgeToVote
-   */
   public function testPledgeToVoteReportsSurveyResponseToVoteBuilder(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -613,9 +540,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::pledgeToVote
-   */
   public function testPledgeToVoteUpdatesTurfVoterWithReportIndex(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -638,9 +562,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::pledgeToVote
-   */
   public function testPledgeToVoteIncludesCellPhoneForPhoneContactMethod(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -665,9 +586,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     );
   }
 
-  /**
-   * @covers ::pledgeToVote
-   */
   public function testPledgeToVoteReportsResultsAndNlParticipation(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');

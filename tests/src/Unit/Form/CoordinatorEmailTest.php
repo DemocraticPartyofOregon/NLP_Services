@@ -18,11 +18,15 @@ use Drupal\Tests\UnitTestCase;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\CoordinatorEmail
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\CoordinatorEmail::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorEmail::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorEmail::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\CoordinatorEmail::class, 'submitForm')]
+#[Group('nlpservices')]
 class CoordinatorEmailTest extends UnitTestCase {
 
   private MailManagerInterface $mailManagerMock;
@@ -111,9 +115,6 @@ class CoordinatorEmailTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_coordinator_email_form', $this->buildForm()->getFormId());
   }
@@ -122,9 +123,6 @@ class CoordinatorEmailTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsSubjectMessageAndSendElements(): void {
     $this->requestStackMock->method('getCurrentRequest')->willReturn($this->makeRequest());
 
@@ -135,9 +133,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->assertArrayHasKey('send', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormStoresQueryParametersInFormState(): void {
     $this->requestStackMock->method('getCurrentRequest')->willReturn(
       $this->makeRequest(['to' => 'coord@test.com', 'from' => 'nl@test.com', 'firstName' => 'Alice', 'lastName' => 'Smith'])
@@ -153,9 +148,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->assertSame('Smith', $params['lastName']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterFlagWhenNotAlreadySet(): void {
     $this->requestStackMock->method('getCurrentRequest')->willReturn($this->makeRequest());
 
@@ -167,9 +159,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormUsesEmptyStringWhenQueryParamMissing(): void {
     $this->requestStackMock->method('getCurrentRequest')
       ->willReturn(Request::create('/'));
@@ -188,9 +177,6 @@ class CoordinatorEmailTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSendsMailAndAddsSuccessMessage(): void {
     $this->configureLanguageMock();
     $this->htmlTextMock->method('getText')->willReturn('plain text');
@@ -200,9 +186,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->submitFormWithDefaults($this->buildForm());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddsErrorMessageWhenMailFails(): void {
     $this->configureLanguageMock();
     $this->htmlTextMock->method('getText')->willReturn('plain text');
@@ -213,9 +196,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->submitFormWithDefaults($this->buildForm());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPassesMessageWithSenderSignatureToHtmlText(): void {
     $this->configureLanguageMock();
     $this->mailManagerMock->method('mail')->willReturn(['result' => TRUE]);
@@ -231,9 +211,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->submitFormWithDefaults($this->buildForm());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPassesCorrectRecipientAndReplyToMail(): void {
     $this->configureLanguageMock();
     $this->htmlTextMock->method('getText')->willReturn('plain text');
@@ -253,9 +230,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->submitFormWithDefaults($this->buildForm());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsRedirectToHelpRoute(): void {
     $this->configureLanguageMock();
     $this->htmlTextMock->method('getText')->willReturn('plain text');
@@ -280,9 +254,6 @@ class CoordinatorEmailTest extends UnitTestCase {
     $this->buildForm()->submitForm($formRef, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsRedirectEvenWhenMailFails(): void {
     $this->configureLanguageMock();
     $this->htmlTextMock->method('getText')->willReturn('plain text');

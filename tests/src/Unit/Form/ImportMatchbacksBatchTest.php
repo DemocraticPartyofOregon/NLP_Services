@@ -11,10 +11,9 @@ use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\NlpMatchbacks;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group nlpservices
- */
+#[Group('nlpservices')]
 class ImportMatchbacksBatchTest extends UnitTestCase {
 
   private NlpMatchbacks $matchbacksMock;

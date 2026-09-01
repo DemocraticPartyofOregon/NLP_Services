@@ -16,11 +16,18 @@ use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpUserDisplay;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DeleteDrupalAccountsForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'hdsWithUsers')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeleteDrupalAccountsForm::class, 'justUsersInHd')]
+#[Group('nlpservices')]
 class DeleteDrupalAccountsFormTest extends UnitTestCase {
 
   private DrupalUser $drupalUserMock;
@@ -107,9 +114,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_delete_drupal_user_form', $this->buildFormInstance()->getFormId());
   }
@@ -118,9 +122,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterAndCountyOnFirstRender(): void {
     $this->configureBuildFormMocks();
 
@@ -131,9 +132,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsPageToDisplayUsersOnFirstRender(): void {
     $this->configureBuildFormMocks();
 
@@ -143,9 +141,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame('displayUsers', $formState->get('page'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsCountySelectedWhenNotAdminUser(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
@@ -161,9 +156,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county_selected'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
     $this->configureBuildFormReenterMocks();
     $this->drupalUserMock->expects($this->never())->method('isNlpAdminUser');
@@ -177,9 +169,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyEmpty(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
@@ -191,9 +180,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsUserFormAndSubmitOnDisplayUsersPage(): void {
     $this->configureBuildFormMocks();
 
@@ -209,9 +195,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('submit', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureBuildFormMocks();
 
@@ -222,9 +205,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/search-boxes', $form['#attached']['library']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersUsersBySearchNeedle(): void {
     $users = [1 => $this->baseUser(1), 2 => $this->baseUser(2)];
     $filtered = [1 => $this->baseUser(1)];
@@ -252,9 +232,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertNull($formState->get('search-needle'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersUsersByHdWhenHdIsNotAll(): void {
     $users = [
       1 => $this->baseUser(1, 'HD1'),
@@ -285,9 +262,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormSearchSubmitReturnsWithoutSideEffects(): void {
     $this->userDisplayMock->expects($this->never())->method('validateUserSelection');
     $this->sessionDataMock->expects($this->never())->method('saveHdIndex');
@@ -299,9 +273,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(3);
 
@@ -313,9 +284,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormDeleteSubmitSetsErrorWhenNoUsersSelected(): void {
     $this->userDisplayMock->method('validateUserSelection')->willReturn([]);
 
@@ -330,9 +298,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormDeleteSubmitStoresUserSelectionsOnValidSelection(): void {
     $selections = [['uid' => 5]];
     $this->userDisplayMock->method('validateUserSelection')->willReturn($selections);
@@ -355,9 +320,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedle(): void {
     $formState = new FormState();
     $formState->setValue('search-needle', 'Smith');
@@ -370,9 +332,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteSubmitDeletesNonAdminUsers(): void {
     $this->drupalUserMock->expects($this->once())->method('deleteUser')->with(7);
     $this->messengerMock->expects($this->once())->method('addStatus');
@@ -389,9 +348,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteSubmitSkipsAdminUsers(): void {
     $this->drupalUserMock->expects($this->never())->method('deleteUser');
     $this->messengerMock->expects($this->once())->method('addStatus');
@@ -408,9 +364,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteSubmitSkipsNlpAdminUsers(): void {
     $this->drupalUserMock->expects($this->never())->method('deleteUser');
 
@@ -426,9 +379,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeleteSubmitDeletesOnlyNonAdminsFromMixedList(): void {
     $deleted = [];
     $this->drupalUserMock->method('deleteUser')
@@ -451,9 +401,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame([10], $deleted);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsReenterAndCallsSetRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -472,17 +419,11 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // hdsWithUsers
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersReturnsEmptyArrayForNoUsers(): void {
     $result = $this->buildFormInstance()->hdsWithUsers([]);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersSkipsUnknownAndZeroHd(): void {
     $users = [
       $this->baseUser(1, 'Unknown'),
@@ -497,9 +438,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertContains('HD1', $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersDeduplicatesHds(): void {
     $users = [
       $this->baseUser(1, 'HD1'),
@@ -516,9 +454,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   // justUsersInHd
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::justUsersInHd
-   */
   public function testJustUsersInHdReturnsOnlyUsersMatchingHd(): void {
     $users = [
       1 => $this->baseUser(1, 1),
@@ -533,9 +468,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayNotHasKey(2, $result);
   }
 
-  /**
-   * @covers ::justUsersInHd
-   */
   public function testJustUsersInHdTreatsUnknownAsZero(): void {
     $users = [
       1 => $this->baseUser(1, 'Unknown'),
@@ -548,9 +480,6 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayNotHasKey(2, $result);
   }
 
-  /**
-   * @covers ::justUsersInHd
-   */
   public function testJustUsersInHdReturnsEmptyArrayWhenNoMatch(): void {
     $users = [1 => $this->baseUser(1, 2)];
 

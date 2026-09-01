@@ -14,11 +14,15 @@ use Drupal\nlpservices\Form\TurfSelectForm;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\TurfSelectForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\TurfSelectForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfSelectForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfSelectForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfSelectForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class TurfSelectFormTest extends UnitTestCase {
 
   private PrivateTempStoreFactory $tempStoreFactoryMock;
@@ -67,9 +71,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame(
       'nlpservices_turf_select_form',
@@ -81,9 +82,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // buildForm — no MCID
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoMcidAddsError(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
@@ -93,9 +91,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoMcidReturnsEmptyForm(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
@@ -110,9 +105,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // buildForm — no turf
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoTurfAddsError(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
@@ -123,9 +115,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoTurfReturnsEmptyForm(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
@@ -137,9 +126,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertEmpty($form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoTurfCallsTurfExistsWithCorrectArgs(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
@@ -156,9 +142,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // buildForm — exactly one turf
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormOneTurfAddsStatusMessage(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
@@ -169,9 +152,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormOneTurfReturnsFormWithNoSubmit(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
@@ -187,9 +167,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // buildForm — multiple turfs
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormMultipleTurfsContainsTurfSelectRadios(): void {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
@@ -208,9 +185,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertSame($turfNames, $form['turf-select']['#options']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormMultipleTurfsContainsSubmitButton(): void {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
@@ -228,9 +202,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['submit']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormMultipleTurfsDefaultValueUsesStoredTurfIndex(): void {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
@@ -247,9 +218,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertSame(20, $form['turf-select']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormMultipleTurfsDefaultsToFirstWhenStoredIndexInvalid(): void {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
@@ -266,9 +234,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertSame(10, $form['turf-select']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormMultipleTurfsStoresTurfArrayInFormState(): void {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
@@ -285,9 +250,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->assertSame($turfArray, $formState->get('turfArray'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormStoresCountyInFormState(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
@@ -302,9 +264,6 @@ class TurfSelectFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormStoresTurfIndexInSession(): void {
     $this->sessionDataMock->expects($this->once())
       ->method('set')
@@ -318,9 +277,6 @@ class TurfSelectFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddsStatusWithSelectedTurfName(): void {
     $this->sessionDataMock->method('set');
     $this->messengerMock->expects($this->atLeastOnce())->method('addStatus');

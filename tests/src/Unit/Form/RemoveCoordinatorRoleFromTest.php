@@ -19,11 +19,16 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom::class, 'submitForm')]
+#[Group('nlpservices')]
 class RemoveCoordinatorRoleFromTest extends UnitTestCase {
 
   private NlpCoordinators $coordinatorsMock;
@@ -106,9 +111,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame(
       'nlpservices_remove_coordinator_role_form',
@@ -120,9 +122,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterAndScopeOnFirstRender(): void {
     $this->configureStandardBuildMocks();
 
@@ -133,9 +132,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertSame('unknown', $formState->get('scope'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsCountyFromSessionOnFirstRender(): void {
     $this->configureStandardBuildMocks('Denver');
 
@@ -145,9 +141,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertSame('Denver', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAddsWarningAndReturnsEmptyWhenCountyIsEmpty(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -157,9 +150,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
     $this->sessionDataMock->expects($this->never())->method('getCounty');
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
@@ -178,9 +168,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsExpectedFormElements(): void {
     $this->configureStandardBuildMocks();
 
@@ -191,9 +178,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertArrayHasKey('submit', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureStandardBuildMocks();
 
@@ -205,9 +189,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertContains('nlpservices/search-boxes', $libs);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersCoordinatorsByHdWhenNotAll(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
@@ -237,9 +218,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertArrayNotHasKey(20, $capturedTable);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormExcludesAssignedCoordinatorsFromUnassignedList(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn([]);
@@ -273,9 +251,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertArrayHasKey(20, $capturedTable);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersUnassignedCoordinatorsBySearchNeedleAndClearsNeedle(): void {
     $this->configureStandardBuildMocks();
 
@@ -297,9 +272,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertNull($formState->get('search-needle'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormEnrichesAssignedCoordinatorsWithDrupalUserData(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn([]);
@@ -325,9 +297,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(3);
 
@@ -339,9 +308,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormUserSelectSetsErrorWhenNoSelections(): void {
     $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')->willReturn([]);
 
@@ -355,9 +321,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormUserSelectStoresSelectionsWhenValid(): void {
     $selections = [['mcid' => 10]];
     $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')->willReturn($selections);
@@ -376,9 +339,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertSame($selections, $captured['selections']);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormUserSelectDoesNotSetErrorWhenSelectionsExist(): void {
     $this->coordinatorsListDisplayMock->method('validateCoordinatorSelection')
       ->willReturn([['mcid' => 10]]);
@@ -397,9 +357,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsReenterAndCallsSetRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -414,9 +371,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormHdChangeSavesNewHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(2);
 
@@ -428,9 +382,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedle(): void {
     $formState = new FormState();
     $formState->setValue('search-needle', 'Smith');
@@ -442,9 +393,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->assertSame('Smith', $formState->get('search-needle'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormUserSelectCallsRemoveCoordinatorRoleForEachSelection(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturnCallback(
       fn($mcid) => ['uid' => $mcid * 10]
@@ -462,9 +410,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormUserSelectCallsRemoveNlpRolesWithCoordinatorRoleId(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->with(10)
@@ -483,9 +428,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormUserSelectProcessesAllSelectionsInOrder(): void {
     $processedMcids = [];
     $this->drupalUserMock->method('getUserByMcid')

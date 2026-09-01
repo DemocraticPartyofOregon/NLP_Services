@@ -14,11 +14,15 @@ use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\NlpDataEntryVoterListDisplay
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class)]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'validateDataEntrySelection')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'whatChanged')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'buildDataEntryVoterArray')]
+#[Group('nlpservices')]
 class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
 
   protected $reportsMock;
@@ -133,17 +137,11 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
   // validateDataEntrySelection
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionReturnsEmptyForEmptyInput(): void {
     $result = $this->service->validateDataEntrySelection([]);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsContactMethod(): void {
     $dataEntry = $this->buildDataEntry('99999', [
       'col_2_2' => ['line_2_2_2' => 2],
@@ -152,9 +150,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(2, $result['99999']['contactMethod']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsSurveyResponse(): void {
     $dataEntry = $this->buildDataEntry('99999', [
       'col_2_3' => ['line_2_3_3' => 5],
@@ -163,9 +158,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(5, $result['99999']['surveyResponse']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsNotContacted(): void {
     $dataEntry = $this->buildDataEntry('99999', [
       'col_2_4' => ['line_2_4_2' => 3],
@@ -174,9 +166,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(3, $result['99999']['notContacted']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsMovedHostileDeceased(): void {
     $dataEntry = $this->buildDataEntry('99999', [
       'col_2_5' => [
@@ -191,9 +180,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(0, $result['99999']['deceased']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsUpdateContact(): void {
     $dataEntry = $this->buildDataEntry('99999', [
       'col_2_5' => [
@@ -206,9 +192,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('206-555-9999', $result['99999']['updateContact']['newContact']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionExtractsNote(): void {
     $dataEntry = $this->buildDataEntry('99999', [], [
       'col_4_1' => ['line_4_1_2' => 'Spoke with voter.'],
@@ -217,9 +200,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('Spoke with voter.', $result['99999']['note']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionHandlesMultipleVoters(): void {
     $dataEntry = array_merge(
       $this->buildDataEntry('11111', ['col_2_2' => ['line_2_2_2' => 1]]),
@@ -232,9 +212,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(2, $result['22222']['contactMethod']);
   }
 
-  /**
-   * @covers ::validateDataEntrySelection
-   */
   public function testValidateDataEntrySelectionIgnoresUnknownRowKeys(): void {
     $dataEntry = ['row_9_99999' => ['col_9_1' => 'garbage']];
     $result = $this->service->validateDataEntrySelection($dataEntry);
@@ -268,17 +245,11 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     ], $overrides);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsEmptyForEmptySelections(): void {
     $result = $this->service->whatChanged([], []);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedSkipsVoterNotInVoterArrays(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection()];
@@ -287,9 +258,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayNotHasKey('99999', $result);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsSurveyResponseWhenSet(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['surveyResponse' => 3])];
@@ -302,9 +270,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(3, $result['99999'][0]['surveyResponse']);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsNotContactedWhenSet(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['notContacted' => 4])];
@@ -316,9 +281,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertContains('notContacted', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsMovedWhenStatusChanges(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['moved' => 1])];
@@ -330,9 +292,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertContains('moved', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedDoesNotReturnMovedWhenStatusUnchanged(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['moved' => FALSE])];
@@ -344,9 +303,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertNotContains('moved', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsHostileWhenStatusChanges(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['hostile' => 1])];
@@ -358,9 +314,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertContains('hostile', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedDoesNotReturnHostileWhenStatusUnchanged(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['hostile' => FALSE])];
@@ -372,9 +325,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertNotContains('hostile', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsDeceasedWhenStatusChanges(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['deceased' => 1])];
@@ -386,9 +336,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertContains('deceased', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsUpdateContactWhenContactChangeSet(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection([
@@ -404,9 +351,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('NC', $updateAction['updateContact']['contactChange']);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedDoesNotReturnUpdateContactWhenContactChangeEmpty(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection([
@@ -420,9 +364,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertNotContains('updateContact', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedReturnsNoteWhenNoteChanges(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['note' => 'New note text'])];
@@ -434,9 +375,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertContains('note', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedDoesNotReturnNoteWhenNoteUnchanged(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection(['note' => 'Same note'])];
@@ -448,9 +386,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertNotContains('note', $types);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedUpdatesContactMethodWhenSelectionDiffers(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $this->nlpConfigurationMock->method('getContactMethods')->willReturn([1 => 'Walk', 2 => 'Phone']);
@@ -468,9 +403,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(2, $result['99999'][0]['contactMethod']);
   }
 
-  /**
-   * @covers ::whatChanged
-   */
   public function testWhatChangedProducesMultipleActionsForSameVoter(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection([
@@ -490,9 +422,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
   // buildDataEntryVoterArray
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsBasicFields(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -505,9 +434,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('CD1', $result['cd']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsNoteAndReportIndexFromCanvassResults(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([
       'note' => ['text' => 'Talked to voter.', 'reportIndex' => 42],
@@ -520,9 +446,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(42, $result['reportIndex']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsEmptyNoteWhenNoCanvassNote(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -533,9 +456,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame(0, $result['reportIndex']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsDeceasedHostileMovedFlags(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([
       'deceased' => TRUE,
@@ -551,9 +471,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertTrue($result['moved']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayIncludesBcAndOoForCellPhone(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -565,9 +482,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayHasKey('OO', $result['contactUpdateOptions']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayIncludesBhForHomePhone(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -579,9 +493,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayNotHasKey('BC', $result['contactUpdateOptions']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayAlwaysIncludesNcNhNe(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -594,9 +505,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayHasKey('NE', $result['contactUpdateOptions']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayIncludesLawnSignAndRideWhenNotOregon(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -608,9 +516,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayHasKey('RTP', $result['contactUpdateOptions']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayExcludesLawnSignAndRideWhenOregon(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -622,9 +527,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertArrayNotHasKey('RTP', $result['contactUpdateOptions']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArrayFormatsPhoneNumber(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -635,9 +537,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('(206) 555-1234', $result['cellPhone']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsNoAttemptStatusWhenNoContact(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -647,9 +546,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertStringContainsString('voter-no-attempt', (string) $result['contactStatusMsg']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsDeceasedStatusWhenVoterDeceased(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
@@ -660,9 +556,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertStringContainsString('voter-deceased', (string) $result['contactStatusMsg']);
   }
 
-  /**
-   * @covers ::buildDataEntryVoterArray
-   */
   public function testBuildDataEntryVoterArraySetsHostileStatusWhenVoterHostile(): void {
     $this->reportsMock->method('getCanvassResults')->willReturn([]);
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);

@@ -15,11 +15,18 @@ use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpVoters;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DataEntryPostcardsForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'buildPostcardSelection')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'reportPostcardMailed')]
+#[Group('nlpservices')]
 class DataEntryPostcardsFormTest extends UnitTestCase {
 
   private DrupalUser $drupalUserMock;
@@ -83,9 +90,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('data_entry_postcard_form', $this->buildFormInstance()->getFormId());
   }
@@ -94,17 +98,11 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // buildPostcardSelection
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildPostcardSelection
-   */
   public function testBuildPostcardSelectionReturnsEmptyArrayForNoVoters(): void {
     $result = $this->buildFormInstance()->buildPostcardSelection([]);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildPostcardSelection
-   */
   public function testBuildPostcardSelectionFormatsVoterDisplayString(): void {
     $result = $this->buildFormInstance()->buildPostcardSelection([$this->baseVoter(11111)]);
 
@@ -112,9 +110,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame('Jane Doe - 123 Main St, Portland', $result[11111]);
   }
 
-  /**
-   * @covers ::buildPostcardSelection
-   */
   public function testBuildPostcardSelectionHandlesMultipleVoters(): void {
     $voters = [
       $this->baseVoter(11111),
@@ -134,9 +129,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsAllVotersRepAndCanvassDateOnFirstRender(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([]);
@@ -150,9 +142,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame(date('Y-m-d'), $formState->get('canvassDate'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormDoesNotResetStateWhenReenterIsSet(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([]);
@@ -171,9 +160,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame('2026-01-01', $formState->get('canvassDate'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsExpectedFormElements(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([]);
@@ -187,9 +173,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('reportMailed', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([]);
@@ -201,9 +184,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/nlp-table', $form['#attached']['library']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAppendsSentMarkerToVoterWhoAlreadyReceivedPostcard(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([$this->baseVoter(11111)]);
@@ -222,9 +202,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertStringContainsString('**', $form['postcards'][$checkboxKey]['#title']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormDoesNotAppendSentMarkerForUnsent(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([$this->baseVoter(11111)]);
@@ -241,9 +218,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertStringNotContainsString('**', $form['postcards']['voter-1-11111']['#title']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsCheckboxDefaultToOneWhenAllVotersSelectedAndPostcardNotSent(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([$this->baseVoter(11111)]);
@@ -260,9 +234,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame(1, $form['postcards']['voter-1-11111']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsCheckboxDefaultToZeroWhenPostcardAlreadySentEvenWithAllVoters(): void {
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([$this->baseVoter(11111)]);
@@ -283,9 +254,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormSetsReenterAndIncrementsRep(): void {
     $formState = new FormState();
     $formState->set('rep', 2);
@@ -298,9 +266,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame(3, $formState->get('rep'));
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormSetsAllVotersTrueWhenChecked(): void {
     $formState = new FormState();
     $formState->set('rep', 1);
@@ -312,9 +277,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('allVoters'));
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormSetsAllVotersFalseWhenUnchecked(): void {
     $formState = new FormState();
     $formState->set('rep', 1);
@@ -330,9 +292,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsReenterIncrementsRepAndCallsSetRebuild(): void {
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
 
@@ -350,9 +309,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame(4, $formState->get('rep'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCallsReportPostcardMailedForEachCheckedVoter(): void {
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
@@ -381,9 +337,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSkipsUncheckedAndNonVoterValues(): void {
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
 
@@ -401,9 +354,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormResetsAllVotersAndUserInput(): void {
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
 
@@ -423,9 +373,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // reportPostcardMailed
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::reportPostcardMailed
-   */
   public function testReportPostcardMailedCallsSetNlReportWithCorrectData(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
@@ -456,9 +403,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame('2026-06-27', $capturedReport['contactDate']);
   }
 
-  /**
-   * @covers ::reportPostcardMailed
-   */
   public function testReportPostcardMailedCallsReportSurveyResponseWithCorrectData(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
@@ -485,9 +429,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame('2026-06-27', $capturedSurvey['dateCanvassed']);
   }
 
-  /**
-   * @covers ::reportPostcardMailed
-   */
   public function testReportPostcardMailedUpdatesNlReportIndexOnTurfVoter(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
@@ -516,9 +457,6 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame(77, $capturedTurfVoter['attemptedContact']);
   }
 
-  /**
-   * @covers ::reportPostcardMailed
-   */
   public function testReportPostcardMailedMarksNlAsHavingReportedResults(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);

@@ -18,11 +18,18 @@ use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpUserDisplay;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\ManageDrupalAccountsForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'hdsWithUsers')]
+#[CoversMethod(\Drupal\nlpservices\Form\ManageDrupalAccountsForm::class, 'displayUser')]
+#[Group('nlpservices')]
 class ManageDrupalAccountsFormTest extends UnitTestCase {
 
   private DrupalUser $drupalUserMock;
@@ -139,9 +146,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_manage_drupal_accounts_form', $this->buildFormInstance()->getFormId());
   }
@@ -150,9 +154,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsReenterCountyAndPageOnFirstRender(): void {
     $this->configureDisplayUsersMocks();
 
@@ -164,9 +165,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame('displayUsers', $formState->get('page'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
     $this->sessionDataMock->expects($this->never())->method('getCounty');
     $this->drupalUserMock->method('getUsers')->willReturn([]);
@@ -186,9 +184,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyEmpty(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->drupalUserMock->method('getUsers')->willReturn([]);
@@ -200,9 +195,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsExpectedElementsOnDisplayUsersPage(): void {
     $this->configureDisplayUsersMocks();
 
@@ -219,9 +211,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('submit', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureDisplayUsersMocks();
 
@@ -234,9 +223,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/edit-user', $libs);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersUsersBySearchNeedleAndClearsNeedle(): void {
     $users   = [1 => $this->baseUser(1), 2 => $this->baseUser(2)];
     $filtered = [1 => $this->baseUser(1)];
@@ -270,9 +256,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(2);
 
@@ -284,9 +267,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormUserSelectSetsErrorWhenNoUsersSelected(): void {
     $this->userDisplayMock->method('validateUserSelection')->willReturn([]);
 
@@ -300,9 +280,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormUserSelectStoresSelectionsWhenValid(): void {
     $selections = [['uid' => 5]];
     $this->userDisplayMock->method('validateUserSelection')->willReturn($selections);
@@ -321,9 +298,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame($selections, $captured['userSelections']);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorForEmptyFirstName(): void {
     $formState = $this->createMock(FormStateInterface::class);
     $formState->method('getTriggeringElement')->willReturn(['#name' => 'edit_submit']);
@@ -336,9 +310,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorForDuplicateMcid(): void {
     $this->drupalUserMock->method('getUserByMcid')->with(99)->willReturn(['uid' => 7]);
 
@@ -353,9 +324,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorWhenMcidNotInNlList(): void {
     $this->drupalUserMock->method('getUserByMcid')->with(99)->willReturn([]);
     $this->nlsMock->method('getNlById')->with(99)->willReturn([]);
@@ -371,9 +339,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorForEmptyMail(): void {
     $formState = $this->createMock(FormStateInterface::class);
     $formState->method('getTriggeringElement')->willReturn(['#name' => 'edit_submit']);
@@ -386,9 +351,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorForDuplicateEmail(): void {
     $this->drupalUserMock->method('getUserByEmail')->with('other@example.com')->willReturn(['uid' => 9]);
 
@@ -403,9 +365,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitSetsErrorWhenNoRoleSelected(): void {
     $formState = $this->createMock(FormStateInterface::class);
     $formState->method('getTriggeringElement')->willReturn(['#name' => 'edit_submit']);
@@ -420,9 +379,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEditSubmitStoresChangedFieldsWhenValid(): void {
     $captured = [];
     $formState = $this->createMock(FormStateInterface::class);
@@ -444,9 +400,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedleAndSetsReenter(): void {
     $formState = new FormState();
     $formState->setValue('search-needle', 'Jones');
@@ -459,9 +412,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCallsSetRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -474,9 +424,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormUserSelectSetsPageAndBuildsUidList(): void {
     $formState = new FormState();
     $formState->set('userSelections', [['uid' => 3], ['uid' => 7]]);
@@ -490,9 +437,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame(2, $formState->get('currentEditIndex'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditDoneSetsPageToDisplayUsersAndResetsEditState(): void {
     $formState = new FormState();
     $formState->setTriggeringElement(['#name' => 'edit_done']);
@@ -505,9 +449,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame(0, $formState->get('currentEditIndex'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditSubmitUpdatesUserAndDecrementsIndex(): void {
     $this->drupalUserMock->expects($this->once())->method('updateUser');
 
@@ -524,9 +465,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertSame(1, $formState->get('currentEditIndex'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditSubmitReturnsToDisplayUsersWhenLastUser(): void {
     $this->drupalUserMock->method('updateUser')->willReturn([]);
 
@@ -544,9 +482,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertNull($formState->get('editUsers'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditSubmitCallsSetMagicWordWhenPasswordChangedAndMcidSet(): void {
     $this->magicWordMock->expects($this->once())->method('setMagicWord')->with(42, 'newpass');
     $this->drupalUserMock->method('updateUser')->willReturn([]);
@@ -562,9 +497,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditSubmitSkipsMagicWordWhenMcidIsEmpty(): void {
     $this->magicWordMock->expects($this->never())->method('setMagicWord');
     $this->drupalUserMock->method('updateUser')->willReturn([]);
@@ -584,18 +516,12 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // hdsWithUsers
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersReturnsEmptyForNoUsers(): void {
     $users = [];
     $result = $this->buildFormInstance()->hdsWithUsers($users, 'All');
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersSkipsUnknownHd(): void {
     $users = [
       1 => $this->baseUser(1, 'Unknown'),
@@ -608,9 +534,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertContains('HD1', $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersSkipsEmptyHd(): void {
     $users = [
       1 => $this->baseUser(1, ''),
@@ -623,9 +546,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertContains('HD2', $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersDeduplicatesHds(): void {
     $users = [
       1 => $this->baseUser(1, 'HD1'),
@@ -638,9 +558,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertCount(2, $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersFiltersToSpecificHd(): void {
     $users = [
       1 => $this->baseUser(1, 'HD1'),
@@ -653,9 +570,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertNotContains('HD2', $result);
   }
 
-  /**
-   * @covers ::hdsWithUsers
-   */
   public function testHdsWithUsersModifiesUsersArrayByReference(): void {
     $users = [
       1 => $this->baseUser(1, 'HD1'),
@@ -672,9 +586,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   // displayUser
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::displayUser
-   */
   public function testDisplayUserReturnsFormElementsWithExpectedKeys(): void {
     $this->drupalUserMock->method('getNlpRoles')->willReturn([
       'nlp_leader'      => 'NLP Leader',
@@ -699,9 +610,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('selected_roles', $result['edit']);
   }
 
-  /**
-   * @covers ::displayUser
-   */
   public function testDisplayUserExcludesNlpAdminFromRoleOptions(): void {
     $this->drupalUserMock->method('getNlpRoles')->willReturn([
       'nlp_leader' => 'NLP Leader',
@@ -721,9 +629,6 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->assertArrayHasKey('nlp_leader', $result['edit']['selected_roles']['#options']);
   }
 
-  /**
-   * @covers ::displayUser
-   */
   public function testDisplayUserPopulatesCurrentValueWithUserFields(): void {
     $this->drupalUserMock->method('getNlpRoles')->willReturn([
       'nlp_leader' => 'NLP Leader',

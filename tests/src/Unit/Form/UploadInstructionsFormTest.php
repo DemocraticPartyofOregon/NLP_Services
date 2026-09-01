@@ -15,11 +15,16 @@ use Drupal\nlpservices\Form\UploadInstructionsForm;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpPaths;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\UploadInstructionsForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\UploadInstructionsForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\UploadInstructionsForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\UploadInstructionsForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\UploadInstructionsForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\UploadInstructionsForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class UploadInstructionsFormTest extends UnitTestCase {
 
   private NlpInstructions $instructionsMock;
@@ -83,9 +88,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame(
       'nlpservices_upload_instructions_form',
@@ -97,9 +99,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // buildForm — no county
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoCountyAddsWarning(): void {
     $this->stubCounty('');
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -108,9 +107,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormNoCountyReturnsEmptyArray(): void {
     $this->stubCounty('');
 
@@ -124,9 +120,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // buildForm — county present
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormStoresCountyInFormState(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -137,9 +130,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormCallsGetInstructionsWithCounty(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->expects($this->once())
@@ -151,9 +141,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormStoresCurrentInstructionsInFormState(): void {
     $current = ['canvass' => ['originalFileName' => 'canvass.pdf'], 'postcard' => []];
     $this->stubCounty('TestCounty');
@@ -165,9 +152,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame($current, $formState->get('current'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsInstructionFieldset(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -179,9 +163,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame('fieldset', $form['instruction_form']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsCanvassFileInput(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -193,9 +174,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame('file', $form['instruction_form']['canvass']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsCardFileInput(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -207,9 +185,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame('file', $form['instruction_form']['card']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsSubmitButton(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -221,9 +196,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['submit']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesLibraries(): void {
     $this->stubCounty('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
@@ -239,9 +211,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCanvassNonPdfSetsError(): void {
     $_FILES['files']['name']['canvass'] = 'instructions.docx';
     $_FILES['files']['name']['card']    = '';
@@ -257,9 +226,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCanvassPdfExtensionSetsNoError(): void {
     $_FILES['files']['name']['canvass'] = 'instructions.pdf';
     $_FILES['files']['name']['card']    = '';
@@ -273,9 +239,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCanvassTooLongSetsError(): void {
     $_FILES['files']['name']['canvass'] = str_repeat('a', 161) . '.pdf';
     $_FILES['files']['name']['card']    = '';
@@ -291,9 +254,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormEmptyCanvassSkipsCanvassValidation(): void {
     $_FILES['files']['name']['canvass'] = '';
     $_FILES['files']['name']['card']    = '';
@@ -307,9 +267,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCardNonPdfSetsError(): void {
     $_FILES['files']['name']['canvass'] = '';
     $_FILES['files']['name']['card']    = 'postcard.docx';
@@ -325,9 +282,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCardPdfExtensionSetsNoError(): void {
     $_FILES['files']['name']['canvass'] = '';
     $_FILES['files']['name']['card']    = 'postcard.pdf';
@@ -341,9 +295,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormCardTooLongSetsError(): void {
     $_FILES['files']['name']['canvass'] = '';
     $_FILES['files']['name']['card']    = str_repeat('b', 161) . '.pdf';
@@ -363,9 +314,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCanvassFileMoveUploadedFileIsCalled(): void {
     $_FILES['files']['name']['canvass']     = 'canvass.pdf';
     $_FILES['files']['tmp_name']['canvass'] = '/tmp/phpABCDEF';
@@ -389,9 +337,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCanvassFileCallsCreateInstructions(): void {
     $_FILES['files']['name']['canvass']     = 'canvass.pdf';
     $_FILES['files']['tmp_name']['canvass'] = '/tmp/phpABCDEF';
@@ -417,9 +362,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCardFileCallsCreateInstructions(): void {
     $_FILES['files']['name']['canvass']  = '';
     $_FILES['files']['name']['card']     = 'postcard.pdf';
@@ -444,9 +386,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoFilesSkipsBothUploads(): void {
     $_FILES['files']['name']['canvass'] = '';
     $_FILES['files']['name']['card']    = '';
@@ -462,9 +401,6 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormGeneratesTimestampedFilename(): void {
     $_FILES['files']['name']['canvass']     = 'canvass.pdf';
     $_FILES['files']['tmp_name']['canvass'] = '/tmp/phpABCDEF';

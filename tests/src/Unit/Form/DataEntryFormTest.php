@@ -23,11 +23,19 @@ use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\ApiMapRegions;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\DataProvider;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DataEntryForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DataEntryForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'initializeDataReporting')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'validatePhoneNumber')]
+#[Group('nlpservices')]
 class DataEntryFormTest extends UnitTestCase {
 
   protected $nlsMock;
@@ -193,9 +201,6 @@ class DataEntryFormTest extends UnitTestCase {
   // getFormId
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_data_entry_form', $this->form->getFormId());
   }
@@ -204,9 +209,6 @@ class DataEntryFormTest extends UnitTestCase {
   // initializeDataReporting
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::initializeDataReporting
-   */
   public function testInitializeDataReportingReturnsFalseWhenMcidMissing(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
@@ -218,9 +220,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertFalse($result);
   }
 
-  /**
-   * @covers ::initializeDataReporting
-   */
   public function testInitializeDataReportingReturnsFalseWhenNoTurfAssigned(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
@@ -234,9 +233,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertFalse($result);
   }
 
-  /**
-   * @covers ::initializeDataReporting
-   */
   public function testInitializeDataReportingReturnsFalseWhenNlNotFound(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
@@ -254,9 +250,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertFalse($result);
   }
 
-  /**
-   * @covers ::initializeDataReporting
-   */
   public function testInitializeDataReportingReturnsTrueAndSetsStateWhenValid(): void {
     $formState = new FormState();
     $this->configureValidSession(101, 42);
@@ -273,9 +266,6 @@ class DataEntryFormTest extends UnitTestCase {
   // buildForm
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyFormWhenInitializeFails(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
@@ -289,9 +279,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertArrayNotHasKey('dataEntryTable', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormShowsUnreportedChangesPageWhenPageSet(): void {
     $this->configureValidSession();
     $this->turfsMock->method('getChangeHistory')->willReturn([]);
@@ -306,9 +293,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertArrayNotHasKey('dataEntryTable', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormShowsPostcardsPageWhenPageSet(): void {
     $this->configureValidSession();
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([
@@ -326,9 +310,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertArrayNotHasKey('dataEntryTable', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormBuildsVoterTableAndAttachesLibraries(): void {
     $this->configureValidSession();
     $this->dataEntryVotersMock->method('fetchVoters')->willReturn([
@@ -355,9 +336,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/data-entry-table', $form['#attached']['library']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormPaginatesToTenVotersPerPage(): void {
     $this->configureValidSession();
 
@@ -387,9 +365,6 @@ class DataEntryFormTest extends UnitTestCase {
   // validateForm
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormIgnoresNonContactMethodTrigger(): void {
     $this->nlpConfigurationMock->expects($this->never())->method('getContactMethods');
     $this->sessionDataMock->expects($this->never())->method('setVoterContactMethod');
@@ -400,9 +375,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormDetectsContactMethodChangeAndStoresInSession(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone']);
@@ -428,9 +400,6 @@ class DataEntryFormTest extends UnitTestCase {
   // submitForm — early-return branches
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAlwaysSetsRebuildAndReenter(): void {
     $formState = new FormState();
     $this->configureSubmitBase($formState);
@@ -442,9 +411,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAcknowledgeUnreportedChangesUpdatesTurf(): void {
     $this->turfsMock->expects($this->once())
       ->method('updateTurfFields')
@@ -462,9 +428,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame('unreportedChanges', $formState->get('page'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPostcardSubmitSetsPage(): void {
     $formState = new FormState();
     $formState->set('reenter', TRUE);
@@ -476,9 +439,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame('postcardsSent', $formState->get('page'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPostcardSelectProcessesOnlyCheckedVoters(): void {
     $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane']);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
@@ -505,9 +465,6 @@ class DataEntryFormTest extends UnitTestCase {
   // submitForm — navigation
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPageSelectSetsCorrectPage(): void {
     $setCalls = [];
     $this->sessionDataMock->method('set')
@@ -526,9 +483,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame(2, $setCalls['currentPage']);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormLastNameSearchNavigatesWhenFound(): void {
     $this->dataEntryVotersMock->method('voterSearch')
       ->with(42, 'Smith', DataEntryForm::DE_PAGE_SIZE)
@@ -551,9 +505,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame(4, $setCalls['currentPage'] ?? NULL);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormLastNameSearchDoesNotNavigateWhenNotFound(): void {
     $this->dataEntryVotersMock->method('voterSearch')
       ->willReturn(['found' => FALSE, 'page' => 0]);
@@ -579,9 +530,6 @@ class DataEntryFormTest extends UnitTestCase {
   // submitForm — voter contact actions
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSurveyResponseCallsPledgeToVote(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('pledgeToVote');
     $formState = $this->buildActionFormState(99999, [
@@ -591,9 +539,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSurveyResponseWithPostcardContactMethodShowsWarning(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->dataEntryReportsMock->expects($this->never())->method('pledgeToVote');
@@ -604,9 +549,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNotContactedCallsNoContactResponse(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse');
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
@@ -614,9 +556,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormMovedCallsVoterMoved(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('voterMoved');
     $formState = $this->buildActionFormState(99999, ['type' => 'moved']);
@@ -624,9 +563,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormHostileCallsHostileVoter(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('hostileVoter');
     $formState = $this->buildActionFormState(99999, ['type' => 'hostile']);
@@ -634,9 +570,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormDeceasedCallsDeceasedVoter(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('deceasedVoter');
     $formState = $this->buildActionFormState(99999, ['type' => 'deceased']);
@@ -644,9 +577,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormBadCellCallsBadPhoneWithCellPhone(): void {
     $this->dataEntryReportsMock->expects($this->once())
       ->method('badPhone')
@@ -659,9 +589,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormBadHomeCallsBadPhoneWithHomePhone(): void {
     $this->dataEntryReportsMock->expects($this->once())
       ->method('badPhone')
@@ -674,9 +601,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewCellValidPhoneSavesReportAndUpdatesVoter(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->reportsMock->expects($this->once())->method('setNlReport');
@@ -689,9 +613,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewCellEmptyPhoneShowsWarningAndSkipsReport(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->reportsMock->expects($this->never())->method('setNlReport');
@@ -703,9 +624,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewCellInvalidPhoneShowsWarningAndSkipsReport(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->reportsMock->expects($this->never())->method('setNlReport');
@@ -717,9 +635,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewHomeValidPhoneSavesReportAndUpdatesVoter(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->reportsMock->expects($this->once())->method('setNlReport');
@@ -732,9 +647,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewHomeInvalidPhoneShowsWarning(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->reportsMock->expects($this->never())->method('setNlReport');
@@ -746,9 +658,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewEmailValidCallsSetNlReport(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->reportsMock->expects($this->once())->method('setNlReport');
@@ -760,9 +669,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewEmailInvalidShowsWarningAndSkipsReport(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->reportsMock->expects($this->never())->method('setNlReport');
@@ -774,9 +680,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAddNoteCallsAddNote(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('addNote');
     $formState = $this->buildActionFormState(99999, ['type' => 'note']);
@@ -784,9 +687,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormLawnSignWithCandidatesSavesReport(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->reportsMock->expects($this->once())->method('setNlReport');
@@ -798,9 +698,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormLawnSignWithoutCandidatesShowsWarningAndSkipsReport(): void {
     $this->messengerMock->expects($this->once())->method('addWarning');
     $this->reportsMock->expects($this->never())->method('setNlReport');
@@ -812,9 +709,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormRideToPollsSavesReport(): void {
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
     $this->reportsMock->expects($this->once())->method('setNlReport');
@@ -830,10 +724,7 @@ class DataEntryFormTest extends UnitTestCase {
   // validatePhoneNumber
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::validatePhoneNumber
-   * @dataProvider validPhoneProvider
-   */
+  #[DataProvider('validPhoneProvider')]
   public function testValidatePhoneNumberReturnsTrueForValidFormats(string $phone): void {
     $this->assertGreaterThan(0, $this->form->validatePhoneNumber($phone));
   }
@@ -849,10 +740,7 @@ class DataEntryFormTest extends UnitTestCase {
     ];
   }
 
-  /**
-   * @covers ::validatePhoneNumber
-   * @dataProvider invalidPhoneProvider
-   */
+  #[DataProvider('invalidPhoneProvider')]
   public function testValidatePhoneNumberReturnsFalseForInvalidFormats(string $phone): void {
     $this->assertFalse((bool) $this->form->validatePhoneNumber($phone));
   }

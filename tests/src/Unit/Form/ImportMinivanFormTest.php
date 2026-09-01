@@ -12,11 +12,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\Form\ImportMinivanForm;
   use Drupal\nlpservices\NlpMinivan;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\Attributes\CoversClass;
+  use PHPUnit\Framework\Attributes\CoversMethod;
+  use PHPUnit\Framework\Attributes\Group;
 
-  /**
-   * @coversDefaultClass \Drupal\nlpservices\Form\ImportMinivanForm
-   * @group nlpservices
-   */
+  #[CoversClass(\Drupal\nlpservices\Form\ImportMinivanForm::class)]
+  #[CoversMethod(\Drupal\nlpservices\Form\ImportMinivanForm::class, 'getFormId')]
+  #[CoversMethod(\Drupal\nlpservices\Form\ImportMinivanForm::class, 'buildForm')]
+  #[CoversMethod(\Drupal\nlpservices\Form\ImportMinivanForm::class, 'submitForm')]
+  #[Group('nlpservices')]
   class ImportMinivanFormTest extends UnitTestCase {
 
     private NlpMinivan $minivanMock;
@@ -74,9 +78,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // getFormId
     // -------------------------------------------------------------------------
 
-    /**
-     * @covers ::getFormId
-     */
     public function testGetFormIdReturnsExpectedString(): void {
       $this->assertSame(
         'nlpservices_import_minivan_form',
@@ -88,18 +89,12 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // buildForm
     // -------------------------------------------------------------------------
 
-    /**
-     * @covers ::buildForm
-     */
     public function testBuildFormContainsSubmitElement(): void {
       $form = $this->buildFormInstance()->buildForm([], new FormState());
 
       $this->assertArrayHasKey('submit', $form);
     }
 
-    /**
-     * @covers ::buildForm
-     */
     public function testBuildFormSubmitElementHasCorrectType(): void {
       $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -110,9 +105,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // submitForm — empty queue breaks the loop immediately
     // -------------------------------------------------------------------------
 
-    /**
-     * @covers ::submitForm
-     */
     public function testSubmitFormCallsMinivanEmailCheck(): void {
       $this->minivanMock->expects($this->atLeastOnce())->method('minivanEmailCheck')->willReturn([]);
 
@@ -120,9 +112,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->buildFormInstance()->submitForm($form, new FormState());
     }
 
-    /**
-     * @covers ::submitForm
-     */
     public function testSubmitFormDoesNotSetBatchWhenQueueIsEmpty(): void {
       $this->minivanMock->method('minivanEmailCheck')->willReturn([]);
 
@@ -137,8 +126,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     /**
-     * @covers ::submitForm
-     *
      * Items whose reportCount is empty/zero must not trigger batch_set; the
      * second call to minivanEmailCheck returns [] to exit the do-while loop.
      */
@@ -159,9 +146,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // submitForm — items with reports trigger batch_set
     // -------------------------------------------------------------------------
 
-    /**
-     * @covers ::submitForm
-     */
     public function testSubmitFormCallsBatchSetForItemsWithReports(): void {
       $this->minivanMock->method('minivanEmailCheck')
         ->willReturnOnConsecutiveCalls(
@@ -175,9 +159,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertCount(1, $GLOBALS['batch_set_calls']);
     }
 
-    /**
-     * @covers ::submitForm
-     */
     public function testSubmitFormSetsOneBatchPerQueueItemWithReports(): void {
       $this->minivanMock->method('minivanEmailCheck')
         ->willReturnOnConsecutiveCalls(
@@ -192,8 +173,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     /**
-     * @covers ::submitForm
-     *
      * The batch operation must pass the expected keys from the queue item
      * through to importMinivanBatch.
      */

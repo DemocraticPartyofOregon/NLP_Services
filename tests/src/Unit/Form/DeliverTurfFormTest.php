@@ -31,11 +31,18 @@ use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DeliverTurfForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DeliverTurfForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'submitForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'notifyUserCredentials')]
+#[CoversMethod(\Drupal\nlpservices\Form\DeliverTurfForm::class, 'updateMinivanInfo')]
+#[Group('nlpservices')]
 class DeliverTurfFormTest extends UnitTestCase {
 
   private NlpTurfs $turfsMock;
@@ -158,9 +165,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_deliver_turf_form', $this->buildFormInstance()->getFormId());
   }
@@ -169,9 +173,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyAndWarnsWhenCountyMissing(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('');
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -181,9 +182,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsEmptyAndErrorsWhenNoInstructions(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->instructionsMock->method('getInstructions')
@@ -195,9 +193,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSetsCountyOnFirstRender(): void {
     $this->configureBuildFormMocks();
 
@@ -207,9 +202,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertSame('TestCounty', $formState->get('county'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitialisationWhenReenterIsSet(): void {
     $this->configureBuildFormMocks();
     $this->instructionsMock->expects($this->never())->method('getInstructions');
@@ -221,9 +213,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->buildFormInstance()->buildForm([], $formState);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormReturnsNoTurfMarkupWhenHdOptionsEmpty(): void {
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn('All');
@@ -239,9 +228,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertStringContainsString('No turf to display', $form['turf-table']['turf-form']['#markup']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsExpectedFormElements(): void {
     $this->configureBuildFormMocks();
 
@@ -254,9 +240,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertArrayHasKey('submit', $form);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesRequiredLibraries(): void {
     $this->configureBuildFormMocks();
 
@@ -267,9 +250,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/hint-note', $form['#attached']['library']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFiltersTurfsBySearchNeedle(): void {
     $allTurfs = [1 => ['turfIndex' => 1], 2 => ['turfIndex' => 2]];
     $filtered = [1 => ['turfIndex' => 1]];
@@ -302,9 +282,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormSearchSubmitStoresNeedle(): void {
     $this->sessionDataMock->expects($this->never())->method('saveHdIndex');
 
@@ -324,9 +301,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertTrue($captured['reenter'] ?? FALSE);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormHdSelectSavesHdIndex(): void {
     $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(2);
 
@@ -339,9 +313,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormNoSelectionSetsError(): void {
     $this->turfDisplayMock->method('validateTurfSelection')->willReturn([]);
 
@@ -357,9 +328,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormValidSelectionStoresSelections(): void {
     $selections = [10 => ['turfIndex' => 10, 'mcid' => 99]];
     $this->turfDisplayMock->method('validateTurfSelection')->willReturn($selections);
@@ -382,9 +350,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSearchSubmitStoresNeedleAndSetsRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -404,9 +369,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // notifyUserCredentials
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::notifyUserCredentials
-   */
   public function testNotifyUserCredentialsReturnsFalseWhenNoCoordinator(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([]);
@@ -417,9 +379,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertFalse($result);
   }
 
-  /**
-   * @covers ::notifyUserCredentials
-   */
   public function testNotifyUserCredentialsReturnsFalseWhenEmailFails(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([
@@ -440,9 +399,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertFalse($result);
   }
 
-  /**
-   * @covers ::notifyUserCredentials
-   */
   public function testNotifyUserCredentialsReturnsTrueAndUpdatesStatusOnSuccess(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([
@@ -466,9 +422,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertTrue($result);
   }
 
-  /**
-   * @covers ::notifyUserCredentials
-   */
   public function testNotifyUserCredentialsUsesFallbackMagicWordWhenMissing(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([
@@ -501,9 +454,6 @@ class DeliverTurfFormTest extends UnitTestCase {
   // updateMinivanInfo
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::updateMinivanInfo
-   */
   public function testUpdateMinivanInfoReturnsTurfFromGetTurf(): void {
     $turf = ['turfIndex' => 7, 'mcid' => 99, 'minivanNumber' => '', 'minivanCreateDate' => ''];
     $this->turfsMock->method('getTurf')->willReturn($turf);
@@ -515,9 +465,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertSame($turf, $result);
   }
 
-  /**
-   * @covers ::updateMinivanInfo
-   */
   public function testUpdateMinivanInfoCallsUpdateTurfFieldsWhenMinivanNumberPresent(): void {
     $turf = [
       'turfIndex'         => 7,
@@ -535,9 +482,6 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->buildFormInstance()->updateMinivanInfo(7);
   }
 
-  /**
-   * @covers ::updateMinivanInfo
-   */
   public function testUpdateMinivanInfoSkipsUpdateTurfFieldsWhenNoMinivanNumber(): void {
     $turf = ['turfIndex' => 7, 'mcid' => 99, 'minivanNumber' => '', 'minivanCreateDate' => ''];
     $this->turfsMock->method('getTurf')->willReturn($turf);

@@ -11,10 +11,9 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\NlpMinivan;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @group nlpservices
- */
+#[Group('nlpservices')]
 class ImportMinivanBatchTest extends UnitTestCase {
 
   private NlpMinivan $minivanMock;

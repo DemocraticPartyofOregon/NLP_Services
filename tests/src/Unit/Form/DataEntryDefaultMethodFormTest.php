@@ -11,11 +11,15 @@ use Drupal\nlpservices\Form\DataEntryDefaultMethodForm;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\DataEntryDefaultMethodForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\DataEntryDefaultMethodForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryDefaultMethodForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryDefaultMethodForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryDefaultMethodForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class DataEntryDefaultMethodFormTest extends UnitTestCase {
 
   protected $sessionDataMock;
@@ -52,9 +56,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
   // getFormId
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_default_method_form', $this->form->getFormId());
   }
@@ -63,9 +64,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
   // buildForm
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormIncludesRequiredElements(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone']);
@@ -80,9 +78,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['save']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormUsesSessionDefaultWhenValid(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone', 2 => 'Postcard']);
@@ -95,9 +90,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
     $this->assertSame(1, $form['contact_method']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFallsBackToWalkWhenNoSessionDefault(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Phone', 1 => 'Walk', 2 => 'Postcard']);
@@ -108,9 +100,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
     $this->assertSame(1, $form['contact_method']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFallsBackToFirstKeyWhenNoWalkAndNoSession(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([5 => 'Phone', 6 => 'Postcard']);
@@ -121,9 +110,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
     $this->assertSame(5, $form['contact_method']['#default_value']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFallsBackToWalkWhenSessionNameNotInMethods(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone']);
@@ -140,9 +126,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
   // submitForm
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSavesSelectedMethodToSession(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone', 2 => 'Postcard']);
@@ -158,9 +141,6 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormShowsStatusMessageWithSelectedName(): void {
     $this->nlpConfigurationMock->method('getContactMethods')
       ->willReturn([0 => 'Walk', 1 => 'Phone']);

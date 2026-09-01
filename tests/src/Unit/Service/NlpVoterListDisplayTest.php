@@ -7,11 +7,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\nlpservices\NlpVoterListDisplay;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\NlpVoterListDisplay
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\NlpVoterListDisplay::class)]
+#[CoversMethod(\Drupal\nlpservices\NlpVoterListDisplay::class, 'buildVoterTableArray')]
+#[CoversMethod(\Drupal\nlpservices\NlpVoterListDisplay::class, 'displayListOfVoters')]
+#[CoversMethod(\Drupal\nlpservices\NlpVoterListDisplay::class, 'validateVoterSelection')]
+#[Group('nlpservices')]
 class NlpVoterListDisplayTest extends UnitTestCase {
 
   protected NlpVoterListDisplay $service;
@@ -53,25 +57,16 @@ class NlpVoterListDisplayTest extends UnitTestCase {
   // buildVoterTableArray
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayReturnsEmptyForEmptyInput(): void {
     $result = $this->service->buildVoterTableArray([]);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayKeyedByVanid(): void {
     $result = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $this->assertArrayHasKey('99999', $result);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayCopiesScalarFields(): void {
     $result = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $row = $result['99999'];
@@ -84,9 +79,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('D', $row['party']);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayNoMoveMarkWhenNotMoved(): void {
     $result = $this->service->buildVoterTableArray([$this->baseVoter(['moved' => FALSE])]);
     $row = $result['99999'];
@@ -95,9 +87,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('Portland', $row['city']);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayAppendsMoveMarkWhenMoved(): void {
     $result = $this->service->buildVoterTableArray([$this->baseVoter(['moved' => TRUE])]);
     $row = $result['99999'];
@@ -107,9 +96,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertStringContainsString('<b>', $row['city']);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayCheckboxColumnHasVanid(): void {
     $result = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $cb = $result['99999']['cb'];
@@ -118,9 +104,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('99999', $cb['vanid']);
   }
 
-  /**
-   * @covers ::buildVoterTableArray
-   */
   public function testBuildVoterTableArrayHandlesMultipleVoters(): void {
     $voters = [
       $this->baseVoter(['vanid' => '11111']),
@@ -137,9 +120,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
   // displayListOfVoters
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::displayListOfVoters
-   */
   public function testDisplayListOfVotersReturnsContactsTable(): void {
     $rows = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $form = $this->service->displayListOfVoters($rows);
@@ -148,9 +128,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('table', $form['contacts']['#type']);
   }
 
-  /**
-   * @covers ::displayListOfVoters
-   */
   public function testDisplayListOfVotersHasNineHeaderColumns(): void {
     $rows = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $form = $this->service->displayListOfVoters($rows);
@@ -158,9 +135,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertCount(9, $form['contacts']['#header']);
   }
 
-  /**
-   * @covers ::displayListOfVoters
-   */
   public function testDisplayListOfVotersCheckboxColumnIsCheckboxType(): void {
     $rows = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $form = $this->service->displayListOfVoters($rows);
@@ -170,9 +144,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertStringContainsString('99999', $cb['#return_value']);
   }
 
-  /**
-   * @covers ::displayListOfVoters
-   */
   public function testDisplayListOfVotersNonCheckboxColumnsAreMarkup(): void {
     $rows = $this->service->buildVoterTableArray([$this->baseVoter()]);
     $form = $this->service->displayListOfVoters($rows);
@@ -181,9 +152,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('99999', $form['contacts']['99999']['vanid']['#markup']);
   }
 
-  /**
-   * @covers ::displayListOfVoters
-   */
   public function testDisplayListOfVotersReturnsEmptyTableForEmptyRows(): void {
     $form = $this->service->displayListOfVoters([]);
 
@@ -196,17 +164,11 @@ class NlpVoterListDisplayTest extends UnitTestCase {
   // validateVoterSelection
   // ---------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateVoterSelection
-   */
   public function testValidateVoterSelectionReturnsEmptyForEmptyInput(): void {
     $result = $this->service->validateVoterSelection([]);
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::validateVoterSelection
-   */
   public function testValidateVoterSelectionIgnoresUncheckedContacts(): void {
     $contacts = [
       ['cb' => ''],
@@ -215,9 +177,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame([], $result);
   }
 
-  /**
-   * @covers ::validateVoterSelection
-   */
   public function testValidateVoterSelectionExtractsVanidFromCheckedContact(): void {
     $contacts = [
       ['cb' => 'CB_checkbox_99999'],
@@ -228,9 +187,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('99999', $result['99999']['vanid']);
   }
 
-  /**
-   * @covers ::validateVoterSelection
-   */
   public function testValidateVoterSelectionExtractsRowCount(): void {
     $contacts = [
       ['cb' => 'CB_checkbox_99999'],
@@ -240,9 +196,6 @@ class NlpVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('checkbox', $result['99999']['rowCount']);
   }
 
-  /**
-   * @covers ::validateVoterSelection
-   */
   public function testValidateVoterSelectionHandlesMultipleCheckedContacts(): void {
     $contacts = [
       ['cb' => 'CB_checkbox_11111'],

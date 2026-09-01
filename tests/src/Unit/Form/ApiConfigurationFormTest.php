@@ -19,11 +19,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Config\ApiConfigurationForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Config\ApiConfigurationForm::class)]
+#[Group('nlpservices')]
 class ApiConfigurationFormTest extends UnitTestCase {
 
   private NlpConfiguration $nlpConfigMock;

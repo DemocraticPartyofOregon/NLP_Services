@@ -14,11 +14,15 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\TurfDeliveryMessageForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\TurfDeliveryMessageForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfDeliveryMessageForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfDeliveryMessageForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\TurfDeliveryMessageForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class TurfDeliveryMessageFormTest extends UnitTestCase {
 
   private NlpConfiguration $nlpConfigurationMock;
@@ -85,9 +89,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame(
       'nlpservices_turf_delivery_message_form',
@@ -99,9 +100,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // buildForm — first render, admin user
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderAdminSetsPageToCountySelect(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
@@ -111,9 +109,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('county_select', $formState->get('page'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderAdminSetsAdminTrue(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
 
@@ -127,9 +122,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // buildForm — first render, non-admin user
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderNonAdminSetsPageToEditCounty(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('');
@@ -140,9 +132,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('edit_county', $formState->get('page'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderNonAdminSetsAdminFalse(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('');
@@ -153,9 +142,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertFalse($formState->get('admin'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderNonAdminFetchesCountyMsg(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
     $this->turfMsgMock->expects($this->once())
@@ -169,9 +155,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('<p>Welcome @coordinatorContactInfo</p>', $formState->get('countyMsg'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFirstRenderNonAdminSetsCountySelected(): void {
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('');
@@ -186,9 +169,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // buildForm — skips init on re-render
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormSkipsInitWhenReenterAlreadySet(): void {
     $this->drupalUserMock->expects($this->never())->method('isNlpAdminUser');
     $this->turfMsgMock->expects($this->never())->method('getTurfMsg');
@@ -201,9 +181,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // buildForm — page rendering
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormCountySelectPageContainsSelectAndSubmit(): void {
     $formState = $this->reenterState('county_select');
 
@@ -215,9 +192,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['county_select_submit']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormEditStatePageContainsBodyAndSubmit(): void {
     $formState = $this->reenterState('edit_state', ['stateMsg' => '<p>Hello</p>']);
 
@@ -230,9 +204,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['edit-box']['state_edit']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormEditCountyPageContainsBodyAndSubmit(): void {
     $formState = $this->reenterState('edit_county', [
       'county_selected' => 'TestCounty',
@@ -248,9 +219,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['edit-box']['county_edit']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormAttachesLibrary(): void {
     $formState = $this->reenterState('county_select');
 
@@ -263,9 +231,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
   // submitForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormSetsReenterAndCallsSetRebuild(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setRebuild'])
@@ -282,9 +247,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCountySelectStateSelectedFetchesStateMsgAndSetsPageToEditState(): void {
     $this->turfMsgMock->expects($this->once())
       ->method('getTurfMsg')
@@ -302,9 +264,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('<p>State @coordinatorContactInfo</p>', $formState->get('stateMsg'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCountySelectCountySelectedFetchesCountyMsgAndSetsPageToEditCounty(): void {
     $this->turfMsgMock->expects($this->once())
       ->method('getTurfMsg')
@@ -323,9 +282,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('<p>County @coordinatorContactInfo</p>', $formState->get('countyMsg'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditStateMissingTagAddsErrorAndDoesNotCallPutTurfMsg(): void {
     $this->turfMsgMock->expects($this->never())->method('putTurfMsg');
     $this->messengerMock->expects($this->once())->method('addError');
@@ -338,9 +294,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditStateMissingTagDoesNotChangePageFromEditState(): void {
     $this->messengerMock->method('addError')->willReturn(NULL);
     $this->turfMsgMock->method('putTurfMsg');
@@ -355,9 +308,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('edit_state', $formState->get('page'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditStateWithTagCallsPutTurfMsgAndSetsPageToCountySelect(): void {
     $msg = '<p>Hello @coordinatorContactInfo</p>';
     $this->turfMsgMock->expects($this->once())->method('putTurfMsg');
@@ -372,9 +322,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('county_select', $formState->get('page'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditCountyMissingTagAddsErrorAndDoesNotCallPutTurfMsg(): void {
     $this->turfMsgMock->expects($this->never())->method('putTurfMsg');
     $this->messengerMock->expects($this->once())->method('addError');
@@ -389,9 +336,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditCountyWithTagCallsPutTurfMsg(): void {
     $msg = '<p>Welcome to @coordinatorContactInfo</p>';
     $this->turfMsgMock->expects($this->once())
@@ -408,9 +352,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditCountyAdminReturnsToCountySelectAfterSave(): void {
     $msg = '<p>@coordinatorContactInfo info here</p>';
     $this->turfMsgMock->method('putTurfMsg');
@@ -427,9 +368,6 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('county_select', $formState->get('page'));
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormEditCountyNonAdminStaysOnEditCountyAfterSave(): void {
     $msg = '<p>@coordinatorContactInfo info here</p>';
     $this->turfMsgMock->method('putTurfMsg');

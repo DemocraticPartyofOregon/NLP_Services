@@ -21,11 +21,16 @@ use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpEncryption;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\VanidForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\VanidForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class VanidFormTest extends UnitTestCase {
 
   private const PREV_ID = 111111111;
@@ -104,9 +109,6 @@ class VanidFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('vanid_form', $this->buildFormInstance()->getFormId());
   }
@@ -115,9 +117,6 @@ class VanidFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsPreviousIdNumberInput(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -126,9 +125,6 @@ class VanidFormTest extends UnitTestCase {
     $this->assertTrue($form['previousId']['#required']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsNewIdNumberInput(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -137,9 +133,6 @@ class VanidFormTest extends UnitTestCase {
     $this->assertTrue($form['newId']['#required']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsSubmitButton(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -151,9 +144,6 @@ class VanidFormTest extends UnitTestCase {
   // validateForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormStoresPreviousIdInFormState(): void {
     $formState = new FormState();
     $formState->setValue('previousId', '123456789');
@@ -167,9 +157,6 @@ class VanidFormTest extends UnitTestCase {
     $this->assertSame('123456789', $formState->get('previousId'));
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormStoresNewVanidInFormState(): void {
     $formState = new FormState();
     $formState->setValue('previousId', '123456789');
@@ -183,9 +170,6 @@ class VanidFormTest extends UnitTestCase {
     $this->assertSame('987654321', $formState->get('newVanid'));
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormPreviousIdWrongLengthSetsError(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setErrorByName'])
@@ -200,9 +184,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormPreviousIdWrongLengthSkipsNewIdCheck(): void {
     $this->apiNlsMock->expects($this->never())->method('getApiNls');
 
@@ -214,9 +195,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormNewIdWrongLengthSetsError(): void {
     $formState = $this->getMockBuilder(FormState::class)
       ->onlyMethods(['setErrorByName'])
@@ -231,9 +209,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormNewIdNotInVoteBuilderSetsError(): void {
     $this->apiNlsMock->method('getApiNls')->willReturn([]);
 
@@ -250,9 +225,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->validateForm($form, $formState);
   }
 
-  /**
-   * @covers ::validateForm
-   */
   public function testValidateFormBothValidSetsNoError(): void {
     $this->apiNlsMock->method('getApiNls')->willReturn(['vanid' => 987654321]);
 
@@ -271,9 +243,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — user login record
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoPreviousUserDeletesMagicWordOnly(): void {
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
     $this->magicWordMock->expects($this->once())
@@ -286,9 +255,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousAndNewUserBothExistDeletesOldUser(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
@@ -303,9 +269,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousAndNewUserBothExistDeletesMagicWord(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
@@ -320,9 +283,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousUserFoundNewUserMissingUpdatesUserRecord(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
@@ -338,9 +298,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousUserFoundNewUserMissingTransfersMagicWord(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
@@ -365,9 +322,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — awards
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoAwardsSkipsAwardTransfer(): void {
     $this->awardsMock->method('getAward')->willReturn([]);
     $this->awardsMock->expects($this->never())->method('deleteAwards');
@@ -377,9 +331,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormAwardsFoundDeletesOldAndMergesWithNewId(): void {
     $award = ['mcid' => self::PREV_ID, 'level' => 3];
     $this->awardsMock->method('getAward')->with(self::PREV_ID)->willReturn($award);
@@ -396,9 +347,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — coordinator assignments
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoCoordinatorAssignmentsSkipsTransfer(): void {
     $this->coordinatorMock->method('getCoordinatorById')->willReturn([]);
     $this->coordinatorMock->expects($this->never())->method('deleteCoordinator');
@@ -408,9 +356,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormCoordinatorAssignmentsReassignedToNewId(): void {
     $assignments = [
       ['cIndex' => 5, 'mcid' => self::PREV_ID, 'county' => 'TestCounty'],
@@ -430,9 +375,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — legislative fixes
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoLegFixSkipsTransfer(): void {
     $this->legFixesMock->method('getLegFix')->willReturn([]);
     $this->legFixesMock->expects($this->never())->method('deleteLegFix');
@@ -442,9 +384,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormLegFixFoundDeletesAndRecreatWithNewId(): void {
     $fix = ['mcid' => self::PREV_ID, 'district' => 12];
     $this->legFixesMock->method('getLegFix')->with(self::PREV_ID)->willReturn($fix);
@@ -461,9 +400,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — reports
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoReportsSkipsTransfer(): void {
     $this->reportsMock->method('getReportsById')->willReturn([]);
     $this->reportsMock->expects($this->never())->method('mergeReport');
@@ -472,9 +408,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormReportsMergedWithNewId(): void {
     $this->reportsMock->method('getReportsById')->with(self::PREV_ID)->willReturn([7, 8]);
     $this->reportsMock->expects($this->exactly(2))
@@ -489,9 +422,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — turfs
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoTurfsSkipsUpdate(): void {
     $this->turfsMock->method('getTurfsById')->willReturn([]);
     $this->turfsMock->expects($this->never())->method('updateTurf');
@@ -500,9 +430,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormTurfsReassignedToNewId(): void {
     $this->turfsMock->method('getTurfsById')
       ->with(self::PREV_ID)
@@ -520,9 +447,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — turf assignments
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNoTurfAssignmentsSkipsUpdate(): void {
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')->willReturn([]);
     $this->turfsMock->method('getTurfsById')->willReturn([]);
@@ -532,9 +456,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormTurfAssignmentsReassignedToNewId(): void {
     $this->turfsMock->method('getTurfsById')->willReturn([]);
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')
@@ -552,9 +473,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — NL records: new NL exists in VoteBuilder
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewNlExistsWithCountyDeletesPreviousNl(): void {
     $this->nlsMock->method('getNlById')
       ->willReturnMap([
@@ -568,9 +486,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewNlExistsNoPreviousStatusSkipsStatusMerge(): void {
     $this->nlsMock->method('getNlById')
       ->willReturnMap([
@@ -584,9 +499,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNewNlExistsMergesStatusFlagsFromPrevious(): void {
     $this->nlsMock->method('getNlById')
       ->willReturnMap([
@@ -628,9 +540,6 @@ class VanidFormTest extends UnitTestCase {
   // submitForm — NL records: new NL not in VoteBuilder, previous NL exists
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousNlOnlyCreatesNlWithNewId(): void {
     $prevNl = ['mcid' => self::PREV_ID, 'county' => 'TestCounty', 'firstName' => 'Jane'];
     $this->nlsMock->method('getNlById')
@@ -648,9 +557,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormPreviousNlOnlyTransfersStatusToNewId(): void {
     $prevNl = ['mcid' => self::PREV_ID, 'county' => 'TestCounty', 'firstName' => 'Jane'];
     $prevStatus = ['mcid' => self::PREV_ID, 'county' => 'TestCounty'];
@@ -669,9 +575,6 @@ class VanidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNeitherNlExistsSkipsAllNlOperations(): void {
     $this->nlsMock->method('getNlById')->willReturn([]);
     $this->nlsMock->expects($this->never())->method('deleteNl');

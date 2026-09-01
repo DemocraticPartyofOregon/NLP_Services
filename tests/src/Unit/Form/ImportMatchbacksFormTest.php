@@ -15,11 +15,15 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Form\ImportMatchbacksForm;
 use Drupal\nlpservices\NlpMatchbacks;
 use Drupal\Tests\UnitTestCase;
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\CoversMethod;
+use PHPUnit\Framework\Attributes\Group;
 
-/**
- * @coversDefaultClass \Drupal\nlpservices\Form\ImportMatchbacksForm
- * @group nlpservices
- */
+#[CoversClass(\Drupal\nlpservices\Form\ImportMatchbacksForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'submitForm')]
+#[Group('nlpservices')]
 class ImportMatchbacksFormTest extends UnitTestCase {
 
   private FileSystemInterface $fileObjMock;
@@ -82,9 +86,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   // getFormId
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::getFormId
-   */
   public function testGetFormIdReturnsExpectedString(): void {
     $this->assertSame('nlpservices_import_matchbacks_form', $this->buildFormInstance()->getFormId());
   }
@@ -93,9 +94,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   // buildForm
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsHintMarkupElement(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -103,9 +101,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
     $this->assertSame('markup', $form['hint']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsManagedFileField(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -113,9 +108,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
     $this->assertSame('managed_file', $form['matchback_file']['#type']);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormFileFieldRestrictsToCsvAndTxtExtensions(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -124,9 +116,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
     $this->assertStringContainsString('txt', $allowed);
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormContainsUploadSubmitButton(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -138,9 +127,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   // submitForm — empty file value returns early
   // -------------------------------------------------------------------------
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormReturnsEarlyWhenMatchbackFileIsEmptyArray(): void {
     $this->matchbacksMock->expects($this->never())->method('decodeMatchbackHdr');
     $this->messengerMock->expects($this->never())->method('addError');
@@ -152,9 +138,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormReturnsEarlyWhenMatchbackFileIsNull(): void {
     $this->matchbacksMock->expects($this->never())->method('decodeMatchbackHdr');
     $this->messengerMock->expects($this->never())->method('addError');
@@ -171,8 +154,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   /**
-   * @covers ::submitForm
-   *
    * When File::load() returns null the filename stays empty, making
    * $fileUri = 'public://temp/' (an unresolvable stream in a unit-test
    * environment).  fopen() returns false so the form must add an error.
@@ -189,8 +170,6 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   }
 
   /**
-   * @covers ::submitForm
-   *
    * Even when fopen fails, $form_state['fileUri'] must be set before the
    * early return so that any post-submit handler can inspect the intended path.
    */
