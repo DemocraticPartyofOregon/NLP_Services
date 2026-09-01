@@ -9,7 +9,7 @@
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add upload of state early voting using the stateFileId">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,23 +104,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.2162140285716212" />
-      <entry key="MS500" value="3.1022839890196843" />
-      <entry key="S2" value="4.96298172650943" />
-      <entry key="S5" value="5.55026637214028" />
-      <entry key="S10" value="5.768824064237767" />
-      <entry key="S30" value="5.9214906277846255" />
-      <entry key="S60" value="5.9605608374418395" />
-      <entry key="M2" value="5.980234060906358" />
-      <entry key="M5" value="5.992082467783247" />
-      <entry key="M10" value="5.996039371896816" />
-      <entry key="M15" value="5.997359167298114" />
-      <entry key="M30" value="5.99868692846807" />
-      <entry key="H1" value="6.031874919265218" />
-      <entry key="H2" value="8.149074554144885" />
-      <entry key="H4" value="24.23694306991661" />
-      <entry key="D1" value="154.2584683070461" />
-      <entry key="W1" value="497.1253618459412" />
+      <entry key="MS100" value="1.000000043870877" />
+      <entry key="MS500" value="1.0456167687176154" />
+      <entry key="S2" value="1.7665628476581101" />
+      <entry key="S5" value="2.5713199918552148" />
+      <entry key="S10" value="3.3034978214064643" />
+      <entry key="S30" value="4.254495473258041" />
+      <entry key="S60" value="4.597565546737824" />
+      <entry key="M2" value="4.790678360815409" />
+      <entry key="M5" value="4.914231288479216" />
+      <entry key="M10" value="4.956767385222474" />
+      <entry key="M15" value="4.971100242531648" />
+      <entry key="M30" value="4.98551481033183" />
+      <entry key="H1" value="4.997580012519496" />
+      <entry key="H2" value="5.227072380254316" />
+      <entry key="H4" value="9.076204899757204" />
+      <entry key="D1" value="119.61543981153451" />
+      <entry key="W1" value="481.47117435491526" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -134,31 +134,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="4.532168137323266E-172" />
-      <entry key="H1" value="3.684788056013791E-86" />
-      <entry key="H2" value="3.3251692488087014E-43" />
-      <entry key="H4" value="1.0164572455134729E-21" />
-      <entry key="D1" value="0.0017380437599109108" />
-      <entry key="W1" value="6.515913871776817" />
+      <entry key="M30" value="2.911242370395753E-178" />
+      <entry key="H1" value="2.9532396320447923E-89" />
+      <entry key="H2" value="9.413623899121378E-45" />
+      <entry key="H4" value="1.7102541767346777E-22" />
+      <entry key="D1" value="0.0012913856734838706" />
+      <entry key="W1" value="6.245196190943115" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.1499965395986653" />
-      <entry key="MS500" value="3.026646784341932" />
-      <entry key="S2" value="4.922034929695289" />
-      <entry key="S5" value="5.530868403322055" />
-      <entry key="S10" value="5.758552716800548" />
-      <entry key="S30" value="5.917932541996008" />
-      <entry key="S60" value="5.958764543247992" />
-      <entry key="M2" value="5.979331565496976" />
-      <entry key="M5" value="5.991720421450834" />
-      <entry key="M10" value="5.995858173653383" />
-      <entry key="M15" value="5.997238329534732" />
-      <entry key="M30" value="5.998626490064808" />
-      <entry key="H1" value="6.031844594140307" />
-      <entry key="H2" value="8.149056120934327" />
-      <entry key="H4" value="24.23692157140963" />
-      <entry key="D1" value="154.2601781546114" />
-      <entry key="W1" value="503.6410489631765" />
+      <entry key="MS100" value="0.9265881019855224" />
+      <entry key="MS500" value="1.0297171483558907" />
+      <entry key="S2" value="1.7596542631176277" />
+      <entry key="S5" value="2.5672355328167575" />
+      <entry key="S10" value="3.300828917078375" />
+      <entry key="S30" value="4.253328681221563" />
+      <entry key="S60" value="4.596931731791143" />
+      <entry key="M2" value="4.79034722905784" />
+      <entry key="M5" value="4.914095191051755" />
+      <entry key="M10" value="4.956698708740968" />
+      <entry key="M15" value="4.971054317162053" />
+      <entry key="M30" value="4.985491776693829" />
+      <entry key="H1" value="4.997568453613183" />
+      <entry key="H2" value="5.227066086645664" />
+      <entry key="H4" value="9.076198395499832" />
+      <entry key="D1" value="119.61670976580339" />
+      <entry key="W1" value="487.7161531435588" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -297,40 +297,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "PHPUnit.Main.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "NLP__Services__V7__3",
-    "git.auto.fetch.suggestion.counter": "1",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/steve/PhpstormProjects/NLP_Services",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.jshint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.jshint": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "org.jetbrains.plugins.github.ui.GithubSettingsConfigurable",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;PHPUnit.Main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__3&quot;,
+    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;1&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\docs" />
@@ -461,14 +461,6 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-    </task>
-    <task id="LOCAL-00157" summary="Fix the restoration of user credentials for sync of active NLs.">
-      <option name="closed" value="true" />
-      <created>1782741308521</created>
-      <option name="number" value="00157" />
-      <option name="presentableId" value="LOCAL-00157" />
-      <option name="project" value="LOCAL" />
-      <updated>1782741308521</updated>
     </task>
     <task id="LOCAL-00158" summary="Fix attachment of PDF when syncing a turf.">
       <option name="closed" value="true" />
@@ -854,7 +846,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787098366583</updated>
     </task>
-    <option name="localTasksCounter" value="206" />
+    <task id="LOCAL-00206" summary="Fix the &quot;The turf name is missing.&quot; error.">
+      <option name="closed" value="true" />
+      <created>1788274518473</created>
+      <option name="number" value="00206" />
+      <option name="presentableId" value="LOCAL-00206" />
+      <option name="project" value="LOCAL" />
+      <updated>1788274518474</updated>
+    </task>
+    <option name="localTasksCounter" value="207" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -921,7 +921,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
     <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
     <MESSAGE value="Update ReadMe" />
     <MESSAGE value="Fix the training manual configuration so the download link work." />
@@ -946,7 +945,8 @@
     <MESSAGE value="Fix the method of retrieving state name and county names" />
     <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
     <MESSAGE value="Add document for configuring NLP Services." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add document for configuring NLP Services." />
+    <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix the &quot;The turf name is missing.&quot; error." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

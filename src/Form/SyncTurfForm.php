@@ -107,11 +107,13 @@ class SyncTurfForm extends FormBase {
         $page = $this->nlpSessionDataObj->get('syncTurfPage') ?? 'turf_select';
         $form_state->set('page', $page);
         $form_state->set('showLists', $this->nlpSessionDataObj->get('showLists') ?? FALSE);
+        $form_state->set('turfId', $this->nlpSessionDataObj->get('turfId'));
       } else {
         $form_state->set('page','turf_select');
         $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
         $form_state->set('showLists', FALSE);
         $this->nlpSessionDataObj->set('showLists', FALSE);
+        $this->nlpSessionDataObj->set('turfId', NULL);
       }
     }
     $county = $form_state->get('county');
@@ -434,6 +436,7 @@ class SyncTurfForm extends FormBase {
         $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
         $turfSelection = $form_state->get('turfSelection');
         $form_state->set('turfId',$turfSelection['turfId']);
+        $this->nlpSessionDataObj->set('turfId', $turfSelection['turfId']);
         break;
 
       case 'previously_assigned_nl':
