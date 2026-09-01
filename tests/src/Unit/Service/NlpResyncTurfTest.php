@@ -3,6 +3,7 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiExportJobs;
   use Drupal\nlpservices\ApiFolders;
@@ -67,9 +68,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
-      $this->messengerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['addStatus'])
-        ->getMock();
+      $this->messengerMock = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);

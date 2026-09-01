@@ -3,6 +3,8 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Entity\EntityStorageException;
+  use Drupal\file\FileInterface;
+  use Drupal\file\FileRepositoryInterface;
   use Drupal\nlpservices\NlpFileFunctions;
   use Drupal\Tests\UnitTestCase;
   use Exception;
@@ -38,9 +40,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /** Returns a mock with setTemporary() and save() methods. */
     private function makeFileMock(bool $saveThrows = false): object {
-      $mock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['setTemporary', 'save'])
-        ->getMock();
+      $mock = $this->createMock(FileInterface::class);
       if ($saveThrows) {
         $mock->method('save')->willThrowException(new Exception('save failed'));
       }
@@ -49,7 +49,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /** Registers a file.repository mock whose writeData() returns $fileMock. */
     private function setupRepo(object $fileMock): void {
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
+      $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->method('writeData')->willReturn($fileMock);
       $container = new ContainerBuilder();
       $container->set('file.repository', $repo);
@@ -58,7 +58,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /** Registers a file.repository mock whose writeData() throws EntityStorageException. */
     private function setupRepoThatThrows(): void {
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
+      $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->method('writeData')->willThrowException(new EntityStorageException(''));
       $container = new ContainerBuilder();
       $container->set('file.repository', $repo);
@@ -70,7 +70,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
      * $capturedUri is set by reference after callService() runs.
      */
     private function setupRepoCapturingUri(object $fileMock, ?string &$capturedUri): void {
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
+      $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->method('writeData')->willReturnCallback(
         function($data, $uri, $mode) use ($fileMock, &$capturedUri) {
           $capturedUri = $uri;
@@ -157,7 +157,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testCreateTempCsvFileWritesEmptyStringToRepository(): void {
       $fileMock = $this->makeFileMock();
-      $repo = $this->getMockBuilder(\stdClass::class)->addMethods(['writeData'])->getMock();
+      $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->expects($this->once())->method('writeData')
         ->with('', $this->anything(), $this->anything())
         ->willReturn($fileMock);

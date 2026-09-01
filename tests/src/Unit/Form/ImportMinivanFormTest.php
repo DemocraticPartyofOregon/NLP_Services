@@ -6,6 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\Extension\ModuleExtensionList;
   use Drupal\Core\Form\FormState;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\Form\ImportMinivanForm;
@@ -29,9 +30,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $moduleRoot = realpath(__DIR__ . '/../../../../');
 
-      $extListMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getPath'])
-        ->getMock();
+      $extListMock = $this->createMock(ModuleExtensionList::class);
       $extListMock->method('getPath')->willReturn($moduleRoot);
 
       $container = new ContainerBuilder();

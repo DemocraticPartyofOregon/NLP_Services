@@ -6,6 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Language\LanguageManagerInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Mail\MailManagerInterface;
+  use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\HtmlText;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpSendEmail;
@@ -36,9 +37,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
-      $this->messengerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['addMessage'])
-        ->getMock();
+      $this->messengerMock = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);

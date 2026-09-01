@@ -36,6 +36,23 @@ if (!function_exists('user_load_by_mail')) {
     return NlpTestGlobals::$stubUserByMail;
   }
 }
+// Stand-ins for the Key module's entity/plugin shapes (drupal/key is not a
+// composer dependency here), so tests can mock a real interface instead of
+// using MockBuilder::addMethods() on \stdClass.
+if (!interface_exists('NlpTestKeyEntityInterface')) {
+  interface NlpTestKeyEntityInterface {
+    public function getKeyValue();
+    public function getKeyProvider();
+    public function delete();
+    public function save();
+  }
+}
+if (!interface_exists('NlpTestKeyProviderInterface')) {
+  interface NlpTestKeyProviderInterface {
+    public function getConfiguration();
+  }
+}
+
 if (!defined('NLP_MODULE'))                { define('NLP_MODULE',                'nlpservices'); }
 if (!defined('NLP_ADMIN_ROLE_ID'))         { define('NLP_ADMIN_ROLE_ID',         'nlp_admin'); }
 if (!defined('NLP_COORDINATOR_ROLE_ID'))   { define('NLP_COORDINATOR_ROLE_ID',   'nlp_coordinator'); }

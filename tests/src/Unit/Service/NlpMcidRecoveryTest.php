@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Component\Datetime\TimeInterface;
   use Drupal\Core\Database\Connection;
   use Drupal\Core\Database\Query\Delete;
   use Drupal\Core\Database\Query\Insert;
@@ -28,9 +29,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function setupContainerWithTime(): void {
-      $timeMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getRequestTime'])
-        ->getMock();
+      $timeMock = $this->createMock(TimeInterface::class);
       $timeMock->method('getRequestTime')->willReturn($this->requestTime);
 
       $container = new ContainerBuilder();

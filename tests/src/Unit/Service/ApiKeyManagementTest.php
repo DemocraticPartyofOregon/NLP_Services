@@ -3,12 +3,16 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\Entity\EntityStorageInterface;
+  use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\File\FileSystemInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
   use Exception;
+  use NlpTestKeyEntityInterface;
+  use NlpTestKeyProviderInterface;
   use Psr\Log\LoggerInterface;
 
   class ApiKeyManagementTest extends UnitTestCase {
@@ -22,13 +26,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       parent::setUp();
       $this->encryptionMock = $this->createMock(NlpEncryption::class);
 
-      $this->keyStorageMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['load', 'create'])
-        ->getMock();
+      $this->keyStorageMock = $this->createMock(EntityStorageInterface::class);
 
-      $this->entityTypeManagerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getStorage'])
-        ->getMock();
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
       $this->entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
 
       $loggerMock        = $this->createMock(LoggerInterface::class);
@@ -55,17 +55,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function makeKeyEntity(string $keyValue = ''): object {
-      $mock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getKeyValue', 'getKeyProvider', 'delete', 'save'])
-        ->getMock();
+      $mock = $this->createMock(NlpTestKeyEntityInterface::class);
       $mock->method('getKeyValue')->willReturn($keyValue);
       return $mock;
     }
 
     private function makeKeyProvider(string $filePath): object {
-      $mock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getConfiguration'])
-        ->getMock();
+      $mock = $this->createMock(NlpTestKeyProviderInterface::class);
       $mock->method('getConfiguration')->willReturn(['file_location' => $filePath]);
       return $mock;
     }

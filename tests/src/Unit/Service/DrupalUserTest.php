@@ -7,9 +7,12 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
   use Drupal\Tests\UnitTestCase;
+  use Drupal\user\UserAuthInterface;
+  use Psr\Log\LoggerInterface;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
   use Symfony\Component\HttpFoundation\Request;
   use Symfony\Component\HttpFoundation\RequestStack;
@@ -126,9 +129,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testVerifyPasswordReturnsTrueWhenAuthSucceeds(): void {
-      $authMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['authenticate'])
-        ->getMock();
+      $authMock = $this->createMock(UserAuthInterface::class);
       $authMock->method('authenticate')->willReturn(42);
       $container = new ContainerBuilder();
       $container->set('user.auth', $authMock);
@@ -138,9 +139,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testVerifyPasswordReturnsFalseWhenAuthFails(): void {
-      $authMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['authenticate'])
-        ->getMock();
+      $authMock = $this->createMock(UserAuthInterface::class);
       $authMock->method('authenticate')->willReturn(FALSE);
       $container = new ContainerBuilder();
       $container->set('user.auth', $authMock);
@@ -219,12 +218,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->magicWordMock->method('getMagicWord')->willReturn('');
 
       $container = new ContainerBuilder();
-      $loggerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['notice'])
-        ->getMock();
-      $loggerFactoryMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['get'])
-        ->getMock();
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
       $container->set('logger.factory', $loggerFactoryMock);
       Drupal::setContainer($container);

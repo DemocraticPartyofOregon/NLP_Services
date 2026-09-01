@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal;
+use Drupal\Component\Utility\EmailValidatorInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -47,9 +48,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->searchBarMock        = $this->createMock(NlpSearchBar::class);
     $this->messengerMock        = $this->createMock(MessengerInterface::class);
 
-    $this->emailValidatorMock = $this->getMockBuilder(\stdClass::class)
-      ->addMethods(['isValid'])
-      ->getMock();
+    $this->emailValidatorMock = $this->createMock(EmailValidatorInterface::class);
 
     $container = new ContainerBuilder();
     $container->set('messenger', $this->messengerMock);

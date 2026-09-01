@@ -3,8 +3,11 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\Entity\EntityStorageInterface;
+  use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
+  use NlpTestKeyEntityInterface;
 
   class NlpEncryptionTest extends UnitTestCase {
 
@@ -13,28 +16,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     protected function setUp(): void {
       parent::setUp();
 
-      $secretKeyEntity = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getKeyValue'])
-        ->getMock();
+      $secretKeyEntity = $this->createMock(NlpTestKeyEntityInterface::class);
       $secretKeyEntity->method('getKeyValue')->willReturn('test-secret-key-for-unit-tests');
 
-      $secretIvEntity = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getKeyValue'])
-        ->getMock();
+      $secretIvEntity = $this->createMock(NlpTestKeyEntityInterface::class);
       $secretIvEntity->method('getKeyValue')->willReturn('test-iv-for-unit');
 
-      $this->keyStorageMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['load'])
-        ->getMock();
+      $this->keyStorageMock = $this->createMock(EntityStorageInterface::class);
       $this->keyStorageMock->method('load')
         ->willReturnMap([
           ['secret_key', $secretKeyEntity],
           ['secret_iv',  $secretIvEntity],
         ]);
 
-      $entityTypeManagerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getStorage'])
-        ->getMock();
+      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
       $entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
 
       $container = new ContainerBuilder();
@@ -142,14 +137,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testReturnsEmptyStringWhenKeysNotConfigured(): void {
-      $keyStorageMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['load'])
-        ->getMock();
+      $keyStorageMock = $this->createMock(EntityStorageInterface::class);
       $keyStorageMock->method('load')->willReturn(NULL);
 
-      $entityTypeManagerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getStorage'])
-        ->getMock();
+      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
       $entityTypeManagerMock->method('getStorage')->willReturn($keyStorageMock);
 
       $container = new ContainerBuilder();

@@ -6,6 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\NlpMinivan;
 use Drupal\Tests\UnitTestCase;
@@ -32,9 +33,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
     $this->messengerMock = $this->createMock(MessengerInterface::class);
     $this->loggerMock    = $this->createMock(LoggerInterface::class);
 
-    $loggerFactoryMock = $this->getMockBuilder(\stdClass::class)
-      ->addMethods(['get'])
-      ->getMock();
+    $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
     $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
 
     $container = new ContainerBuilder();

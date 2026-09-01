@@ -3,7 +3,9 @@
 namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
+  use Drupal\Core\Extension\ModuleExtensionList;
   use Drupal\Core\Form\FormStateInterface;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiSavedLists;
   use Drupal\nlpservices\ApiFolders;
@@ -18,6 +20,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpTurfStatus;
   use Drupal\nlpservices\Form\SyncTurfForm;
   use Drupal\Tests\UnitTestCase;
+  use Psr\Log\LoggerInterface;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
   use Symfony\Component\HttpFoundation\Request;
   use Symfony\Component\HttpFoundation\RequestStack;
@@ -58,12 +61,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->requestStackMock->method('getCurrentRequest')->willReturn($defaultRequest);
 
       // logger.factory is needed by any validateForm path that hits turfName-missing.
-      $loggerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['notice', 'warning', 'error'])
-        ->getMock();
-      $loggerFactoryMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['get'])
-        ->getMock();
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
       $container = new ContainerBuilder();
@@ -688,9 +687,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       ]);
 
       // Wire extension.list.module into the existing container.
-      $moduleListMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['getPath'])
-        ->getMock();
+      $moduleListMock = $this->createMock(ModuleExtensionList::class);
       $moduleListMock->method('getPath')->willReturn('/modules/nlpservices');
       Drupal::getContainer()->set('extension.list.module', $moduleListMock);
 

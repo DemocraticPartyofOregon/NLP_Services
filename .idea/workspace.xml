@@ -7,11 +7,21 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Save the turfId in the session data.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update the tests for recent cherry picks.">
+      <change beforePath="$PROJECT_DIR$/tests/bootstrap.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/bootstrap.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDocumentsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDocumentsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/DrupalUserTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/DrupalUserTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpEncryptionTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpEncryptionTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFileFunctionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFileFunctionsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMcidRecoveryTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMcidRecoveryTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpRepliesTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSendEmailTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSendEmailTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncTurfProcessorTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -106,23 +116,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000072774764974" />
-      <entry key="MS500" value="1.1390431318813146" />
-      <entry key="S2" value="2.971858783733357" />
-      <entry key="S5" value="5.959009920123484" />
-      <entry key="S10" value="8.235892613761592" />
-      <entry key="S30" value="10.521978931685354" />
-      <entry key="S60" value="11.228311536427361" />
-      <entry key="M2" value="11.607623819563026" />
-      <entry key="M5" value="12.060897184249482" />
-      <entry key="M10" value="12.970337516121804" />
-      <entry key="M15" value="13.713599253907327" />
-      <entry key="M30" value="14.945696232749667" />
-      <entry key="H1" value="15.84551363835107" />
-      <entry key="H2" value="16.586456333412137" />
-      <entry key="H4" value="20.504719560602883" />
-      <entry key="D1" value="130.3331418893804" />
-      <entry key="W1" value="492.73065864927975" />
+      <entry key="MS100" value="1.0825969165734466" />
+      <entry key="MS500" value="1.834937497314169" />
+      <entry key="S2" value="3.827718280595196" />
+      <entry key="S5" value="6.737496137397646" />
+      <entry key="S10" value="9.055703757590678" />
+      <entry key="S30" value="11.43859916730769" />
+      <entry key="S60" value="12.183043959550957" />
+      <entry key="M2" value="12.582310343714349" />
+      <entry key="M5" value="13.01170333480663" />
+      <entry key="M10" value="14.504875478702605" />
+      <entry key="M15" value="16.32734236283706" />
+      <entry key="M30" value="20.39605617772625" />
+      <entry key="H1" value="24.153941957077446" />
+      <entry key="H2" value="26.917765929702824" />
+      <entry key="H4" value="31.784107699348553" />
+      <entry key="D1" value="141.44662985104952" />
+      <entry key="W1" value="504.70565700645176" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -136,31 +146,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="1.735787035241471E-178" />
-      <entry key="H1" value="2.2803826412308277E-89" />
-      <entry key="H2" value="8.272015932753077E-45" />
-      <entry key="H4" value="1.6032007942019576E-22" />
-      <entry key="D1" value="0.001277547845838217" />
-      <entry key="W1" value="6.2355919479938615" />
+      <entry key="M30" value="8.622826346803035E-179" />
+      <entry key="H1" value="1.6072533005978206E-89" />
+      <entry key="H2" value="6.944638796291154E-45" />
+      <entry key="H4" value="1.4689501885336017E-22" />
+      <entry key="D1" value="0.0012590617557086973" />
+      <entry key="W1" value="6.22262144878407" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9138382879736368" />
-      <entry key="MS500" value="1.119502749011515" />
-      <entry key="S2" value="2.96101369785648" />
-      <entry key="S5" value="5.950581600213617" />
-      <entry key="S10" value="8.230090823182326" />
-      <entry key="S30" value="10.519508790541797" />
-      <entry key="S60" value="11.226993242544856" />
-      <entry key="M2" value="11.606942272605476" />
-      <entry key="M5" value="12.060612968113613" />
-      <entry key="M10" value="12.970182968378003" />
-      <entry key="M15" value="13.713489389975095" />
-      <entry key="M30" value="14.945635625044066" />
-      <entry key="H1" value="15.845481249460219" />
-      <entry key="H2" value="16.58643906466436" />
-      <entry key="H4" value="20.504707592637196" />
-      <entry key="D1" value="130.33439725676612" />
-      <entry key="W1" value="498.9660333894882" />
+      <entry key="MS100" value="1.0241785349330574" />
+      <entry key="MS500" value="1.8084385544162613" />
+      <entry key="S2" value="3.8103124606593304" />
+      <entry key="S5" value="6.725826202385982" />
+      <entry key="S10" value="9.048122822789422" />
+      <entry key="S30" value="11.435488261749567" />
+      <entry key="S60" value="12.181398224214234" />
+      <entry key="M2" value="12.581463337775553" />
+      <entry key="M5" value="13.011354269463036" />
+      <entry key="M10" value="14.504683117579802" />
+      <entry key="M15" value="16.327199413328042" />
+      <entry key="M30" value="20.395968036906584" />
+      <entry key="H1" value="24.15389008378937" />
+      <entry key="H2" value="26.917736902327103" />
+      <entry key="H4" value="31.78408946694219" />
+      <entry key="D1" value="141.44786584194247" />
+      <entry key="W1" value="510.92806152620227" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -258,6 +268,16 @@
       <path value="$PROJECT_DIR$/vendor/marc-mabe/php-enum" />
       <path value="$PROJECT_DIR$/vendor/twig/html-extra" />
       <path value="$PROJECT_DIR$/vendor/twig/twig" />
+      <path value="$PROJECT_DIR$/vendor/smalot/pdfparser" />
+      <path value="$PROJECT_DIR$/vendor/webmozart/assert" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/type-resolver" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/deprecations" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-common" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/instantiator" />
+      <path value="$PROJECT_DIR$/vendor/phpspec/prophecy" />
+      <path value="$PROJECT_DIR$/vendor/phpspec/prophecy-phpunit" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpdoc-parser" />
     </include_path>
   </component>
   <component name="ProblemsViewState">
@@ -463,14 +483,6 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-    </task>
-    <task id="LOCAL-00159" summary="Drupal migration">
-      <option name="closed" value="true" />
-      <created>1782882493528</created>
-      <option name="number" value="00159" />
-      <option name="presentableId" value="LOCAL-00159" />
-      <option name="project" value="LOCAL" />
-      <updated>1782882493528</updated>
     </task>
     <task id="LOCAL-00160" summary="Fix failed emeail for detection of missing NLPVoterAC">
       <option name="closed" value="true" />
@@ -856,7 +868,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788275859337</updated>
     </task>
-    <option name="localTasksCounter" value="208" />
+    <task id="LOCAL-00208" summary="Update the tests for recent cherry picks.">
+      <option name="closed" value="true" />
+      <created>1788277683783</created>
+      <option name="number" value="00208" />
+      <option name="presentableId" value="LOCAL-00208" />
+      <option name="project" value="LOCAL" />
+      <updated>1788277683783</updated>
+    </task>
+    <option name="localTasksCounter" value="209" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -923,7 +943,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Update ReadMe" />
     <MESSAGE value="Fix the training manual configuration so the download link work." />
     <MESSAGE value="Fix the tests for changes to age and awaitingReply" />
     <MESSAGE value="Fix type error in map regions" />
@@ -948,7 +967,8 @@
     <MESSAGE value="Add document for configuring NLP Services." />
     <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
     <MESSAGE value="Save the turfId in the session data." />
-    <option name="LAST_COMMIT_MESSAGE" value="Save the turfId in the session data." />
+    <MESSAGE value="Update the tests for recent cherry picks." />
+    <option name="LAST_COMMIT_MESSAGE" value="Update the tests for recent cherry picks." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

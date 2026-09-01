@@ -3,6 +3,7 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiExportJobs;
@@ -19,6 +20,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
+  use Psr\Log\LoggerInterface;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class NlpSyncTurfProcessorTest extends UnitTestCase {
@@ -57,12 +59,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfStatusMock      = $this->createMock(NlpTurfStatus::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
 
-      $loggerMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['warning', 'error', 'notice'])
-        ->getMock();
-      $loggerFactoryMock = $this->getMockBuilder(\stdClass::class)
-        ->addMethods(['get'])
-        ->getMock();
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
       $container = new ContainerBuilder();
