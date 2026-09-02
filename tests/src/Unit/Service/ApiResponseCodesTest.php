@@ -184,7 +184,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $result = $this->buildService()->getApiExpectedResultCodes();
 
       $walkResponses = $result['Walk']['responses'];
-      foreach (['Not Home', 'Refused', 'Moved', 'Deceased', 'Hostile', 'Do Not Contact', 'Do Not Knock'] as $text) {
+      foreach (['Not Home', 'Refused', 'Moved', 'Deceased', 'Hostile'] as $text) {
         $this->assertArrayHasKey($text, $walkResponses, "Walk responses missing: $text");
       }
     }

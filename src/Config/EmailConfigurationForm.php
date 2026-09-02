@@ -130,7 +130,7 @@ voting starts.'
     }
     unset($configuration);
 
-    $emailConfiguration = $form_state->get('emailConfiguration');
+    $emailConfiguration = $form_state->get('emailConfiguration') ?? [];
     foreach ($emailInfo as $type => $configuration) {
       $errorMessage = $this->emailConfigurationObj->verifyConfiguration($configuration);
       if (!empty($errorMessage)) {

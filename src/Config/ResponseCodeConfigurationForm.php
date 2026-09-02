@@ -202,6 +202,62 @@ class ResponseCodeConfigurationForm extends FormBase {
   }
 
 
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * warnOfMissingExpectedResultCodes
+   *
+   * Warn if any of the API expected response codes are not available in
+   * this instance of VoteBuilder.
+   *
+   * @param array $apiKnownResultCodes
+   * @param array $apiExpectedResultCodes
+   * @return void
+   */
+  private function warnOfMissingExpectedResultCodes(array $apiKnownResultCodes, array $apiExpectedResultCodes): void
+  {
+    foreach ($apiExpectedResultCodes as $contentType => $expectedResultCodes) {
+      if(empty($apiKnownResultCodes[$contentType])) {
+        $this->messenger()->addWarning($this->t('Contact type not available in VoteBuilder: [@contentType]', ['@contentType' => $contentType]));
+        continue;
+      }
+      $knownResponses = $apiKnownResultCodes[$contentType]['responses'] ?? [];
+      foreach ($expectedResultCodes['responses'] as $responseName => $responseText) {
+        if(empty($knownResponses[$responseName])) {
+          $this->messenger()->addWarning($this->t('Expected response code not available in VoteBuilder: [@contentType - @responseName]', [
+            '@contentType' => $contentType,
+            '@responseName' => $responseName,
+          ]));
+        }
+      }
+    }
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * warnOfMissingPhoneRcSubs
+   *
+   * Warn if the subContext or subResponse used in $phoneRcSubs are not
+   * available in this instance of VoteBuilder.
+   *
+   * @param array $apiKnownResultCodes
+   * @return void
+   */
+  private function warnOfMissingPhoneRcSubs(array $apiKnownResultCodes): void
+  {
+    foreach ($this->phoneRcSubs as $contextName => $responseRcSubs) {
+      foreach ($responseRcSubs as $responseName => $responseRcSub) {
+        $subContext = $responseRcSub['subContext'];
+        $subResponse = $responseRcSub['subResponse'];
+        if(empty($apiKnownResultCodes[$subContext]['responses'][$subResponse])) {
+          $this->messenger()->addWarning($this->t('Phone response substitution not available in VoteBuilder: [@contextName - @responseName -> @subContext - @subResponse]', [
+            '@contextName' => $contextName,
+            '@responseName' => $responseName,
+            '@subContext' => $subContext,
+            '@subResponse' => $subResponse,
+          ]));
+        }
+      }
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
@@ -217,6 +273,8 @@ class ResponseCodeConfigurationForm extends FormBase {
 
     $apiKnownResponseCodes = $this->apiResponseCodeObj->getApiKnownResultCodes();
     $apiExpectedResultCodes = $this->apiResponseCodeObj->getApiExpectedResultCodes();
+    $this->warnOfMissingExpectedResultCodes($apiKnownResponseCodes, $apiExpectedResultCodes);
+    $this->warnOfMissingPhoneRcSubs($apiKnownResponseCodes);
     $form['code_select'] = $this->buildCanvassCodeSelect(
       $apiKnownResponseCodes,$apiExpectedResultCodes,$currentResponseCodes,$codes);
     $form_state->set('codes',$codes);

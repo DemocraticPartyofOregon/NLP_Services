@@ -13,4 +13,4 @@ composer.lock
 /example.gitignore
 /index.php
 /robots.txt
-/update.php
+/update.php.phpunit.result.cache

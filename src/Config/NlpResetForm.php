@@ -143,8 +143,8 @@ class NlpResetForm extends FormBase {
     foreach ($drupalUsers as $drupalUser) {
       $roles = $drupalUser['roles'];
       $roleNames = array_flip($roles);
-      if (empty($roleNames['nlp_leader'])) { continue; }
-      if (!empty($roleNames['nlp_coordinator']) || !empty($roleNames['nlp_admin']) || !empty($roleNames['administrator'])) { continue; }
+      if (!isset($roleNames['nlp_leader'])) { continue; }
+      if (isset($roleNames['nlp_coordinator']) || isset($roleNames['nlp_admin']) || isset($roleNames['administrator'])) { continue; }
 
       unset($roleNames['nlp_leader']);
       unset($roleNames['authenticated']);

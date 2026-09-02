@@ -21,13 +21,8 @@ class ApiResponseCodes
       ['text'=>'Deceased','weight'=>6,'abbreviation'=>'DC'],
       ['text'=>'Hostile','weight'=>7,'abbreviation'=>'HO'],
       ['text'=>'Left Message','weight'=>9,'abbreviation'=>'LM'],
-      ['text'=>'Left Literature','weight'=>10,'abbreviation'=>'LL'],
       ['text'=>'Deceased','weight'=>12,'abbreviation'=>'DC'],
       ['text'=>'Hostile','weight'=>13,'abbreviation'=>'HS'],
-      ['text'=>'Do Not Contact','weight'=>14,'abbreviation'=>'DNC'],
-      ['text'=>'Do Not Knock','weight'=>15,'abbreviation'=>'DNK'],
-      ['text'=>'Do Not Mail','weight'=>16,'abbreviation'=>'DNM'],
-      ['text'=>'Do Not Call','weight'=>11,'abbreviation'=>'DNC'],
       ['text'=>'Wrong Address','weight'=>17,'abbreviation'=>'WA'],
     ],
     'Phone'=>[
@@ -62,7 +57,7 @@ class ApiResponseCodes
       ['text'=>'Left Message','weight'=>5],
     ],
   ];
-  
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
@@ -72,7 +67,7 @@ class ApiResponseCodes
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiResponseCodes
   {
     return new static(
@@ -81,7 +76,7 @@ class ApiResponseCodes
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * getApiContactTypes
    *
@@ -117,7 +112,7 @@ class ApiResponseCodes
     }
     return $contactTypes;
   }
-  
+
   /**
    * getApiResultCodes
    *
@@ -155,7 +150,7 @@ class ApiResponseCodes
     }
     return $resultCodes;
   }
-  
+
   /**
    * getApiKnownResultCodes
    *
@@ -177,7 +172,7 @@ class ApiResponseCodes
     }
     return $knownResultCodes;
   }
-  
+
   /**
    * @return array - Array of the recommended contact types and response codes.
    *
@@ -196,7 +191,7 @@ class ApiResponseCodes
     }
     return $expectedResultCodes;
   }
-  
+
   /**
    * getApiExpectedAbbreviations
    *
@@ -217,8 +212,8 @@ class ApiResponseCodes
       $text = $expectedResultArray['text'];
       $expectedAbbreviations[$text] = $expectedResultArray['abbreviation'] ?? '';
     }
-    
+
     return $expectedAbbreviations;
   }
-  
+
 }

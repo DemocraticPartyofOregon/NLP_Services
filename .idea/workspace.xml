@@ -7,32 +7,15 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="PHPUnit deprecations">
-      <change afterPath="$PROJECT_DIR$/.phpunit.result.cache" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Update tests to remove depreciated functions">
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorEmailTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorEmailTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CoordinatorsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryDefaultMethodFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryDefaultMethodFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryPostcardsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryPostcardsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteCoordinatorFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteCoordinatorFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteDrupalAccountsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteDrupalAccountsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DeliverTurfFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DeliverTurfFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ManageDrupalAccountsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ManageDrupalAccountsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/RemoveCoordinatorRoleFromTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/RemoveCoordinatorRoleFromTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfDeliveryMessageFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/TurfSelectFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/TurfSelectFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/UploadInstructionsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/UploadInstructionsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/VanidFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/VanidFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryReportsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryReportsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVoterListDisplayTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVoterListDisplayTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpVoterListDisplayTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpVoterListDisplayTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiResponseCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiResponseCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/EmailConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/NlpResetForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/NlpResetForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ResponseCodeConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiExportJobsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiExportJobsTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiResponseCodesTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiResponseCodesTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -127,23 +110,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0825969165734466" />
-      <entry key="MS500" value="1.834937497314169" />
-      <entry key="S2" value="3.827718280595196" />
-      <entry key="S5" value="6.737496137397646" />
-      <entry key="S10" value="9.055703757590678" />
-      <entry key="S30" value="11.43859916730769" />
-      <entry key="S60" value="12.183043959550957" />
-      <entry key="M2" value="12.582310343714349" />
-      <entry key="M5" value="13.01170333480663" />
-      <entry key="M10" value="14.504875478702605" />
-      <entry key="M15" value="16.32734236283706" />
-      <entry key="M30" value="20.39605617772625" />
-      <entry key="H1" value="24.153941957077446" />
-      <entry key="H2" value="26.917765929702824" />
-      <entry key="H4" value="31.784107699348553" />
-      <entry key="D1" value="141.44662985104952" />
-      <entry key="W1" value="504.70565700645176" />
+      <entry key="MS100" value="1.0013340236885349" />
+      <entry key="MS500" value="1.270004740181068" />
+      <entry key="S2" value="2.40279846816121" />
+      <entry key="S5" value="5.050737560752757" />
+      <entry key="S10" value="7.711282482294276" />
+      <entry key="S30" value="10.807558842273849" />
+      <entry key="S60" value="11.837997553608128" />
+      <entry key="M2" value="12.401469884037635" />
+      <entry key="M5" value="12.756233684362456" />
+      <entry key="M10" value="12.877378472493143" />
+      <entry key="M15" value="12.918087896521543" />
+      <entry key="M30" value="12.962920458876843" />
+      <entry key="H1" value="13.316001632227646" />
+      <entry key="H2" value="16.16707124627436" />
+      <entry key="H4" value="23.914865409727376" />
+      <entry key="D1" value="131.37452775643214" />
+      <entry key="W1" value="505.0290558661367" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -157,31 +140,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="8.622826346803035E-179" />
-      <entry key="H1" value="1.6072533005978206E-89" />
-      <entry key="H2" value="6.944638796291154E-45" />
-      <entry key="H4" value="1.4689501885336017E-22" />
-      <entry key="D1" value="0.0012590617557086973" />
-      <entry key="W1" value="6.22262144878407" />
+      <entry key="M30" value="1.6739864946812154E-182" />
+      <entry key="H1" value="2.2394196323076183E-91" />
+      <entry key="H2" value="8.197383243258665E-46" />
+      <entry key="H4" value="5.046843736348197E-23" />
+      <entry key="D1" value="0.001053697210823334" />
+      <entry key="W1" value="6.066330494851824" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.0241785349330574" />
-      <entry key="MS500" value="1.8084385544162613" />
-      <entry key="S2" value="3.8103124606593304" />
-      <entry key="S5" value="6.725826202385982" />
-      <entry key="S10" value="9.048122822789422" />
-      <entry key="S30" value="11.435488261749567" />
-      <entry key="S60" value="12.181398224214234" />
-      <entry key="M2" value="12.581463337775553" />
-      <entry key="M5" value="13.011354269463036" />
-      <entry key="M10" value="14.504683117579802" />
-      <entry key="M15" value="16.327199413328042" />
-      <entry key="M30" value="20.395968036906584" />
-      <entry key="H1" value="24.15389008378937" />
-      <entry key="H2" value="26.917736902327103" />
-      <entry key="H4" value="31.78408946694219" />
-      <entry key="D1" value="141.44786584194247" />
-      <entry key="W1" value="510.92806152620227" />
+      <entry key="MS100" value="0.9605527012696605" />
+      <entry key="MS500" value="1.2598395886543905" />
+      <entry key="S2" value="2.391291948427497" />
+      <entry key="S5" value="5.0282511046678735" />
+      <entry key="S10" value="7.690592752168344" />
+      <entry key="S30" value="10.797075838642192" />
+      <entry key="S60" value="11.832170480763882" />
+      <entry key="M2" value="12.398397395066786" />
+      <entry key="M5" value="12.754964821125755" />
+      <entry key="M10" value="12.876737248115067" />
+      <entry key="M15" value="12.917658892941649" />
+      <entry key="M30" value="12.96270517684464" />
+      <entry key="H1" value="13.315893085694558" />
+      <entry key="H2" value="16.167013860131746" />
+      <entry key="H4" value="23.91483215378317" />
+      <entry key="D1" value="131.37555764553994" />
+      <entry key="W1" value="511.09517423752754" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -494,14 +477,6 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-    </task>
-    <task id="LOCAL-00161" summary="Add guard rails for sync and delete of turf to allow propagation of the change of the activist code.">
-      <option name="closed" value="true" />
-      <created>1783195969163</created>
-      <option name="number" value="00161" />
-      <option name="presentableId" value="LOCAL-00161" />
-      <option name="project" value="LOCAL" />
-      <updated>1783195969164</updated>
     </task>
     <task id="LOCAL-00162" summary="Correct title for API key configuration form">
       <option name="closed" value="true" />
@@ -887,7 +862,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788279340816</updated>
     </task>
-    <option name="localTasksCounter" value="210" />
+    <task id="LOCAL-00210" summary="Update tests to remove depreciated functions">
+      <option name="closed" value="true" />
+      <created>1788299907646</created>
+      <option name="number" value="00210" />
+      <option name="presentableId" value="LOCAL-00210" />
+      <option name="project" value="LOCAL" />
+      <updated>1788299907646</updated>
+    </task>
+    <option name="localTasksCounter" value="211" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -954,7 +937,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the tests for changes to age and awaitingReply" />
     <MESSAGE value="Fix type error in map regions" />
     <MESSAGE value="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes." />
     <MESSAGE value="Handle empty date of birth for a voter." />
@@ -979,7 +961,8 @@
     <MESSAGE value="Save the turfId in the session data." />
     <MESSAGE value="Update the tests for recent cherry picks." />
     <MESSAGE value="PHPUnit deprecations" />
-    <option name="LAST_COMMIT_MESSAGE" value="PHPUnit deprecations" />
+    <MESSAGE value="Update tests to remove depreciated functions" />
+    <option name="LAST_COMMIT_MESSAGE" value="Update tests to remove depreciated functions" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
