@@ -198,10 +198,13 @@ class ImportTableForm extends FormBase
               $update = FALSE;
             } else {
               $existingElections = [];
-              foreach ($awardKeys as $key) {
+              foreach ($existingKeys as $key) {
                 $existingElections[$key] = TRUE;
               }
-              $newElections = array_merge($existingElections,$elections);
+              // Election-year keys are numeric strings, and array_merge()
+              // renumbers (rather than merges by key) arrays with numeric
+              // keys, so array_replace() is used instead to preserve them.
+              $newElections = array_replace($existingElections,$elections);
               ksort($newElections);
               $tableRecord['electionCount'] = count($newElections);
               $tableRecord['participation'] = json_encode($newElections);

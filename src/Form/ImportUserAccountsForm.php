@@ -95,10 +95,10 @@ class ImportUserAccountsForm extends FormBase {
     ];
     $batch = [
       'operations' => [
-        ['importUsersBatch', [$args]],
+        ['importUserAccountsBatch', [$args]],
       ],
-      'file' => $modulePath . '/src/Form/ImportUsersBatch.php',
-      'finished' => 'importUsersBatchFinished',
+      'file' => $modulePath . '/src/Form/ImportUserAccountsBatch.php',
+      'finished' => 'importUserAccountsBatchFinished',
       'title' => t('Processing import users.'),
       'init_message' => t('Users import is starting.'),
       'progress_message' => t('Processed @percentage % of user accounts file.'),

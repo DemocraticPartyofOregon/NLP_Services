@@ -7,18 +7,17 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Added test for setup and configuration.">
-      <change afterPath="$PROJECT_DIR$/tests/fixtures/Absentee Vote List - Lamar.pdf" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/fixtures/ArrayInputForPdfGenerator.txt" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpEarlyVotingTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFolderSetupTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpPdfParserTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfAcCheckerTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfStatusTest.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/PdfGeneratorTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Added test for new services for Montana and Mississippi.">
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CancelMovedReportTest.php" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DatabaseSchemaFormTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SetVoterAcBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/CompareVanidsForm.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportTableForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportTableForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportUserAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportUserAccountsForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportUsersBatch.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportUserAccountsBatch.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/nlp-config.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanFormTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -75,7 +74,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26336" />
+    <option name="cachedIndexableFilesCount" value="26785" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -113,23 +112,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.000000000000056" />
-      <entry key="MS500" value="1.00224727558027" />
-      <entry key="S2" value="1.3259423810145692" />
-      <entry key="S5" value="2.9663403637740124" />
-      <entry key="S10" value="5.668918304810081" />
-      <entry key="S30" value="10.080522741797909" />
-      <entry key="S60" value="11.841682448080812" />
-      <entry key="M2" value="12.865585461227843" />
-      <entry key="M5" value="13.532176889679938" />
-      <entry key="M10" value="13.763675691670603" />
-      <entry key="M15" value="13.841908985883345" />
-      <entry key="M30" value="13.920682415354493" />
-      <entry key="H1" value="13.960276836483487" />
-      <entry key="H2" value="13.988869499283373" />
-      <entry key="H4" value="14.546420074012712" />
-      <entry key="D1" value="84.1912283974253" />
-      <entry key="W1" value="475.7722675677231" />
+      <entry key="MS100" value="1.0000373816831014" />
+      <entry key="MS500" value="1.179209026492619" />
+      <entry key="S2" value="2.6367926933343844" />
+      <entry key="S5" value="4.788075083896263" />
+      <entry key="S10" value="6.624337896590248" />
+      <entry key="S30" value="8.629125884108099" />
+      <entry key="S60" value="9.27746218701195" />
+      <entry key="M2" value="9.651027242329882" />
+      <entry key="M5" value="10.91050938943668" />
+      <entry key="M10" value="13.778847044937223" />
+      <entry key="M15" value="15.874502561545343" />
+      <entry key="M30" value="19.082408514255427" />
+      <entry key="H1" value="21.279281949584792" />
+      <entry key="H2" value="22.57480735104971" />
+      <entry key="H4" value="23.79193270338872" />
+      <entry key="D1" value="93.44985726180725" />
+      <entry key="W1" value="485.17184373203713" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -143,31 +142,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="1.4364309841433168E-195" />
-      <entry key="H1" value="6.559970531642341E-98" />
-      <entry key="H2" value="4.436683446396401E-49" />
-      <entry key="H4" value="1.1741172260508912E-24" />
-      <entry key="D1" value="5.629862189287372E-4" />
-      <entry key="W1" value="5.54673952488588" />
+      <entry key="M30" value="9.398037669315846E-196" />
+      <entry key="H1" value="5.3061325781168686E-98" />
+      <entry key="H2" value="3.99021730293951E-49" />
+      <entry key="H4" value="1.1134751060897913E-24" />
+      <entry key="D1" value="5.580322168709943E-4" />
+      <entry key="W1" value="5.539740430771434" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="1.0983798979512637E-13" />
-      <entry key="MS500" value="0.004466000275200253" />
-      <entry key="S2" value="0.5427038394568423" />
-      <entry key="S5" value="2.5074675286440997" />
-      <entry key="S10" value="5.403299753574001" />
-      <entry key="S30" value="9.98203496606812" />
-      <entry key="S60" value="11.791028494284797" />
-      <entry key="M2" value="12.839890609997012" />
-      <entry key="M5" value="13.521808535855548" />
-      <entry key="M10" value="13.758476261676803" />
-      <entry key="M15" value="13.838439295732405" />
-      <entry key="M30" value="13.91894586502946" />
-      <entry key="H1" value="13.959408134317002" />
-      <entry key="H2" value="13.988435010331095" />
-      <entry key="H4" value="14.546202044670249" />
-      <entry key="D1" value="84.19174245008094" />
-      <entry key="W1" value="481.31880796448894" />
+      <entry key="MS100" value="0.9526738569496703" />
+      <entry key="MS500" value="1.1680502669212358" />
+      <entry key="S2" value="2.6303175821411706" />
+      <entry key="S5" value="4.782715810185096" />
+      <entry key="S10" value="6.620428974929319" />
+      <entry key="S30" value="8.627374942682414" />
+      <entry key="S60" value="9.276514296576117" />
+      <entry key="M2" value="9.650489533155554" />
+      <entry key="M5" value="10.909493862398264" />
+      <entry key="M10" value="13.777288898862256" />
+      <entry key="M15" value="15.87294915648098" />
+      <entry key="M30" value="19.081238175298356" />
+      <entry key="H1" value="21.278562173945957" />
+      <entry key="H2" value="22.574408022803393" />
+      <entry key="H4" value="23.7917216525075" />
+      <entry key="D1" value="93.45036607708721" />
+      <entry key="W1" value="490.7113851839563" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -481,15 +480,8 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-      <workItem from="1788388474322" duration="5060000" />
-    </task>
-    <task id="LOCAL-00163" summary="Update readme file">
-      <option name="closed" value="true" />
-      <created>1783796252220</created>
-      <option name="number" value="00163" />
-      <option name="presentableId" value="LOCAL-00163" />
-      <option name="project" value="LOCAL" />
-      <updated>1783796252220</updated>
+      <workItem from="1788388474322" duration="13171000" />
+      <workItem from="1788452079103" duration="2240000" />
     </task>
     <task id="LOCAL-00164" summary="Add county names for Mississippi and Montana states">
       <option name="closed" value="true" />
@@ -875,7 +867,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788378005885</updated>
     </task>
-    <option name="localTasksCounter" value="212" />
+    <task id="LOCAL-00212" summary="Added test for new services for Montana and Mississippi.">
+      <option name="closed" value="true" />
+      <created>1788394208635</created>
+      <option name="number" value="00212" />
+      <option name="presentableId" value="LOCAL-00212" />
+      <option name="project" value="LOCAL" />
+      <updated>1788394208635</updated>
+    </task>
+    <option name="localTasksCounter" value="213" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -942,7 +942,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes." />
     <MESSAGE value="Handle empty date of birth for a voter." />
     <MESSAGE value="Remove dead code that causes a fatal error in export contact reports" />
     <MESSAGE value="Require submit for changes to the active nls form." />
@@ -967,21 +966,11 @@
     <MESSAGE value="PHPUnit deprecations" />
     <MESSAGE value="Update tests to remove depreciated functions" />
     <MESSAGE value="Added test for setup and configuration." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added test for setup and configuration." />
+    <MESSAGE value="Added test for new services for Montana and Mississippi." />
+    <option name="LAST_COMMIT_MESSAGE" value="Added test for new services for Montana and Mississippi." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="php">
-          <url>file://$PROJECT_DIR$/src/Form/CompareVanidsForm.php</url>
-          <line>7</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />

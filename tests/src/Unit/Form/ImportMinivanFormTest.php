@@ -199,9 +199,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 }
 
 // Stub batch_set() in the form's namespace so unit tests do not require
-// a full Drupal bootstrap.
+// a full Drupal bootstrap. Guarded because other test files (e.g.
+// ImportUserAccountsFormTest) declare the same namespaced stub, and PHP
+// fatals on redeclaring a function when both files load in the same test run.
 namespace Drupal\nlpservices\Form {
-  function batch_set(array $batch_definition): void {
-    $GLOBALS['batch_set_calls'][] = $batch_definition;
+  if (!function_exists(__NAMESPACE__ . '\batch_set')) {
+    function batch_set(array $batch_definition): void {
+      $GLOBALS['batch_set_calls'][] = $batch_definition;
+    }
   }
 }

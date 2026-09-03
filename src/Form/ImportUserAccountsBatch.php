@@ -3,7 +3,7 @@
 const MAX_QUEUE_LIMIT = 100;
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * importUsersBatch
+ * importUserAccountsBatch
  *
  * Read the provided file and save the Dems.
  *
@@ -11,7 +11,7 @@ const MAX_QUEUE_LIMIT = 100;
  * @param $context
  * @noinspection PhpUnused
  */
-function importUsersBatch($arg,&$context): void
+function importUserAccountsBatch($arg,&$context): void
 {
   $messenger = Drupal::messenger();
   $uri = $arg['uri'];
@@ -20,7 +20,7 @@ function importUsersBatch($arg,&$context): void
   try {
     $drupalRoles = Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
   } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException|Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
-    nlp_debug_msg('importUsersBatch', $e->getMessage() );
+    nlp_debug_msg('importUserAccountsBatch', $e->getMessage() );
   }
   foreach ($drupalRoles as $drupalRole) {
     $nlpRoles[$drupalRole->id()] = $drupalRole->label();
@@ -155,7 +155,7 @@ function importUsersBatch($arg,&$context): void
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * importUsersBatchFinished
+ * importUserAccountsBatchFinished
  *
  * The batch operation is finished.  Report the results.
  *
@@ -165,7 +165,7 @@ function importUsersBatch($arg,&$context): void
  * @noinspection PhpUnusedParameterInspection
  * @noinspection PhpUnused
  */
-function importUsersBatchFinished($success, $results, $operations): void
+function importUserAccountsBatchFinished($success, $results, $operations): void
 {
   $messenger = Drupal::messenger();
   if ($success) {

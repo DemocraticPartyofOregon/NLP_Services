@@ -22,6 +22,7 @@ Links for functions to configure NLP services.
 {% set purgeNlUsers = path('nlpservices.purge_nl_accounts') %}
 {% set importCredentials = path('nlpservices.import_credentials_form') %}
 {% set enableDebug = path('nlpservices.enable_debug_form') %}
+{% set databaseSchema = path('nlpservices.database_schema_form') %}
 {% set enableCronTasks = path('nlpservices.enable_cron_tasks_form') %}
 {% set documents = path('nlpservices.document_configuration_form') %}
 {% set welcome = path('nlpservices.welcome') %}
@@ -84,6 +85,7 @@ Links for functions to configure NLP services.
     <h1>Testing</h1>
     <ul>
         <li><a href={{ enableDebug }}>Enable debug displays.</a></li>
+        <li><a href={{ databaseSchema }}>Verify the database tables</a></li>
     </ul>
 
 {% endtrans %}
