@@ -12,7 +12,7 @@ class NlpDataEntryPrint
 {
   const string DD_CALL_FILE = 'nl_call_list';
   const string DD_POSTCARD_FILE = 'nl_postcard_list';
-  
+
   protected NlpCoordinators $coordinators;
   protected NlpSessionData $sessionData;
   protected NlpNls $nlsObj;
@@ -22,7 +22,7 @@ class NlpDataEntryPrint
   protected NlpInstructions $instructionsObj;
   protected DrupalUser $drupalUserObj;
   protected NlpCreateWalksheet $createWalksheetObj;
-  
+
   public function __construct($nlsObj, $sessionData, $coordinators, $votersObj,
                               $turfsObj, $pathsObj, $instructionsObj, $drupalUserObj,
                               $createWalksheetObj ) {
@@ -36,7 +36,7 @@ class NlpDataEntryPrint
     $this->drupalUserObj = $drupalUserObj;
     $this->createWalksheetObj = $createWalksheetObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpDataEntryPrint
   {
     return new static(
@@ -51,7 +51,7 @@ class NlpDataEntryPrint
       $container->get('nlpservices.create_walksheet')
     );
   }
-  
+
   /**
    * getVoters
    *
@@ -91,18 +91,18 @@ class NlpDataEntryPrint
   public function dataEntryPrint(): string
   {
     $messenger = Drupal::messenger();
-    
+
     $county = $this->sessionData->getCounty();
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'] ?? 0;
-    
+
     $instructions = $this->instructionsObj->getInstructions($county);
     $page = '<p>The links below provide access to printable documents for voter contact instructions, canvassing
 a walk sheet, mailing postcards, and GOTV calling for voters whose ballot is not yet received by the county election
 division.  </p>';
-    
+
     $page .= "<h2>Canvass Instructions</h2>";
-  
+
     $page .= '<p>The "Instructions for canvassing" document is a PDF that can be downloaded and printed from
 your computer. (For some counties, the document can be an Excel spreadsheet.) This PDF was created at the time the
 turf was created and may not be the latest information on
@@ -111,22 +111,22 @@ The PDF\'s value is primarily the map for a canvass.  If you display your turf, 
 information.  The instructions are usually for a walking canvass of your neighborhood, but occasionally it can
 be for sending postcards, or both depending on your situation. (Note, if you are using the MiniVAN app, you can get the most
 recent information from VoteBuilder.)</p>';
-    
+
     $path = $this->pathsObj->getPath('INST',$county);
     $canvass = $instructions['canvass']['fileName'];
     if(!empty($canvass)) {
       $canvassUrl = Drupal::service('file_url_generator')->generateAbsoluteString($path . $instructions['canvass']['fileName']);
       $page .= '<p><b>Instructions for canvassing:</b> <a href="' . $canvassUrl . '" target="_blank">Click here</a></p> ';
     }
-  
+
     $postcard = $instructions['postcard']['fileName'];
     if(!empty($postcard)) {
       $postcardUrl = Drupal::service('file_url_generator')->generateAbsoluteString($path . $instructions['postcard']['fileName']);
       $page .= '<p><b>Instructions for sending postcards:</b> <a href="' . $postcardUrl . '" target="_blank">Click here</a></p> ';
     }
-    
+
     $turfIndex = $this->sessionData->get('turfIndex');
-  
+
     if(empty($turfIndex)) {
       $turfArray = (!empty($mcid))?$this->turfsObj->turfExists($mcid,$county):[];
       if (empty($turfArray)) {
@@ -135,18 +135,18 @@ recent information from VoteBuilder.)</p>';
       }
       $turfIndex = $turfArray['turfIndex'];
     }
-    
+
     $turf = $this->turfsObj->getTurf($turfIndex);
-    
+
     $page .= "<h2>Printable walksheet (Original with a map)</h2>";
 
     if(!empty($turf['turfPDF'])) {
       $pdfPath = $this->pathsObj->getPath('PDF',$county);
       $pdfUri = $pdfPath . $turf['turfPDF'];
       $url = Drupal::service('file_url_generator')->generateAbsoluteString($pdfUri);
-      $page .=  '<p>The link below takes you to a printable document with a map and a list of voters for you to 
-contact.  The document was prepared for you by your coordinator and represents the list of voters in your turf at 
-the time the list was created.  If you have had this list for more than 30 days, the actual list of voters may 
+      $page .=  '<p>The link below takes you to a printable document with a map and a list of voters for you to
+contact.  The document was prepared for you by your coordinator and represents the list of voters in your turf at
+the time the list was created.  If you have had this list for more than 30 days, the actual list of voters may
 differ.</p>';
       $page .=  '<p></p><span style="font-weight:bold; color: blue;"><b>Get your walk sheet:</b> </span><a href="'.$url.
         '" target="_blank"> Click Here</a></p>';
@@ -158,69 +158,69 @@ your county coordinator.</p>';
 
     $page .= "<h2>Printable walksheet (Latest list of voters but without a map)</h2>";
 
-    $page .=  '<p>Approximately every thirty days, the state 
-party updates the database of registered voters.   If your turf was created before the latest update of voters, it may have experienced some change.   Some 
-voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf 
-in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from 
-the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if 
-still attempting to contact voters.  If you are unable to print your walksheet, contact your coordinator for 
+    $page .=  '<p>Approximately every thirty days, the state
+party updates the database of registered voters.   If your turf was created before the latest update of voters, it may have experienced some change.   Some
+voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf
+in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from
+the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if
+still attempting to contact voters.  If you are unable to print your walksheet, contact your coordinator for
 assistance.</p>';
-    
+
     $page .= '<p><b>Create a new walksheet: </b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
-    
+
     $page .= "<h2>GOTV calling list</h2>";
-  
+
     $page .= "<p>The last update of ballots received by county elections is typically the Friday before
 the election.  For those voters who have not voted and for which we have a phone number, it can be
 beneficial to call these voters.  However, about 40% of voters insist on voting on election day.  It's
 a good idea to be cautious about calling voters that always vote late. </p>";
-  
+
     $page .= '<p><b>GOTV calling list:</b> <a href="nlp-printable-calling-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
-  
+
     $page .= "<h2>Postcard mailing list</h2>";
     $page .= '<p>The postcard address list is organized by mailing address which can be different from the voting
  address.  The list is also ordered by households, and you should send one card to each household with the names of
   all the voters. </p>';
-    
+
     $page .= '<p><b>Postcard mailing list:</b> <a href="nlp-printable-mailing-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';
-    
+
     return $page;
   }
 
- 
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallList
-   * 
+   *
    * @param array $voters
    * @return array
    */
   public function buildCallList( array $voters ): array
   {
     $note = '<div class="call-list-display">';
-    
+
     $note .= "<p>The following table contains the list of households from your
 turf.  The names in red are those that have not yet voted (also marked with
 an asterisk). The column on the right indicates that at least one voter in the
 household has not yet voted, and a reminder call might be helpful.</p>";
-    
+
     $note .= '</div>';
-    
+
     $contacts[] = [
       '#markup' => $note,
     ];
     $voterArrays = $this->buildCallTableArray($voters);
-    
+
     $page = $this->buildCallListDisplay($voterArrays);
-  
+
     $listUri = $this->buildListPrint('call',$page,"GOTV Call list");
-    
+
     $header = [
       'names' => 'Named(s)',
       'phoneNumbers' => 'Phone Number(s)',
       'address' => 'Address',
       'someOneToCall' => 'Call',
     ];
-    
+
     $rows = [];
     foreach ($voterArrays as $voterArray) {
       $row = [];
@@ -231,7 +231,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $row['someOneToCall'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$call.'</span>');
       $rows[] = $row;
     }
-    
+
     // Create the table as a render array.
     $contacts[] = [
       '#theme' => 'table',
@@ -245,21 +245,21 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       '#prefix' => '<div class="call-list-display">',
       '#suffix' => '</div>',
     ];
-    
+
     $url = Drupal::service('file_url_generator')->generateAbsoluteString($listUri);
     $text =  "<p> * Hasn't voted yet. &nbsp; ** SMS texting optin unknown.</p></div>";
     $text .= "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
     $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
 If you right-click on the print, you can save the table on your system.  This saved file can be read by
 Microsoft Word and edited or printed.</p></div>";
-    
+
     $contacts[] = [
       '#markup' => $text,
     ];
-    
+
     return $contacts;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallListDisplay
    *
@@ -268,7 +268,7 @@ Microsoft Word and edited or printed.</p></div>";
    */
   public function buildCallListDisplay( array $voterArrays ): array
   {
-  
+
     $page = [];
     $page[] = '<div class="call-list-display">';
 
@@ -278,7 +278,7 @@ an asterisk). The column on the right indicates that at least one voter in the
 household has not yet voted, and a reminder call might be helpful.</p>";
     // Get the list of voters for this turf, ordered by voting address.
     $page[] = '<table class="call-table">';
-    
+
     // Create the display of voter's, grouped BY ADDRESS if more than one at the same address.
     foreach ($voterArrays as $voterArray) {
       $page[] = "<tr>";
@@ -293,7 +293,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $page[] =  "<p> * Hasn't voted yet. &nbsp; ** SMS texting optin unknown.</p></div>";
     return $page;
   }
-  
+
   /**
    * buildCallTableArray
    *
@@ -310,7 +310,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $savedHousehold = [];
     foreach ($voters as $voter) {
       $voterArray = [];
-      
+
       $exclude = ($voter['status']['deceased'] || $voter['status']['hostile']);
       // Extracted the name, address and age info from the vtr record.
       $voterNickname = " [".$voter['nickname']."]";
@@ -339,7 +339,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
           $someOneToCall = TRUE;
         }
       }
-      
+
       $phoneNumbers = "H:";
       if(!empty($voter['homePhone'])) {
         $phoneNumbers .= $this->formatTelephone($voter['homePhone']);
@@ -350,7 +350,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
         $optIn = (!empty($voter['smsOptInStatus']))?$voter['smsOptInStatus']:'**';
         $phoneNumbers .= '<span class="voter-sms-status"> '.$optIn.'</span>';
       }
-      
+
       $voterAddress = $voter['address'];
       $householdAddress = $voterAddress['streetNo'].' '
         .$voterAddress['streetPrefix'].' '.$voterAddress['streetName'].' '.$voterAddress['streetType'];
@@ -375,12 +375,12 @@ household has not yet voted, and a reminder call might be helpful.</p>";
             $savedHousehold['someOneToCall'] = $someOneToCall;
           }
         } else {
-         
+
           $voterArray['names'] = $savedHousehold['names'];
           $voterArray['phoneNumbers'] = $savedHousehold['phoneNumbers'];
           $voterArray['address'] = $savedHousehold['address'];
           $voterArray['someOneToCall'] = $savedHousehold['someOneToCall'];
-          
+
           $savedHousehold['address'] = $householdAddress;
           $savedHousehold['names'] = $householdNames;
           $savedHousehold['phoneNumbers'] = $phoneNumbers;
@@ -397,10 +397,10 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $voterArray['someOneToCall'] = $savedHousehold['someOneToCall'];
       $voterArrays[] = $voterArray;
     }
-    
+
     return $voterArrays;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallListPrint
    *
@@ -463,17 +463,17 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     } while (TRUE);
     fclose($cssFh);
     fputs($fh,"</style>");
-    
+
     fputs($fh, "</head><body>");
-  
+
     fputs($fh,"<h1>$title</h1>");
-  
+
     fputs($fh,"<span style='font-family:Calibri,sans-serif'>");
-  
+
     foreach ($page as $line) {
       fputs($fh,$line."\n");
     }
-  
+
     fputs($fh,"</span></body></html>");
     fclose($fh);
     return $listUri;
@@ -495,7 +495,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     preg_match('/(\d{3})(\d{3})(\d{4})/', $cleaned, $matches);
     return "($matches[1]) $matches[2]-$matches[3]";
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildMailingList
    *
@@ -510,18 +510,18 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $tableArrays = $this->buildMailListArray($voters);
     $page = $this->buildMailListDisplay($tableArrays);
     $listUri = $this->buildListPrint('postcard',$page,"Postcard Mailing List");
-    
+
     $url = Drupal::service('file_url_generator')->generateAbsoluteString($listUri);
     $text = "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
     $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
 If you right-click on the print, you can save the table on your system.  This saved file can be read by
 Microsoft Word and edited or printed.</p></div>";
-    
+
     $header = [
       'names' => 'Named(s)',
       'address' => 'Address',
     ];
-    
+
     $rows = [];
     foreach($tableArrays as $tableArray) {
       $rows[] = [
@@ -543,13 +543,13 @@ Microsoft Word and edited or printed.</p></div>";
       '#prefix' => '<div class="mail-list-display">',
       '#suffix' => '</div>',
     ];
-    
+
     $content[] = [
       '#markup' => $text,
     ];
     return $content;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildMailListDisplay
    *
@@ -563,16 +563,16 @@ Microsoft Word and edited or printed.</p></div>";
     $page = [];
     $page[] = '<div class="call-list-display">';
     $page[] =  '<table class="mail-table">';
-  
+
     $page[] = '<thead><tr>';
-  
+
     $page[] = '<th class="name">Name(s)</th><th class="address">Mailing Address</th>';
     $page[] =  '</tr></thead>';
     $page[] =  '<tbody>';
-  
+
     // Create the display of the voter's mailing address, grouped if more than one at the same address.
     foreach ($tableArrays as $tableArray) {
-      
+
       $page[] = "<tr>";
       $page[] = '<td class="name">' . $tableArray['names'] . "</td>";
       $page[] = '<td class="address">' . $tableArray['address'] . "</td>";
@@ -581,7 +581,7 @@ Microsoft Word and edited or printed.</p></div>";
     $page[] =  "</tbody></table></div>";
     return $page;
   }
-  
+
   /**
    * buildMailListArray
    *
@@ -595,7 +595,7 @@ Microsoft Word and edited or printed.</p></div>";
     $voterArrays = [];
     $current = [];
     foreach ($voters as $voter) {
-      
+
       $voterArray = [];
       $exclude = ($voter['status']['deceased'] || $voter['status']['hostile']);
       // Extracted the name, address and age info from the vtr record.
@@ -611,19 +611,19 @@ Microsoft Word and edited or printed.</p></div>";
       if($exclude) {
         $voterName .= ' '.$exclusion;
       }
-      
+
       $votingHistory = $voter['votingHistory'];
       $formattedVotingHistory = str_replace(['@Y','@N'],['Yes','No'],$votingHistory);
-      
+
       $voterName .= '<br>&nbsp;&nbsp;'.$formattedVotingHistory;
-      
+
       if(empty($voter['address']['mAddress'])) {
         $mailingAddress = 'Not available.';
       } else {
         $mailingAddress = $voter['address']['mAddress'].'<br>'.$voter['address']['mCity']. ', '
           .$voter['address']['mState'].' '.$voter['address']['mZip'];
       }
-      
+
       // If the first voter in the household, remember name and address in case there are others.
       if (empty($current['address'])) {
         $current['address'] = $mailingAddress;
@@ -636,13 +636,13 @@ Microsoft Word and edited or printed.</p></div>";
         } else {
           // If this voter is registered at a different address, write the
           // mailing address record and start over with this voter.
-          
+
           $voterArray['names'] = $current['name'];
           $voterArray['address'] = $current['address'];
           $current['address'] = $mailingAddress;
           $current['name'] = $voterName;
           $voterArrays[] = $voterArray;
-          
+
         }
       }
     }
@@ -671,16 +671,17 @@ Microsoft Word and edited or printed.</p></div>";
   public function buildWalksheetPage( int $turfIndex ): array
   {
     $walksheetData = $this->createWalksheetObj->createWalksheetArray($turfIndex);
+    nlp_debug_msg('walksheetData',$walksheetData);
     if(empty($walksheetData)) {
       return [
         '#markup' => '<p>No walksheet data available.</p>',
       ];
     }
     $pdfUrl = $this->createWalksheetObj->createWalksheetPdf($walksheetData);
-    
+
     return [
       '#markup' => '<p><a href="'.$pdfUrl.'" target="_blank">Click here to view or download your walk sheet</a></p>',
     ];
   }
-  
+
 }

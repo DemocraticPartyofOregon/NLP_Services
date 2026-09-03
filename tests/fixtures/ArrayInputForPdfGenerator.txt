@@ -1,0 +1,141 @@
+<?php
+$values =
+array (
+  0 => 
+  array (
+    'householdLineCount' => 2,
+    'householdAddress' => 
+    array (
+      'addressLine1' => '1676 Buddy Rd',
+      'addressLine2' => NULL,
+      'city' => 'Chipley',
+    ),
+    'votersInHousehold' => 
+    array (
+      0 => 
+      array (
+        'control' => 
+        array (
+          'type' => 'voter',
+          'vanid' => '129200',
+          'householdAddress' => 
+          array (
+            'addressLine1' => '1676 Buddy Rd',
+            'addressLine2' => NULL,
+            'city' => 'Chipley',
+          ),
+          'row' => 'solid',
+        ),
+        'address' => '1676 Buddy Rd',
+        'name' => '<b>Sage, James</b><br>(James) 69 M D',
+        'votingHistory' => 'P26:N G24:N P24:N G22:N ',
+        'results' => '#results',
+        'question' => '#question',
+        'notes' => 'Notes',
+      ),
+    ),
+  ),
+  1 => 
+  array (
+    'householdLineCount' => 2,
+    'householdAddress' => 
+    array (
+      'addressLine1' => '1661 Duncan Community Rd',
+      'addressLine2' => NULL,
+      'city' => 'Chipley',
+    ),
+    'votersInHousehold' => 
+    array (
+      0 => 
+      array (
+        'control' => 
+        array (
+          'type' => 'voter',
+          'vanid' => '542787',
+          'householdAddress' => 
+          array (
+            'addressLine1' => '1661 Duncan Community Rd',
+            'addressLine2' => NULL,
+            'city' => 'Chipley',
+          ),
+          'row' => 'solid',
+        ),
+        'address' => '1661 Duncan Community Rd',
+        'name' => '<b>Norris, Dolores</b><br>(Dolores) 108 F D',
+        'votingHistory' => 'P26:N G24:N P24:N G22:N ',
+        'results' => '#results',
+        'question' => '#question',
+        'notes' => 'Notes',
+      ),
+    ),
+  ),
+  2 => 
+  array (
+    'householdLineCount' => 2,
+    'householdAddress' => 
+    array (
+      'addressLine1' => '1685 Duncan Community Rd',
+      'addressLine2' => NULL,
+      'city' => 'Chipley',
+    ),
+    'votersInHousehold' => 
+    array (
+      0 => 
+      array (
+        'control' => 
+        array (
+          'type' => 'voter',
+          'vanid' => '555768',
+          'householdAddress' => 
+          array (
+            'addressLine1' => '1685 Duncan Community Rd',
+            'addressLine2' => NULL,
+            'city' => 'Chipley',
+          ),
+          'row' => 'solid',
+        ),
+        'address' => '1685 Duncan Community Rd',
+        'name' => '<b>Bowers, Nathaniel</b><br>(Nathaniel) 45 M D',
+        'votingHistory' => 'P26:N G24:N P24:N G22:N ',
+        'results' => '#results',
+        'question' => '#question',
+        'notes' => 'Notes',
+      ),
+    ),
+  ),
+  3 => 
+  array (
+    'householdLineCount' => 2,
+    'householdAddress' => 
+    array (
+      'addressLine1' => '1690 Duncan Community Rd',
+      'addressLine2' => NULL,
+      'city' => 'Chipley',
+    ),
+    'votersInHousehold' => 
+    array (
+      0 => 
+      array (
+        'control' => 
+        array (
+          'type' => 'voter',
+          'vanid' => '242130',
+          'householdAddress' => 
+          array (
+            'addressLine1' => '1690 Duncan Community Rd',
+            'addressLine2' => NULL,
+            'city' => 'Chipley',
+          ),
+          'row' => 'solid',
+        ),
+        'address' => '1690 Duncan Community Rd',
+        'name' => '<b>Klatt, Jennifer</b><br>(Jennifer) 50 F D',
+        'votingHistory' => 'P26:N G24:N P24:N G22:N ',
+        'results' => '#results',
+        'question' => '#question',
+        'notes' => 'Notes',
+      ),
+    ),
+  ),
+);
+?>
