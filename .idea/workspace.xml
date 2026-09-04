@@ -7,10 +7,8 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Consolidate all batch files in the Batch directory">
-      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/KeyValidateForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/KeyValidateForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the key validation to the src/Config directory">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,23 +103,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000000512812" />
-      <entry key="S2" value="1.0076848860679448" />
-      <entry key="S5" value="1.5483514835041157" />
-      <entry key="S10" value="3.6546949775273463" />
-      <entry key="S30" value="9.467335281720377" />
-      <entry key="S60" value="12.571852099600674" />
-      <entry key="M2" value="14.590067712796666" />
-      <entry key="M5" value="16.47161886842529" />
-      <entry key="M10" value="19.402944996392215" />
-      <entry key="M15" value="22.29691420115704" />
-      <entry key="M30" value="28.204150219587024" />
-      <entry key="H1" value="33.34443454079227" />
-      <entry key="H2" value="36.793850978829354" />
-      <entry key="H4" value="39.28107004345" />
-      <entry key="D1" value="109.44510181028441" />
-      <entry key="W1" value="501.4253985920177" />
+      <entry key="MS100" value="1.0000021310561666" />
+      <entry key="MS500" value="1.0758933212461732" />
+      <entry key="S2" value="2.0493168130732666" />
+      <entry key="S5" value="4.411792392154368" />
+      <entry key="S10" value="6.870367129107949" />
+      <entry key="S30" value="9.838859135240899" />
+      <entry key="S60" value="10.850033978298638" />
+      <entry key="M2" value="11.539770384636885" />
+      <entry key="M5" value="14.282122006248203" />
+      <entry key="M10" value="19.47414848650439" />
+      <entry key="M15" value="23.850924860375766" />
+      <entry key="M30" value="32.5918231355221" />
+      <entry key="H1" value="40.499230771580116" />
+      <entry key="H2" value="46.01772821415533" />
+      <entry key="H4" value="49.77068039217118" />
+      <entry key="D1" value="120.73381968704639" />
+      <entry key="W1" value="512.9589996659754" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -135,31 +133,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="5.604247463753903E-196" />
-      <entry key="H1" value="4.097492414417453E-98" />
-      <entry key="H2" value="3.506441342241107E-49" />
-      <entry key="H4" value="1.0437957573919018E-24" />
-      <entry key="D1" value="5.520542724760687E-4" />
-      <entry key="W1" value="5.531223432487766" />
+      <entry key="M30" value="4.099774474580882E-196" />
+      <entry key="H1" value="3.504608337848519E-98" />
+      <entry key="H2" value="3.2428528627777965E-49" />
+      <entry key="H4" value="1.0037969232685115E-24" />
+      <entry key="D1" value="5.484707827409302E-4" />
+      <entry key="W1" value="5.526079930419938" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9201876506248751" />
-      <entry key="MS500" value="0.9835020740767098" />
-      <entry key="S2" value="1.003509221357171" />
-      <entry key="S5" value="1.5460158544681577" />
-      <entry key="S10" value="3.652133322955017" />
-      <entry key="S30" value="9.464872438325203" />
-      <entry key="S60" value="12.570114184526423" />
-      <entry key="M2" value="14.589022994843772" />
-      <entry key="M5" value="16.471104944181025" />
-      <entry key="M10" value="19.40237124402106" />
-      <entry key="M15" value="22.296197469664786" />
-      <entry key="M30" value="28.20336907813297" />
-      <entry key="H1" value="33.34383682380449" />
-      <entry key="H2" value="36.79347905058445" />
-      <entry key="H4" value="39.280861675289046" />
-      <entry key="D1" value="109.44560341839932" />
-      <entry key="W1" value="506.95642310058935" />
+      <entry key="MS100" value="0.9460597195079158" />
+      <entry key="MS500" value="1.0644178119299823" />
+      <entry key="S2" value="2.043987673826487" />
+      <entry key="S5" value="4.406927820105403" />
+      <entry key="S10" value="6.866530690738783" />
+      <entry key="S30" value="9.837021680754352" />
+      <entry key="S60" value="10.849020624961472" />
+      <entry key="M2" value="11.539228192087801" />
+      <entry key="M5" value="14.281823639351918" />
+      <entry key="M10" value="19.47381294283479" />
+      <entry key="M15" value="23.8504670935259" />
+      <entry key="M30" value="32.59121446724241" />
+      <entry key="H1" value="40.49870089616891" />
+      <entry key="H2" value="46.01737491445283" />
+      <entry key="H4" value="49.77047534166429" />
+      <entry key="D1" value="120.73431726099635" />
+      <entry key="W1" value="518.4848807462909" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -479,15 +477,7 @@
       <workItem from="1788482278225" duration="483000" />
       <workItem from="1788482825370" duration="1810000" />
       <workItem from="1788496857455" duration="2156000" />
-      <workItem from="1788531611816" duration="2499000" />
-    </task>
-    <task id="LOCAL-00166" summary="Use the secret key/iv instead of hardcoded values">
-      <option name="closed" value="true" />
-      <created>1783864981723</created>
-      <option name="number" value="00166" />
-      <option name="presentableId" value="LOCAL-00166" />
-      <option name="project" value="LOCAL" />
-      <updated>1783864981723</updated>
+      <workItem from="1788531611816" duration="3193000" />
     </task>
     <task id="LOCAL-00167" summary="Use the secret key/iv instead of hardcoded values">
       <option name="closed" value="true" />
@@ -873,7 +863,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788533446604</updated>
     </task>
-    <option name="localTasksCounter" value="215" />
+    <task id="LOCAL-00215" summary="Move the key validation to the src/Config directory">
+      <option name="closed" value="true" />
+      <created>1788534255718</created>
+      <option name="number" value="00215" />
+      <option name="presentableId" value="LOCAL-00215" />
+      <option name="project" value="LOCAL" />
+      <updated>1788534255718</updated>
+    </task>
+    <option name="localTasksCounter" value="216" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -940,7 +938,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Require submit for changes to the active nls form." />
     <MESSAGE value="Style - line spacing" />
     <MESSAGE value="Early voting import for Mississippi" />
     <MESSAGE value="Add needs ride to polls and wants lawn sign for Mississippi" />
@@ -965,7 +962,8 @@
     <MESSAGE value="Added test for new services for Montana and Mississippi." />
     <MESSAGE value="Added test for new services for remaining untested files." />
     <MESSAGE value="Consolidate all batch files in the Batch directory" />
-    <option name="LAST_COMMIT_MESSAGE" value="Consolidate all batch files in the Batch directory" />
+    <MESSAGE value="Move the key validation to the src/Config directory" />
+    <option name="LAST_COMMIT_MESSAGE" value="Move the key validation to the src/Config directory" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
