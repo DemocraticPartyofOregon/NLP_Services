@@ -9,6 +9,20 @@
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the key validation to the src/Config directory">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/phpunit.xml" beforeDir="false" afterPath="$PROJECT_DIR$/phpunit.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ActivistCodeConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ActivistCodeConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ApiConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DocumentConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/DocumentConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ElectionConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ElectionConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/EmailConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/EmailConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/EnableCronTasksFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/EnableCronTasksFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportReportsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportReportsFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/KeyValidateFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/NlpResetFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/NlpResetFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ResponseCodeConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ResponseCodeConfigurationFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SurveyQuestionFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/SurveyQuestionFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/VoteBuilderUpdateDateTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/VoteBuilderUpdateDateTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,7 +79,7 @@
     <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26336" />
+    <option name="cachedIndexableFilesCount" value="26787" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -478,14 +492,7 @@
       <workItem from="1788482825370" duration="1810000" />
       <workItem from="1788496857455" duration="2156000" />
       <workItem from="1788531611816" duration="3193000" />
-    </task>
-    <task id="LOCAL-00167" summary="Use the secret key/iv instead of hardcoded values">
-      <option name="closed" value="true" />
-      <created>1783865033947</created>
-      <option name="number" value="00167" />
-      <option name="presentableId" value="LOCAL-00167" />
-      <option name="project" value="LOCAL" />
-      <updated>1783865033948</updated>
+      <workItem from="1788538162987" duration="952000" />
     </task>
     <task id="LOCAL-00168" summary="Minor code review changes">
       <option name="closed" value="true" />
@@ -871,7 +878,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788534255718</updated>
     </task>
-    <option name="localTasksCounter" value="216" />
+    <task id="LOCAL-00216" summary="Move the key validation to the src/Config directory">
+      <option name="closed" value="true" />
+      <created>1788538294439</created>
+      <option name="number" value="00216" />
+      <option name="presentableId" value="LOCAL-00216" />
+      <option name="project" value="LOCAL" />
+      <updated>1788538294439</updated>
+    </task>
+    <option name="localTasksCounter" value="217" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit\Form;
+namespace Drupal\Tests\nlpservices\Unit\Config;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;

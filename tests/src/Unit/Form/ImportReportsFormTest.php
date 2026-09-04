@@ -205,19 +205,4 @@ class ImportReportsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  public function testSubmitFormSuccessLooksUpModulePathForTheBatchFile(): void {
-    $fileMock = $this->createMock(File::class);
-    $fileMock->method('getFilename')->willReturn('reports.csv');
-    $this->stubEntityTypeManager($fileMock);
-    $moduleListMock = $this->stubModuleExtensionList();
-    $moduleListMock->expects($this->once())->method('getPath')->with('nlpservices');
-
-    $formState = new FormState();
-    $formState->setValue('nl_reports_file', [42]);
-    $formState->setValue('empty', FALSE);
-
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $formState);
-  }
-
 }

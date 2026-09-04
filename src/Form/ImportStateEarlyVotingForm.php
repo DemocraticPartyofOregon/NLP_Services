@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -83,7 +84,7 @@ class ImportStateEarlyVotingForm extends FormBase
     }
     try {
       $fileEntity->save();
-    } catch (Drupal\Core\Entity\EntityStorageException $e) {
+    } catch (EntityStorageException $e) {
       nlp_debug_msg('File save error', $e->getMessage());
       return;
     }
