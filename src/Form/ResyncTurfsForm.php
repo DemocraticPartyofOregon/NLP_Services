@@ -3,11 +3,11 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\nlpservices\Batch\ResyncTurfsBatch;
 use Drupal\nlpservices\NlpTurfs;
 
 /**
@@ -80,18 +80,15 @@ class ResyncTurfsForm extends FormBase
       return;
     }
     
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-
     $args = [
       'votebuilderUpdateDate' => $votebuilderUpdateDate,
       'turfs' => $staleTurfs,
     ];
     $batch = [
       'operations' => [
-        ['resyncTurfsBatch', [$args]]
+        [[ResyncTurfsBatch::class, 'process'], [$args]],
       ],
-      'file' => $modulePath . '/src/Form/ResyncTurfsBatch.php',
-      'finished' => 'resyncTurfsBatchFinished',
+      'finished' => [ResyncTurfsBatch::class, 'finished'],
       'title' => $this->t('Resync existing turfs with new registration data.'),
       'init_message' => $this->t('Resync is starting.'),
       'progress_message' => $this->t('Processed @percentage % of reported turfs.'),

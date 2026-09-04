@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit\Form;
+namespace Drupal\Tests\nlpservices\Unit\Service;
 
 use Drupal;
 use Drupal\Core\Database\StatementInterface;
@@ -11,6 +11,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\TempStore\PrivateTempStore;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\nlpservices\ApiVoter;
+use Drupal\nlpservices\Batch\ExportVoterContactReportsBatch;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpVoters;
 use Drupal\Tests\UnitTestCase;
@@ -26,11 +27,6 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
   private PrivateTempStore $tempStoreMock;
   private PrivateTempStoreFactory $tempStoreFactoryMock;
   private array $tempFiles = [];
-
-  public static function setUpBeforeClass(): void {
-    parent::setUpBeforeClass();
-    require_once __DIR__ . '/../../../../src/Form/ExportVoterContactReportsBatch.php';
-  }
 
   protected function setUp(): void {
     parent::setUp();
@@ -127,7 +123,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — file cannot be opened
+  // process — file cannot be opened
   // -------------------------------------------------------------------------
 
   public function testBatchFileOpenFailureSetsFinishedAndAddsStatus(): void {
@@ -135,13 +131,13 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->reportsMock->expects($this->never())->method('selectAllReports');
 
     $context = $this->baseContext();
-    @exportVoterContactReportsBatch($this->baseArg(['uri' => '/nonexistent_dir_xyz/file.csv']), $context);
+    @ExportVoterContactReportsBatch::process($this->baseArg(['uri' => '/nonexistent_dir_xyz/file.csv']), $context);
 
     $this->assertTrue($context['finished']);
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — writes active voters, skips API lookup
+  // process — writes active voters, skips API lookup
   // -------------------------------------------------------------------------
 
   public function testBatchWritesAllRecordsWhenNotRemovingInactive(): void {
@@ -154,14 +150,14 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->apiVoterMock->expects($this->never())->method('voterExists');
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path]), $context);
 
     $this->assertSame(['11111,a', '22222,b'], $this->readDataLines($path));
     $this->assertSame(1, $context['finished']);
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — removeInactive skips inactive voters
+  // process — removeInactive skips inactive voters
   // -------------------------------------------------------------------------
 
   public function testBatchSkipsInactiveVoterWhenRemoveInactiveTrue(): void {
@@ -185,14 +181,14 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       }));
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
 
     $this->assertSame(['11111,active'], $this->readDataLines($path));
     $this->assertSame(['11111' => TRUE, '22222' => FALSE], $capturedVotersExist);
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — cached votersExist skips API lookup
+  // process — cached votersExist skips API lookup
   // -------------------------------------------------------------------------
 
   public function testBatchReusesCachedVotersExistWithoutCallingApi(): void {
@@ -203,13 +199,13 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->apiVoterMock->expects($this->never())->method('voterExists');
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
 
     $this->assertSame(['11111,a'], $this->readDataLines($path));
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — currentCycleOnly fills missing cd
+  // process — currentCycleOnly fills missing cd
   // -------------------------------------------------------------------------
 
   public function testBatchFillsMissingCdWhenCurrentCycleOnly(): void {
@@ -222,7 +218,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       ->willReturn(7);
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
 
     $this->assertSame(['11111,7,a'], $this->readDataLines($path));
   }
@@ -234,13 +230,13 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->votersMock->expects($this->never())->method('getVoterCd');
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
 
     $this->assertSame(['11111,3,a'], $this->readDataLines($path));
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatch — cycle progression
+  // process — cycle progression
   // -------------------------------------------------------------------------
 
   public function testBatchFinishesOnLastCycleBelowLimit(): void {
@@ -249,7 +245,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path]), $context);
 
     $this->assertSame(1, $context['finished']);
     $this->assertSame(1, $context['results']['records']);
@@ -268,7 +264,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'startCycle' => 1, 'endCycle' => 2, 'countOfRecords' => 100]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'startCycle' => 1, 'endCycle' => 2, 'countOfRecords' => 100]), $context);
 
     $this->assertGreaterThan(0, $context['finished']);
     $this->assertLessThan(1, $context['finished']);
@@ -284,7 +280,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       ->willReturn($this->makeCountingResultMock(NlpReports::BATCH_LIMIT));
 
     $context = $this->baseContext();
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'countOfRecords' => 2000]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'countOfRecords' => 2000]), $context);
 
     $this->assertGreaterThan(0, $context['finished']);
     $this->assertLessThan(1, $context['finished']);
@@ -310,20 +306,20 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       'votersNotFound'  => 3,
     ];
 
-    exportVoterContactReportsBatch($this->baseArg(['uri' => $path, 'startCycle' => 1, 'endCycle' => 2]), $context);
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'startCycle' => 1, 'endCycle' => 2]), $context);
 
     $this->assertSame(1, $context['finished']);
     $this->assertSame(751, $context['results']['records']);
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatchFinished — success
+  // finished — success
   // -------------------------------------------------------------------------
 
   public function testFinishedSuccessAddsFourStatusMessages(): void {
     $this->messengerMock->expects($this->exactly(4))->method('addStatus');
 
-    exportVoterContactReportsBatchFinished(
+    ExportVoterContactReportsBatch::finished(
       TRUE,
       ['records' => 10, 'votersExistCount' => 5, 'votersNotFound' => 2, 'uri' => '/tmp/x.csv'],
       [],
@@ -331,13 +327,13 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // exportVoterContactReportsBatchFinished — failure
+  // finished — failure
   // -------------------------------------------------------------------------
 
   public function testFinishedFailureAddsSingleErrorStatus(): void {
     $this->messengerMock->expects($this->once())->method('addStatus');
 
-    exportVoterContactReportsBatchFinished(FALSE, [], []);
+    ExportVoterContactReportsBatch::finished(FALSE, [], []);
   }
 
 }

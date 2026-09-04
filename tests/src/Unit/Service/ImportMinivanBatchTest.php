@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit\Form;
+namespace Drupal\Tests\nlpservices\Unit\Service;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\nlpservices\Batch\ImportMinivanBatch;
 use Drupal\nlpservices\NlpMinivan;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
@@ -19,11 +20,6 @@ class ImportMinivanBatchTest extends UnitTestCase {
   private NlpMinivan $minivanMock;
   private MessengerInterface $messengerMock;
   private LoggerInterface $loggerMock;
-
-  public static function setUpBeforeClass(): void {
-    parent::setUpBeforeClass();
-    require_once __DIR__ . '/../../../../src/Form/ImportMinivanBatch.php';
-  }
 
   protected function setUp(): void {
     parent::setUp();
@@ -77,7 +73,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // importMinivanBatch — processing
+  // ImportMinivanBatch::process — processing
   // -------------------------------------------------------------------------
 
   public function testBatchCallsProcessMinivanQueueReports(): void {
@@ -88,14 +84,14 @@ class ImportMinivanBatchTest extends UnitTestCase {
       ->willReturn($this->baseCounts());
 
     $context = $this->baseContext();
-    importMinivanBatch($arg, $context);
+    ImportMinivanBatch::process($arg, $context);
   }
 
   public function testBatchSetsFinishedToOne(): void {
     $this->minivanMock->method('processMinivanQueueReports')->willReturn($this->baseCounts());
 
     $context = $this->baseContext();
-    importMinivanBatch($this->baseArg(), $context);
+    ImportMinivanBatch::process($this->baseArg(), $context);
 
     $this->assertSame(1, $context['finished']);
   }
@@ -104,7 +100,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
     $this->minivanMock->method('processMinivanQueueReports')->willReturn($this->baseCounts());
 
     $context = $this->baseContext();
-    importMinivanBatch($this->baseArg(), $context);
+    ImportMinivanBatch::process($this->baseArg(), $context);
 
     $this->assertSame('MiniVAN Report', $context['results']['subject']);
   }
@@ -113,7 +109,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
     $this->minivanMock->method('processMinivanQueueReports')->willReturn($this->baseCounts());
 
     $context = $this->baseContext();
-    importMinivanBatch($this->baseArg(), $context);
+    ImportMinivanBatch::process($this->baseArg(), $context);
 
     $this->assertSame(6,  $context['results']['month']);
     $this->assertSame(15, $context['results']['day']);
@@ -124,19 +120,19 @@ class ImportMinivanBatchTest extends UnitTestCase {
     $this->minivanMock->method('processMinivanQueueReports')->willReturn($counts);
 
     $context = $this->baseContext();
-    importMinivanBatch($this->baseArg(), $context);
+    ImportMinivanBatch::process($this->baseArg(), $context);
 
     $this->assertSame($counts, $context['results']['counts']);
   }
 
   // -------------------------------------------------------------------------
-  // importMinivanFinished — success
+  // ImportMinivanBatch::finished — success
   // -------------------------------------------------------------------------
 
   public function testFinishedSuccessAddsStatusMessage(): void {
     $this->messengerMock->expects($this->once())->method('addStatus');
 
-    importMinivanFinished(
+    ImportMinivanBatch::finished(
       TRUE,
       ['counts' => $this->baseCounts(), 'subject' => 'Report', 'month' => 6, 'day' => 15],
       [],
@@ -146,7 +142,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
   public function testFinishedSuccessLogsNotice(): void {
     $this->loggerMock->expects($this->once())->method('notice');
 
-    importMinivanFinished(
+    ImportMinivanBatch::finished(
       TRUE,
       ['counts' => $this->baseCounts(), 'subject' => 'Report', 'month' => 6, 'day' => 15],
       [],
@@ -156,7 +152,7 @@ class ImportMinivanBatchTest extends UnitTestCase {
   public function testFinishedSuccessDoesNotAddError(): void {
     $this->messengerMock->expects($this->never())->method('addError');
 
-    importMinivanFinished(
+    ImportMinivanBatch::finished(
       TRUE,
       ['counts' => $this->baseCounts(), 'subject' => 'Report', 'month' => 6, 'day' => 15],
       [],
@@ -164,25 +160,25 @@ class ImportMinivanBatchTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // importMinivanFinished — failure
+  // ImportMinivanBatch::finished — failure
   // -------------------------------------------------------------------------
 
   public function testFinishedFailureAddsErrorMessage(): void {
     $this->messengerMock->expects($this->once())->method('addError');
 
-    importMinivanFinished(FALSE, [], []);
+    ImportMinivanBatch::finished(FALSE, [], []);
   }
 
   public function testFinishedFailureLogsNotice(): void {
     $this->loggerMock->expects($this->once())->method('notice');
 
-    importMinivanFinished(FALSE, [], []);
+    ImportMinivanBatch::finished(FALSE, [], []);
   }
 
   public function testFinishedFailureDoesNotAddStatus(): void {
     $this->messengerMock->expects($this->never())->method('addStatus');
 
-    importMinivanFinished(FALSE, [], []);
+    ImportMinivanBatch::finished(FALSE, [], []);
   }
 
 }

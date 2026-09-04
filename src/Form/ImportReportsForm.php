@@ -2,13 +2,12 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
-use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\file\Entity\File;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\nlpservices\Batch\ImportReportsBatch;
 use Drupal\nlpservices\NlpReports;
 
 /**
@@ -98,21 +97,21 @@ class ImportReportsForm extends FormBase {
     if(!empty($emptyTable)) {
       $this->reports->emptyNlTable();
     }
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $args = [
       'uri' => $fileUri,
     ];
-    
-    $batch_builder = (new BatchBuilder())
-      ->setTitle(t('Processing import reports.'))
-      ->setFile($modulePath . '/src/Form/ImportReportsBatch.php')
-      ->setFinishCallback('importReportsBatchFinished')
-      ->setInitMessage(t('Reports import is starting.'))
-      ->setProgressMessage(t('Processed @percentage % of reports file.'))
-      ->setErrorMessage(t('import reports has encountered an error.'))
-      ->addOperation('importReportsBatch', [$args,]);
-    
-    batch_set($batch_builder->toArray());
+
+    $batch = [
+      'operations' => [
+        [[ImportReportsBatch::class, 'process'], [$args]],
+      ],
+      'finished' => [ImportReportsBatch::class, 'finished'],
+      'title' => t('Processing import reports.'),
+      'init_message' => t('Reports import is starting.'),
+      'progress_message' => t('Processed @percentage % of reports file.'),
+      'error_message' => t('import reports has encountered an error.'),
+    ];
+    batch_set($batch);
   }
   
 }

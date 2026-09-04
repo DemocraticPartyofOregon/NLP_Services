@@ -8,9 +8,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Entity\EntityStorageInterface;
   use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\Entity\EntityTypeRepositoryInterface;
-  use Drupal\Core\Extension\ModuleExtensionList;
   use Drupal\Core\Form\FormState;
   use Drupal\file\Entity\File;
+  use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\ImportUserAccountsForm;
   use Drupal\Tests\UnitTestCase;
@@ -69,12 +69,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $container = Drupal::getContainer();
       $container->set('entity_type.manager', $etmMock);
       $container->set('entity_type.repository', $etrMock);
-    }
-
-    private function stubModuleExtensionList(): void {
-      $moduleListMock = $this->createMock(ModuleExtensionList::class);
-      $moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
-      Drupal::getContainer()->set('extension.list.module', $moduleListMock);
     }
 
     // -------------------------------------------------------------------------
@@ -169,7 +163,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $fileMock->expects($this->once())->method('save');
 
       $this->stubEntityTypeManager($fileMock);
-      $this->stubModuleExtensionList();
 
       $formState = new FormState();
       $formState->setValue('user_file', [42]);
@@ -185,7 +178,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $fileMock->method('getFilename')->willReturn('accounts.csv');
 
       $this->stubEntityTypeManager($fileMock);
-      $this->stubModuleExtensionList();
 
       $formState = new FormState();
       $formState->setValue('user_file', [42]);
@@ -197,12 +189,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertSame('public://temp/accounts.csv', $args['uri']);
     }
 
-    public function testSubmitFormSuccessBatchReferencesImportUserAccountsBatchFile(): void {
+    public function testSubmitFormSuccessBatchReferencesImportUserAccountsBatchClass(): void {
       $fileMock = $this->createMock(File::class);
       $fileMock->method('getFilename')->willReturn('accounts.csv');
 
       $this->stubEntityTypeManager($fileMock);
-      $this->stubModuleExtensionList();
 
       $formState = new FormState();
       $formState->setValue('user_file', [42]);
@@ -211,9 +202,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->buildFormInstance()->submitForm($form, $formState);
 
       $batch = $GLOBALS['batch_set_calls'][0];
-      $this->assertSame('modules/custom/nlpservices/src/Form/ImportUserAccountsBatch.php', $batch['file']);
-      $this->assertSame('importUserAccountsBatch', $batch['operations'][0][0]);
-      $this->assertSame('importUserAccountsBatchFinished', $batch['finished']);
+      $this->assertSame([ImportUserAccountsBatch::class, 'process'], $batch['operations'][0][0]);
+      $this->assertSame([ImportUserAccountsBatch::class, 'finished'], $batch['finished']);
     }
 
   }

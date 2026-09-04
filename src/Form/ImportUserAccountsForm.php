@@ -2,12 +2,12 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\file\Entity\File;
+use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
 use Drupal\nlpservices\DrupalUser;
 
 /**
@@ -89,16 +89,14 @@ class ImportUserAccountsForm extends FormBase {
     }
     $fileName = $bg_file->getFilename();
     $fileUri = 'public://temp/' . $fileName;
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $args = [
       'uri' => $fileUri,
     ];
     $batch = [
       'operations' => [
-        ['importUserAccountsBatch', [$args]],
+        [[ImportUserAccountsBatch::class, 'process'], [$args]],
       ],
-      'file' => $modulePath . '/src/Form/ImportUserAccountsBatch.php',
-      'finished' => 'importUserAccountsBatchFinished',
+      'finished' => [ImportUserAccountsBatch::class, 'finished'],
       'title' => t('Processing import users.'),
       'init_message' => t('Users import is starting.'),
       'progress_message' => t('Processed @percentage % of user accounts file.'),

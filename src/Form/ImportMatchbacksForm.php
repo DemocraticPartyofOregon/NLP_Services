@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\file\Entity\File;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\nlpservices\Batch\ImportMatchbacksBatch;
 use Drupal\nlpservices\NlpMatchbacks;
 
 /**
@@ -135,14 +136,12 @@ class ImportMatchbacksForm extends FormBase
       $messenger->addError(t('Fix the problem before resubmit.'));
       return;
     }
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-    
     $createTime = time();
-    
+
     $config = Drupal::service('config.factory')->getEditable('nlpservices.configuration');
     $config->set('nlpservices-last-matchback-time',$createTime);
     $config->save();
-    
+
     fclose($fh);
 
     // Set up the call to start a batch operation.
@@ -153,10 +152,9 @@ class ImportMatchbacksForm extends FormBase
     ];
     $batch = [
       'operations' => [
-        ['importMatchbacksBatch', [$args]],
+        [[ImportMatchbacksBatch::class, 'process'], [$args]],
       ],
-      'file' => $modulePath.'/src/Form/ImportMatchbacksBatch.php',
-      'finished' => 'importMatchbacksBatchFinished',
+      'finished' => [ImportMatchbacksBatch::class, 'finished'],
       'title' => t('Processing import_matchbacks upload.'),
       'init_message' => t('Matchback import is starting.'),
       'progress_message' => t('Processed @percentage % of ballots received file.'),

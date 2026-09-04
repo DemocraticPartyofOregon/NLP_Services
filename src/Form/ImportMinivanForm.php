@@ -2,10 +2,10 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Batch\BatchBuilder;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\nlpservices\Batch\ImportMinivanBatch;
 use Drupal\nlpservices\NlpMinivan;
 
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -49,8 +49,6 @@ class ImportMinivanForm extends FormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-
     do {
       $queueItems = $this->minivanObj->minivanEmailCheck();
       if (empty($queueItems)) { break; }
@@ -65,12 +63,11 @@ class ImportMinivanForm extends FormBase
         ];
         $batch_builder = (new BatchBuilder())
           ->setTitle(t('Processing import_minivan upload.'))
-          ->setFile($modulePath . '/src/Form/ImportMinivanBatch.php')
-          ->setFinishCallback('importMinivanFinished')
+          ->setFinishCallback([ImportMinivanBatch::class, 'finished'])
           ->setInitMessage(t('MiniVAN import is starting.'))
           ->setProgressMessage(t('Processed @percentage % of minivan reports file.'))
           ->setErrorMessage(t('import_minivan has encountered an error.'))
-          ->addOperation('importMinivanBatch', [$args]);
+          ->addOperation([ImportMinivanBatch::class, 'process'], [$args]);
         batch_set($batch_builder->toArray());
       }
     } while (TRUE);

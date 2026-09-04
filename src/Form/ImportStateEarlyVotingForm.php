@@ -2,11 +2,11 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\file\Entity\File;
+use Drupal\nlpservices\Batch\ImportStateEarlyVotingBatch;
 use Drupal\nlpservices\NlpEarlyVoting;
 
 /**
@@ -115,18 +115,15 @@ class ImportStateEarlyVotingForm extends FormBase
       return;
     }
 
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-
     $args = [
       'fileUri' => $fileUri,
       'fieldPos' => $fieldPos['pos'],
     ];
     $batch = [
       'operations' => [
-        ['importStateEarlyVotingBatch', [$args]],
+        [[ImportStateEarlyVotingBatch::class, 'process'], [$args]],
       ],
-      'file' => $modulePath . '/src/Form/ImportStateEarlyVotingBatch.php',
-      'finished' => 'importStateEarlyVotingBatchFinished',
+      'finished' => [ImportStateEarlyVotingBatch::class, 'finished'],
       'title' => $this->t('Processing state early voting upload.'),
       'init_message' => $this->t('State early voting import is starting.'),
       'progress_message' => $this->t('Processed @percentage % of the state early voting file.'),

@@ -7,6 +7,7 @@ use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Controller\ControllerBase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\Core\Batch\BatchBuilder;
+use Drupal\nlpservices\Batch\ImportMinivanBatch;
 
 /**
  * @noinspection PhpUnused
@@ -89,8 +90,6 @@ class MinivanController extends ControllerBase
             continue;
           }
           foreach ($reportBatch as $reportBlock) {
-            $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
-            //nlp_debug_msg('$modulePath',$modulePath);
             // Set up the call to start a batch operation.
             $args = [
               'records' => $reportBlock,
@@ -99,15 +98,14 @@ class MinivanController extends ControllerBase
               'month' => $month,
               'day' => $day,
             ];
-  
+
             $batch_builder = (new BatchBuilder())
               ->setTitle(t('Processing import_minivan upload.'))
-              ->setFile($modulePath . '/src/Form/ImportMinivanBatch.php')
-              ->setFinishCallback('importMinivanFinished')
+              ->setFinishCallback([ImportMinivanBatch::class, 'finished'])
               ->setInitMessage(t('MiniVAN import is starting.'))
               ->setProgressMessage('Processed @percentage % of minivan reports file.')
               ->setErrorMessage('import_minivan has encountered an error.')
-              ->addOperation('importMinivanBatch', [$args,]);
+              ->addOperation([ImportMinivanBatch::class, 'process'], [$args,]);
             
             batch_set($batch_builder->toArray());
             batch_process('node/1');

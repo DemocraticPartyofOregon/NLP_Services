@@ -10,6 +10,7 @@ use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\Batch\AwakeBatch;
 use Exception;
 //use stdClass;
 
@@ -147,15 +148,13 @@ class AwakeForm extends FormBase {
     $startTimestamp = strtotime($dateRange['start_date']);
     $endTimestamp   = strtotime($dateRange['end_date']);
 
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $batchBuilder = (new BatchBuilder())
       ->setTitle(t('Processing voted file.'))
-      ->setFile($modulePath . '/src/Form/AwakeBatch.php')
-      ->setFinishCallback('awakeFinished')
+      ->setFinishCallback([AwakeBatch::class, 'finished'])
       ->setInitMessage(t('Awake processing is starting.'))
       ->setProgressMessage(t('Processed @percentage% of the voted file.'))
       ->setErrorMessage(t('Awake processing encountered an error.'))
-      ->addOperation('awakeBatch', [[
+      ->addOperation([AwakeBatch::class, 'process'], [[
         'filePath'       => $filePath,
         'fid'            => $fid,
         'headerOffset'   => $headerOffset,
