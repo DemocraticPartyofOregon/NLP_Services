@@ -6,7 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Form\FormStateInterface;
   use Drupal\nlpservices\ApiKeyVerification;
-  use Drupal\nlpservices\Form\KeyValidateForm;
+  use Drupal\nlpservices\Config\KeyValidateForm;
   use Drupal\Tests\UnitTestCase;
 
   class KeyValidateFormTest extends UnitTestCase {

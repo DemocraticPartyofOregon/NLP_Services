@@ -7,41 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Added test for new services for remaining untested files.">
-      <change afterPath="$PROJECT_DIR$/src/Batch/AwakeBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ExportVoterContactReportsBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ImportMatchbacksBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ImportMinivanBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ImportReportsBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ImportStateEarlyVotingBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ImportUserAccountsBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/Batch/ResyncTurfsBatch.php" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ExportVoterContactReportsBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/MinivanController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/MinivanController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ExportVoterContactReportsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMatchbacksForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMinivanBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportMinivanForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportMinivanForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportReportsBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportReportsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportReportsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportUserAccountsBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportUserAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportUserAccountsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ResyncTurfsBatch.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ResyncTurfsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ResyncTurfsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ExportVoterContactReportsBatchTest.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMatchbacksBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ImportMatchbacksBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportMinivanBatchTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ImportMinivanBatchTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportReportsBatchTest.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportStateEarlyVotingBatchTest.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportUserAccountsBatchTest.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportUserAccountsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportUserAccountsFormTest.php" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Consolidate all batch files in the Batch directory">
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/KeyValidateForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/KeyValidateForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -136,23 +105,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000373816831014" />
-      <entry key="MS500" value="1.179209026492619" />
-      <entry key="S2" value="2.6367926933343844" />
-      <entry key="S5" value="4.788075083896263" />
-      <entry key="S10" value="6.624337896590248" />
-      <entry key="S30" value="8.629125884108099" />
-      <entry key="S60" value="9.27746218701195" />
-      <entry key="M2" value="9.651027242329882" />
-      <entry key="M5" value="10.91050938943668" />
-      <entry key="M10" value="13.778847044937223" />
-      <entry key="M15" value="15.874502561545343" />
-      <entry key="M30" value="19.082408514255427" />
-      <entry key="H1" value="21.279281949584792" />
-      <entry key="H2" value="22.57480735104971" />
-      <entry key="H4" value="23.79193270338872" />
-      <entry key="D1" value="93.44985726180725" />
-      <entry key="W1" value="485.17184373203713" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000000512812" />
+      <entry key="S2" value="1.0076848860679448" />
+      <entry key="S5" value="1.5483514835041157" />
+      <entry key="S10" value="3.6546949775273463" />
+      <entry key="S30" value="9.467335281720377" />
+      <entry key="S60" value="12.571852099600674" />
+      <entry key="M2" value="14.590067712796666" />
+      <entry key="M5" value="16.47161886842529" />
+      <entry key="M10" value="19.402944996392215" />
+      <entry key="M15" value="22.29691420115704" />
+      <entry key="M30" value="28.204150219587024" />
+      <entry key="H1" value="33.34443454079227" />
+      <entry key="H2" value="36.793850978829354" />
+      <entry key="H4" value="39.28107004345" />
+      <entry key="D1" value="109.44510181028441" />
+      <entry key="W1" value="501.4253985920177" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -166,31 +135,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="9.398037669315846E-196" />
-      <entry key="H1" value="5.3061325781168686E-98" />
-      <entry key="H2" value="3.99021730293951E-49" />
-      <entry key="H4" value="1.1134751060897913E-24" />
-      <entry key="D1" value="5.580322168709943E-4" />
-      <entry key="W1" value="5.539740430771434" />
+      <entry key="M30" value="5.604247463753903E-196" />
+      <entry key="H1" value="4.097492414417453E-98" />
+      <entry key="H2" value="3.506441342241107E-49" />
+      <entry key="H4" value="1.0437957573919018E-24" />
+      <entry key="D1" value="5.520542724760687E-4" />
+      <entry key="W1" value="5.531223432487766" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9526738569496703" />
-      <entry key="MS500" value="1.1680502669212358" />
-      <entry key="S2" value="2.6303175821411706" />
-      <entry key="S5" value="4.782715810185096" />
-      <entry key="S10" value="6.620428974929319" />
-      <entry key="S30" value="8.627374942682414" />
-      <entry key="S60" value="9.276514296576117" />
-      <entry key="M2" value="9.650489533155554" />
-      <entry key="M5" value="10.909493862398264" />
-      <entry key="M10" value="13.777288898862256" />
-      <entry key="M15" value="15.87294915648098" />
-      <entry key="M30" value="19.081238175298356" />
-      <entry key="H1" value="21.278562173945957" />
-      <entry key="H2" value="22.574408022803393" />
-      <entry key="H4" value="23.7917216525075" />
-      <entry key="D1" value="93.45036607708721" />
-      <entry key="W1" value="490.7113851839563" />
+      <entry key="MS100" value="0.9201876506248751" />
+      <entry key="MS500" value="0.9835020740767098" />
+      <entry key="S2" value="1.003509221357171" />
+      <entry key="S5" value="1.5460158544681577" />
+      <entry key="S10" value="3.652133322955017" />
+      <entry key="S30" value="9.464872438325203" />
+      <entry key="S60" value="12.570114184526423" />
+      <entry key="M2" value="14.589022994843772" />
+      <entry key="M5" value="16.471104944181025" />
+      <entry key="M10" value="19.40237124402106" />
+      <entry key="M15" value="22.296197469664786" />
+      <entry key="M30" value="28.20336907813297" />
+      <entry key="H1" value="33.34383682380449" />
+      <entry key="H2" value="36.79347905058445" />
+      <entry key="H4" value="39.280861675289046" />
+      <entry key="D1" value="109.44560341839932" />
+      <entry key="W1" value="506.95642310058935" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -510,15 +479,7 @@
       <workItem from="1788482278225" duration="483000" />
       <workItem from="1788482825370" duration="1810000" />
       <workItem from="1788496857455" duration="2156000" />
-      <workItem from="1788531611816" duration="1542000" />
-    </task>
-    <task id="LOCAL-00165" summary="Improve the notes about the secret key and iv">
-      <option name="closed" value="true" />
-      <created>1783833716254</created>
-      <option name="number" value="00165" />
-      <option name="presentableId" value="LOCAL-00165" />
-      <option name="project" value="LOCAL" />
-      <updated>1783833716254</updated>
+      <workItem from="1788531611816" duration="2499000" />
     </task>
     <task id="LOCAL-00166" summary="Use the secret key/iv instead of hardcoded values">
       <option name="closed" value="true" />
@@ -904,7 +865,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788454470744</updated>
     </task>
-    <option name="localTasksCounter" value="214" />
+    <task id="LOCAL-00214" summary="Consolidate all batch files in the Batch directory">
+      <option name="closed" value="true" />
+      <created>1788533446604</created>
+      <option name="number" value="00214" />
+      <option name="presentableId" value="LOCAL-00214" />
+      <option name="project" value="LOCAL" />
+      <updated>1788533446604</updated>
+    </task>
+    <option name="localTasksCounter" value="215" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -971,7 +940,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Remove dead code that causes a fatal error in export contact reports" />
     <MESSAGE value="Require submit for changes to the active nls form." />
     <MESSAGE value="Style - line spacing" />
     <MESSAGE value="Early voting import for Mississippi" />
@@ -996,7 +964,8 @@
     <MESSAGE value="Added test for setup and configuration." />
     <MESSAGE value="Added test for new services for Montana and Mississippi." />
     <MESSAGE value="Added test for new services for remaining untested files." />
-    <option name="LAST_COMMIT_MESSAGE" value="Added test for new services for remaining untested files." />
+    <MESSAGE value="Consolidate all batch files in the Batch directory" />
+    <option name="LAST_COMMIT_MESSAGE" value="Consolidate all batch files in the Batch directory" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

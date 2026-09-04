@@ -375,7 +375,7 @@ nlpservices.export_nls_status_form:
 nlpservices.key_validate_form:
   path: '/nlpservices-key-validate-form'
   defaults:
-    _form: Drupal\nlpservices\Form\KeyValidateForm
+    _form: Drupal\nlpservices\Config\KeyValidateForm
     _title: 'Validate the API keys.'
   requirements:
     _permission: 'nlp administer'
