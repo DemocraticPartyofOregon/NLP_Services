@@ -19,7 +19,7 @@ use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpNls;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class VanidForm extends FormBase
+class ReassignMcidForm extends FormBase
 {
   protected DrupalUser $drupalUserObj;
   protected ApiNls $apiNlsObj;
@@ -31,11 +31,11 @@ class VanidForm extends FormBase
   protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
   protected NlpVoters $votersObj;
-  
+
   protected NlpNls $nlsObj;
   protected MagicWord $magicWordObj;
-  
-  
+
+
   public function __construct( $drupalUserObj, $apiNlsObj, $nlpEncryptObj, $awardsObj,
                                $coordinatorObj, $legFixesObj, $reportsObj, $turfsObj,
                                $votersObj, $nlsObj, $magicWordObj, $turfAssignmentsObj)
@@ -53,8 +53,8 @@ class VanidForm extends FormBase
     $this->magicWordObj = $magicWordObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
   }
-  
-  public static function create(ContainerInterface $container): VanidForm
+
+  public static function create(ContainerInterface $container): ReassignMcidForm
   {
     return new static(
       $container->get('nlpservices.drupal_user'),
@@ -76,87 +76,97 @@ class VanidForm extends FormBase
    */
   public function getFormId(): string
   {
-    return 'vanid_form';
+    return 'reassign_mcid_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $form['previousNote'] = [
-      '#markup' => t('<p>Duplicate records for an NL can be removed by merging them in VoteBuilder. The merge will retain one record as the primary and destroy the other. If the destroyed VANID is the one known to NLP Services, the remaining record appears to be a new NL. To transfer the known information about the NL, this function can be used to update the NLP database. The Previous VANID below must be non-existent, i.e., destroyed for this function to work correctly.</p><p>It is highly recommended that merging duplicate records be avoided during an election. If a merge must be done, then be sure to identify the VANID in use by NLP Services as the primary. If you do a merge and fail to correctly identify, then use this function.</p>'),
+      '#markup' => t('<p>Duplicate records in MyCampaign for an NL can be removed by merging them in
+VoteBuilder. The merge will retain one record as the primary and destroy the other. If the destroyed vanid
+in MyCampaign is the one known to NLP Services as the MCID, the remaining record appears to be a new NL. To
+transfer the known information about the NL, this function can be used to update the NLP database. The Previous
+vanid in MyCampaign must be non-existent, i.e., destroyed for this function to work correctly.</p>
+<p>It is highly recommended that merging duplicate records be avoided during an election. If a merge must be done,
+then be sure to identify the vanid in MyCampaign in use by NLP Services as the primary. If you do a merge and fail
+to correctly identify the primary, then use this function.</p>'),
     ];
-    
+
     $form['previousId'] = [
       '#type' => 'number',
-      '#title' => t('Previous VANID for the NL.'),
+      '#title' => t('Previous MCID (vanid in MyCampaign) for the NL.'),
       '#maxlength' => 12,
       '#required' => TRUE,
     ];
-    
+
     $form['newNote'] = [
-      '#markup' => t('<p>The new VANID must be a valid number for a volunteer in the VoteBuilder database.</p>'),
+      '#markup' => t('<p>The new MCID (vanid in MyCampaign) must be a valid number for a volunteer in the
+MyCampaign database.</p>'),
     ];
-    
+
     $form['newId'] = [
       '#type' => 'number',
-      '#title' => t('New VANID for the NL.'),
+      '#title' => t('New MCID for the NL.'),
       '#maxlength' => 12,
       '#required' => TRUE,
     ];
-    
-    
-    $form['repairVanid'] = [
+
+
+    $form['repairMcid'] = [
       '#type' => 'submit',
-      '#value' => t('Repair VANID.'),
-      '#name' => 'repair-vanid',];
-    
-    
+      '#value' => t('Repair MCID.'),
+      '#name' => 'repair-mcid',];
+
+
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
     $previousId = $form_state->getValue('previousId');
-    $newVanid = $form_state->getValue('newId');
+    $newId = $form_state->getValue('newId');
     $form_state->set('previousId',$previousId);
-    $form_state->set('newVanid',$newVanid);
-    
+    $form_state->set('newId',$newId);
+
     $previousIdLen = strlen($previousId);
     if( $previousIdLen != 9 ) {
-      $form_state->setErrorByName('previousId', t('A VANID is 9 digits but the previous ID entered only has @count.', ['@count' => $previousIdLen]));
+      $form_state->setErrorByName('previousId', t('A vanid is 9 digits but the previous ID entered
+      only has @count.', ['@count' => $previousIdLen]));
       return;
     }
-    
-    $newIdLen = strlen($newVanid);
+
+    $newIdLen = strlen($newId);
     if( $newIdLen != 9 ) {
-      $form_state->setErrorByName('newId', t('A VANID is 9 digits but the new ID entered only has @count.', ['@count' => $newIdLen]));
+      $form_state->setErrorByName('newId', t('A vanid is 9 digits but the new ID entered only has
+      @count.', ['@count' => $newIdLen]));
     } else {
-      $newNl = $this->apiNlsObj->getApiNls('',$newVanid);
+      $newNl = $this->apiNlsObj->getApiNls('',$newId);
       if(empty($newNl)) {
-        $form_state->setErrorByName('newId', t('The new VANID must exist in VoteBuilder.'));
+        $form_state->setErrorByName('newId', t('The new vanid must exist in the MyCampaign database.'));
       }
     }
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    
+
     $previousId = $form_state->get('previousId');
-    $newId = $form_state->get('newVanid');
-    
+    $newId = $form_state->get('newId');
+
     // Fix the login record so the NL can see their turf.
     $userPrevious = $this->drupalUserObj->getUserByMcid($previousId);
     if(!empty($userPrevious)) {
       $userNew = $this->drupalUserObj->getUserByMcid($newId);
-      
+
       if(!empty($userNew)) {
         $this->magicWordObj->deleteMagicWord($previousId);
         $this->drupalUserObj->deleteUser($userPrevious['uid']);
@@ -174,7 +184,7 @@ class VanidForm extends FormBase
     } else {
       $this->magicWordObj->deleteMagicWord($previousId);
     }
-    
+
     // Transfer awards from old ID to new.
     $awardsPrevious = $this->awardsObj->getAward($previousId);
     if(!empty($awardsPrevious)) {
@@ -182,7 +192,7 @@ class VanidForm extends FormBase
       $awardsPrevious['mcid'] = $newId;
       $this->awardsObj->mergeAward($awardsPrevious);
     }
-    
+
     // Transfer the coordinator assignment.
     $coordinatorAssignments = $this->coordinatorObj->getCoordinatorById($previousId);
     if(!empty($coordinatorAssignments)) {
@@ -194,7 +204,7 @@ class VanidForm extends FormBase
         $this->coordinatorObj->createCoordinator($coordinatorAssignment);
       }
     }
-    
+
     // Change the legislative fix for this NL.
     $legFix = $this->legFixesObj->getLegFix($previousId);
     if(!empty($legFix)) {
@@ -202,7 +212,7 @@ class VanidForm extends FormBase
       $legFix['mcid'] = $newId;
       $this->legFixesObj->createLegFix($legFix);
     }
-    
+
     // Change the reports by this NL to the new ID.
     $reports = $this->reportsObj->getReportsById($previousId);
     if(!empty($reports)) {
@@ -214,7 +224,7 @@ class VanidForm extends FormBase
         $this->reportsObj->mergeReport($reportReq);
       }
     }
-    
+
     // Reassign existing turfs associated with an old ID with the new ID.
     $turfs = $this->turfsObj->getTurfsById($previousId);
     if(!empty($turfs)) {
@@ -222,7 +232,7 @@ class VanidForm extends FormBase
         $this->turfsObj->updateTurf($turf['turfIndex'],'mcid',$newId);
       }
     }
-    
+
     // Fix the turf assignments.
     $turfAssignments = $this->turfAssignmentsObj->getTurfAssignmentsById($previousId);
     if(!empty($turfAssignments)) {
@@ -230,7 +240,7 @@ class VanidForm extends FormBase
         $this->turfsObj->updateTurf($turfAssignment['turfId'],'mcid',$newId);
       }
     }
-    
+
     // Convert NL record to the new ID.
     $newNlRecord = $this->nlsObj->getNlById($newId);
     if(!empty($newNlRecord)) {
@@ -251,7 +261,7 @@ class VanidForm extends FormBase
           $this->nlsObj->deleteNlsStatus($previousId);
         }
       }
-      
+
     } else {
       $previousNlRecord = $this->nlsObj->getNlById($previousId);
       if(!empty($previousNlRecord)) {
@@ -267,8 +277,8 @@ class VanidForm extends FormBase
         $this->nlsObj->setNlsStatus($previousStatus);
         $this->nlsObj->deleteNlsStatus($previousId);
       }
-      
+
     }
-    
+
   }
 }

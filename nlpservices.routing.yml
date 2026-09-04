@@ -120,10 +120,10 @@ nlpservices.database_schema_form:
 
 # Manage
 
-nlpservices.vanid_form:
-  path: '/nlpservices-vanid-form'
+nlpservices.reassign_mcid_form:
+  path: '/nlpservices-reassign-mcid-form'
   defaults:
-    _form: Drupal\nlpservices\Form\VanidForm
+    _form: Drupal\nlpservices\Form\ReassignMcidForm
     _title: "Repair the database for a change in an Nl's VANID."
   requirements:
     _permission: 'nlp tools access'
@@ -500,16 +500,6 @@ nlpservices.export_user_accounts_file:
   requirements:
     _permission: 'nlp tools access'
 
-nlpservices.export_status:
-  path: '/nlp-export-status'
-  defaults:
-    _controller: Drupal\nlpservices\Controller\BasicTestController::exportStatus
-    _title: 'Export Status'
-  requirements:
-    _permission: 'nlp tools access'
-  options:
-    no_cache: TRUE
-
 nlpservices.export_report:
   path: '/nlp-export-report'
   defaults:
@@ -665,16 +655,6 @@ nlpservices.enable_debug_form:
     _title: 'Enable debug form.'
   requirements:
     _permission: 'nlp administer'
-
-nlpservices.basic_test:
-  path: '/nlp-basic-test'
-  defaults:
-    _controller: Drupal\nlpservices\Controller\BasicTestController::exportStatus
-    _title: 'Export an NLP status'
-  requirements:
-    _permission: 'nlp tools access'
-  options:
-    no_cache: TRUE
 
 nlpservices.admin_menu_section:
   path: '/admin/config/nlp_menu'

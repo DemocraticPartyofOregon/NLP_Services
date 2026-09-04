@@ -7,22 +7,15 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the key validation to the src/Config directory">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the Config tests to a new test directory">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/phpunit.xml" beforeDir="false" afterPath="$PROJECT_DIR$/phpunit.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportStateEarlyVotingForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ActivistCodeConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ActivistCodeConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ApiConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ApiConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DocumentConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/DocumentConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ElectionConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ElectionConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/EmailConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/EmailConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/EnableCronTasksFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/EnableCronTasksFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportReportsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportReportsFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/KeyValidateFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/KeyValidateFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/NlpResetFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/NlpResetFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ResponseCodeConfigurationFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/ResponseCodeConfigurationFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SurveyQuestionFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/SurveyQuestionFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/VoteBuilderUpdateDateTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Config/VoteBuilderUpdateDateTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.routing.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.routing.yml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/BasicTestController.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AcValidateBatch.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AcValidateForm.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/VanidForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ReassignMcidForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Templates/manageNls.html.twig" beforeDir="false" afterPath="$PROJECT_DIR$/src/Templates/manageNls.html.twig" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/VanidFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ReassignMcidFormTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -117,23 +110,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000021310561666" />
-      <entry key="MS500" value="1.0758933212461732" />
-      <entry key="S2" value="2.0493168130732666" />
-      <entry key="S5" value="4.411792392154368" />
-      <entry key="S10" value="6.870367129107949" />
-      <entry key="S30" value="9.838859135240899" />
-      <entry key="S60" value="10.850033978298638" />
-      <entry key="M2" value="11.539770384636885" />
-      <entry key="M5" value="14.282122006248203" />
-      <entry key="M10" value="19.47414848650439" />
-      <entry key="M15" value="23.850924860375766" />
-      <entry key="M30" value="32.5918231355221" />
-      <entry key="H1" value="40.499230771580116" />
-      <entry key="H2" value="46.01772821415533" />
-      <entry key="H4" value="49.77068039217118" />
-      <entry key="D1" value="120.73381968704639" />
-      <entry key="W1" value="512.9589996659754" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0000000000012288" />
+      <entry key="S2" value="1.0010528386029656" />
+      <entry key="S5" value="1.0644513232233124" />
+      <entry key="S10" value="1.2627838297285128" />
+      <entry key="S30" value="1.9612800300296351" />
+      <entry key="S60" value="2.6052042901186714" />
+      <entry key="M2" value="3.164251978492553" />
+      <entry key="M5" value="3.8049556654360495" />
+      <entry key="M10" value="6.439900121443575" />
+      <entry key="M15" value="10.361432221155129" />
+      <entry key="M30" value="20.01252955261882" />
+      <entry key="H1" value="29.775352128578046" />
+      <entry key="H2" value="41.12008338428848" />
+      <entry key="H4" value="57.776589370741476" />
+      <entry key="D1" value="149.34006790894173" />
+      <entry key="W1" value="550.6535350407542" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -147,31 +140,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="4.099774474580882E-196" />
-      <entry key="H1" value="3.504608337848519E-98" />
-      <entry key="H2" value="3.2428528627777965E-49" />
-      <entry key="H4" value="1.0037969232685115E-24" />
-      <entry key="D1" value="5.484707827409302E-4" />
-      <entry key="W1" value="5.526079930419938" />
+      <entry key="M30" value="3.8109973278868185E-200" />
+      <entry key="H1" value="3.3789271496829796E-100" />
+      <entry key="H2" value="3.1841748900936335E-50" />
+      <entry key="H4" value="3.1454348541011065E-25" />
+      <entry key="D1" value="4.520217197428999E-4" />
+      <entry key="W1" value="5.37548917654364" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9460597195079158" />
-      <entry key="MS500" value="1.0644178119299823" />
-      <entry key="S2" value="2.043987673826487" />
-      <entry key="S5" value="4.406927820105403" />
-      <entry key="S10" value="6.866530690738783" />
-      <entry key="S30" value="9.837021680754352" />
-      <entry key="S60" value="10.849020624961472" />
-      <entry key="M2" value="11.539228192087801" />
-      <entry key="M5" value="14.281823639351918" />
-      <entry key="M10" value="19.47381294283479" />
-      <entry key="M15" value="23.8504670935259" />
-      <entry key="M30" value="32.59121446724241" />
-      <entry key="H1" value="40.49870089616891" />
-      <entry key="H2" value="46.01737491445283" />
-      <entry key="H4" value="49.77047534166429" />
-      <entry key="D1" value="120.73431726099635" />
-      <entry key="W1" value="518.4848807462909" />
+      <entry key="MS100" value="0.8293195458144417" />
+      <entry key="MS500" value="0.9632618940212879" />
+      <entry key="S2" value="0.9917194760910043" />
+      <entry key="S5" value="1.0602348226174294" />
+      <entry key="S10" value="1.2599499206385816" />
+      <entry key="S30" value="1.9596606399820724" />
+      <entry key="S60" value="2.604138041463456" />
+      <entry key="M2" value="3.1636134863904846" />
+      <entry key="M5" value="3.8045938129448964" />
+      <entry key="M10" value="6.439186231128499" />
+      <entry key="M15" value="10.360390009230574" />
+      <entry key="M30" value="20.011296911208373" />
+      <entry key="H1" value="29.7743836939645" />
+      <entry key="H2" value="41.119442998391314" />
+      <entry key="H4" value="57.77618340535943" />
+      <entry key="D1" value="149.34041438243497" />
+      <entry key="W1" value="556.0288215112053" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -492,15 +485,7 @@
       <workItem from="1788482825370" duration="1810000" />
       <workItem from="1788496857455" duration="2156000" />
       <workItem from="1788531611816" duration="3193000" />
-      <workItem from="1788538162987" duration="952000" />
-    </task>
-    <task id="LOCAL-00168" summary="Minor code review changes">
-      <option name="closed" value="true" />
-      <created>1783888190745</created>
-      <option name="number" value="00168" />
-      <option name="presentableId" value="LOCAL-00168" />
-      <option name="project" value="LOCAL" />
-      <updated>1783888190745</updated>
+      <workItem from="1788538162987" duration="6778000" />
     </task>
     <task id="LOCAL-00169" summary="Make the welcome page dynamic with election dates">
       <option name="closed" value="true" />
@@ -886,7 +871,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788538294439</updated>
     </task>
-    <option name="localTasksCounter" value="217" />
+    <task id="LOCAL-00217" summary="Move the Config tests to a new test directory">
+      <option name="closed" value="true" />
+      <created>1788539272349</created>
+      <option name="number" value="00217" />
+      <option name="presentableId" value="LOCAL-00217" />
+      <option name="project" value="LOCAL" />
+      <updated>1788539272350</updated>
+    </task>
+    <option name="localTasksCounter" value="218" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -953,7 +946,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Style - line spacing" />
     <MESSAGE value="Early voting import for Mississippi" />
     <MESSAGE value="Add needs ride to polls and wants lawn sign for Mississippi" />
     <MESSAGE value="Add safeguards for cron already running" />
@@ -978,7 +970,8 @@
     <MESSAGE value="Added test for new services for remaining untested files." />
     <MESSAGE value="Consolidate all batch files in the Batch directory" />
     <MESSAGE value="Move the key validation to the src/Config directory" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move the key validation to the src/Config directory" />
+    <MESSAGE value="Move the Config tests to a new test directory" />
+    <option name="LAST_COMMIT_MESSAGE" value="Move the Config tests to a new test directory" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

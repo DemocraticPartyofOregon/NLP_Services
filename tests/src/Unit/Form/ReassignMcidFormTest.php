@@ -9,7 +9,7 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\nlpservices\ApiNls;
 use Drupal\nlpservices\DrupalUser;
-use Drupal\nlpservices\Form\VanidForm;
+use Drupal\nlpservices\Form\ReassignMcidForm;
 use Drupal\nlpservices\MagicWord;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\NlpCoordinators;
@@ -25,13 +25,13 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
 
-#[CoversClass(\Drupal\nlpservices\Form\VanidForm::class)]
-#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'getFormId')]
-#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'buildForm')]
-#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'validateForm')]
-#[CoversMethod(\Drupal\nlpservices\Form\VanidForm::class, 'submitForm')]
+#[CoversClass(\Drupal\nlpservices\Form\ReassignMcidForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\ReassignMcidForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\ReassignMcidForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ReassignMcidForm::class, 'validateForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ReassignMcidForm::class, 'submitForm')]
 #[Group('nlpservices')]
-class VanidFormTest extends UnitTestCase {
+class ReassignMcidFormTest extends UnitTestCase {
 
   private const PREV_ID = 111111111;
   private const NEW_ID  = 222222222;
@@ -79,8 +79,8 @@ class VanidFormTest extends UnitTestCase {
   // Helpers
   // -------------------------------------------------------------------------
 
-  private function buildFormInstance(): VanidForm {
-    $form = new VanidForm(
+  private function buildFormInstance(): ReassignMcidForm {
+    $form = new ReassignMcidForm(
       $this->drupalUserMock,
       $this->apiNlsMock,
       $this->nlpEncryptMock,
@@ -110,7 +110,7 @@ class VanidFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testGetFormIdReturnsExpectedString(): void {
-    $this->assertSame('vanid_form', $this->buildFormInstance()->getFormId());
+    $this->assertSame('reassign_mcid_form', $this->buildFormInstance()->getFormId());
   }
 
   // -------------------------------------------------------------------------
@@ -240,7 +240,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — user login record
+  // submitForm ? user login record
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoPreviousUserDeletesMagicWordOnly(): void {
@@ -319,7 +319,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — awards
+  // submitForm ? awards
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoAwardsSkipsAwardTransfer(): void {
@@ -344,7 +344,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — coordinator assignments
+  // submitForm ? coordinator assignments
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoCoordinatorAssignmentsSkipsTransfer(): void {
@@ -372,7 +372,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — legislative fixes
+  // submitForm ? legislative fixes
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoLegFixSkipsTransfer(): void {
@@ -397,7 +397,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — reports
+  // submitForm ? reports
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoReportsSkipsTransfer(): void {
@@ -419,7 +419,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — turfs
+  // submitForm ? turfs
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoTurfsSkipsUpdate(): void {
@@ -444,7 +444,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — turf assignments
+  // submitForm ? turf assignments
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNoTurfAssignmentsSkipsUpdate(): void {
@@ -470,7 +470,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — NL records: new NL exists in VoteBuilder
+  // submitForm ? NL records: new NL exists in VoteBuilder
   // -------------------------------------------------------------------------
 
   public function testSubmitFormNewNlExistsWithCountyDeletesPreviousNl(): void {
@@ -537,7 +537,7 @@ class VanidFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — NL records: new NL not in VoteBuilder, previous NL exists
+  // submitForm ? NL records: new NL not in VoteBuilder, previous NL exists
   // -------------------------------------------------------------------------
 
   public function testSubmitFormPreviousNlOnlyCreatesNlWithNewId(): void {
