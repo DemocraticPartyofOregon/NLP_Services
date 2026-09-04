@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\nlpservices\Unit\Service {
+namespace Drupal\Tests\nlpservices\Unit\Batch {
 
   use Drupal;
   use Drupal\Core\Messenger\MessengerInterface;

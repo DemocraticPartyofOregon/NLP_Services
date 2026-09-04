@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit\Service;
+namespace Drupal\Tests\nlpservices\Unit\Batch;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
