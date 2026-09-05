@@ -34,8 +34,9 @@ class NlpTurfListDisplayVoteBuilder
       $row = [];
       $row['cb'] = ['type' => 'cb', 'turfId' => $turfId, 'mcid' => $turf['mcid']];
       $row['turfAssigned'] = $turf['turfAssigned'];
-      $row['nlName'] = $turf['nl'];
       $row['turfName'] = $turf['turfName'];
+      $row['nlName'] = $turf['nl'];
+      $row['mcid'] = $turf['mcid'];
       $row['mapRegionName'] = (!empty($turf['mapRegionName'])) ? $turf['mapRegionName'] : ' ';
       $row['doorCount'] = $turf['doorCount'];
       $row['voterCount'] = $turf['voterCount'];
@@ -43,7 +44,6 @@ class NlpTurfListDisplayVoteBuilder
       $row['minivanCreateDate'] = (!empty($turf['minivanCreateDate'])) ?
         date('Y-m-d', strtotime($turf['minivanCreateDate'])) : '';
       $row['turfId'] = $turf['turfId'];
-      $row['mcid'] = $turf['mcid'];
       $rows[] = $row;
     }
 
@@ -88,8 +88,9 @@ and cannot be assigned to this turf.<br>
     $this->header = [
       ['data' => t('cb'), 'class' => ['nlp-th-color']],
       ['data' => t('A'), 'field' => 'turfAssigned', 'class' => ['nlp-th-color']],
-      ['data' => t('Name'), 'field' => 'nl', 'class' => ['nlp-th-color']],
       ['data' => t('Turf Name'), 'field' => 'turfName', 'class' => ['nlp-th-color']],
+      ['data' => t('Previous NL'), 'field' => 'nl', 'class' => ['nlp-th-color']],
+      ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']],
     ];
     $this->header[] = ['data' => t('Map Region Name'), 'field' => 'mapRegionName', 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Doors'), 'class' => ['nlp-th-color']];
@@ -97,7 +98,6 @@ and cannot be assigned to this turf.<br>
     $this->header[] = ['data' => t('Minivan Number'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Created'), 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('Turf ID'), 'field' => 'turfId', 'class' => ['nlp-th-color']];
-    $this->header[] = ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color']];
   }
 
   /**

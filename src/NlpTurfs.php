@@ -992,8 +992,8 @@ class NlpTurfs
           $footnote = (!empty($nls)) ? '*' : '**';
           $footnote = '<span class="nlp-footnote-warning">' . $footnote . '</span>';
           $turfInUse = [
-            'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'],
-            'mcid' => $previousTurfAssignment['mcid'] . $footnote,
+            'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'] . $footnote,
+            'mcid' => $previousTurfAssignment['mcid'],
             'hintPrevious' => $previousTurfAssignment['mcid'],
             'turfAssigned' => '',
           ];

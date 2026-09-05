@@ -7,24 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Move the test for the batch files to their own directory">
-      <change beforePath="$PROJECT_DIR$/.idea/php.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/php.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove dead code and fix typos">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AddDrupalAccountForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DeleteDrupalAccountsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfDeliveryMessageForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpEarlyVoting.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpEarlyVoting.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMatchbacks.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMatchbacks.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfStatus.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfStatus.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfListDisplayVoteBuilder.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfs.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfs.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -119,23 +105,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.00000000000932" />
-      <entry key="M30" value="1.0000203120443858" />
-      <entry key="H1" value="1.0378192777612876" />
-      <entry key="H2" value="2.8246897530778057" />
-      <entry key="H4" value="15.347352830391433" />
-      <entry key="D1" value="136.305162590369" />
-      <entry key="W1" value="561.7728020846155" />
+      <entry key="MS100" value="1.0000003124367072" />
+      <entry key="MS500" value="1.0610732995116292" />
+      <entry key="S2" value="2.4657778540849495" />
+      <entry key="S5" value="4.588518103761469" />
+      <entry key="S10" value="5.975815787956158" />
+      <entry key="S30" value="7.23722406300077" />
+      <entry key="S60" value="7.606297376654049" />
+      <entry key="M2" value="7.800000723205855" />
+      <entry key="M5" value="7.9364372631362405" />
+      <entry key="M10" value="8.090741450725133" />
+      <entry key="M15" value="8.231243226667587" />
+      <entry key="M30" value="8.494695338883597" />
+      <entry key="H1" value="8.733086385827516" />
+      <entry key="H2" value="10.381591160416605" />
+      <entry key="H4" value="22.10061880183673" />
+      <entry key="D1" value="142.39636938716623" />
+      <entry key="W1" value="568.6422736811235" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -149,31 +135,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="9.68342172826697E-207" />
-      <entry key="H1" value="1.7032324767370898E-103" />
-      <entry key="H2" value="7.148986283480625E-52" />
-      <entry key="H4" value="4.7130762945385507E-26" />
-      <entry key="D1" value="3.2943009067583617E-4" />
-      <entry key="W1" value="5.137951334373913" />
+      <entry key="M30" value="4.921344406687223E-207" />
+      <entry key="H1" value="1.2142311937808363E-103" />
+      <entry key="H2" value="6.0361245424874185E-52" />
+      <entry key="H4" value="4.330732251174777E-26" />
+      <entry key="D1" value="3.248174928117231E-4" />
+      <entry key="W1" value="5.127611936227149" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.0068484821977815215" />
-      <entry key="MS500" value="0.36907860142070825" />
-      <entry key="S2" value="0.7794346643256944" />
-      <entry key="S5" value="0.9051319321151962" />
-      <entry key="S10" value="0.9513842189752761" />
-      <entry key="S30" value="0.9835247980117546" />
-      <entry key="S60" value="0.9917281875654007" />
-      <entry key="M2" value="0.9958555053648098" />
-      <entry key="M5" value="0.9983401363572042" />
-      <entry key="M10" value="0.9991697234990681" />
-      <entry key="M15" value="0.9994464057182909" />
-      <entry key="M30" value="0.9997434720782421" />
-      <entry key="H1" value="1.037678454717279" />
-      <entry key="H2" value="2.8245769755716643" />
-      <entry key="H4" value="15.347176296660441" />
-      <entry key="D1" value="136.30535273035343" />
-      <entry key="W1" value="566.9105485078212" />
+      <entry key="MS100" value="0.8950253685671468" />
+      <entry key="MS500" value="1.0385471646102737" />
+      <entry key="S2" value="2.4557821753743765" />
+      <entry key="S5" value="4.581415235370164" />
+      <entry key="S10" value="5.97119033225462" />
+      <entry key="S30" value="7.235348905001405" />
+      <entry key="S60" value="7.60531048874573" />
+      <entry key="M2" value="7.799494137817956" />
+      <entry key="M5" value="7.936202888814473" />
+      <entry key="M10" value="8.09052903336817" />
+      <entry key="M15" value="8.231031165815013" />
+      <entry key="M30" value="8.494520045580522" />
+      <entry key="H1" value="8.732968679848351" />
+      <entry key="H2" value="10.381487278110788" />
+      <entry key="H4" value="22.10045225802401" />
+      <entry key="D1" value="142.3965561428562" />
+      <entry key="W1" value="573.7696810153906" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -497,15 +483,7 @@
       <workItem from="1788538162987" duration="7550000" />
       <workItem from="1788581652935" duration="137000" />
       <workItem from="1788581877309" duration="4697000" />
-      <workItem from="1788587194653" duration="2441000" />
-    </task>
-    <task id="LOCAL-00172" summary="Fix migration of WelcomeController for D11 migrations.">
-      <option name="closed" value="true" />
-      <created>1784434666390</created>
-      <option name="number" value="00172" />
-      <option name="presentableId" value="LOCAL-00172" />
-      <option name="project" value="LOCAL" />
-      <updated>1784434666390</updated>
+      <workItem from="1788587194653" duration="4574000" />
     </task>
     <task id="LOCAL-00173" summary="Remove dead code">
       <option name="closed" value="true" />
@@ -891,7 +869,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788564508714</updated>
     </task>
-    <option name="localTasksCounter" value="221" />
+    <task id="LOCAL-00221" summary="Remove dead code and fix typos">
+      <option name="closed" value="true" />
+      <created>1788624635243</created>
+      <option name="number" value="00221" />
+      <option name="presentableId" value="LOCAL-00221" />
+      <option name="project" value="LOCAL" />
+      <updated>1788624635243</updated>
+    </task>
+    <option name="localTasksCounter" value="222" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -958,7 +944,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the search for an NL in ActiveNlsDisplayForm" />
     <MESSAGE value="Code Review" />
     <MESSAGE value="Inhibit form change popup if the only change it the HD select." />
     <MESSAGE value="Update version number" />
@@ -983,7 +968,8 @@
     <MESSAGE value="Remove dead files" />
     <MESSAGE value="Rename file that reassigns MCID and fix termonology" />
     <MESSAGE value="Move the test for the batch files to their own directory" />
-    <option name="LAST_COMMIT_MESSAGE" value="Move the test for the batch files to their own directory" />
+    <MESSAGE value="Remove dead code and fix typos" />
+    <option name="LAST_COMMIT_MESSAGE" value="Remove dead code and fix typos" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
