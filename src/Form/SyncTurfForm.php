@@ -478,7 +478,7 @@ class SyncTurfForm extends FormBase {
       $mcid = $form_state->get('mcid');
       $county = $form_state->get('county');
 
-      // PHP deletes uploaded temp files at end of request. Move the walksheet
+      // PHP deletes uploaded temp files at the end of the request. Move the walksheet
       // to persistent storage now so the batch (a later request) can access it.
       $walksheetInfo = $form_state->get('walksheetInfo');
       if (!empty($walksheetInfo['tempName'])) {

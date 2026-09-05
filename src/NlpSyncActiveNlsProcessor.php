@@ -571,7 +571,7 @@ class NlpSyncActiveNlsProcessor {
   /**
    * createNewCredentials
    *
-   * Generates a new set of user credentials based on provided user and record data,
+   * Generates a new set of user credentials based on provided user and record data
    * and associates them with a magic word if applicable.
    *
    * @param array $nlRecord

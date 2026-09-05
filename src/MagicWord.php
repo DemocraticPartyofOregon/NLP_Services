@@ -185,7 +185,7 @@ class MagicWord {
    *
    * Get NL credentials from the database.
    * 1. If the NL has a password, decrypt it.
-   * 2. If the NL has no password, return an empty string.''
+   * 2. If the NL has no password, return an empty string.
    * @param int $mcid
    * @param bool $decrypted
    * @return array
@@ -204,7 +204,7 @@ class MagicWord {
       return [];
     }
     $credentials = $result->fetchAssoc();
-    if(empty($credentials)) {return [];}
+    if(!is_array($credentials)) {return [];}
     if($decrypted) {
       $credentials['magicWord'] = !empty($credentials['magicWordEncrypted'])
         ? $this->nlpEncryptObj->encrypt_decrypt('decrypt', $credentials['magicWordEncrypted'])
@@ -238,9 +238,9 @@ class MagicWord {
       return [];
     }
     $credentials = $result->fetchAssoc();
-    if(empty($credentials)) {return [];}
+    if(!is_array($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
     return $credentials;
   }
 
@@ -268,9 +268,9 @@ class MagicWord {
       return [];
     }
     $credentials = $result->fetchAssoc();
-    if(empty($credentials)) {return [];}
+    if(!is_array($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
     return $credentials;
   }
 
@@ -298,9 +298,9 @@ class MagicWord {
       return [];
     }
     $credentials = $result->fetchAssoc();
-    if (empty($credentials)) {return [];}
+    if (!is_array($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
     return $credentials;
   }
 

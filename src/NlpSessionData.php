@@ -162,7 +162,7 @@ class NlpSessionData
 
   /**
    * Returns the index of the selected house district saved in the session.
-   * If a hd_index query parameter is present in the current request it is
+   * If a hd_index query parameter is present in the current request, it is
    * saved to session first, so URL-driven HD selection takes effect immediately.
    *
    * @return int
@@ -190,7 +190,7 @@ class NlpSessionData
 
   /**
    * Returns the index of the selected precinct saved in the session.
-   * If a pct_index query parameter is present in the current request it is
+   * If a pct_index query parameter is present in the current request, it is
    * saved to session first, so URL-driven precinct selection takes effect immediately.
    *
    * @return int

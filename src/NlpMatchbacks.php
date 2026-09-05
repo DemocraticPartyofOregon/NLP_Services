@@ -18,24 +18,24 @@ class NlpMatchbacks
   private array $records = [];
   private int $sqlCnt = 0;
   private int $batchCnt = 0;
-  
+
   private array $fields = ['vanid','date'];
-  
+
   private array $matchbackVanHdr = [
     'vanid' => ['name'=>'VoterFileVANID','err'=>'Voter File VANID missing.'],
     'ballotReceived' => ['name'=>'BallotReceived','err'=>'BallotReceived missing.'],
     'earlyVoted' => ['name'=>'EarlyVoted','err'=>'BallotReceived missing'],
   ];
-  
+
   protected Connection $connection;
   protected NlpImap $imapObj;
-  
-  
+
+
   public function __construct( $connection, $imapObj ) {
     $this->connection = $connection;
     $this->imapObj = $imapObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpMatchbacks
   {
     return new static(
@@ -43,7 +43,7 @@ class NlpMatchbacks
       $container->get('nlpservices.imap'),
     );
   }
-  
+
   /**
    * decodeMatchbackHdr
    *
@@ -126,7 +126,7 @@ class NlpMatchbacks
     }
     return $batchSubmit;
   }
-  
+
   /**
    * flushMatchbacks
    *
@@ -154,7 +154,7 @@ class NlpMatchbacks
     $this->records = [];
     return TRUE;
   }
-  
+
   /**
    * matchbackExists
    *
@@ -178,7 +178,7 @@ class NlpMatchbacks
     $exists = $result->fetchAssoc();
     return !empty($exists);
   }
-  
+
   /**
    * getMatchbackDate
    *
@@ -224,7 +224,7 @@ class NlpMatchbacks
       nlp_debug_msg('setLatestMatchbackDate',$e->getMessage());
     }
   }
-  
+
   /**
    * getLatestMatchbackDate
    *
@@ -249,7 +249,7 @@ class NlpMatchbacks
     if(!$lastDate) {return '';}
     return $lastDate['date'];
   }
-  
+
   /**
    * matchbackTransaction
    *
@@ -261,13 +261,13 @@ class NlpMatchbacks
   {
     return  $this->connection->startTransaction();
   }
-  
+
   /**
    * matchbackEmailFetch
    *
    * Check the email inbox for a new matchback email, download the attachment,
    * save it to a temp file, and return the file path.  All CSV parsing is
-   * deferred to the queue worker so hook_cron returns quickly.
+   * deferred to the queue worker, so hook_cron returns quickly.
    *
    * @return string  Path to temp file, or '' if no email was found.
    */
@@ -427,5 +427,5 @@ class NlpMatchbacks
     }
     return $fieldPos;
   }
-  
+
 }

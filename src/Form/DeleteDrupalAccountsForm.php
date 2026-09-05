@@ -22,7 +22,7 @@ class DeleteDrupalAccountsForm extends FormBase
   protected NlpSearchBar $searchBarObj;
   protected PrivateTempStoreFactory $privateTempstoreObj;
   protected NlpSessionData $sessionDataObj;
-  
+
   public function __construct($drupalUser, $userDisplayObj, $searchBarObj, $privateTempstoreObj,
                               $sessionDataObj)
   {
@@ -32,7 +32,7 @@ class DeleteDrupalAccountsForm extends FormBase
     $this->privateTempstoreObj = $privateTempstoreObj;
     $this->sessionDataObj = $sessionDataObj;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -46,7 +46,7 @@ class DeleteDrupalAccountsForm extends FormBase
       $container->get('nlpservices.session_data')
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -54,16 +54,16 @@ class DeleteDrupalAccountsForm extends FormBase
   {
     return 'nlpservices_delete_drupal_user_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    
+
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
-      
+
       $county = $this->sessionDataObj->getCounty();
       $form_state->set('county',$county);
 
@@ -71,10 +71,10 @@ class DeleteDrupalAccountsForm extends FormBase
       if(!$this->drupalUser->isNlpAdminUser()) {
         $form_state->set('county_selected',$county);
       }
-      
+
       $users = $this->drupalUser->getUsers($county);
       $userCount = count($users);
-      
+
       $hdOptions = $this->hdsWithUsers($users);
       if($userCount<$this->drupalUser::USER_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
@@ -82,7 +82,7 @@ class DeleteDrupalAccountsForm extends FormBase
       $this->sessionDataObj->setNewDistricts($hdOptions);
       $form_state->set('hdOptions',$hdOptions);
     }
-    
+
     $page = $form_state->get('page');
     $county = $form_state->get('county');
     if(empty($county)) {
@@ -91,7 +91,7 @@ class DeleteDrupalAccountsForm extends FormBase
       return [];
     }
     if ($page == 'displayUsers') {
-      
+
       // A search needle was entered, display all possible matches.
       $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
@@ -105,8 +105,8 @@ class DeleteDrupalAccountsForm extends FormBase
           $users = $this->justUsersInHd($users, $currentHd);
         }
       }
-      
-      // One of the colummns was clicked to sort the table.
+
+      // One of the columns was clicked to sort the table.
       $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
       if(!empty($sort)) {
         $order = $_GET['order'];
@@ -118,13 +118,13 @@ class DeleteDrupalAccountsForm extends FormBase
           $users[$unsortedUser['uid']] = $unsortedUser;
         }
       }
-      
+
       $form_state->set('users',$users);
-      
+
       $hdOptions = $form_state->get('hdOptions');
       $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
       $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
-      
+
       // Create the AJAX wrapper for updating the form changes.
       $form['user-form'] = [
         '#prefix' => '<div id="selectbox-div">',
@@ -135,7 +135,7 @@ class DeleteDrupalAccountsForm extends FormBase
         ],
       ];
       $form['user-form']['user-table'] = $this->userDisplayObj->displayUsers($users);
-      
+
       $form['submit'] = [
         '#type' => 'submit',
         '#name' => 'delete-submit',
@@ -150,7 +150,7 @@ class DeleteDrupalAccountsForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -158,17 +158,17 @@ class DeleteDrupalAccountsForm extends FormBase
   {
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    
+
     switch ($elementClicked) {
-      
+
       case 'search_submit':
         return;
-        
+
       case 'hd-select':
         $currentHdIndex = $form_state->getValue('hd-select');
         $this->sessionDataObj->saveHdIndex($currentHdIndex);
         return;
-      
+
       case 'delete-submit':
         $userSelections = $this->userDisplayObj->validateUserSelection($form_state->getValue('contacts'));
         $form_state->set('userSelections', $userSelections);
@@ -178,7 +178,7 @@ class DeleteDrupalAccountsForm extends FormBase
         break;
     }
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -187,23 +187,23 @@ class DeleteDrupalAccountsForm extends FormBase
     $messenger = Drupal::messenger();
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();  // form_state will persist.
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
-      
+
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         break;
-     
+
       case 'delete-submit':
         $userSelections = $form_state->get('userSelections');
         foreach($userSelections as $userSelection) {
           $uid = $userSelection['uid'];
           $users = $form_state->get('users');
           $user = $users[$uid];
-          
+
           $admin = (in_array('administrator',$user['roles']) OR in_array('nlp_admin',$user['roles']));
           if ($admin) {
             $messenger->addStatus(t("An admin can't be deleted this way."));
@@ -216,13 +216,13 @@ class DeleteDrupalAccountsForm extends FormBase
         }
         break;
       }
-      
+
    }
-   
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * hdsWithUsers
    *
-   * Create a list of HDs that have users in them, sorted in assending order.
+   * Create a list of HDs that have users in them, sorted in ascending order.
    *
    * @param array $users
    * @return array
@@ -239,7 +239,7 @@ class DeleteDrupalAccountsForm extends FormBase
     asort($hdOptions);
     return $hdOptions;
   }
-  
+
   /**
    * justUsersInHd
    *
@@ -261,7 +261,7 @@ class DeleteDrupalAccountsForm extends FormBase
     }
     return $hdUsers;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * selectboxCallback
    *
@@ -275,5 +275,5 @@ class DeleteDrupalAccountsForm extends FormBase
   {
     return $form['user-form'];
   }
-  
+
 }

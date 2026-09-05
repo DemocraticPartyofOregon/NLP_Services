@@ -161,7 +161,7 @@ class NlpNlsListDisplay
     // Build sort links manually instead of using #tablesort => TRUE.
     // TableSort::getQueryParameters appends all current request query params to
     // sort link URLs (via `+ request->query->all()`). When the form is rebuilt
-    // during an AJAX POST, any AJAX-identifying params in the request URL (e.g.
+    // during an AJAX POST, any AJAX-identifying params in the request URL (e.g.,
     // ajax_form=1) would be inherited by the sort links, causing the browser's
     // subsequent GET click to be treated as AJAX and returning a JSON error.
     // Manual links with only ?sort=…&order=… keep the URLs clean.
@@ -189,7 +189,8 @@ class NlpNlsListDisplay
 
     foreach ($rows as $row) {
       // Identify the row by the mcid embedded in its cell data rather than
-      // by its position in $rows -- sortNlsTable() re-indexes $rows with
+      // by its position in $rows.
+      // The sortNlsTable() re-indexes $rows with
       // sequential integer keys, so the array key can no longer be trusted
       // to be the mcid once the table has been sorted.
       $rowMcid = 0;

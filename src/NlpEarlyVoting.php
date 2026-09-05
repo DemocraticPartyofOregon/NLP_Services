@@ -41,7 +41,7 @@ class NlpEarlyVoting
    * Name format: "lastName, firstName [optional additional]"
    *
    * Output rows have keys: 'vanid', 'name', 'precinct', 'date'.
-   * - vanid is 0 and date is '' when the match is ambiguous (multiple voters).
+   * - $vanid is 0 and $date is '' when the match is ambiguous (multiple voters).
    * - Rows with no match are omitted.
    *
    * @param array $earlyVotingRows

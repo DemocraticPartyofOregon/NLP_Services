@@ -15,14 +15,14 @@ class NlpDataEntryVoterListDisplay
   protected NlpReports $reportsObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
-  
+
   public function __construct( $reportsObj, $nlpConfigurationObj, $nlpSessionDataObj)
   {
     $this->reportsObj = $reportsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpDataEntryVoterListDisplay
   {
     return new static(
@@ -31,7 +31,7 @@ class NlpDataEntryVoterListDisplay
       $container->get('nlpservices.session_data'),
     );
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildDataEntryVoterArray
    *
@@ -160,7 +160,7 @@ class NlpDataEntryVoterListDisplay
     $contactDate = $scriptQuestion = $response = NULL;
     $fn = $voter['nickname'];
     $dateFormatter = Drupal::service('date.formatter');
-    
+
     $timeZone = date_default_timezone_get();
     try {
       $timeZoneObj = new DateTimeZone($timeZone);
@@ -168,7 +168,7 @@ class NlpDataEntryVoterListDisplay
       nlp_debug_msg('Time zone error',$e->getMessage());
       return $voterArray;
     }
-    
+
     if(!empty($voter['status']['deceased'])) {
       $contactStatusType = 'deceased';
     } elseif(!empty($voter['status']['hostile'])) {
@@ -214,8 +214,8 @@ class NlpDataEntryVoterListDisplay
     );
     return $voterArray;
   }
-  
-  
+
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * formatTelephone
    *
@@ -232,7 +232,7 @@ class NlpDataEntryVoterListDisplay
     preg_match('/(\d{3})(\d{3})(\d{4})/', $cleaned, $matches);
     return "($matches[1]) $matches[2]-$matches[3]";
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildVoterDataEntryTable
    *
@@ -243,13 +243,13 @@ class NlpDataEntryVoterListDisplay
    */
   public function buildVoterDataEntryTable( array $voterArrays ):array
   {
-    
+
     $form['dataEntry'] = [
       '#type' => 'table',
       '#rows' => [],
       '#theme' => 'table',
     ];
-    
+
     foreach ($voterArrays as $voterArray) {
       $vanid = $voterArray['vanid'];
       $commentMax = $this->reportsObj::MAX_COMMENT;
@@ -259,7 +259,7 @@ class NlpDataEntryVoterListDisplay
         '#markup' => "$name",
         '#wrapper_attributes' => ['colspan' => 5, 'class' => ['det-background',],]
       ];
-      
+
       $form['dataEntry']['row_2_' . $vanid] = [
         '#wrapper_attributes' => ['class' => ['det-background',],]
       ];
@@ -315,15 +315,15 @@ class NlpDataEntryVoterListDisplay
       $form['dataEntry']['row_2_' . $vanid]['col_2_3']['line_2_3_4'] = [
         '#type' => 'markup',
         '#markup' => '<div class="response-title-note line-spacer">
-            (Skip this report unless voter responds directly.)</div>',
+            (Skip this report unless the voter responds directly.)</div>',
       ];
-      
+
       $form['dataEntry']['row_2_' . $vanid]['col_2_4'] = [
         '#type' => 'markup',
         '#markup' => "<b>Voter Wasn't Contacted</b>",
         '#wrapper_attributes' => ['rowspan' => 3, 'class' => ['det-top', 'det-background',],]
       ];
-      
+
       // The cell to report an attempt to contact the voter without getting a response to the P2V.
       $responses = $this->nlpConfigurationObj->getContactResponses($selectedContactMethod);
       $hidden = ['Deceased', 'Hostile', 'Moved'];  // Checkboxes record these.
@@ -352,19 +352,19 @@ class NlpDataEntryVoterListDisplay
         '#markup' => "<div><b>Important Updates:</b></div>",
         '#wrapper_attributes' => ['rowspan' => 4, 'class' => ['det-top', 'det-background',],]
       ];
-      
+
       $form['dataEntry']['row_2_' . $vanid]['col_2_5']['line_2_5_2'] = [
         '#type' => 'checkbox',
         '#title' => 'Moved',
         '#default_value' => (int)$voterArray['moved'],
       ];
-      
+
       $form['dataEntry']['row_2_' . $vanid]['col_2_5']['line_2_5_3'] = [
         '#type' => 'checkbox',
         '#title' => 'Hostile',
         '#default_value' => (int)$voterArray['hostile'],
       ];
-      
+
       $form['dataEntry']['row_2_' . $vanid]['col_2_5']['line_2_5_4'] = [
         '#type' => 'checkbox',
         '#title' => 'Deceased',
@@ -410,7 +410,7 @@ class NlpDataEntryVoterListDisplay
         '#markup' => $contactStatusMsg,
         '#wrapper_attributes' => ['colspan' => 4, 'class' => ['det-background',],]
       ];
-      
+
       $form['dataEntry']['row_6_' . $vanid]['col_6_1'] = [
         '#markup' => "&nbsp;",
         '#wrapper_attributes' => ['colspan' => 5, 'class' => ['det-spacer',],]
@@ -418,11 +418,11 @@ class NlpDataEntryVoterListDisplay
     }
     return $form;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * validateDataEntrySelection
    *
-   * Extract the user entered information from the values array returned
+   * Extract the user-entered information from the $values array returned
    * by the forms API.
    *
    * Returns an array of input for each voter indexed by the vanid.
@@ -436,11 +436,11 @@ class NlpDataEntryVoterListDisplay
    *     'Deceased' = 1 if the voter is deceased, 0 otherwise.
    *     'updateContact' = An array with the contact change and new contact information.
    *           'contactChange' = The type of contact change,
-   *                'BC' for bad cell phone.
-   *                'BH' for bad home phone,
-   *                'NC' for new cell phone,
-   *                'NH' for new home phone,
-   *                'NE' for new email,
+   *                'BC' for a bad cell phone.
+   *                'BH' for a bad home phone,
+   *                'NC' for a new cell phone,
+   *                'NH' for a new home phone,
+   *                'NE' for a new email,
    *           'newContact' = The new contact information, e.g., a new phone number or email.
    *     'Note' = The note entered by the user for this voter.
    *
@@ -472,7 +472,7 @@ class NlpDataEntryVoterListDisplay
           $newContact = $row['col_2_5']['line_2_5_6'];
           $selections[$vanid]['updateContact'] = ['contactChange'=>$updateContact, 'newContact'=>$newContact];
           break;
-          
+
         case 'row4':
           $note = $row['col_4_1']['line_4_1_2'];
           $selections[$vanid]['note'] = $note;
@@ -481,7 +481,7 @@ class NlpDataEntryVoterListDisplay
     }
     return $selections;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * whatChanged
    *
@@ -517,17 +517,17 @@ class NlpDataEntryVoterListDisplay
         $this->nlpSessionDataObj->setVoterContactMethod($setContactMethod);
         $contactMethod = $selection['contactMethod'];
       }
-      
+
       $surveyResponse = $selection['surveyResponse'];
       if(!empty($surveyResponse)) {
         $actions[$vanid][] = ['type'=>'surveyResponse', 'contactMethod'=>$contactMethod, 'surveyResponse'=>$surveyResponse];
       }
-      
+
       $notContacted = $selection['notContacted'];
       if(!empty($notContacted)) {
         $actions[$vanid][] = ['type'=>'notContacted', 'contactMethod'=>$contactMethod, 'notContacted'=>$notContacted];
       }
-      
+
       if(isset($selection['moved']) && isset($voterArray['moved'])) {
         if($selection['moved'] != $voterArray['moved']) {
           $actions[$vanid][] = ['type'=>'moved', 'contactMethod'=>$contactMethod, 'moved'=>$selection['moved']];
@@ -536,27 +536,27 @@ class NlpDataEntryVoterListDisplay
         $msg = var_export($selection, true);
         Drupal::logger('nlpservices')->notice('Moved error: '.$msg);
       }
-      
+
       if($selection['hostile'] != $voterArray['hostile']) {
         $actions[$vanid][] = ['type'=>'hostile', 'contactMethod'=>$contactMethod, 'hostile'=>$selection['hostile']];
       }
-      
+
       if($selection['deceased'] != $voterArray['deceased']) {
         $actions[$vanid][] = ['type'=>'deceased', 'contactMethod'=>$contactMethod, 'deceased'=>$selection['deceased']];
       }
-      
+
       $newContact = (empty($selection['updateContact']['newContact']))?'':$selection['updateContact']['newContact'];
       if(!empty($selection['updateContact']['contactChange'])) {
         $actions[$vanid][] = ['type'=>'updateContact', 'contactMethod'=>$contactMethod,
           'updateContact'=>$selection['updateContact'], 'newContact'=>$newContact];
       }
-      
+
       if($selection['note'] != $voterArray['note']) {
         $actions[$vanid][] = ['type'=>'note', 'contactMethod'=>$contactMethod, 'note'=>$selection['note']];
       }
-      
+
     }
     return $actions;
   }
-  
+
 }

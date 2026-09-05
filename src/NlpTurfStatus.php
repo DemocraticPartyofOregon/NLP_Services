@@ -16,9 +16,9 @@ class NlpTurfStatus
   const string TURF_CREATE_VALIDATED = 'turfCreateValidated';
   const string TURF_DELETE_VALIDATED = 'turfDeleteValidated';
 
-  const int CREATED_EXPIRY_SMALL_SECS = 240;  // voter count < 60  (4 minutes)
+  const int CREATED_EXPIRY_SMALL_SECS = 240;  // voter count < 60 (4 minutes)
   const int CREATED_EXPIRY_LARGE_SECS = 420;  // voter count >= 60 (7 minutes)
-  const int DELETED_EXPIRY_SMALL_SECS = 240;  // voter count < 60  (4 minutes)
+  const int DELETED_EXPIRY_SMALL_SECS = 240;  // voter count < 60 (4 minutes)
   const int DELETED_EXPIRY_LARGE_SECS = 420;  // voter count >= 60 (7 minutes)
 
   protected Connection $connection;
@@ -93,17 +93,17 @@ class NlpTurfStatus
    *
    * Returns TRUE when the turf's activist-code state has settled (or the
    * status record no longer requires verification), FALSE when codes are still
-   * in flight.  When codes are confirmed the record is stamped with the
-   * appropriate validated status so future calls return immediately.
+   * in flight.  When codes are confirmed, the record is stamped with the
+   * appropriate validated status, so future calls return immediately.
    *
    * Decision tree:
-   *   - No record found                            → true  (nothing to wait for)
+   *   - No record found → true (nothing to wait for)
    *   - status = turfDeleteValidated/
-   *              turfCreateValidated               → true  (already confirmed)
-   *   - status = turfDeleted, all codes removed    → true  (stamps turfDeleteValidated)
-   *   - status = turfCreated, all codes applied    → true  (stamps turfCreateValidated)
-   *   - expiration passed, codes incomplete        → true  (logs error with failed vanids)
-   *   - otherwise                                  → false (codes still in flight)
+   *              turfCreateValidated → true (already confirmed)
+   *   - status = turfDeleted, all codes removed → true (stamps turfDeleteValidated)
+   *   - status = turfCreated, all codes applied → true (stamps turfCreateValidated)
+   *   - expiration passed, codes incomplete → true (logs error with failed vanids)
+   *   - otherwise → false (codes still in flight)
    *
    * @param string $folderName
    * @param string $turfName

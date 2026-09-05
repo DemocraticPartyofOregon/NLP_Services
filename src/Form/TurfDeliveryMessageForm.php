@@ -40,7 +40,7 @@ class TurfDeliveryMessageForm extends FormBase
       $container->get('nlpservices.drupal_user'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -48,7 +48,7 @@ class TurfDeliveryMessageForm extends FormBase
   {
     return 'nlpservices_turf_delivery_message_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -150,17 +150,17 @@ class TurfDeliveryMessageForm extends FormBase
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();
     $messenger = Drupal::messenger();
-  
+
     $page = $form_state->get('page');
     switch ($page) {
 
       case 'county_select':
         $countySelect = $form_state->getValue('county_select');
         $countySelected = $this->nlpConfiguration->getCountyNames()[$countySelect];
-       
+
         if($countySelected == 'State') {
           $stateMsg = $this->turfMsg->getTurfMsg();
-        
+
           $form_state->set('stateMsg', $stateMsg);
           $form_state->set('page', 'edit_state');
         } else {
@@ -170,7 +170,7 @@ class TurfDeliveryMessageForm extends FormBase
           $form_state->set('page', 'edit_county');
         }
         break;
-    
+
       case 'edit_state':
         $stateMsg = $form_state->getValue('body')['value'];
         $tagExists = strpos($stateMsg,'@coordinatorContactInfo');
@@ -182,7 +182,7 @@ class TurfDeliveryMessageForm extends FormBase
         $this->turfMsg->putTurfMsg('',$stateMsg);
         $form_state->set('page', 'county_select');
         break;
-    
+
       case 'edit_county':
         $countySelected = $form_state->get('county_selected');
         $countyMsg = $form_state->getValue('body')['value'];
@@ -201,7 +201,7 @@ class TurfDeliveryMessageForm extends FormBase
         break;
     }
   }
-  
+
   /**
    * editHelp
    *
@@ -220,7 +220,7 @@ the message by using tokens.  These tokens are changed to actual values before t
     ];
     $form['county-tokens'] = [
       '#markup' => "<p>
-<b>@nickname:</b>  \t\tNL's nickname, or first name if the nickname is not known.<br>
+<b>@nickname:</b> \t\tNL's nickname, or first name if the nickname is not known.<br>
 <b>@county:</b> The name of the NL's county.<br>
 <b>@electionDay:</b> Date of the election.<br>
 <b>@ballotDropDay:</b> First date the county elections can send out ballots.<br>
@@ -236,7 +236,7 @@ the message by using tokens.  These tokens are changed to actual values before t
       '#prefix' => '<div class="turf-delivery-message-tokens" id="turf-delivery-message-tokens">',
       '#suffix' => '</div>',
     ];
-    
+
     $form['composite-token-1'] = [
       '#markup' => '<p>
 <b>@coordinatorContactInfo:</b> Composite of the Coordinator\'s contact information.<br>
@@ -256,8 +256,8 @@ Password: @pass
       '#prefix' => '<div class="turf-delivery-message-tokens">',
       '#suffix' => '</div></div>',
     ];
-    
+
     return $form;
   }
-  
+
 }

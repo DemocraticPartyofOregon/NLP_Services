@@ -17,9 +17,9 @@
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
+      <path value="$USER_HOME$/drupal-11.4.5/core" />
+      <path value="$USER_HOME$/drupal-11.4.5/modules" />
+      <path value="$USER_HOME$/drupal-11.4.5/vendor" />
       <path value="$PROJECT_DIR$/vendor/asm89/stack-cors" />
       <path value="$PROJECT_DIR$/vendor/composer" />
       <path value="$PROJECT_DIR$/vendor/doctrine/deprecations" />

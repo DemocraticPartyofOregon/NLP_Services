@@ -18,14 +18,14 @@ class AddDrupalAccountForm extends FormBase
   protected DrupalUser $drupalUser;
   protected NlpNls $nls;
   protected MagicWord $magicWord;
-  
+
   public function __construct( $drupalUser, $nls, $magicWord)
   {
     $this->drupalUser = $drupalUser;
     $this->nls = $nls;
     $this->magicWord = $magicWord;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -37,7 +37,7 @@ class AddDrupalAccountForm extends FormBase
       $container->get('nlpservices.magic_word'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -45,7 +45,7 @@ class AddDrupalAccountForm extends FormBase
   {
     return 'nlpservices_add_drupal_account_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -60,12 +60,12 @@ class AddDrupalAccountForm extends FormBase
       $adminRole = $this->drupalUser->isNlpAdminUser();
       $form_state->set('admin',$adminRole);
     }
-    
+
     $county = $form_state->get('county');
     $page = $form_state->get('page');
 
     switch ($page) {
-      
+
       case 'addUser':
         if(empty($county)) {
           $messenger = Drupal::messenger();
@@ -84,7 +84,7 @@ class AddDrupalAccountForm extends FormBase
           '#required' => TRUE,
         ];
         $form['needle-note'] = [
-          '#markup' => "<p>The search value need not be a full name, email, or MCID.  It can be an incomplete fragment.</p>",
+          '#markup' => "<p>The search value need not be a full name, email, or MCID. It can be an incomplete fragment.</p>",
         ];
         $form['add_submit'] = [
           '#type' => 'submit',
@@ -142,7 +142,7 @@ want to participate as an NL.  This case is rare.</p>",
           '#value' => t('Not found, go back'),
         ];
         break;
-      
+
       case 'displayUserAdd':
         $mcid = $form_state->get('selectedMcid');
         $nl = $this->nls->getNlById($mcid);
@@ -161,7 +161,7 @@ want to participate as an NL.  This case is rare.</p>",
         } else {
           $email = $nl['email'];
         }
-        
+
         $user = [
           'uid' => NULL,
           'email' => $email,
@@ -177,7 +177,7 @@ want to participate as an NL.  This case is rare.</p>",
         $form['adduser'] = $this->addUser($user);
         if(empty($nl['email'])) {
           $form['email_note'] = [
-            '#markup' => "<p>This NL does not have an email.  It is not a good idea to create a login without a working 
+            '#markup' => "<p>This NL does not have an email.  It is not a good idea to create a login without a working
             email.  A fictitious one is suggested here if you choose to create an account.</p>"
           ];
         }
@@ -195,7 +195,7 @@ want to participate as an NL.  This case is rare.</p>",
     }
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -205,11 +205,11 @@ want to participate as an NL.  This case is rare.</p>",
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();
     $county = $form_state->get('county');
-    
+
     $triggering_element = $form_state->getTriggeringElement();
     $element_clicked = $triggering_element['#name'];
     switch ($element_clicked) {
-      
+
       case 'add-submit':
         $needle = $form_state->getValue('needle');
         $nlList = $this->nls->searchNls($needle,$county);
@@ -375,5 +375,5 @@ want to participate as an NL.  This case is rare.</p>",
 
     return $form_element;
   }
-  
+
 }
