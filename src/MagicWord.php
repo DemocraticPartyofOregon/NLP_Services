@@ -499,48 +499,15 @@ class MagicWord {
     return FALSE;
   }
 
-  public function reEncryptAll(string $oldSecretKey, string $oldSecretIv, string $newSecretKey, string $newSecretIv): bool
-  {
-    try {
-      $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
-      $query->addField('m', 'mcid');
-      $query->addField('m', 'magicWordEncrypted');
-      $result = $query->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('reEncryptAll', $e->getMessage());
-      return FALSE;
-    }
-    $method = 'AES-256-CBC';
-    $oldKey = hash('sha256', $oldSecretKey);
-    $oldIv  = substr(hash('sha256', $oldSecretIv), 0, 16);
-    $newKey = hash('sha256', $newSecretKey);
-    $newIv  = substr(hash('sha256', $newSecretIv), 0, 16);
-    while ($row = $result->fetchAssoc()) {
-      if (empty($row['magicWordEncrypted'])) {
-        continue;
-      }
-      $plain = openssl_decrypt(base64_decode($row['magicWordEncrypted']), $method, $oldKey, 0, $oldIv);
-      if ($plain === FALSE) {
-        nlp_debug_msg('reEncryptAll', 'Decrypt failed for mcid ' . $row['mcid']);
-        return FALSE;
-      }
-      $reEncrypted = base64_encode(openssl_encrypt($plain, $method, $newKey, 0, $newIv));
-      try {
-        $this->connection->update(self::MAGIC_WORD_TBL)
-          ->fields(['magicWordEncrypted' => $reEncrypted])
-          ->condition('mcid', $row['mcid'])
-          ->execute();
-      }
-      catch (Exception $e) {
-        nlp_debug_msg('reEncryptAll', $e->getMessage());
-        return FALSE;
-      }
-    }
-    return TRUE;
-  }
-
-  public function removeCoordinatorRole($mcid): void
+  /**
+   * removeCoordinatorRole
+   *
+   * Removes the NLP_COORDINATOR_ROLE_ID from the roles of the given mcid.
+   *
+   * @param int $mcid The mcid of the user whose coordinator role should be removed.
+   * @return void
+   */
+  public function removeCoordinatorRole( int $mcid ): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);
     if(is_array($credentials['roles'])) {

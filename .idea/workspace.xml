@@ -7,14 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Problem report NLP-183: move columns in the sync turf display of turfs.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Use generic method to get column names">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNls.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfListDisplayVoteBuilderTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfListDisplayVoteBuilderTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfsTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -109,23 +104,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0213886044277671" />
-      <entry key="MS500" value="1.6839685844068057" />
-      <entry key="S2" value="4.035129139268216" />
-      <entry key="S5" value="7.138749418149118" />
-      <entry key="S10" value="10.160451971441393" />
-      <entry key="S30" value="15.014609635427444" />
-      <entry key="S60" value="17.16289041516709" />
-      <entry key="M2" value="18.480017895007943" />
-      <entry key="M5" value="19.365371880411292" />
-      <entry key="M10" value="19.686259788255242" />
-      <entry key="M15" value="19.867537274194113" />
-      <entry key="M30" value="20.74581988098958" />
-      <entry key="H1" value="22.714994835034137" />
-      <entry key="H2" value="25.81890660106483" />
-      <entry key="H4" value="36.57101775021652" />
-      <entry key="D1" value="155.74021076028282" />
-      <entry key="W1" value="584.767729680827" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0000000001723428" />
+      <entry key="S5" value="1.0001243246508524" />
+      <entry key="S10" value="1.0111500964746836" />
+      <entry key="S30" value="1.2244587639700661" />
+      <entry key="S60" value="1.5584769600135318" />
+      <entry key="M2" value="2.462422415420521" />
+      <entry key="M5" value="4.763109229506998" />
+      <entry key="M10" value="6.435100178091557" />
+      <entry key="M15" value="7.17093640285375" />
+      <entry key="M30" value="8.019968867868283" />
+      <entry key="H1" value="8.502310046819296" />
+      <entry key="H2" value="9.28124055171198" />
+      <entry key="H4" value="14.156627615659353" />
+      <entry key="D1" value="121.8049516766702" />
+      <entry key="W1" value="567.4478579540753" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -139,31 +134,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="4.948722459637137E-208" />
-      <entry key="H1" value="3.8504018310706846E-104" />
-      <entry key="H2" value="3.399073272850818E-52" />
-      <entry key="H4" value="3.2498439041166357E-26" />
-      <entry key="D1" value="3.0963943836109824E-4" />
-      <entry key="W1" value="5.092676974497231" />
+      <entry key="M30" value="9.441758454842679E-215" />
+      <entry key="H1" value="1.6818449255067843E-107" />
+      <entry key="H2" value="7.103959447597216E-54" />
+      <entry key="H4" value="4.6982105421131804E-27" />
+      <entry key="D1" value="2.2431996746166092E-4" />
+      <entry key="W1" value="4.863487410867418" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9856195726547403" />
-      <entry key="MS500" value="1.6673488552829707" />
-      <entry key="S2" value="4.024477829394866" />
-      <entry key="S5" value="7.131223748971266" />
-      <entry key="S10" value="10.155036598950065" />
-      <entry key="S30" value="15.011844372471701" />
-      <entry key="S60" value="17.1612849028196" />
-      <entry key="M2" value="18.479145737887176" />
-      <entry key="M5" value="19.365004203604137" />
-      <entry key="M10" value="19.686072398444573" />
-      <entry key="M15" value="19.867409590548462" />
-      <entry key="M30" value="20.745739102063773" />
-      <entry key="H1" value="22.714925837354635" />
-      <entry key="H2" value="25.81883224229752" />
-      <entry key="H4" value="36.57088483709289" />
-      <entry key="D1" value="155.7403874657129" />
-      <entry key="W1" value="589.86020325824" />
+      <entry key="MS100" value="6.043669460952457E-8" />
+      <entry key="MS500" value="0.035996488823417425" />
+      <entry key="S2" value="0.4355770961354232" />
+      <entry key="S5" value="0.7172602452170973" />
+      <entry key="S10" value="0.8560172246131121" />
+      <entry key="S30" value="1.1563470059936152" />
+      <entry key="S60" value="1.5158644256806273" />
+      <entry key="M2" value="2.4374257695789843" />
+      <entry key="M5" value="4.751891466029499" />
+      <entry key="M10" value="6.42924846184112" />
+      <entry key="M15" value="7.166977618633175" />
+      <entry key="M30" value="8.017959635871298" />
+      <entry key="H1" value="8.50129773849742" />
+      <entry key="H2" value="9.28073091667486" />
+      <entry key="H4" value="14.15635387146494" />
+      <entry key="D1" value="121.80503720214351" />
+      <entry key="W1" value="572.3111450498549" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -487,23 +482,7 @@
       <workItem from="1788538162987" duration="7550000" />
       <workItem from="1788581652935" duration="137000" />
       <workItem from="1788581877309" duration="4697000" />
-      <workItem from="1788587194653" duration="7376000" />
-    </task>
-    <task id="LOCAL-00174" summary="Code review ActivistCodeConfigurationForm">
-      <option name="closed" value="true" />
-      <created>1784435382026</created>
-      <option name="number" value="00174" />
-      <option name="presentableId" value="LOCAL-00174" />
-      <option name="project" value="LOCAL" />
-      <updated>1784435382026</updated>
-    </task>
-    <task id="LOCAL-00175" summary="Remove debug code">
-      <option name="closed" value="true" />
-      <created>1784435596309</created>
-      <option name="number" value="00175" />
-      <option name="presentableId" value="LOCAL-00175" />
-      <option name="project" value="LOCAL" />
-      <updated>1784435596309</updated>
+      <workItem from="1788587194653" duration="8620000" />
     </task>
     <task id="LOCAL-00176" summary="Add generic email subjects for MiniVAN reports.">
       <option name="closed" value="true" />
@@ -881,7 +860,23 @@
       <option name="project" value="LOCAL" />
       <updated>1788630600522</updated>
     </task>
-    <option name="localTasksCounter" value="223" />
+    <task id="LOCAL-00223" summary="Problem report NLP-183: move columns in the sync turf display of turfs.">
+      <option name="closed" value="true" />
+      <created>1788670362717</created>
+      <option name="number" value="00223" />
+      <option name="presentableId" value="LOCAL-00223" />
+      <option name="project" value="LOCAL" />
+      <updated>1788670362717</updated>
+    </task>
+    <task id="LOCAL-00224" summary="Use generic method to get column names">
+      <option name="closed" value="true" />
+      <created>1788670402151</created>
+      <option name="number" value="00224" />
+      <option name="presentableId" value="LOCAL-00224" />
+      <option name="project" value="LOCAL" />
+      <updated>1788670402151</updated>
+    </task>
+    <option name="localTasksCounter" value="225" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -948,7 +943,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Inhibit form change popup if the only change it the HD select." />
     <MESSAGE value="Update version number" />
     <MESSAGE value="Remove the use of configured HD names in favor of using dynamic values based on active NLs." />
     <MESSAGE value="Move the display of NLP Configuration and Administration" />
@@ -973,7 +967,8 @@
     <MESSAGE value="Move the test for the batch files to their own directory" />
     <MESSAGE value="Remove dead code and fix typos" />
     <MESSAGE value="Problem report NLP-183: move columns in the sync turf display of turfs." />
-    <option name="LAST_COMMIT_MESSAGE" value="Problem report NLP-183: move columns in the sync turf display of turfs." />
+    <MESSAGE value="Use generic method to get column names" />
+    <option name="LAST_COMMIT_MESSAGE" value="Use generic method to get column names" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
