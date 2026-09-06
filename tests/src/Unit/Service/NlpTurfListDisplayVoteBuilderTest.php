@@ -192,7 +192,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetSortFieldReturnsNlForName(): void {
-      $this->assertSame('nl', $this->service->getSortField('Name'));
+      $this->assertSame('nl', $this->service->getSortField('Previous NL'));
     }
 
     public function testGetSortFieldReturnsTurfNameForTurfName(): void {
@@ -233,7 +233,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfsAscendingByNl(): void {
       $turfs = $this->buildTurfs();
-      $this->service->sortTurfs($turfs, 'asc', 'Name');
+      $this->service->sortTurfs($turfs, 'asc', 'Previous NL');
       $values = array_column($turfs, 'nl');
       $this->assertSame('Alice', $values[0]);
       $this->assertSame('Zara', $values[2]);
@@ -241,7 +241,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfsDescendingByNl(): void {
       $turfs = $this->buildTurfs();
-      $this->service->sortTurfs($turfs, 'desc', 'Name');
+      $this->service->sortTurfs($turfs, 'desc', 'Previous NL');
       $values = array_column($turfs, 'nl');
       $this->assertSame('Zara', $values[0]);
       $this->assertSame('Alice', $values[2]);

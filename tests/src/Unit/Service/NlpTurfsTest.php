@@ -887,7 +887,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ]);
       $this->nlsMock->method('getNlById')->willReturn(['mcid' => 42]);
       $result = $this->buildTurfs()->turfInUse(50, 999, 'Denver-001');
-      $this->assertSame('Bob Smith', $result['nl']);
+      $this->assertSame('Bob Smith<span class="nlp-footnote-warning">*</span>', $result['nl']);
       $this->assertSame('', $result['turfAssigned']);
     }
 
