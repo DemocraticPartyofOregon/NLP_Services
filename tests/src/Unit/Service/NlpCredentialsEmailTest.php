@@ -351,6 +351,69 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNull($capturedReply);
     }
 
+    public function testSendCredentialsEmailExplicitCoordinatorSkipsLookupAndIsUsedInMessage(): void {
+      $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
+      $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'bsmith']);
+      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
+      $this->configMock->method('getElectionDate')->willReturn('2024-11-05');
+      $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');
+      $this->setupRequestMock();
+      $this->coordinatorsMock->expects($this->never())->method('getAssignedCoordinator');
+
+      $capturedMessage = '';
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function ($key, $to, $subject, string $message) use (&$capturedMessage): bool {
+          $capturedMessage = $message;
+          return TRUE;
+        });
+
+      $override = ['firstName' => 'Alex', 'lastName' => 'Admin', 'phone' => '555-1111', 'email' => 'alex@example.com'];
+      $this->buildService()->sendCredentialsEmail(42, '@coordinatorContactInfo', '', [], $override);
+      $this->assertStringContainsString('Alex Admin', $capturedMessage);
+    }
+
+    public function testSendCredentialsEmailMailKeyIsForwardedToSendEmail(): void {
+      $this->setupStandardMocks();
+
+      $capturedKey = '';
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function (string $key) use (&$capturedKey): bool {
+          $capturedKey = $key;
+          return TRUE;
+        });
+
+      $this->buildService()->sendCredentialsEmail(42, 'Hello', '', [], null, 'account_reminder');
+      $this->assertSame('account_reminder', $capturedKey);
+    }
+
+    public function testSendCredentialsEmailDefaultMailKeyIsDeliverTurf(): void {
+      $this->setupStandardMocks();
+
+      $capturedKey = '';
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function (string $key) use (&$capturedKey): bool {
+          $capturedKey = $key;
+          return TRUE;
+        });
+
+      $this->buildService()->sendCredentialsEmail(42, 'Hello');
+      $this->assertSame('deliver_turf', $capturedKey);
+    }
+
+    public function testSendCredentialsEmailExplicitSubjectOverridesDefault(): void {
+      $this->setupStandardMocks();
+
+      $capturedSubject = '';
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function ($key, $to, string $subject) use (&$capturedSubject): bool {
+          $capturedSubject = $subject;
+          return TRUE;
+        });
+
+      $this->buildService()->sendCredentialsEmail(42, 'Hello', '', [], null, 'account_reminder', 'Custom subject');
+      $this->assertSame('Custom subject', $capturedSubject);
+    }
+
   }
 
 }

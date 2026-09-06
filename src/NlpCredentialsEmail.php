@@ -58,9 +58,14 @@ class NlpCredentialsEmail
    * @param string $messageTemplate
    * @param string $note - plain text to be included as a paragraph
    * @param array $miniVanArray
+   * @param array|null $coordinator - contact info to use for @coordinatorContactInfo; if NULL,
+   *   the coordinator assigned to the NL is looked up automatically.
+   * @param string $mailKey - the key passed to NlpSendEmail::sendEmail() for hook_mail().
+   * @param string|null $subject - the email subject; if NULL, a default turf-delivery subject is used.
    * @return bool
    */
-  public function sendCredentialsEmail(int $mcid, string $messageTemplate, string $note='', array $miniVanArray=[]): bool
+  public function sendCredentialsEmail(int $mcid, string $messageTemplate, string $note='', array $miniVanArray=[],
+                                        ?array $coordinator=null, string $mailKey='deliver_turf', ?string $subject=null): bool
   {
     $nl = $this->nlsObj->getNlById($mcid);
     if(empty($nl)) {
@@ -68,7 +73,7 @@ class NlpCredentialsEmail
       return FALSE;
     }
     $county = $nl['county'];
-    $nlCoordinator = $this->coordinatorsObj->getAssignedCoordinator($nl);
+    $nlCoordinator = $coordinator ?? $this->coordinatorsObj->getAssignedCoordinator($nl);
     $coordinatorContactInfo = '';
     if(!empty($nlCoordinator)) {
       $firstName = $nlCoordinator['firstName'];
@@ -129,11 +134,11 @@ class NlpCredentialsEmail
       '@nickname' => (!empty($nl['nickname']))?$nl['nickname']:$nl['firstName'],
     ]);
 
-    $subject = "Neighborhood Leader Materials - $county County";
+    $subject ??= "Neighborhood Leader Materials - $county County";
     $reply = $nlCoordinator['email'] ?? null;
 
     $message = (string)$message;
-    $result = $this->sendMailObj->sendEmail('deliver_turf',$to, $subject, $message, $reply);
+    $result = $this->sendMailObj->sendEmail($mailKey,$to, $subject, $message, $reply);
     if (!$result) {
       Drupal::logger('nlpservices')->notice('sendCredentialsEmail failed for mcid: @mcid to: @to',
         ['@mcid' => $mcid, '@to' => $to]);

@@ -10,9 +10,8 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpNls;
-use Drupal\nlpservices\MagicWord;
+use Drupal\nlpservices\NlpCredentialsEmail;
 use Drupal\nlpservices\NlpUserDisplay;
-use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpSessionData;
 
 /**
@@ -22,23 +21,21 @@ class LoginCredentialsReminderForm extends FormBase
 {
   protected DrupalUser $drupalUser;
   protected NlpNls $nlsObj;
-  protected MagicWord $magicWord;
+  protected NlpCredentialsEmail $credentialsEmailObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpUserDisplay $userDisplayObj;
-  protected NlpSendEmail $sendEmailObj;
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
 
-  public function __construct($drupalUser, $nlsObj, $magicWord, $searchBarObj,
-                              $userDisplayObj, $sendEmailObj, $nlpConfigurationObj, $nlpSessionDataObj )
+  public function __construct($drupalUser, $nlsObj, $credentialsEmailObj, $searchBarObj,
+                              $userDisplayObj, $nlpConfigurationObj, $nlpSessionDataObj )
   {
     $this->drupalUser = $drupalUser;
     $this->nlsObj = $nlsObj;
-    $this->magicWord = $magicWord;
+    $this->credentialsEmailObj = $credentialsEmailObj;
     $this->searchBarObj = $searchBarObj;
 
     $this->userDisplayObj = $userDisplayObj;
-    $this->sendEmailObj = $sendEmailObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
   }
@@ -51,10 +48,9 @@ class LoginCredentialsReminderForm extends FormBase
     return new static(
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.nls'),
-      $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.credentials_email'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.user_display'),
-      $container->get('nlpservices.send_email'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
     );
@@ -283,33 +279,27 @@ class LoginCredentialsReminderForm extends FormBase
   function remindUserCredentials($user): bool
   {
     $messenger = Drupal::messenger();
-    $mcid = $user['mcid'];
-    $password = 'unknown';
-    if(!empty($mcid)) {
-      $magicWord = $this->magicWord->getMagicWord($mcid);
-      $password = (!empty($magicWord))?$magicWord:'unknown';
-    }
 
     $today = date("F j, Y, g:i a");
     $subject = 'Neighborhood Leader account login reminder'.' - '.$today;
 
-    $message = "<p>".$user['firstName'].",</p>";
-    $message .= "<p>".'The following information provides the credentials you need to access NLP Services for '.
-      $user['county'].' County'."</p>";
-
-    global $base_url;
-    $message .= '<p><a href="' . $base_url . '" target="_blank">Neighborhood Leader Login</a></p>';
-    $message .=  '<p>Username: '.$user['userName'].' <br>Password: '.$password.' </p>';
+    $messageTemplate = "<p>@nickname,</p>".
+      "<p>The following information provides the credentials you need to access NLP Services for @county County</p>".
+      '@nlpLogin'.
+      '<p>Please contact me if you have any questions.<br>Thanks<br></p>'.
+      '@coordinatorContactInfo';
 
     $currentUser = $this->drupalUser->getCurrentUser();
-    $currentUserEmail =  $currentUser['email'];
+    $adminContact = [
+      'firstName' => $currentUser['firstName'],
+      'lastName' => $currentUser['lastName'],
+      'phone' => $currentUser['phone'],
+      'email' => $currentUser['email'],
+    ];
 
-    $thanks = '<p>Please contact me if you have any questions.<br>Thanks<br>'.$currentUser['firstName'].' '.
-      $currentUser['lastName'].'<br>Phone: '.$currentUser['phone'].
-      '<br>Email: <a href="mailto:@email?subject=NL%20Help%20Request">'.$currentUserEmail.'</a></p>';
-    $message .= $thanks;
-
-    $result = $this->sendEmailObj->sendEmail('account_reminder',$user['email'], $subject, $message, $currentUserEmail);
+    $result = $this->credentialsEmailObj->sendCredentialsEmail(
+      (int) $user['mcid'], $messageTemplate, '', [], $adminContact, 'account_reminder', $subject
+    );
     if (!$result) {
       $messenger->addError(t('There was a problem sending your message and it was not sent.'));
       return FALSE;

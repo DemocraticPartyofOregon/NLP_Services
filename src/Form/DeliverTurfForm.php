@@ -13,15 +13,12 @@ use Drupal\Component\Utility\Html;
 
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpPaths;
-use Drupal\nlpservices\MagicWord;
-use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpCoordinators;
+use Drupal\nlpservices\NlpCredentialsEmail;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\nlpservices\NlpTurfDisplay;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\ApiMapRegions;
 
@@ -31,40 +28,34 @@ use Drupal\nlpservices\ApiMapRegions;
 class DeliverTurfForm extends FormBase
 {
   protected NlpTurfs $turfsObj;
-  protected DrupalUser $drupalUserObj;
   protected NlpPaths $pathsObj;
   protected FileSystemInterface $fileSystemObj;
   protected NlpInstructions $instructionsObj;
   protected NlpCoordinators $coordinatorsObj;
-  protected MagicWord $magicWordObj;
+  protected NlpCredentialsEmail $credentialsEmailObj;
   protected NlpTurfDeliveryMessage $turfMsgObj;
   protected NlpTurfDisplay $turfDisplayObj;
 
   protected NlpSearchBar $searchBarObj;
-  protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
-  protected NlpSendEmail $sendMailObj;
   protected  NlpNls $nlsObj;
   protected ApiMapRegions $foldersObj;
-  public function __construct( $turfsObj, $drupalUserObj, $pathsObj, $fileSystemObj,
-                              $instructionsObj, $coordinatorsObj, $magicWordObj, $turfMsgObj,
+  public function __construct( $turfsObj, $pathsObj, $fileSystemObj,
+                              $instructionsObj, $coordinatorsObj, $credentialsEmailObj, $turfMsgObj,
                               $turfDisplayObj, $searchBarObj,
-                              $nlpConfigurationObj, $nlpSessionDataObj, $sendMailObj, $nlsObj, $foldersObj,
+                              $nlpSessionDataObj, $nlsObj, $foldersObj,
                               $requestStack)
   {
     $this->turfsObj = $turfsObj;
-    $this->drupalUserObj = $drupalUserObj;
     $this->pathsObj = $pathsObj;
     $this->fileSystemObj = $fileSystemObj;
     $this->instructionsObj = $instructionsObj;
     $this->coordinatorsObj = $coordinatorsObj;
-    $this->magicWordObj = $magicWordObj;
+    $this->credentialsEmailObj = $credentialsEmailObj;
     $this->turfMsgObj = $turfMsgObj;
     $this->turfDisplayObj = $turfDisplayObj;
     $this->searchBarObj = $searchBarObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
-    $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
     $this->foldersObj = $foldersObj;
     $this->setRequestStack($requestStack);
@@ -77,18 +68,15 @@ class DeliverTurfForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.turfs'),
-      $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.paths'),
       $container->get('file_system'),
       $container->get('nlpservices.instructions'),
       $container->get('nlpservices.coordinators'),
-      $container->get('nlpservices.magic_word'),
+      $container->get('nlpservices.credentials_email'),
       $container->get('nlpservices.turf_delivery_message'),
       $container->get('nlpservices.turf_display'),
       $container->get('nlpservices.search_bar'),
-      $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.api_map_regions'),
       $container->get('request_stack'),
@@ -355,76 +343,18 @@ class DeliverTurfForm extends FormBase
       return FALSE;
     }
 
-    $serverName = $this->requestStack->getCurrentRequest()->server->get('SERVER_NAME');
-    $serverUrl = 'https://'.$serverName;
     $turfMsg = $this->turfMsgObj->getTurfMsg($county);
 
-    $coordinatorContactTemplate = '<p>@firstName @lastName<br>Phone: @phone<br>Email:
-<a href="mailto:@email?subject=Request for help with turf">@email</a></p>';
-
-    /** @noinspection HtmlUnknownTarget */
-    $nlpLoginTemplate = '<p><b>Neighborhood Leader Login: </b><a href="@server_url" target="_blank">@server_url</a>
-<br><b>Username:</b> @name<br><b>Password:</b> @pass</p>';
-
-    $minivanNumber = 0;
-    $minivanCreateDate = '';
-    if(!empty($turfChoice['minivanNumber'])) {
-      $minivanNumber = $turfChoice['minivanNumber'];
-      $minivanCreateDate = $turfChoice['minivanCreateDate'];
-      $nlpLoginTemplate .= '<p><b>MiniVan Number: </b>@minivanNumber<br>MiniVan was created @minivanCreateDate</p>';
+    $miniVanArray = [];
+    if (!empty($turfChoice['minivanNumber'])) {
+      $miniVanArray = [
+        'minivanNumber' => $turfChoice['minivanNumber'],
+        'minivanCreateDate' => $turfChoice['minivanCreateDate'],
+      ];
     }
-
-    $plainNote = '';
-    if (!empty($note)) {
-      $plainNote = '<p>' . $note . '</p>';
-    }
-
-    $needles = ['@nlpLogin','@coordinatorContactInfo','@plainNote'];
-    $replace = [$nlpLoginTemplate,$coordinatorContactTemplate,$plainNote];
-    $paragraphsAdded = str_replace($needles, $replace ,$turfMsg);
-
-    $electionDate = $this->nlpConfigurationObj->getElectionDate();
-    $ballotDropDate = $this->nlpConfigurationObj->getBallotDropDate();
-    $electionTimeStamp = strtotime($electionDate);
-    $ballotDropTimeStamp = strtotime($ballotDropDate);
 
     $mcid = $turfChoice['mcid'];
-    $magicWord = $this->magicWordObj->getMagicWord($mcid);
-    if(empty($magicWord)) {
-      $magicWord = 'Your Password';
-    }
-
-    $user = $this->drupalUserObj->getUserByMcid($mcid);
-    if(empty($user)) {
-      Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
-      $userName = 'unknown';
-    } else {
-      $userName = $user['userName'];
-    }
-
-    $nl = $this->nlsObj->getNlById($mcid);
-    $to = $nl['email'];
-
-    $message = (string) new FormattableMarkup($paragraphsAdded, [
-      '@nickname' => $turfChoice['nlFirstName'] ?? '',
-      '@county' => $county,
-      '@electionDay' => date("F j, Y",$electionTimeStamp),
-      '@ballotDropDay' => date("F j, Y",$ballotDropTimeStamp),
-      '@server_url' => $serverUrl,
-      '@name' => $userName,
-      '@pass' => $magicWord,
-      '@firstName' => $nlCoordinator['firstName'] ?? '',
-      '@lastName' => $nlCoordinator['lastName'] ?? '',
-      '@phone' => $nlCoordinator['phone'] ?? '',
-      '@email' => $nlCoordinator['email'] ?? '',
-      '@minivanNumber' => $minivanNumber,
-      '@minivanCreateDate' => $minivanCreateDate,
-    ]);
-
-    $subject =  "Neighborhood Leader Materials - $county County";
-    $reply = $nlCoordinator['email'];
-
-    $result = $this->sendMailObj->sendEmail('deliver_turf',$to, $subject, $message, $reply);
+    $result = $this->credentialsEmailObj->sendCredentialsEmail($mcid, $turfMsg, $note, $miniVanArray, $nlCoordinator, 'deliver_turf');
     if (!$result) {
       $messenger->addMessage(t('There was a problem sending your message and it was not sent.'),
         $messenger::TYPE_ERROR,TRUE);

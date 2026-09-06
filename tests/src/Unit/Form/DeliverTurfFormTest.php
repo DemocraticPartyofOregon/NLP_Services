@@ -13,16 +13,13 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\ApiMapRegions;
-use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\Form\DeliverTurfForm;
-use Drupal\nlpservices\MagicWord;
 use Drupal\nlpservices\NlpCoordinators;
-use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpCredentialsEmail;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpPaths;
 use Drupal\nlpservices\NlpSearchBar;
-use Drupal\nlpservices\NlpSendEmail;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\nlpservices\NlpTurfDisplay;
@@ -46,18 +43,15 @@ use PHPUnit\Framework\Attributes\Group;
 class DeliverTurfFormTest extends UnitTestCase {
 
   private NlpTurfs $turfsMock;
-  private DrupalUser $drupalUserMock;
   private NlpPaths $pathsMock;
   private FileSystemInterface $fileSystemMock;
   private NlpInstructions $instructionsMock;
   private NlpCoordinators $coordinatorsMock;
-  private MagicWord $magicWordMock;
+  private NlpCredentialsEmail $credentialsEmailMock;
   private NlpTurfDeliveryMessage $turfMsgMock;
   private NlpTurfDisplay $turfDisplayMock;
   private NlpSearchBar $searchBarMock;
-  private NlpConfiguration $nlpConfigurationMock;
   private NlpSessionData $sessionDataMock;
-  private NlpSendEmail $sendMailMock;
   private NlpNls $nlsMock;
   private ApiMapRegions $foldersMock;
   private MessengerInterface $messengerMock;
@@ -66,18 +60,15 @@ class DeliverTurfFormTest extends UnitTestCase {
     parent::setUp();
 
     $this->turfsMock          = $this->createMock(NlpTurfs::class);
-    $this->drupalUserMock     = $this->createMock(DrupalUser::class);
     $this->pathsMock          = $this->createMock(NlpPaths::class);
     $this->fileSystemMock     = $this->createMock(FileSystemInterface::class);
     $this->instructionsMock   = $this->createMock(NlpInstructions::class);
     $this->coordinatorsMock   = $this->createMock(NlpCoordinators::class);
-    $this->magicWordMock      = $this->createMock(MagicWord::class);
+    $this->credentialsEmailMock = $this->createMock(NlpCredentialsEmail::class);
     $this->turfMsgMock        = $this->createMock(NlpTurfDeliveryMessage::class);
     $this->turfDisplayMock    = $this->createMock(NlpTurfDisplay::class);
     $this->searchBarMock      = $this->createMock(NlpSearchBar::class);
-    $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
     $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
-    $this->sendMailMock       = $this->createMock(NlpSendEmail::class);
     $this->nlsMock            = $this->createMock(NlpNls::class);
     $this->foldersMock        = $this->createMock(ApiMapRegions::class);
     $this->messengerMock      = $this->createMock(MessengerInterface::class);
@@ -109,18 +100,15 @@ class DeliverTurfFormTest extends UnitTestCase {
 
     $form = new DeliverTurfForm(
       $this->turfsMock,
-      $this->drupalUserMock,
       $this->pathsMock,
       $this->fileSystemMock,
       $this->instructionsMock,
       $this->coordinatorsMock,
-      $this->magicWordMock,
+      $this->credentialsEmailMock,
       $this->turfMsgMock,
       $this->turfDisplayMock,
       $this->searchBarMock,
-      $this->nlpConfigurationMock,
       $this->sessionDataMock,
-      $this->sendMailMock,
       $this->nlsMock,
       $this->foldersMock,
       $requestStack,
@@ -385,13 +373,7 @@ class DeliverTurfFormTest extends UnitTestCase {
       'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
     ]);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('Hello @nickname @nlpLogin @coordinatorContactInfo @plainNote');
-    $this->foldersMock->method('updateMinivanInfo');
-    $this->nlpConfigurationMock->method('getElectionDate')->willReturn('2026-11-03');
-    $this->nlpConfigurationMock->method('getBallotDropDate')->willReturn('2026-10-14');
-    $this->magicWordMock->method('getMagicWord')->willReturn('secret');
-    $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'jane.doe']);
-    $this->nlsMock->method('getNlById')->willReturn(['email' => 'nl@example.com']);
-    $this->sendMailMock->method('sendEmail')->willReturn(FALSE);
+    $this->credentialsEmailMock->method('sendCredentialsEmail')->willReturn(FALSE);
     $this->messengerMock->expects($this->once())->method('addMessage');
 
     $result = $this->buildFormInstance()->notifyUserCredentials($this->baseTurfChoice(), '');
@@ -401,17 +383,14 @@ class DeliverTurfFormTest extends UnitTestCase {
 
   public function testNotifyUserCredentialsReturnsTrueAndUpdatesStatusOnSuccess(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->coordinatorsMock->method('getCoordinator')->willReturn([
-      'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
-    ]);
+    $coordinator = ['firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com'];
+    $this->coordinatorsMock->method('getCoordinator')->willReturn($coordinator);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('Hello @nlpLogin @coordinatorContactInfo @plainNote');
-    $this->foldersMock->method('updateMinivanInfo');
-    $this->nlpConfigurationMock->method('getElectionDate')->willReturn('2026-11-03');
-    $this->nlpConfigurationMock->method('getBallotDropDate')->willReturn('2026-10-14');
-    $this->magicWordMock->method('getMagicWord')->willReturn('secret');
-    $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'jane.doe']);
-    $this->nlsMock->method('getNlById')->willReturn(['email' => 'nl@example.com']);
-    $this->sendMailMock->method('sendEmail')->willReturn(TRUE);
+
+    $this->credentialsEmailMock->expects($this->once())
+      ->method('sendCredentialsEmail')
+      ->with(99, 'Hello @nlpLogin @coordinatorContactInfo @plainNote', '', [], $coordinator, 'deliver_turf')
+      ->willReturn(TRUE);
 
     $this->nlsMock->expects($this->once())->method('updateNlStatus')->with(99, ['turfDelivered' => 'Y']);
     $this->turfsMock->expects($this->once())->method('setTurfDelivered')->with(10);
@@ -422,32 +401,25 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertTrue($result);
   }
 
-  public function testNotifyUserCredentialsUsesFallbackMagicWordWhenMissing(): void {
+  public function testNotifyUserCredentialsPassesMinivanInfoWhenPresent(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->coordinatorsMock->method('getCoordinator')->willReturn([
-      'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
-    ]);
-    $this->turfMsgMock->method('getTurfMsg')->willReturn('@nlpLogin @coordinatorContactInfo @plainNote');
-    $this->foldersMock->method('updateMinivanInfo');
-    $this->nlpConfigurationMock->method('getElectionDate')->willReturn('2026-11-03');
-    $this->nlpConfigurationMock->method('getBallotDropDate')->willReturn('2026-10-14');
-    $this->magicWordMock->method('getMagicWord')->willReturn('');
-    $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'jane.doe']);
-    $this->nlsMock->method('getNlById')->willReturn(['email' => 'nl@example.com']);
+    $coordinator = ['firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com'];
+    $this->coordinatorsMock->method('getCoordinator')->willReturn($coordinator);
+    $this->turfMsgMock->method('getTurfMsg')->willReturn('@nlpLogin @coordinatorContactInfo @plainNote @miniVanInfo');
 
-    $capturedMessage = '';
-    $this->sendMailMock->method('sendEmail')
-      ->willReturnCallback(function ($type, $to, $subject, $message) use (&$capturedMessage): bool {
-        $capturedMessage = $message;
-        return TRUE;
-      });
+    $turfChoice = $this->baseTurfChoice();
+    $turfChoice['minivanNumber'] = '12345';
+    $turfChoice['minivanCreateDate'] = '2026-05-01';
+
+    $this->credentialsEmailMock->expects($this->once())
+      ->method('sendCredentialsEmail')
+      ->with(99, $this->anything(), '', ['minivanNumber' => '12345', 'minivanCreateDate' => '2026-05-01'], $coordinator, 'deliver_turf')
+      ->willReturn(TRUE);
     $this->nlsMock->method('updateNlStatus');
     $this->turfsMock->method('setTurfDelivered');
     $this->messengerMock->method('addMessage');
 
-    $this->buildFormInstance()->notifyUserCredentials($this->baseTurfChoice(), '');
-
-    $this->assertStringContainsString('Your Password', $capturedMessage);
+    $this->buildFormInstance()->notifyUserCredentials($turfChoice, '');
   }
 
   // -------------------------------------------------------------------------

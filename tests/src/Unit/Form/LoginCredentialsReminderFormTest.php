@@ -8,11 +8,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\LoginCredentialsReminderForm;
-  use Drupal\nlpservices\MagicWord;
   use Drupal\nlpservices\NlpConfiguration;
+  use Drupal\nlpservices\NlpCredentialsEmail;
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpSearchBar;
-  use Drupal\nlpservices\NlpSendEmail;
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpUserDisplay;
   use Drupal\Tests\UnitTestCase;
@@ -21,10 +20,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     private DrupalUser $drupalUserMock;
     private NlpNls $nlsObjMock;
-    private MagicWord $magicWordMock;
+    private NlpCredentialsEmail $credentialsEmailMock;
     private NlpSearchBar $searchBarMock;
     private NlpUserDisplay $userDisplayMock;
-    private NlpSendEmail $sendEmailMock;
     private NlpConfiguration $nlpConfigurationMock;
     private NlpSessionData $nlpSessionDataMock;
     private MessengerInterface $messengerMock;
@@ -33,10 +31,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       parent::setUp();
       $this->drupalUserMock      = $this->createMock(DrupalUser::class);
       $this->nlsObjMock          = $this->createMock(NlpNls::class);
-      $this->magicWordMock       = $this->createMock(MagicWord::class);
+      $this->credentialsEmailMock = $this->createMock(NlpCredentialsEmail::class);
       $this->searchBarMock       = $this->createMock(NlpSearchBar::class);
       $this->userDisplayMock     = $this->createMock(NlpUserDisplay::class);
-      $this->sendEmailMock       = $this->createMock(NlpSendEmail::class);
       $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
       $this->nlpSessionDataMock  = $this->createMock(NlpSessionData::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
@@ -60,10 +57,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $form = new LoginCredentialsReminderForm(
         $this->drupalUserMock,
         $this->nlsObjMock,
-        $this->magicWordMock,
+        $this->credentialsEmailMock,
         $this->searchBarMock,
         $this->userDisplayMock,
-        $this->sendEmailMock,
         $this->nlpConfigurationMock,
         $this->nlpSessionDataMock,
       );
@@ -357,10 +353,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->with(1)->willReturn($user);
       $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
-      $this->magicWordMock->method('getMagicWord')->with(10001)->willReturn('secret123');
-      $this->sendEmailMock->expects($this->once())
-        ->method('sendEmail')
-        ->with('account_reminder', 'jane@example.com', $this->isType('string'), $this->isType('string'), 'admin@example.com')
+      $adminContact = ['firstName' => 'Admin', 'lastName' => 'User', 'phone' => '555-0000', 'email' => 'admin@example.com'];
+      $this->credentialsEmailMock->expects($this->once())
+        ->method('sendCredentialsEmail')
+        ->with(10001, $this->isType('string'), '', [], $adminContact, 'account_reminder', $this->isType('string'))
         ->willReturn(TRUE);
       $this->messengerMock->expects($this->once())->method('addStatus');
 
@@ -383,7 +379,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $user['email'] = '';
 
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
-      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+      $this->credentialsEmailMock->expects($this->never())->method('sendCredentialsEmail');
       $this->messengerMock->expects($this->once())->method('addError');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -405,7 +401,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $user['mcid'] = 0;
 
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
-      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+      $this->credentialsEmailMock->expects($this->never())->method('sendCredentialsEmail');
       $this->messengerMock->expects($this->once())->method('addError');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -426,8 +422,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
       $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
-      $this->magicWordMock->method('getMagicWord')->willReturn('');
-      $this->sendEmailMock->method('sendEmail')->willReturn(FALSE);
+      $this->credentialsEmailMock->method('sendCredentialsEmail')->willReturn(FALSE);
       $this->messengerMock->expects($this->atLeastOnce())->method('addError');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -441,21 +436,24 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // remindUserCredentials — falls back to 'unknown' password when no magic word
+    // remindUserCredentials — signs the email off with the current admin's own
+    // contact info instead of a coordinator's, and uses a distinct subject line
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormReminderSelectUsesUnknownPasswordWhenNoMagicWord(): void {
+    public function testSubmitFormReminderSelectSignsOffWithCurrentAdminContactAndReminderSubject(): void {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
       $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
-      $this->magicWordMock->method('getMagicWord')->willReturn('');
 
-      $capturedMessage = '';
-      $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function ($type, $to, $subject, $message, $from) use (&$capturedMessage) {
-          $capturedMessage = $message;
-          return TRUE;
-        });
+      $capturedCoordinator = null;
+      $capturedSubject = '';
+      $this->credentialsEmailMock->method('sendCredentialsEmail')
+        ->willReturnCallback(function ($mcid, $template, $note, $miniVan, $coordinator, $mailKey, $subject)
+          use (&$capturedCoordinator, &$capturedSubject) {
+            $capturedCoordinator = $coordinator;
+            $capturedSubject = $subject;
+            return TRUE;
+          });
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'reminder_select']);
@@ -465,7 +463,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $form = [];
       $this->buildForm()->submitForm($form, $formState);
-      $this->assertStringContainsString('unknown', $capturedMessage);
+
+      $this->assertEquals($this->currentUserFixture(), $capturedCoordinator);
+      $this->assertStringContainsString('account login reminder', $capturedSubject);
     }
 
   }
