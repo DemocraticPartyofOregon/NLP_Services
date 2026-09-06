@@ -326,19 +326,6 @@ class NlpImap
   }
 
   /**
-   * getHeader
-   *
-   * Gets the email header information.
-   *
-   * @param int $emailNumber
-   * @return string
-   */
-  public function getHeader(int $emailNumber): string
-  {
-    return imap_fetchheader($this->connection,$emailNumber);
-  }
-
-  /**
    * setUnread
    *
    * Mark the email as unread.

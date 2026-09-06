@@ -18,7 +18,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpSyncTurfAddVoter;
   use Drupal\nlpservices\NlpTurfAssignments;
-  use Drupal\nlpservices\NlpTurfMapRegions;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
@@ -41,7 +40,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private DatabaseFunctions $databaseFunctionsMock;
     private NlpNls $nlsMock;
     private NlpSendEmail $sendEmailMock;
-    private NlpTurfMapRegions $turfMapRegionsMock;
     private NlpSessionData $sessionDataMock;
     private object $messengerMock;
 
@@ -61,7 +59,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->databaseFunctionsMock = $this->createMock(DatabaseFunctions::class);
       $this->nlsMock = $this->createMock(NlpNls::class);
       $this->sendEmailMock = $this->createMock(NlpSendEmail::class);
-      $this->turfMapRegionsMock = $this->createMock(NlpTurfMapRegions::class);
       $this->sessionDataMock = $this->createMock(NlpSessionData::class);
 
       $loggerMock = $this->createMock(LoggerInterface::class);
@@ -96,7 +93,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->databaseFunctionsMock,
         $this->nlsMock,
         $this->sendEmailMock,
-        $this->turfMapRegionsMock,
         $this->sessionDataMock,
         $this->turfAssignmentsMock,
       );
@@ -118,7 +114,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           $this->databaseFunctionsMock,
           $this->nlsMock,
           $this->sendEmailMock,
-          $this->turfMapRegionsMock,
           $this->sessionDataMock,
           $this->turfAssignmentsMock,
         ])
@@ -145,7 +140,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.database_functions', $this->databaseFunctionsMock);
       $container->set('nlpservices.nls', $this->nlsMock);
       $container->set('nlpservices.send_email', $this->sendEmailMock);
-      $container->set('nlpservices.turf_map_regions', $this->turfMapRegionsMock);
       $container->set('nlpservices.session_data', $this->sessionDataMock);
       $container->set('nlpservices.turf_assignments', $this->turfAssignmentsMock);
 

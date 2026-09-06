@@ -288,8 +288,7 @@ services:
                  '@nlpservices.sync_turf_add_voter', '@nlpservices.api_voter', '@nlpservices.configuration',
                  '@nlpservices.api_folders', '@nlpservices.activist_codes', '@nlpservices.coordinators',
                  '@nlpservices.database_functions', '@nlpservices.nls', '@nlpservices.send_email',
-                 '@nlpservices.turf_map_regions', '@nlpservices.session_data',
-                 '@nlpservices.turf_assignments' ]
+                 '@nlpservices.session_data', '@nlpservices.turf_assignments' ]
 
   nlpservices.search_bar:
     class: Drupal\nlpservices\NlpSearchBar

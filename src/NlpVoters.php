@@ -704,63 +704,6 @@ class NlpVoters {
   }
 
   /**
-   * getVotersInCounty
-   *
-   * Get the voters in a county.  The county is stored in the voter turf table.
-   *
-   * @param string $county - the county to fetch the voters for.
-   * @return array - an array of vanids for the voters in the county.
-   */
-  public function getVotersInCounty(string $county): array
-  {
-    try {
-      $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
-      $query->addField('g','vanid');
-      $query->condition('county',$county);
-      $result = $query->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getVotersInCounty', $e->getMessage() );
-      return [];
-    }
-    $records = $result->fetchAll();
-    $keys = [];
-    foreach ($records as $record) {
-      $keys[$record->vanid] = $record->vanid;
-    }
-    return $keys;
-  }
-
-  /**
-   * getVotersInCd
-   *
-   * Get the voters in a congressional district.  The congressional district is stored in the voter address.
-   *
-   * @param int $cd - the congressional district to fetch the voters for.
-   * @return array - an array of vanids for the voters in the congressional district.
-   */
-  public function getVotersInCd(int $cd): array
-  {
-    try {
-      $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
-      $query->leftJoin(self::VOTER_ADDRESS_TBL, 'a', 'g.vanid = a.vanid' );
-      $query->addField('g','vanid');
-      $query->condition('a.cd',$cd);
-      $result = $query->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getVotersInCd', $e->getMessage() );
-      return [];
-    }
-    $records = $result->fetchAll();
-    $keys = [];
-    foreach ($records as $record) {
-      $keys[$record->vanid] = $record->vanid;
-    }
-    return $keys;
-  }
-
-  /**
    * getParticipatingCounties
    *
    * Get the list of counties that have turfs assigned to NLs.

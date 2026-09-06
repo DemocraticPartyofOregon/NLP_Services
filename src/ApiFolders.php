@@ -13,7 +13,6 @@ class ApiFolders {
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
-  private array $mapRegions = [];
   public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
@@ -127,25 +126,4 @@ class ApiFolders {
     return $folderOptions;
   }
 
-  /**
-   * getTurfIds
-   *
-   * Get all turf IDs from the map regions.
-   * This function iterates through the map regions and collects all turf IDs
-   * into a single array. It returns an array of turf IDs.
-   *
-   * @return array
-   */
-  public function getTurfIds(): array
-  {
-    $turfIds = [];
-    if(!empty($this->mapRegions)) {
-      foreach ($this->mapRegions as $mapRegion) {
-        $turfIdsInRegion = array_keys($mapRegion['turfInfo']);
-        $turfIds = array_merge($turfIds, $turfIdsInRegion);
-      }
-    }
-    return $turfIds;
-  }
-  
 }

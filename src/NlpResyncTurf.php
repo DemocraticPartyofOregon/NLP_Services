@@ -23,13 +23,12 @@ class NlpResyncTurf
   protected NlpNls $nlsObj;
   protected NlpSendEmail $sendEmailObj;
   protected ApiActivistCodes $activistCodesObj;
-  protected NlpTurfMapRegions $turfMapRegionsObj;
   protected NlpSessionData $sessionDataObj;
 
   public function __construct($votersObj,$turfsObj, $exportJobsObj, $savedListsObj,
                               $syncTurfAddVoterObj, $apiVoterObj, $nlpConfigurationObj,
                               $apiFoldersObj, $activistCodesObj, $coordinatorsObj,
-                              $databaseFunctionsObj, $nlsObj, $sendEmailObj, $turfMapRegionsObj,
+                              $databaseFunctionsObj, $nlsObj, $sendEmailObj,
                               $sessionDataObj, $turfAssignmentsObj ) {
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
@@ -45,7 +44,6 @@ class NlpResyncTurf
     $this->databaseFunctionsObj = $databaseFunctionsObj;
     $this->nlsObj = $nlsObj;
     $this->sendEmailObj = $sendEmailObj;
-    $this->turfMapRegionsObj = $turfMapRegionsObj;
     $this->sessionDataObj = $sessionDataObj;
   }
 
@@ -65,7 +63,6 @@ class NlpResyncTurf
       $container->get('nlpservices.database_functions'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.send_email'),
-      $container->get('nlpservices.turf_map_regions'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_assignments'),
     );

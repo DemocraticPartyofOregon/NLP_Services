@@ -243,14 +243,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $result);
     }
 
-    // -------------------------------------------------------------------------
-    // getTurfIds
-    // -------------------------------------------------------------------------
-
-    public function testGetTurfIdsReturnsEmptyWhenNoMapRegions(): void {
-      $this->assertSame([], $this->buildService()->getTurfIds());
-    }
-
   }
 
 }

@@ -523,34 +523,6 @@ class DrupalUser {
   }
 
   /**
-   * addNlpRoles
-   *
-   * Adds the NLP roles to a user account given the uid and an array of role ids.
-   *
-   * @param int $uid
-   * @param array $rids
-   * @return bool
-   *
-   * Not currently used.
-   * @noinspection PhpUnused
-   */
-  public function addNlpRoles( int $uid, array $rids): bool
-  {
-    $user = User::load($uid);
-    if(empty($user)) {return FALSE;}
-    foreach ($rids as $rid) {
-      $user->addRole($rid);
-    }
-    try {
-      $user->save();
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('addNlpRoles.',$e->getMessage());
-      return FALSE;
-    }
-    return TRUE;
-  }
-
-  /**
    * removeNlpRoles
    *
    * Removes the NLP roles from a user account given the uid and an array of role ids.
