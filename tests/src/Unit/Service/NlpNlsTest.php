@@ -12,6 +12,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Database\Query\Select;
   use Drupal\Core\Database\Query\Update;
   use Drupal\Core\Database\StatementInterface;
+  use Drupal\nlpservices\DatabaseFunctions;
   use Drupal\nlpservices\NlpNls;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -19,6 +20,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   class NlpNlsTest extends UnitTestCase {
 
     private Connection $connectionMock;
+    private DatabaseFunctions $dbFunctionsMock;
     private ConfigFactoryInterface $configFactoryMock;
     private ImmutableConfig $nlpConfigMock;
     private array $surveyQuestions = [];
@@ -26,6 +28,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     protected function setUp(): void {
       parent::setUp();
       $this->connectionMock = $this->createMock(Connection::class);
+      $this->dbFunctionsMock = $this->createMock(DatabaseFunctions::class);
       $this->configFactoryMock = $this->createMock(ConfigFactoryInterface::class);
       $this->nlpConfigMock = $this->createMock(ImmutableConfig::class);
 
@@ -52,7 +55,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function buildService(): NlpNls {
-      return new NlpNls($this->connectionMock);
+      return new NlpNls($this->connectionMock, $this->dbFunctionsMock);
     }
 
     private function buildDeleteMock(): Delete {
@@ -126,6 +129,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testCreateFactoryUsesDatabaseServiceFromContainer(): void {
       $container = new ContainerBuilder();
       $container->set('database', $this->connectionMock);
+      $container->set('nlpservices.database_functions', $this->dbFunctionsMock);
 
       $service = NlpNls::create($container);
 
@@ -223,15 +227,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $statusStmt->method('fetchAssoc')->willReturn(false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($statusStmt));
 
-      $columnStmt = $this->createMock(StatementInterface::class);
-      $columnStmt->method('fetchAssoc')->willReturnOnConsecutiveCalls(
-        ['Field' => 'mcid'],
-        ['Field' => 'county'],
-        ['Field' => 'contact'],
-        ['Field' => 'asked'],
-        false,
-      );
-      $this->connectionMock->method('query')->willReturn($columnStmt);
+      $this->dbFunctionsMock->method('getColumnNames')->willReturn(['mcid', 'county', 'contact', 'asked']);
 
       $result = $this->buildService()->getNlsStatus(42, 'Denver');
 
@@ -261,7 +257,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $statusStmt = $this->createMock(StatementInterface::class);
       $statusStmt->method('fetchAssoc')->willReturn(false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($statusStmt));
-      $this->connectionMock->method('query')->willThrowException(new \Exception('DB error'));
+      $this->dbFunctionsMock->method('getColumnNames')->willReturn([]);
 
       $result = $this->buildService()->getNlsStatus(42, 'Denver');
 

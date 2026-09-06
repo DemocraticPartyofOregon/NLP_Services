@@ -35,8 +35,10 @@ class NlpNls {
   public array $askList = [];
   
   protected Connection $connection;
-  public function __construct( $connection) {
+  protected DatabaseFunctions $dbFunctionsObj;
+  public function __construct( $connection, $dbFunctionsObj) {
     $this->connection = $connection;
+    $this->dbFunctionsObj = $dbFunctionsObj;
     $nlpConfig = Drupal::service('config.factory')->get('nlpservices.configuration');
     $surveyQuestions = $nlpConfig->get('nlpservices_survey_questions');
     if(empty($surveyQuestions['askList'])) {
@@ -45,7 +47,7 @@ class NlpNls {
     }
     $this->askList = $surveyQuestions['askList'];
   }
-  
+
   /**
    * @param ContainerInterface $container
    * @return NlpNls
@@ -54,6 +56,7 @@ class NlpNls {
   {
     return new static(
       $container->get('database'),
+      $container->get('nlpservices.database_functions'),
     );
   }
   
@@ -122,31 +125,6 @@ class NlpNls {
   }
   
   /**
-   * getColumnNames
-   *
-   * Get the column names for the NLS status table.
-   * Used to initialize a new NL status record.
-   *
-   * @return array
-   */
-  private function getColumnNames(): array
-  {
-    try {
-      $select = "SHOW COLUMNS FROM  {".self::NLS_STATUS_TBL.'}';
-      $result = $this->connection->query($select);
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getColumnNames', $e->getMessage() );
-      return [];
-    }
-    $colNames = [];
-    while ($name = $result->fetchAssoc()) {
-      $colNames[] = $name['Field'];
-    }
-    return $colNames;
-  }
-  
-  /**
    * getNlsStatus
    *
    * Get the status record of a NL by mcid and county.
@@ -173,7 +151,7 @@ class NlpNls {
     }
     $nlStatus = $result->fetchAssoc();
     if(empty($nlStatus)) {
-      $statusColumnNames = $this->getColumnNames();
+      $statusColumnNames = $this->dbFunctionsObj->getColumnNames(self::NLS_STATUS_TBL);
       $nlStatus = [];
       foreach ($statusColumnNames as $nlpKey) {
         $nlStatus[$nlpKey] = NULL;

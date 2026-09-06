@@ -499,25 +499,6 @@ class MagicWord {
     return FALSE;
   }
 
-  public function getColumnNames(): array
-  {
-    try {
-      $select = "SHOW COLUMNS FROM  {".self::MAGIC_WORD_TBL.'}';
-      $result = $this->connection->query($select);
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('getColumnNames', $e->getMessage() );
-      return [];
-    }
-    $colNames = [];
-    do {
-      $name = $result->fetchAssoc();
-      if(empty($name)) {break;}
-      $colNames[] = $name['Field'];
-    } while (TRUE);
-    return $colNames;
-  }
-
   public function reEncryptAll(string $oldSecretKey, string $oldSecretIv, string $newSecretKey, string $newSecretIv): bool
   {
     try {
