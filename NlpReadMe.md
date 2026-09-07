@@ -64,6 +64,12 @@ NLP Services is distributed as a compressed file.   Using FTP or File Manager, u
 
 Use the Extend tab to install the NLP Services module.
 
+## Add the private file path to the settings.php file
+
+Edit the `settings.php` file located in `myStateName/web/sites/default/` and add the following line:
+
+    $settings['file_private_path'] = '/home/myStateName/private-files';
+
 ## Now install the support modules
 
 This version of NLP Services uses three additional modules: "SMTP Authentication Support", "Automated Logout", and "User Redirect".  These modules should be installed using composer.

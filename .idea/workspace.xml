@@ -7,10 +7,9 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Consolodate redundant code for sending credentials">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="API keys are now private and outside the Drupal site">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NlpReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/NlpReadMe.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -105,23 +104,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000449911260159" />
-      <entry key="MS500" value="1.1354181738803844" />
-      <entry key="S2" value="1.7965518001506995" />
-      <entry key="S5" value="3.1175038296095208" />
-      <entry key="S10" value="5.107316980996823" />
-      <entry key="S30" value="8.607428758766073" />
-      <entry key="S60" value="10.100720191798114" />
-      <entry key="M2" value="10.992511148277092" />
-      <entry key="M5" value="11.582088069035361" />
-      <entry key="M10" value="11.788466139964862" />
-      <entry key="M15" value="11.858397564691872" />
-      <entry key="M30" value="11.929662710774247" />
-      <entry key="H1" value="12.101927310517114" />
-      <entry key="H2" value="13.897960322382891" />
-      <entry key="H4" value="19.64827283254691" />
-      <entry key="D1" value="102.1976914041053" />
-      <entry key="W1" value="561.0963954860899" />
+      <entry key="MS100" value="1.0000022226228225" />
+      <entry key="MS500" value="1.090081254282353" />
+      <entry key="S2" value="1.877606845664197" />
+      <entry key="S5" value="2.4323705056095344" />
+      <entry key="S10" value="2.6913226961178873" />
+      <entry key="S30" value="2.891001150958763" />
+      <entry key="S60" value="2.944697681342542" />
+      <entry key="M2" value="2.972145025061568" />
+      <entry key="M5" value="2.992689043989924" />
+      <entry key="M10" value="3.2924586211546942" />
+      <entry key="M15" value="4.26452874167178" />
+      <entry key="M30" value="8.39754020792468" />
+      <entry key="H1" value="14.142163585922974" />
+      <entry key="H2" value="19.022169410339636" />
+      <entry key="H4" value="22.80833090111707" />
+      <entry key="D1" value="82.76606565717731" />
+      <entry key="W1" value="542.67647534548" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -135,31 +134,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="6.183976926516891E-227" />
-      <entry key="H1" value="1.361110663733746E-113" />
-      <entry key="H2" value="6.390785149016845E-57" />
-      <entry key="H4" value="1.4091568848530666E-28" />
-      <entry key="D1" value="1.2503715358280057E-4" />
-      <entry key="W1" value="4.473902663023695" />
+      <entry key="M30" value="6.082967972626571E-239" />
+      <entry key="H1" value="1.3499487193205538E-119" />
+      <entry key="H2" value="6.364527020983194E-60" />
+      <entry key="H4" value="4.446981323865088E-30" />
+      <entry key="D1" value="7.028943812690009E-5" />
+      <entry key="W1" value="4.120509869194008" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9526793983224848" />
-      <entry key="MS500" value="1.123529167440067" />
-      <entry key="S2" value="1.7911691696978653" />
-      <entry key="S5" value="3.113890534468843" />
-      <entry key="S10" value="5.104243588564255" />
-      <entry key="S30" value="8.605505617508499" />
-      <entry key="S60" value="10.099546712055151" />
-      <entry key="M2" value="10.99185897099182" />
-      <entry key="M5" value="11.581809578339744" />
-      <entry key="M10" value="11.788323782931606" />
-      <entry key="M15" value="11.85830195495491" />
-      <entry key="M30" value="11.929614547484876" />
-      <entry key="H1" value="12.101902910005562" />
-      <entry key="H2" value="13.897946075826594" />
-      <entry key="H4" value="19.64825521812987" />
-      <entry key="D1" value="102.19773624881047" />
-      <entry key="W1" value="565.5701134167564" />
+      <entry key="MS100" value="0.9012524109241256" />
+      <entry key="MS500" value="1.0669872552771318" />
+      <entry key="S2" value="1.8656825248316184" />
+      <entry key="S5" value="2.425793997013068" />
+      <entry key="S10" value="2.687607229487584" />
+      <entry key="S30" value="2.8896522337668666" />
+      <entry key="S60" value="2.944008333482215" />
+      <entry key="M2" value="2.9717965425551167" />
+      <entry key="M5" value="2.9925485837988552" />
+      <entry key="M10" value="3.2923825742780073" />
+      <entry key="M15" value="4.264465272516996" />
+      <entry key="M30" value="8.39748082290956" />
+      <entry key="H1" value="14.142114431471093" />
+      <entry key="H2" value="19.02213651884847" />
+      <entry key="H4" value="22.80831118484845" />
+      <entry key="D1" value="82.76608722599937" />
+      <entry key="W1" value="546.7968145422469" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -483,15 +482,7 @@
       <workItem from="1788538162987" duration="7550000" />
       <workItem from="1788581652935" duration="137000" />
       <workItem from="1788581877309" duration="4697000" />
-      <workItem from="1788587194653" duration="31416000" />
-    </task>
-    <task id="LOCAL-00180" summary="Fix the training manual configuration so the download link work.">
-      <option name="closed" value="true" />
-      <created>1784521353261</created>
-      <option name="number" value="00180" />
-      <option name="presentableId" value="LOCAL-00180" />
-      <option name="project" value="LOCAL" />
-      <updated>1784521353261</updated>
+      <workItem from="1788587194653" duration="32661000" />
     </task>
     <task id="LOCAL-00181" summary="Fix the tests for changes to age and awaitingReply">
       <option name="closed" value="true" />
@@ -877,7 +868,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788743637355</updated>
     </task>
-    <option name="localTasksCounter" value="229" />
+    <task id="LOCAL-00229" summary="API keys are now private and outside the Drupal site">
+      <option name="closed" value="true" />
+      <created>1788811703852</created>
+      <option name="number" value="00229" />
+      <option name="presentableId" value="LOCAL-00229" />
+      <option name="project" value="LOCAL" />
+      <updated>1788811703852</updated>
+    </task>
+    <option name="localTasksCounter" value="230" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -944,7 +943,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Use NlpConfiguration for state, county and countyNames." />
     <MESSAGE value="Remove the configuration of HD names and use structure based on the API keys." />
     <MESSAGE value="Fix the method of retrieving state name and county names" />
     <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
@@ -969,7 +967,8 @@
     <MESSAGE value="Implement secure password reveal and remove redundant code" />
     <MESSAGE value="Remove dead code" />
     <MESSAGE value="Consolodate redundant code for sending credentials" />
-    <option name="LAST_COMMIT_MESSAGE" value="Consolodate redundant code for sending credentials" />
+    <MESSAGE value="API keys are now private and outside the Drupal site" />
+    <option name="LAST_COMMIT_MESSAGE" value="API keys are now private and outside the Drupal site" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
