@@ -289,16 +289,8 @@ class LoginCredentialsReminderForm extends FormBase
       '<p>Please contact me if you have any questions.<br>Thanks<br></p>'.
       '@coordinatorContactInfo';
 
-    $currentUser = $this->drupalUser->getCurrentUser();
-    $adminContact = [
-      'firstName' => $currentUser['firstName'],
-      'lastName' => $currentUser['lastName'],
-      'phone' => $currentUser['phone'],
-      'email' => $currentUser['email'],
-    ];
-
     $result = $this->credentialsEmailObj->sendCredentialsEmail(
-      (int) $user['mcid'], $messageTemplate, '', [], $adminContact, 'account_reminder', $subject
+      (int) $user['mcid'], $messageTemplate, '', [], null, 'account_reminder', $subject, $user['email']
     );
     if (!$result) {
       $messenger->addError(t('There was a problem sending your message and it was not sent.'));

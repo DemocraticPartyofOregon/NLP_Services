@@ -211,13 +211,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString('Jane Doe', $capturedMessage);
     }
 
-    public function testSendCredentialsEmailNoCoordinatorLeavesContactInfoEmpty(): void {
+    public function testSendCredentialsEmailNoCoordinatorFallsBackToNlpAdmin(): void {
       $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
       $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'bsmith']);
       $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
       $this->configMock->method('getElectionDate')->willReturn('2024-11-05');
       $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');
+      $this->configMock->method('getNotificationEmail')->willReturn('nlpadmin@example.com');
       $this->setupRequestMock();
 
       $capturedMessage = '';
@@ -228,7 +229,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         });
 
       $this->buildService()->sendCredentialsEmail(42, '@coordinatorContactInfo');
-      $this->assertSame('', $capturedMessage);
+      $this->assertStringContainsString('NLP Admin', $capturedMessage);
+      $this->assertStringContainsString('nlpadmin@example.com', $capturedMessage);
     }
 
     public function testSendCredentialsEmailNotePlaceholderReplacedWithWrappedNote(): void {
@@ -331,13 +333,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('jane@example.com', $capturedReply);
     }
 
-    public function testSendCredentialsEmailNoCoordinatorReplyToIsNull(): void {
+    public function testSendCredentialsEmailNoCoordinatorReplyToIsNlpAdminNotificationEmail(): void {
       $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
       $this->drupalUserMock->method('getUserByMcid')->willReturn(['userName' => 'bsmith']);
       $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
       $this->configMock->method('getElectionDate')->willReturn('2024-11-05');
       $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');
+      $this->configMock->method('getNotificationEmail')->willReturn('nlpadmin@example.com');
       $this->setupRequestMock();
 
       $capturedReply = 'unset';
@@ -348,7 +351,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         });
 
       $this->buildService()->sendCredentialsEmail(42, 'Hello');
-      $this->assertNull($capturedReply);
+      $this->assertSame('nlpadmin@example.com', $capturedReply);
     }
 
     public function testSendCredentialsEmailExplicitCoordinatorSkipsLookupAndIsUsedInMessage(): void {
@@ -412,6 +415,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->buildService()->sendCredentialsEmail(42, 'Hello', '', [], null, 'account_reminder', 'Custom subject');
       $this->assertSame('Custom subject', $capturedSubject);
+    }
+
+    public function testSendCredentialsEmailExplicitToOverridesNlEmail(): void {
+      $this->setupStandardMocks();
+
+      $capturedTo = '';
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function ($key, string $to) use (&$capturedTo): bool {
+          $capturedTo = $to;
+          return TRUE;
+        });
+
+      $this->buildService()->sendCredentialsEmail(42, 'Hello', '', [], null, 'deliver_turf', null, 'drupal-account@example.com');
+      $this->assertSame('drupal-account@example.com', $capturedTo);
     }
 
   }

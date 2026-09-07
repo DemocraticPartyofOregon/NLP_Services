@@ -59,13 +59,16 @@ class NlpCredentialsEmail
    * @param string $note - plain text to be included as a paragraph
    * @param array $miniVanArray
    * @param array|null $coordinator - contact info to use for @coordinatorContactInfo; if NULL,
-   *   the coordinator assigned to the NL is looked up automatically.
+   *   the coordinator assigned to the NL is looked up automatically. If no coordinator is found
+   *   (or an empty array is passed), the NLP Admin notification address is used instead.
    * @param string $mailKey - the key passed to NlpSendEmail::sendEmail() for hook_mail().
    * @param string|null $subject - the email subject; if NULL, a default turf-delivery subject is used.
+   * @param string|null $to - the recipient email address; if NULL, the NL's email from nlp_nls is used.
    * @return bool
    */
   public function sendCredentialsEmail(int $mcid, string $messageTemplate, string $note='', array $miniVanArray=[],
-                                        ?array $coordinator=null, string $mailKey='deliver_turf', ?string $subject=null): bool
+                                        ?array $coordinator=null, string $mailKey='deliver_turf', ?string $subject=null,
+                                        ?string $to=null): bool
   {
     $nl = $this->nlsObj->getNlById($mcid);
     if(empty($nl)) {
@@ -74,6 +77,14 @@ class NlpCredentialsEmail
     }
     $county = $nl['county'];
     $nlCoordinator = $coordinator ?? $this->coordinatorsObj->getAssignedCoordinator($nl);
+    if (empty($nlCoordinator)) {
+      $nlCoordinator = [
+        'firstName' => NLP_ADMIN_ROLE_LABEL,
+        'lastName' => '',
+        'phone' => '',
+        'email' => $this->nlpConfigurationObj->getNotificationEmail(),
+      ];
+    }
     $coordinatorContactInfo = '';
     if(!empty($nlCoordinator)) {
       $firstName = $nlCoordinator['firstName'];
@@ -123,7 +134,7 @@ class NlpCredentialsEmail
     $electionTimeStamp = strtotime($electionDate);
     $ballotDropTimeStamp = strtotime($ballotDropDate);
 
-    $to = $nl['email'];
+    $to ??= $nl['email'];
 
     $message = t($paragraphsAdded, [
       '@county' => $county,

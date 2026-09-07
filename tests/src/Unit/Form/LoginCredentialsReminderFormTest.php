@@ -81,15 +81,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       ];
     }
 
-    private function currentUserFixture(): array {
-      return [
-        'firstName' => 'Admin',
-        'lastName'  => 'User',
-        'email'     => 'admin@example.com',
-        'phone'     => '555-0000',
-      ];
-    }
-
     // -------------------------------------------------------------------------
     // getFormId
     // -------------------------------------------------------------------------
@@ -352,11 +343,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testSubmitFormReminderSelectSendsEmailsToSelectedUsers(): void {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->with(1)->willReturn($user);
-      $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
-      $adminContact = ['firstName' => 'Admin', 'lastName' => 'User', 'phone' => '555-0000', 'email' => 'admin@example.com'];
       $this->credentialsEmailMock->expects($this->once())
         ->method('sendCredentialsEmail')
-        ->with(10001, $this->isType('string'), '', [], $adminContact, 'account_reminder', $this->isType('string'))
+        ->with(10001, $this->isType('string'), '', [], null, 'account_reminder', $this->isType('string'), 'jane@example.com')
         ->willReturn(TRUE);
       $this->messengerMock->expects($this->once())->method('addStatus');
 
@@ -421,7 +410,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testSubmitFormReminderSelectReportsFailureWhenSendEmailFails(): void {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
-      $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
       $this->credentialsEmailMock->method('sendCredentialsEmail')->willReturn(FALSE);
       $this->messengerMock->expects($this->atLeastOnce())->method('addError');
 
@@ -436,22 +424,24 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // remindUserCredentials — signs the email off with the current admin's own
-    // contact info instead of a coordinator's, and uses a distinct subject line
+    // remindUserCredentials — lets NlpCredentialsEmail resolve the NL's own
+    // assigned coordinator (falling back to the NLP Admin) instead of signing
+    // off as the currently logged-in admin, and uses a distinct subject line
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormReminderSelectSignsOffWithCurrentAdminContactAndReminderSubject(): void {
+    public function testSubmitFormReminderSelectDefersCoordinatorResolutionAndUsesReminderSubject(): void {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
-      $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
 
-      $capturedCoordinator = null;
+      $capturedCoordinator = 'unset';
       $capturedSubject = '';
+      $capturedTo = '';
       $this->credentialsEmailMock->method('sendCredentialsEmail')
-        ->willReturnCallback(function ($mcid, $template, $note, $miniVan, $coordinator, $mailKey, $subject)
-          use (&$capturedCoordinator, &$capturedSubject) {
+        ->willReturnCallback(function ($mcid, $template, $note, $miniVan, $coordinator, $mailKey, $subject, $to)
+          use (&$capturedCoordinator, &$capturedSubject, &$capturedTo) {
             $capturedCoordinator = $coordinator;
             $capturedSubject = $subject;
+            $capturedTo = $to;
             return TRUE;
           });
 
@@ -464,8 +454,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $form = [];
       $this->buildForm()->submitForm($form, $formState);
 
-      $this->assertEquals($this->currentUserFixture(), $capturedCoordinator);
+      // NULL means "resolve the NL's assigned coordinator automatically, falling back
+      // to the NLP Admin if none is assigned" — see NlpCredentialsEmail::sendCredentialsEmail().
+      $this->assertNull($capturedCoordinator);
       $this->assertStringContainsString('account login reminder', $capturedSubject);
+      // The reminder must go to the Drupal account's own email (what the admin sees in the
+      // selection table), not whatever nlp_nls happens to have on file for the NL.
+      $this->assertSame('jane@example.com', $capturedTo);
     }
 
   }
