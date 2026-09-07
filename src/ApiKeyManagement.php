@@ -66,10 +66,14 @@ class ApiKeyManagement
   public function createKey(string $id, string $label, string $value): bool
   {
     try {
-      // Get the real filesystem path for public files
+      // Get the real filesystem path for private files
       $fileSystem = Drupal::service('file_system');
-      $publicPath = $fileSystem->realpath('public://');
-      $dir = $publicPath . '/keys';
+      $privatePath = $fileSystem->realpath('private://');
+      if (!$privatePath) {
+        nlp_debug_msg('createKey', 'Private file path is not configured; see nlpservices_requirements().');
+        return FALSE;
+      }
+      $dir = $privatePath . '/keys';
 
       // Ensure directory exists
       if (!is_dir($dir)) {
@@ -198,10 +202,14 @@ class ApiKeyManagement
         $values['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('encrypt', $values['API Key']);
       }
 
-      // Get the real filesystem path for public files
+      // Get the real filesystem path for private files
       $fileSystem = Drupal::service('file_system');
-      $publicPath = $fileSystem->realpath('public://');
-      $dir = $publicPath . '/keys';
+      $privatePath = $fileSystem->realpath('private://');
+      if (!$privatePath) {
+        nlp_debug_msg('createKeyWithValues', 'Private file path is not configured; see nlpservices_requirements().');
+        return FALSE;
+      }
+      $dir = $privatePath . '/keys';
 
       // Ensure directory exists
       if (!is_dir($dir)) {

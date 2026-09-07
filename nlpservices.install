@@ -1,7 +1,106 @@
 <?php
 
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Extension\Requirement\RequirementSeverity;
+use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Site\Settings;
 use Drupal\field\Entity\FieldStorageConfig;
+
+/**
+ * Implements hook_requirements().
+ *
+ * Verifies that the private filesystem is configured, since API key files
+ * (see ApiKeyManagement) are stored under private:// so they are not
+ * directly downloadable over the web.
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_requirements($phase): array
+{
+  $requirements = [];
+
+  if (($phase === 'install' || $phase === 'runtime') && !Settings::get('file_private_path')) {
+    $requirements['nlpservices_private_file_path'] = [
+      'title' => t('NLP Services: private file path'),
+      'value' => t('Not configured'),
+      'description' => t("NLP Services stores API key files under the private:// stream wrapper so they aren't directly downloadable over the web. Add \$settings['file_private_path'] to settings.php, pointing to a directory outside the web root."),
+      'severity' => RequirementSeverity::Error,
+    ];
+  }
+
+  return $requirements;
+}
+
+/**
+ * Creates the private://keys directory, if the private file path is configured.
+ */
+function _nlpservices_ensure_keys_directory(): void
+{
+  if (Settings::get('file_private_path')) {
+    $dir = 'private://keys';
+    Drupal::service('file_system')->prepareDirectory($dir, FileSystemInterface::CREATE_DIRECTORY);
+  }
+}
+
+/**
+ * Implements hook_install().
+ * @noinspection PhpUnused
+ * @noinspection PhpUnusedParameterInspection
+ */
+function nlpservices_install($is_syncing): void
+{
+  _nlpservices_ensure_keys_directory();
+}
+
+/**
+ * Creates the private://keys directory for sites that installed this module
+ * before API keys were moved off the public filesystem.
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10001(): void
+{
+  _nlpservices_ensure_keys_directory();
+}
+
+/**
+ * Repoints 'file' provider key entities at private://keys.
+ *
+ * Key config entities store the API key's file path as an absolute string
+ * at the time the key was created (see ApiKeyManagement::createKey() and
+ * ::createKeyWithValues()). Moving the underlying files from public:// to
+ * private:// on disk doesn't update that stored path, so this walks every
+ * 'file' provider key and repoints it at the private location if the file
+ * has already been moved there.
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10002(): void
+{
+  $privatePath = Drupal::service('file_system')->realpath('private://');
+  if (!$privatePath) {
+    return;
+  }
+
+  $storage = Drupal::entityTypeManager()->getStorage('key');
+  /** @var Drupal\key\Entity\Key $key */
+  foreach ($storage->loadMultiple() as $key) {
+    if ($key->getKeyProvider()->getPluginId() !== 'file') {
+      continue;
+    }
+    $settings = $key->get('key_provider_settings');
+    $oldLocation = $settings['file_location'] ?? '';
+    if (!$oldLocation) {
+      continue;
+    }
+    $newLocation = $privatePath . '/keys/' . basename($oldLocation);
+    if ($oldLocation === $newLocation || !is_file($newLocation)) {
+      continue;
+    }
+    $settings['file_location'] = $newLocation;
+    $key->set('key_provider_settings', $settings);
+    $key->save();
+  }
+}
 
 /**
  * Implements hook_uninstall().

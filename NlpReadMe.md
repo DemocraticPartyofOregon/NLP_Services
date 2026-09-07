@@ -38,6 +38,12 @@ Use your TTY app to redefine the public html directory (In the commands below, c
     mv ~/public_html ~/public_html_backup
     ln -s ~/oregon/web/ ~/public_html
 
+Create a directory for the private files for saving API keys and set the permissions:
+
+    mkdir -p /home/myStateName/private-files/keys
+    chown -R www-data:www-data /home/myStateName/private-files
+    chmod 755 /home/myStateName/private-files /home/myStateName/private-files/keys
+
 Then use composer to get the core:
 
     composer create-project drupal/recommended-project myStateName
