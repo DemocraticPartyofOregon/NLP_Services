@@ -246,23 +246,6 @@ class NlpSessionData
   }
 
   /**
-   * Returns an array of the focus for the HD and precinct for the current session.
-   * Used to restore the focus of the HD and precinct when the coordinator works with turfs.
-   * The county changes for an admin who can change counties for support purposes.
-   *
-   * @return array
-   */
-  public function getCurrentDistricts(): array
-  {
-    $districts = $this->get('currentDistricts');
-    $county = $this->getCounty();
-    if(empty($districts) || (!empty($districts['county']) && $districts['county'] != $county)) {
-      $districts = ['county' => $county, 'hdNew' => TRUE];
-    }
-    return $districts;
-  }
-
-  /**
    * Sets a value in the session storage.
    * Known Keys:
    * - turfIndex - The index of the current turf being worked on.

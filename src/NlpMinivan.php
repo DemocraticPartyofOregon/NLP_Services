@@ -827,8 +827,4 @@ class NlpMinivan {
     return $counts;
   }
 
-  public function getMinivanCountKeys(): array {
-    return $this->minivanCountKeys;
-  }
-
 }

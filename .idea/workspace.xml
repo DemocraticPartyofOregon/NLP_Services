@@ -8,8 +8,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="API keys are now private and outside the Drupal site">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/NlpReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/NlpReadMe.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/MagicWord.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/MagicWord.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSessionData.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSessionData.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpTurfMapRegions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfMapRegions.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/MagicWordTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/MagicWordTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSessionDataTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSessionDataTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfMapRegionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfMapRegionsTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -104,23 +108,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0000022226228225" />
-      <entry key="MS500" value="1.090081254282353" />
-      <entry key="S2" value="1.877606845664197" />
-      <entry key="S5" value="2.4323705056095344" />
-      <entry key="S10" value="2.6913226961178873" />
-      <entry key="S30" value="2.891001150958763" />
-      <entry key="S60" value="2.944697681342542" />
-      <entry key="M2" value="2.972145025061568" />
-      <entry key="M5" value="2.992689043989924" />
-      <entry key="M10" value="3.2924586211546942" />
-      <entry key="M15" value="4.26452874167178" />
-      <entry key="M30" value="8.39754020792468" />
-      <entry key="H1" value="14.142163585922974" />
-      <entry key="H2" value="19.022169410339636" />
-      <entry key="H4" value="22.80833090111707" />
-      <entry key="D1" value="82.76606565717731" />
-      <entry key="W1" value="542.67647534548" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0000000015778814" />
+      <entry key="S60" value="1.0000687945050513" />
+      <entry key="M2" value="1.0143656908085357" />
+      <entry key="M5" value="1.3546207965068382" />
+      <entry key="M10" value="2.1333697817331467" />
+      <entry key="M15" value="3.094620010596938" />
+      <entry key="M30" value="6.885307961142869" />
+      <entry key="H1" value="12.839255883509585" />
+      <entry key="H2" value="18.40461097530497" />
+      <entry key="H4" value="22.817030697374758" />
+      <entry key="D1" value="83.15537849401865" />
+      <entry key="W1" value="543.1026405459182" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -134,31 +138,31 @@
       <entry key="M5" value="0.0" />
       <entry key="M10" value="0.0" />
       <entry key="M15" value="0.0" />
-      <entry key="M30" value="6.082967972626571E-239" />
-      <entry key="H1" value="1.3499487193205538E-119" />
-      <entry key="H2" value="6.364527020983194E-60" />
-      <entry key="H4" value="4.446981323865088E-30" />
-      <entry key="D1" value="7.028943812690009E-5" />
-      <entry key="W1" value="4.120509869194008" />
+      <entry key="M30" value="4.263169803330266E-239" />
+      <entry key="H1" value="1.1301232813882079E-119" />
+      <entry key="H2" value="5.823316702343013E-60" />
+      <entry key="H4" value="4.253705739101899E-30" />
+      <entry key="D1" value="6.977080942045016E-5" />
+      <entry key="W1" value="4.116152776041266" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9012524109241256" />
-      <entry key="MS500" value="1.0669872552771318" />
-      <entry key="S2" value="1.8656825248316184" />
-      <entry key="S5" value="2.425793997013068" />
-      <entry key="S10" value="2.687607229487584" />
-      <entry key="S30" value="2.8896522337668666" />
-      <entry key="S60" value="2.944008333482215" />
-      <entry key="M2" value="2.9717965425551167" />
-      <entry key="M5" value="2.9925485837988552" />
-      <entry key="M10" value="3.2923825742780073" />
-      <entry key="M15" value="4.264465272516996" />
-      <entry key="M30" value="8.39748082290956" />
-      <entry key="H1" value="14.142114431471093" />
-      <entry key="H2" value="19.02213651884847" />
-      <entry key="H4" value="22.80831118484845" />
-      <entry key="D1" value="82.76608722599937" />
-      <entry key="W1" value="546.7968145422469" />
+      <entry key="MS100" value="0.5176324619206888" />
+      <entry key="MS500" value="0.8766057213160351" />
+      <entry key="S2" value="0.9676116201423443" />
+      <entry key="S5" value="0.9869165458858419" />
+      <entry key="S10" value="0.9934367347173356" />
+      <entry key="S30" value="0.9978074426818545" />
+      <entry key="S60" value="0.9989718973787615" />
+      <entry key="M2" value="1.0138154154516756" />
+      <entry key="M5" value="1.3543846800579888" />
+      <entry key="M10" value="2.133233861679401" />
+      <entry key="M15" value="3.0945156734228982" />
+      <entry key="M30" value="6.885229759820708" />
+      <entry key="H1" value="12.839196442144301" />
+      <entry key="H2" value="18.40457173510589" />
+      <entry key="H4" value="22.81700726518299" />
+      <entry key="D1" value="83.15539914155505" />
+      <entry key="W1" value="547.2186227211268" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
@@ -482,15 +486,7 @@
       <workItem from="1788538162987" duration="7550000" />
       <workItem from="1788581652935" duration="137000" />
       <workItem from="1788581877309" duration="4697000" />
-      <workItem from="1788587194653" duration="32661000" />
-    </task>
-    <task id="LOCAL-00181" summary="Fix the tests for changes to age and awaitingReply">
-      <option name="closed" value="true" />
-      <created>1784522563979</created>
-      <option name="number" value="00181" />
-      <option name="presentableId" value="LOCAL-00181" />
-      <option name="project" value="LOCAL" />
-      <updated>1784522563979</updated>
+      <workItem from="1788587194653" duration="33686000" />
     </task>
     <task id="LOCAL-00182" summary="Fix type error in map regions">
       <option name="closed" value="true" />
@@ -876,7 +872,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788811703852</updated>
     </task>
-    <option name="localTasksCounter" value="230" />
+    <task id="LOCAL-00230" summary="API keys are now private and outside the Drupal site">
+      <option name="closed" value="true" />
+      <created>1788815743974</created>
+      <option name="number" value="00230" />
+      <option name="presentableId" value="LOCAL-00230" />
+      <option name="project" value="LOCAL" />
+      <updated>1788815743974</updated>
+    </task>
+    <option name="localTasksCounter" value="231" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

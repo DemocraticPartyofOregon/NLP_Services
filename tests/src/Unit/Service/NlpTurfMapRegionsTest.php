@@ -4,8 +4,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Database\Connection;
   use Drupal\Core\Database\Query\Merge;
-  use Drupal\Core\Database\Query\Select;
-  use Drupal\Core\Database\StatementInterface;
   use Drupal\nlpservices\NlpTurfMapRegions;
   use Drupal\Tests\UnitTestCase;
 
@@ -24,14 +22,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private function buildService(): NlpTurfMapRegions {
       return new NlpTurfMapRegions($this->connectionMock);
-    }
-
-    private function buildSelectMock(StatementInterface $stmtMock): Select {
-      $selectMock = $this->createMock(Select::class);
-      $selectMock->method('fields')->willReturnSelf();
-      $selectMock->method('condition')->willReturnSelf();
-      $selectMock->method('execute')->willReturn($stmtMock);
-      return $selectMock;
     }
 
     private function buildMergeMock(): Merge {
@@ -129,48 +119,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->buildService()->updateTurfMapRegion($this->baseFields());
       $this->assertTrue(TRUE);
-    }
-
-    // -------------------------------------------------------------------------
-    // getTurfMapRegion
-    // -------------------------------------------------------------------------
-
-    public function testGetTurfMapRegionReturnsRowWhenFound(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($this->baseFields());
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-
-      $result = $this->buildService()->getTurfMapRegion(5);
-
-      $this->assertSame(5, $result['mapRegionId']);
-      $this->assertSame('Region A', $result['mapRegionName']);
-    }
-
-    public function testGetTurfMapRegionReturnsEmptyArrayWhenNotFound(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn(false);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-
-      $this->assertSame([], $this->buildService()->getTurfMapRegion(99));
-    }
-
-    public function testGetTurfMapRegionReturnsEmptyArrayOnException(): void {
-      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-
-      $this->assertSame([], $this->buildService()->getTurfMapRegion(5));
-    }
-
-    public function testGetTurfMapRegionQueuesCorrectTable(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($this->baseFields());
-      $selectMock = $this->buildSelectMock($stmtMock);
-
-      $this->connectionMock->expects($this->once())
-        ->method('select')
-        ->with(NlpTurfMapRegions::TURF_MAP_REGIONS_TBL, 'i')
-        ->willReturn($selectMock);
-
-      $this->buildService()->getTurfMapRegion(5);
     }
 
   }

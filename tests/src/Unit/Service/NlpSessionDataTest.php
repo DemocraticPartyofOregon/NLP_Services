@@ -391,46 +391,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $service->getPrecinctList());
     }
 
-    // -------------------------------------------------------------------------
-    // getCurrentDistricts()
-    // -------------------------------------------------------------------------
-
-    public function testGetCurrentDistrictsReturnsStoredDistrictsWhenCountyMatches(): void {
-      $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Multnomah']);
-      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $service = $this->buildService();
-      $service->set('County', 'Multnomah');
-      $stored = ['county' => 'Multnomah', 'hdNew' => FALSE, 'hd' => 'HD5'];
-      $service->set('currentDistricts', $stored);
-
-      $result = $service->getCurrentDistricts();
-
-      $this->assertSame($stored, $result);
-    }
-
-    public function testGetCurrentDistrictsResetsWhenCountyChanges(): void {
-      $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Washington']);
-      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $service = $this->buildService();
-      $service->set('currentDistricts', ['county' => 'Multnomah', 'hdNew' => FALSE]);
-
-      $result = $service->getCurrentDistricts();
-
-      $this->assertSame('Washington', $result['county']);
-      $this->assertTrue($result['hdNew']);
-    }
-
-    public function testGetCurrentDistrictsReturnsDefaultWhenEmpty(): void {
-      $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Clackamas']);
-      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $service = $this->buildService();
-
-      $result = $service->getCurrentDistricts();
-
-      $this->assertSame('Clackamas', $result['county']);
-      $this->assertTrue($result['hdNew']);
-    }
-
   }
 
 }

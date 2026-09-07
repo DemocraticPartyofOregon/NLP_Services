@@ -245,37 +245,6 @@ class MagicWord {
   }
 
   /**
-   * getCredentialsByUsername
-   *
-   * Retrieves user credentials by their MCID.
-   *
-   * @param string $username
-   * @return array An associative array of user credentials. Returns an empty array if no credentials
-   * are found or an error occurs.
-   */
-  public function getCredentialsByUsername(string $username): array
-  {
-    if(empty($username)) {return [];}
-    try {
-      $query = $this->connection->select(self::MAGIC_WORD_TBL, 'm');
-      $query->fields('m');
-      $query->condition('username',$username);
-      $result = $query->execute();
-    }
-    catch (Exception $e) {
-      $error = $e->getMessage();
-      nlp_debug_msg('getCredentialsByUsername', $error );
-      return [];
-    }
-    $credentials = $result->fetchAssoc();
-    if(!is_array($credentials)) {return [];}
-    unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
-    return $credentials;
-  }
-
-
-  /**
    * getCredentialsByVfid
    *
    * Retrieves user credentials by their VoterFile VANID.

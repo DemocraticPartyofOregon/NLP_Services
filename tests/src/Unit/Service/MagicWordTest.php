@@ -254,24 +254,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCredentialsByUsername
-    // -------------------------------------------------------------------------
-
-    public function testGetCredentialsByUsernameEmptyUsernameSkipsDatabase(): void {
-      $this->connectionMock->expects($this->never())->method('select');
-      $this->assertSame([], $this->buildMagicWord()->getCredentialsByUsername(''));
-    }
-
-    public function testGetCredentialsByUsernameFoundReturnsCleanCredentials(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($this->baseRawCredentials());
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildMagicWord()->getCredentialsByUsername('alice.smith');
-      $this->assertArrayNotHasKey('magicWordEncrypted', $result);
-      $this->assertSame(['nlp_leader' => 'NLP Leader'], $result['roles']);
-    }
-
-    // -------------------------------------------------------------------------
     // createCredentials
     // -------------------------------------------------------------------------
 

@@ -50,30 +50,4 @@ class NlpTurfMapRegions
     }
   }
 
-  /**
-   * getTurfMapRegion
-   *
-   * Fetches the turf map region associated with the given map region ID.
-   *
-   * @param int $mapRegionId - The ID of the map region to retrieve.
-   * @return array - Associative array containing the turf map region data,
-   *   or an empty array if no record is found or an error occurs.
-   */
-  public function getTurfMapRegion(int $mapRegionId): array
-  {
-    try {
-      $query = $this->connection->select(self::TURF_MAP_REGIONS_TBL, 'i');
-      $query->fields('i');
-      $query->condition('mapRegionId', $mapRegionId);
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getTurfMapRegion', $e->getMessage());
-      return [];
-    }
-
-    $turfRecord = $result->fetchAssoc();
-    if(empty($turfRecord)) { return []; }
-    return $turfRecord;
-  }
-
 }

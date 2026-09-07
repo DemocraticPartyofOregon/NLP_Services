@@ -100,20 +100,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getMinivanCountKeys()
-    // -------------------------------------------------------------------------
-
-    public function testGetMinivanCountKeysReturnsExpectedKeys(): void {
-      $this->assertSame([
-        'recordCount',
-        'newRecordCount',
-        'skippedRecordCount',
-        'rejectedRecordCount',
-        'notNlpCount',
-      ], $this->buildService()->getMinivanCountKeys());
-    }
-
-    // -------------------------------------------------------------------------
     // extractMinivanFields()
     // -------------------------------------------------------------------------
 
