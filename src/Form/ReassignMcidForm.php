@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-//use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\ApiNls;
@@ -15,7 +14,6 @@ use Drupal\nlpservices\NlpLegislativeFixes;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
-use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpNls;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -30,7 +28,6 @@ class ReassignMcidForm extends FormBase
   protected NlpReports $reportsObj;
   protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
-  protected NlpVoters $votersObj;
 
   protected NlpNls $nlsObj;
   protected MagicWord $magicWordObj;
@@ -38,7 +35,7 @@ class ReassignMcidForm extends FormBase
 
   public function __construct( $drupalUserObj, $apiNlsObj, $nlpEncryptObj, $awardsObj,
                                $coordinatorObj, $legFixesObj, $reportsObj, $turfsObj,
-                               $votersObj, $nlsObj, $magicWordObj, $turfAssignmentsObj)
+                               $nlsObj, $magicWordObj, $turfAssignmentsObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->apiNlsObj = $apiNlsObj;
@@ -48,7 +45,6 @@ class ReassignMcidForm extends FormBase
     $this->legFixesObj = $legFixesObj;
     $this->reportsObj = $reportsObj;
     $this->turfsObj = $turfsObj;
-    $this->votersObj = $votersObj;
     $this->nlsObj = $nlsObj;
     $this->magicWordObj = $magicWordObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
@@ -65,7 +61,6 @@ class ReassignMcidForm extends FormBase
       $container->get('nlpservices.legislative_fixes'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.turfs'),
-      $container->get('nlpservices.voters'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.turf_assignments'),

@@ -158,7 +158,6 @@ coordinator and not to the NLP Site admin.</p>"),
     
     // Search the list of available NLs for a match with the needle.
     $needle = $form_state->get('search-needle');
-    //nlp_debug_msg('needle',$needle);
     if(!empty($needle)) {
       $allCountyNls = $this->nlsObj->getCountyNls($county);
       $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCountyNls);
@@ -191,7 +190,6 @@ coordinator and not to the NLP Site admin.</p>"),
       case 'hd-select-add':
         // The user changed the HD to display.
         $currentHdIndex = $form_state->getValue($elementClicked);
-        //nlp_debug_msg('currentHdIndex',$currentHdIndex);;
         $this->sessionDataObj->saveHdIndex($currentHdIndex);
         break;
       
@@ -209,7 +207,6 @@ coordinator and not to the NLP Site admin.</p>"),
         $allCountyCoordinators = $this->coordinatorsObj->getAllCoordinators($county);
         $countyCoordinators = (empty($allCountyCoordinators[$county]))?[]:$allCountyCoordinators[$county];
         $scope = $form_state->get('scope');
-        //nlp_debug_msg('scope',$scope);
         $assignmentRole = [
           'county' => $county,
           'scope' => $scope,
@@ -253,7 +250,6 @@ coordinator and not to the NLP Site admin.</p>"),
             $hdOptions = array_combine($hdList, $hdList);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
-            //nlp_debug_msg('$hd',$hd);
             if($this->coordinatorsObj->duplicateScope('hd',$hd,$countyCoordinators)) {
               $form_state->setErrorByName('scope',t('A contact coordinator for this HD is already assigned.'));
             }
@@ -268,7 +264,6 @@ coordinator and not to the NLP Site admin.</p>"),
             $assignmentRole['precinctList'] = NULL;
             break;
         }
-        //nlp_debug_msg('assignmentRole', $assignmentRole);
         $form_state->set('assignmentRole',$assignmentRole);
         $altEmail = $form_state->getValue('altEmail');
         if(!empty($altEmail) AND !Drupal::service('email.validator')->isValid($altEmail)) {
@@ -290,7 +285,6 @@ coordinator and not to the NLP Site admin.</p>"),
       
       case 'scope-select':
         $scopeSelect = $form_state->getValue('scope-select');
-        //nlp_debug_msg('scopeSelect',$scopeSelect);
         $form_state->set('scope',$scopeSelect);
         break;
       
@@ -476,7 +470,6 @@ coordinator to groups of NLs.</p>',
       'mcid' => $coordinator['mcid'],
       'hd' => $coordinator['hd'],
       'magicWord' => $magicWord,
-      //'sharedEmail' => NULL,
       'roles' => [NLP_COORDINATOR_ROLE_ID => NLP_COORDINATOR_ROLE_LABEL,],
     ];
     $newUser = $this->drupalUserObj->addUser($newAccount);
@@ -574,9 +567,7 @@ coordinator to groups of NLs.</p>',
       '#prefix' => '<div class="coordinator-option-box">',
       '#suffix' => '</div>',
     ];
-    //nlp_debug_msg('assignedCoordinators',$assignedCoordinators);
     $tableArray = $this->coordinatorsListDisplayObj->buildCoordinatorTableArray('current', $assignedCoordinators);
-    //nlp_debug_msg('tableArray',$tableArray);
     if(!empty($sortRequest)) {
       $this->coordinatorsListDisplayObj->sortNlsTable($tableArray,$sortRequest['sort'],$sortRequest['order'],'current');
     }

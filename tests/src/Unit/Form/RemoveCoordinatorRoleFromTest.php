@@ -12,7 +12,6 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\Form\RemoveCoordinatorRoleFrom;
 use Drupal\nlpservices\MagicWord;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpCoordinators;
 use Drupal\nlpservices\NlpCoordinatorsListDisplay;
 use Drupal\nlpservices\NlpNls;
@@ -38,7 +37,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   private NlpCoordinatorsListDisplay $coordinatorsListDisplayMock;
   private NlpSessionData $sessionDataMock;
   private NlpSearchBar $searchBarMock;
-  private NlpConfiguration $nlpConfigurationMock;
   private MessengerInterface $messengerMock;
 
   protected function setUp(): void {
@@ -51,7 +49,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->coordinatorsListDisplayMock = $this->createMock(NlpCoordinatorsListDisplay::class);
     $this->sessionDataMock            = $this->createMock(NlpSessionData::class);
     $this->searchBarMock              = $this->createMock(NlpSearchBar::class);
-    $this->nlpConfigurationMock       = $this->createMock(NlpConfiguration::class);
     $this->messengerMock              = $this->createMock(MessengerInterface::class);
 
     $container = new ContainerBuilder();
@@ -78,7 +75,6 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
       $this->coordinatorsListDisplayMock,
       $this->sessionDataMock,
       $this->searchBarMock,
-      $this->nlpConfigurationMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);

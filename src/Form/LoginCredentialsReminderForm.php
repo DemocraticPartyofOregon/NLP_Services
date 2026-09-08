@@ -168,12 +168,6 @@ class LoginCredentialsReminderForm extends FormBase
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
-      /*
-      case 'search_submit':
-        $needle = $form_state->getValue('search-needle');
-        $form_state->set('search-needle', $needle);
-        return;
-        */
       case 'hd-select':
         $currentHdIndex = $form_state->getValue('hd-select');
         // The user changed the HD to display.

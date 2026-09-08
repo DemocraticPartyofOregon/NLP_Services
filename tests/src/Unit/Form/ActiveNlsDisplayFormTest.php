@@ -35,7 +35,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpNlsListDisplay $nlsListDisplayMock;
     private NlpAwards $awardsMock;
     private NlpSessionData $sessionDataMock;
-    private NlpConfiguration $configurationMock;
     private ApiSurveyQuestion $apiSurveyQuestionMock;
     private ApiActivistCodes $apiActivistCodesMock;
     private RequestStack $requestStackMock;
@@ -50,7 +49,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->nlsListDisplayMock    = $this->createMock(NlpNlsListDisplay::class);
       $this->awardsMock            = $this->createMock(NlpAwards::class);
       $this->sessionDataMock       = $this->createMock(NlpSessionData::class);
-      $this->configurationMock     = $this->createMock(NlpConfiguration::class);
       $this->apiSurveyQuestionMock = $this->createMock(ApiSurveyQuestion::class);
       $this->apiActivistCodesMock  = $this->createMock(ApiActivistCodes::class);
       $this->requestStackMock      = $this->createMock(RequestStack::class);
@@ -70,7 +68,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->nlsListDisplayMock,
         $this->awardsMock,
         $this->sessionDataMock,
-        $this->configurationMock,
         $this->apiSurveyQuestionMock,
         $this->apiActivistCodesMock,
         $this->requestStackMock,

@@ -14,7 +14,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpReports;
   use Drupal\nlpservices\NlpSearchBar;
   use Drupal\nlpservices\NlpSessionData;
-  use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoterListDisplay;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
@@ -26,7 +25,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpSessionData $sessionMock;
     private PrivateTempStoreFactory $tempStoreFactoryMock;
     private PrivateTempStore $tempStoreMock;
-    private NlpTurfs $turfsMock;
     private NlpSearchBar $searchBarMock;
     private NlpVoterListDisplay $voterListDisplayMock;
     private MessengerInterface $messengerMock;
@@ -41,7 +39,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->tempStoreFactoryMock->method('get')
         ->with('nlpservices.session_data')
         ->willReturn($this->tempStoreMock);
-      $this->turfsMock            = $this->createMock(NlpTurfs::class);
       $this->searchBarMock        = $this->createMock(NlpSearchBar::class);
       $this->voterListDisplayMock = $this->createMock(NlpVoterListDisplay::class);
       $this->messengerMock        = $this->createMock(MessengerInterface::class);
@@ -76,7 +73,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->reportsMock,
         $this->sessionMock,
         $this->tempStoreFactoryMock,
-        $this->turfsMock,
         $this->searchBarMock,
         $this->voterListDisplayMock,
       );

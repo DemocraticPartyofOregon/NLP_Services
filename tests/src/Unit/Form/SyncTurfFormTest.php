@@ -13,7 +13,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpSyncTurfBuilder;
   use Drupal\nlpservices\NlpNlsListDisplay;
-  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
   use Drupal\nlpservices\ApiMapRegions;
@@ -33,7 +32,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpTurfs $turfsMock;
     private NlpSyncTurfBuilder $syncTurfBuilderMock;
     private NlpNlsListDisplay $nlsListDisplayMock;
-    private NlpConfiguration $configurationMock;
     private NlpSessionData $sessionDataMock;
     private NlpTurfListDisplayVoteBuilder $turfListDisplayMock;
     private ApiMapRegions $mapRegionsMock;
@@ -49,7 +47,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->turfsMock          = $this->createMock(NlpTurfs::class);
       $this->syncTurfBuilderMock = $this->createMock(NlpSyncTurfBuilder::class);
       $this->nlsListDisplayMock = $this->createMock(NlpNlsListDisplay::class);
-      $this->configurationMock  = $this->createMock(NlpConfiguration::class);
       $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
       $this->turfListDisplayMock = $this->createMock(NlpTurfListDisplayVoteBuilder::class);
       $this->mapRegionsMock     = $this->createMock(ApiMapRegions::class);
@@ -90,7 +87,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->turfsMock,
         $this->syncTurfBuilderMock,
         $this->nlsListDisplayMock,
-        $this->configurationMock,
         $this->sessionDataMock,
         $this->turfListDisplayMock,
         $this->mapRegionsMock,

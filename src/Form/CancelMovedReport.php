@@ -7,9 +7,6 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\nlpservices\NlpSearchBar;
-//use Drupal\nlpservices\NlpTurfDisplay;
-//use Drupal\nlpservices\NlpVoterDisplay;
-use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpVoters;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpReports;
@@ -28,19 +25,16 @@ class CancelMovedReport extends FormBase
   protected NlpReports $reportsObj;
   protected NlpSessionData $sessionObj;
   protected PrivateTempStoreFactory $privateTempstoreObj;
-  protected NlpTurfs $turfsObj;
   protected NlpSearchBar $searchBarObj;
-  //protected NlpVoterDisplay $voterDisplayObj;
   protected NlpVoterListDisplay $voterListDisplayObj;
   
   public function __construct($votersObj, $reportsObj, $sessionObj, $privateTempstoreObj,
-                              $turfsObj, $searchBarObj, $voterListDisplayObj )
+                              $searchBarObj, $voterListDisplayObj )
   {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->sessionObj = $sessionObj;
     $this->privateTempstoreObj = $privateTempstoreObj;
-    $this->turfsObj = $turfsObj;
     $this->searchBarObj = $searchBarObj;
     $this->voterListDisplayObj = $voterListDisplayObj;
   }
@@ -55,7 +49,6 @@ class CancelMovedReport extends FormBase
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.session_data'),
       $container->get('tempstore.private'),
-      $container->get('nlpservices.turfs'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.voter_list_display'),
     );

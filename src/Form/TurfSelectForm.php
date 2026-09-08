@@ -82,7 +82,6 @@ class TurfSelectForm extends FormBase
     $turfIndex = $this->sessionDataObj->get('turfIndex');
     $turfNames = $this->turfObj->createTurfNames($turfArray);
     $form_state->set('$turfNames',$turfNames);
-    //nlp_debug_msg('$turfNames',$turfNames);
     reset($turfNames);
     $firstTurfIndex = key($turfNames);
     $defaultTurfIndex = (empty($turfIndex) || empty($turfNames[$turfIndex]))?$firstTurfIndex:$turfIndex;

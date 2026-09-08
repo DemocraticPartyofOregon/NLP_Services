@@ -18,7 +18,6 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
-use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpEncryption;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -45,7 +44,6 @@ class ReassignMcidFormTest extends UnitTestCase {
   private NlpReports $reportsMock;
   private NlpTurfAssignments $turfAssignmentsMock;
   private NlpTurfs $turfsMock;
-  private NlpVoters $votersMock;
   private NlpNls $nlsMock;
   private MagicWord $magicWordMock;
 
@@ -61,7 +59,6 @@ class ReassignMcidFormTest extends UnitTestCase {
     $this->reportsMock         = $this->createMock(NlpReports::class);
     $this->turfAssignmentsMock = $this->createMock(NlpTurfAssignments::class);
     $this->turfsMock           = $this->createMock(NlpTurfs::class);
-    $this->votersMock          = $this->createMock(NlpVoters::class);
     $this->nlsMock             = $this->createMock(NlpNls::class);
     $this->magicWordMock       = $this->createMock(MagicWord::class);
 
@@ -89,7 +86,6 @@ class ReassignMcidFormTest extends UnitTestCase {
       $this->legFixesMock,
       $this->reportsMock,
       $this->turfsMock,
-      $this->votersMock,
       $this->nlsMock,
       $this->magicWordMock,
       $this->turfAssignmentsMock,

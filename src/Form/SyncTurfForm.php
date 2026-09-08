@@ -16,7 +16,6 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\nlpservices\NlpSyncTurfBuilder;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
 use Drupal\nlpservices\ApiMapRegions;
 use Drupal\nlpservices\Batch\SyncTurfBatch;
@@ -29,7 +28,6 @@ class SyncTurfForm extends FormBase {
   protected NlpTurfs $turfsObj;
   protected NlpSyncTurfBuilder $syncTurfBuilderObj;
   protected NlpNlsListDisplay $nlsListDisplayObj;
-  protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
   protected NlpTurfListDisplayVoteBuilder $turfListDisplayObj;
   protected ApiMapRegions $mapRegionsObj;
@@ -37,7 +35,7 @@ class SyncTurfForm extends FormBase {
 
   public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
                                 $syncTurfBuilderObj, $nlsListDisplayObj,
-                                $nlpConfigurationObj, $nlpSessionDataObj, $turfListDisplayObj,
+                                $nlpSessionDataObj, $turfListDisplayObj,
                                 $mapRegionsObj, $requestStack, $turfStatusObj ) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
@@ -45,7 +43,6 @@ class SyncTurfForm extends FormBase {
     $this->turfsObj = $turfsObj;
     $this->syncTurfBuilderObj = $syncTurfBuilderObj;
     $this->nlsListDisplayObj = $nlsListDisplayObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->turfListDisplayObj = $turfListDisplayObj;
     $this->mapRegionsObj = $mapRegionsObj;
@@ -65,7 +62,6 @@ class SyncTurfForm extends FormBase {
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.sync_turf_builder'),
       $container->get('nlpservices.nls_list_display'),
-      $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_list_display_votebuilder'),
       $container->get('nlpservices.api_map_regions'),

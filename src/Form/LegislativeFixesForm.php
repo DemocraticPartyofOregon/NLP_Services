@@ -187,7 +187,6 @@ class LegislativeFixesForm extends FormBase
         foreach ($values['fix_delete'] as $selection) {
           if ($selection != '') {
             $fs_mcid = $existingFixes[$selection]['mcid'];
-            //$fs_county = $existingFixes[$selection]['county'];
             $this->legFixes->deleteLegFix($fs_mcid);
           }
         }

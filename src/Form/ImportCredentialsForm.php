@@ -51,7 +51,7 @@ class ImportCredentialsForm extends FormBase
    */
   public function getFormId(): string
   {
-    return 'nlpservices_import_table_form';
+    return 'nlpservices_import_credentials_form';
   }
   
   /**

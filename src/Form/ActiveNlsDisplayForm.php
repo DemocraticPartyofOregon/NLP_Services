@@ -14,7 +14,6 @@ use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpNlsListDisplay;
 use Drupal\nlpservices\NlpAwards;
 use Drupal\nlpservices\NlpSessionData;
-use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\ApiSurveyQuestion;
 use Drupal\nlpservices\ApiActivistCodes;
 
@@ -31,12 +30,11 @@ class ActiveNlsDisplayForm extends FormBase
   protected NlpSearchBar $searchBarObj;
   protected NlpAwards $awardsObj;
   protected NlpSessionData $sessionDataObj;
-  protected NlpConfiguration $nlpConfigurationObj;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected ApiActivistCodes $apiActivistCodesObj;
   public function __construct( $votersObj, $reportsObj, $nlsObj, $turfsObj,
                                $searchBarObj, $nlsListDisplayObj, $awardsObj, $sessionDataObj,
-                               $nlpConfigurationObj, $apiSurveyQuestionObj, $apiActivistCodesObj,
+                               $apiSurveyQuestionObj, $apiActivistCodesObj,
                                $requestStack) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
@@ -46,7 +44,6 @@ class ActiveNlsDisplayForm extends FormBase
     $this->nlsListDisplayObj = $nlsListDisplayObj;
     $this->awardsObj = $awardsObj;
     $this->sessionDataObj = $sessionDataObj;
-    $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
     $this->apiActivistCodesObj = $apiActivistCodesObj;
     $this->requestStack = $requestStack;
@@ -66,7 +63,6 @@ class ActiveNlsDisplayForm extends FormBase
       $container->get('nlpservices.nls_list_display'),
       $container->get('nlpservices.awards'),
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.configuration'),
       $container->get('nlpservices.survey_question'),
       $container->get('nlpservices.activist_codes'),
       $container->get('request_stack'),
@@ -348,7 +344,6 @@ class ActiveNlsDisplayForm extends FormBase
    */
   function processAsk($mcid,$askStatus): void
   {
-    //nlp_debug_msg('processAsk',"$mcid,$askStatus");
     $currentStatus = $this->nlsObj->getNlsStatus($mcid);
     $status = $currentStatus;
     $status['asked'] = $askStatus;

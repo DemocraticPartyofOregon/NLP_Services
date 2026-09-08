@@ -3,7 +3,6 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
-//use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -230,7 +229,6 @@ class DataEntryForm extends FormBase
     $elementClicked = $triggeringElement['#name'];
 
     $values = $form_state->getValues();
-    //nlp_debug_msg('$values',$values);
     $newCanvassDate = (!empty($values['canvassDate']))?$values['canvassDate']:'';
 
     $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
@@ -418,7 +416,6 @@ class DataEntryForm extends FormBase
                 $report['text'] = $homePhone;
                 $report['cycle'] = $this->nlpConfigurationObj->getCycle();
                 $report['type'] = 'Change';
-                //nlp_debug_msg('result',$report);
                 $this->reportsObj->setNlReport($report);
 
                 $newPhoneNumber = [
@@ -433,7 +430,6 @@ class DataEntryForm extends FormBase
                 $messenger = Drupal::messenger();
                 $email = $action['updateContact']['newContact'];                $voterName = $action['firstName'] . ' ' . $action['lastName'];
 
-                //nlp_debug_msg('$email',$email);
                 if(empty($email))  {
                   $messenger->addWarning('You must enter a new email, Voter is '.$voterName);
                   break;
