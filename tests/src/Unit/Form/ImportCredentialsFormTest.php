@@ -117,7 +117,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testGetFormIdReturnsExpectedId(): void {
-      $this->assertSame('nlpservices_import_table_form', $this->buildForm()->getFormId());
+      $this->assertSame('nlpservices_import_credentials_form', $this->buildForm()->getFormId());
     }
 
     // -------------------------------------------------------------------------

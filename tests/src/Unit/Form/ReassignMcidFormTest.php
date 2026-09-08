@@ -97,7 +97,7 @@ class ReassignMcidFormTest extends UnitTestCase {
   private function submitState(): FormState {
     $state = new FormState();
     $state->set('previousId', self::PREV_ID);
-    $state->set('newVanid', self::NEW_ID);
+    $state->set('newId', self::NEW_ID);
     return $state;
   }
 
@@ -132,8 +132,8 @@ class ReassignMcidFormTest extends UnitTestCase {
   public function testBuildFormContainsSubmitButton(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-    $this->assertArrayHasKey('repairVanid', $form);
-    $this->assertSame('submit', $form['repairVanid']['#type']);
+    $this->assertArrayHasKey('repairMcid', $form);
+    $this->assertSame('submit', $form['repairMcid']['#type']);
   }
 
   // -------------------------------------------------------------------------
@@ -153,7 +153,7 @@ class ReassignMcidFormTest extends UnitTestCase {
     $this->assertSame('123456789', $formState->get('previousId'));
   }
 
-  public function testValidateFormStoresNewVanidInFormState(): void {
+  public function testValidateFormStoresNewIdInFormState(): void {
     $formState = new FormState();
     $formState->setValue('previousId', '123456789');
     $formState->setValue('newId', '987654321');
@@ -163,7 +163,7 @@ class ReassignMcidFormTest extends UnitTestCase {
     $form = [];
     $this->buildFormInstance()->validateForm($form, $formState);
 
-    $this->assertSame('987654321', $formState->get('newVanid'));
+    $this->assertSame('987654321', $formState->get('newId'));
   }
 
   public function testValidateFormPreviousIdWrongLengthSetsError(): void {

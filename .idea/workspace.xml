@@ -9,25 +9,8 @@
   <component name="ChangeListManager">
     <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove dead code">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ActiveNlsDisplayForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CancelMovedReport.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/CoordinatorsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DeleteCoordinatorForm.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ImportCredentialsForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LegislativeFixesForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LegislativeFixesForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/LoginCredentialsReminderForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/ReassignMcidForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/ReassignMcidForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/RemoveCoordinatorRoleFrom.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/RemoveCoordinatorRoleFrom.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/SyncTurfForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/TurfSelectForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/TurfSelectForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/UpdatePdfAssignmentForm.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ActiveNlsDisplayFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ActiveNlsDisplayFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/CancelMovedReportTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/CancelMovedReportTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DeleteCoordinatorFormTest.php" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ImportCredentialsFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ImportCredentialsFormTest.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/ReassignMcidFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/ReassignMcidFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/RemoveCoordinatorRoleFromTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/RemoveCoordinatorRoleFromTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -500,15 +483,7 @@
       <workItem from="1788538162987" duration="7550000" />
       <workItem from="1788581652935" duration="137000" />
       <workItem from="1788581877309" duration="4697000" />
-      <workItem from="1788587194653" duration="36318000" />
-    </task>
-    <task id="LOCAL-00183" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784782427189</created>
-      <option name="number" value="00183" />
-      <option name="presentableId" value="LOCAL-00183" />
-      <option name="project" value="LOCAL" />
-      <updated>1784782427189</updated>
+      <workItem from="1788587194653" duration="37101000" />
     </task>
     <task id="LOCAL-00184" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
       <option name="closed" value="true" />
@@ -894,7 +869,15 @@
       <option name="project" value="LOCAL" />
       <updated>1788816876563</updated>
     </task>
-    <option name="localTasksCounter" value="232" />
+    <task id="LOCAL-00232" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788837533765</created>
+      <option name="number" value="00232" />
+      <option name="presentableId" value="LOCAL-00232" />
+      <option name="project" value="LOCAL" />
+      <updated>1788837533765</updated>
+    </task>
+    <option name="localTasksCounter" value="233" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
