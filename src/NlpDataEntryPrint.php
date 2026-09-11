@@ -671,7 +671,6 @@ Microsoft Word and edited or printed.</p></div>";
   public function buildWalksheetPage( int $turfIndex ): array
   {
     $walksheetData = $this->createWalksheetObj->createWalksheetArray($turfIndex);
-    nlp_debug_msg('walksheetData',$walksheetData);
     if(empty($walksheetData)) {
       return [
         '#markup' => '<p>No walksheet data available.</p>',
