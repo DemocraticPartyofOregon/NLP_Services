@@ -932,6 +932,34 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
+  public function testSubmitFormOptOutOfTextingSavesReportWithVoterCellPhone(): void {
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->reportsMock->expects($this->once())
+      ->method('setNlReport')
+      ->with($this->callback(function ($report) {
+        return $report['text'] === '206-555-1234';
+      }));
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'OO', 'newContact' => ''],
+    ]);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormOptOutOfTextingMissingCellPhoneSkipsReport(): void {
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'OO', 'newContact' => ''],
+    ]);
+    $voterArrays = $formState->get('voterArrays');
+    $voterArrays[99999]['cellPhone'] = '';
+    $formState->set('voterArrays', $voterArrays);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
   public function testSubmitFormBadHomeCallsBadPhoneWithHomePhone(): void {
     $this->dataEntryReportsMock->expects($this->once())
       ->method('badPhone')
