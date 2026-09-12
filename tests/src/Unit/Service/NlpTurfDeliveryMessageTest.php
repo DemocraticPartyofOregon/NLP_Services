@@ -14,6 +14,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private string $tempDir;
     private FileSystemInterface $fileSystemMock;
     private NlpPaths $pathsMock;
+    private ModuleExtensionList $moduleListMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -21,6 +22,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       mkdir($this->tempDir, 0777, TRUE);
       $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
       $this->pathsMock      = $this->createMock(NlpPaths::class);
+      $this->moduleListMock = $this->createMock(ModuleExtensionList::class);
     }
 
     protected function tearDown(): void {
@@ -40,15 +42,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function buildService(): NlpTurfDeliveryMessage {
-      return new NlpTurfDeliveryMessage($this->fileSystemMock, $this->pathsMock);
+      return new NlpTurfDeliveryMessage($this->fileSystemMock, $this->pathsMock, $this->moduleListMock);
     }
 
     private function setupModuleContainer(string $modulePath): void {
-      $moduleListMock = $this->createMock(ModuleExtensionList::class);
-      $moduleListMock->method('getPath')->willReturn($modulePath);
-      $container = new ContainerBuilder();
-      $container->set('extension.list.module', $moduleListMock);
-      \Drupal::setContainer($container);
+      $this->moduleListMock->method('getPath')->willReturn($modulePath);
     }
 
     // -------------------------------------------------------------------------

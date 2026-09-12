@@ -2,7 +2,7 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -14,7 +14,7 @@ class NlpTurfDeliveryMessage
   protected FileSystemInterface $fileSystem;
   protected NlpPaths $paths;
 
-  public function __construct($fileSystem, $paths) {
+  public function __construct($fileSystem, $paths, private readonly ModuleExtensionList $moduleExtensionList) {
     $this->fileSystem = $fileSystem;
     $this->paths = $paths;
   }
@@ -22,8 +22,9 @@ class NlpTurfDeliveryMessage
   public static function create(ContainerInterface $container): NlpTurfDeliveryMessage
   {
     return new static(
-      $container->get('file.system'),
-      $container->get('nlpservices_paths'),
+      $container->get('file_system'),
+      $container->get('nlpservices.paths'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -61,7 +62,7 @@ class NlpTurfDeliveryMessage
       }
     }
     if(!file_exists($fileName)) {
-      $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+      $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
       $fileName = $modulePath . '/src/Templates/' . self::TURF_DEFAULT_TEMPLATE;
       if(!file_exists($fileName)) {
         nlp_debug_msg('Turf email template missing');

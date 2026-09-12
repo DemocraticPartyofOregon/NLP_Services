@@ -14,6 +14,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   class PdfGeneratorTest extends UnitTestCase {
 
     private array $tempFiles = [];
+    private FileRepositoryInterface $repoMock;
+    private FileUrlGeneratorInterface $urlGeneratorMock;
 
     protected function tearDown(): void {
       parent::tearDown();
@@ -31,7 +33,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildGenerator(): PdfGenerator {
-      return new PdfGenerator();
+      return new PdfGenerator($this->repoMock, $this->urlGeneratorMock);
     }
 
     /**
@@ -70,10 +72,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function setupContainer(FileRepositoryInterface $repoMock, FileUrlGeneratorInterface $urlGeneratorMock): void {
-      $container = new ContainerBuilder();
-      $container->set('file.repository', $repoMock);
-      $container->set('file_url_generator', $urlGeneratorMock);
-      Drupal::setContainer($container);
+      $this->repoMock = $repoMock;
+      $this->urlGeneratorMock = $urlGeneratorMock;
     }
 
     // -------------------------------------------------------------------------

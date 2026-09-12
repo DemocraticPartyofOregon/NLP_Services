@@ -12,6 +12,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   class NlpFileFunctionsTest extends UnitTestCase {
 
+    private FileRepositoryInterface $repoMock;
+
     protected function tearDown(): void {
       parent::tearDown();
       \Drupal::setContainer(new ContainerBuilder());
@@ -22,7 +24,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): NlpFileFunctions {
-      return new NlpFileFunctions();
+      return new NlpFileFunctions($this->repoMock);
     }
 
     /**
@@ -47,26 +49,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return $mock;
     }
 
-    /** Registers a file.repository mock whose writeData() returns $fileMock. */
+    /** Sets up a file.repository mock whose writeData() returns $fileMock. */
     private function setupRepo(object $fileMock): void {
       $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->method('writeData')->willReturn($fileMock);
-      $container = new ContainerBuilder();
-      $container->set('file.repository', $repo);
-      \Drupal::setContainer($container);
+      $this->repoMock = $repo;
     }
 
-    /** Registers a file.repository mock whose writeData() throws EntityStorageException. */
+    /** Sets up a file.repository mock whose writeData() throws EntityStorageException. */
     private function setupRepoThatThrows(): void {
       $repo = $this->createMock(FileRepositoryInterface::class);
       $repo->method('writeData')->willThrowException(new EntityStorageException(''));
-      $container = new ContainerBuilder();
-      $container->set('file.repository', $repo);
-      \Drupal::setContainer($container);
+      $this->repoMock = $repo;
     }
 
     /**
-     * Registers a file.repository mock that captures the URI passed to writeData().
+     * Sets up a file.repository mock that captures the URI passed to writeData().
      * $capturedUri is set by reference after callService() runs.
      */
     private function setupRepoCapturingUri(object $fileMock, ?string &$capturedUri): void {
@@ -77,9 +75,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           return $fileMock;
         }
       );
-      $container = new ContainerBuilder();
-      $container->set('file.repository', $repo);
-      \Drupal::setContainer($container);
+      $this->repoMock = $repo;
     }
 
     // -------------------------------------------------------------------------
@@ -161,9 +157,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $repo->expects($this->once())->method('writeData')
         ->with('', $this->anything(), $this->anything())
         ->willReturn($fileMock);
-      $container = new ContainerBuilder();
-      $container->set('file.repository', $repo);
-      \Drupal::setContainer($container);
+      $this->repoMock = $repo;
       $this->callService('prefix');
     }
 

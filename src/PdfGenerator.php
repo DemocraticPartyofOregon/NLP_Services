@@ -2,13 +2,28 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\File\FileExists;
+use Drupal\file\FileRepositoryInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class PdfGenerator {
-  
+
+  public function __construct(
+    private readonly FileRepositoryInterface $fileRepository,
+    private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+  ) {}
+
+  public static function create(ContainerInterface $container): static
+  {
+    return new static(
+      $container->get('file.repository'),
+      $container->get('file_url_generator'),
+    );
+  }
+
   /**
    * generatePdf
    *
@@ -34,8 +49,7 @@ class PdfGenerator {
       ]);
     $mpdf->WriteHTML($html);
     // Create a Drupal temporary file to store the PDF.  It's deleted in a few days.
-    $file_repository = Drupal::service('file.repository');
-    $file = $file_repository->writeData('Placeholder', $tempFile, FileExists::Replace);
+    $file = $this->fileRepository->writeData('Placeholder', $tempFile, FileExists::Replace);
     if ($file) {
       $file->setTemporary();
       $file->save();
@@ -47,7 +61,7 @@ class PdfGenerator {
     }
     $mpdf->Output($file_uri, Destination::FILE);
     // Return a URL for a hyperlink to the PDF file.
-    return Drupal::service('file_url_generator')->generateAbsoluteString($file_uri);
+    return $this->fileUrlGenerator->generateAbsoluteString($file_uri);
   }
   
 }

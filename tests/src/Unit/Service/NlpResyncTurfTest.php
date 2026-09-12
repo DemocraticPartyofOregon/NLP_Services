@@ -4,6 +4,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Messenger\MessengerInterface;
+  use Drupal\Core\Routing\RouteMatchInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiExportJobs;
   use Drupal\nlpservices\ApiFolders;
@@ -42,6 +43,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpSendEmail $sendEmailMock;
     private NlpSessionData $sessionDataMock;
     private object $messengerMock;
+    private object $routeMatchMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -66,6 +68,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
       $this->messengerMock = $this->createMock(MessengerInterface::class);
+      $this->routeMatchMock = $this->createMock(RouteMatchInterface::class);
+      $this->routeMatchMock->method('getRouteName')->willReturn('some.route');
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
@@ -95,6 +99,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->sendEmailMock,
         $this->sessionDataMock,
         $this->turfAssignmentsMock,
+        $this->routeMatchMock,
       );
     }
 
@@ -116,6 +121,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           $this->sendEmailMock,
           $this->sessionDataMock,
           $this->turfAssignmentsMock,
+          $this->routeMatchMock,
         ])
         ->onlyMethods($methods)
         ->getMock();
@@ -142,6 +148,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.send_email', $this->sendEmailMock);
       $container->set('nlpservices.session_data', $this->sessionDataMock);
       $container->set('nlpservices.turf_assignments', $this->turfAssignmentsMock);
+      $container->set('current_route_match', $this->routeMatchMock);
 
       $service = NlpResyncTurf::create($container);
 

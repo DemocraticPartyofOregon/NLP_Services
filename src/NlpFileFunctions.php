@@ -2,13 +2,26 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileExists;
+use Drupal\file\FileRepositoryInterface;
 use Exception;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpFileFunctions
 {
+
+  public function __construct(
+    private readonly FileRepositoryInterface $fileRepository,
+  ) {}
+
+  public static function create(ContainerInterface $container): static
+  {
+    return new static(
+      $container->get('file.repository'),
+    );
+  }
+
   /**
    * Creates a temporary CSV file and returns its URI and file handle.
    *
@@ -23,7 +36,7 @@ class NlpFileFunctions
   {
     $uri = 'public://temp/' . $filePrefix . '-' . date('Y-m-d-H-i-s') . '.csv';
     try {
-      $file = Drupal::service('file.repository')->writeData('', $uri, FileExists::Replace);
+      $file = $this->fileRepository->writeData('', $uri, FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.', $e->getMessage());
       return false;

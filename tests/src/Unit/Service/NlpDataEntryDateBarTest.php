@@ -19,6 +19,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpDataEntryVoters $dataEntryVotersMock;
     private NlpSessionData $sessionDataMock;
     private NlpConfiguration $configMock;
+    private ModuleExtensionList $moduleListMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -28,12 +29,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->sessionDataMock     = $this->createMock(NlpSessionData::class);
       $this->configMock          = $this->createMock(NlpConfiguration::class);
 
-      $moduleListMock = $this->createMock(ModuleExtensionList::class);
-      $moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
+      $this->moduleListMock = $this->createMock(ModuleExtensionList::class);
+      $this->moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
 
       $container = new ContainerBuilder();
       $container->set('string_translation', $this->getStringTranslationStub());
-      $container->set('extension.list.module', $moduleListMock);
       \Drupal::setContainer($container);
     }
 
@@ -53,6 +53,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->dataEntryVotersMock,
         $this->sessionDataMock,
         $this->configMock,
+        $this->moduleListMock,
       );
     }
 

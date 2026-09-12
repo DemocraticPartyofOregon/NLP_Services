@@ -55,7 +55,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function buildService(): NlpNls {
-      return new NlpNls($this->connectionMock, $this->dbFunctionsMock);
+      return new NlpNls($this->connectionMock, $this->dbFunctionsMock, $this->configFactoryMock);
     }
 
     private function buildDeleteMock(): Delete {
@@ -130,6 +130,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container = new ContainerBuilder();
       $container->set('database', $this->connectionMock);
       $container->set('nlpservices.database_functions', $this->dbFunctionsMock);
+      $container->set('config.factory', $this->configFactoryMock);
 
       $service = NlpNls::create($container);
 

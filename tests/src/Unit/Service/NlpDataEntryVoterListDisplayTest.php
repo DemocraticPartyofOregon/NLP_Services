@@ -29,6 +29,7 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
   protected $nlpConfigurationMock;
   protected $sessionDataMock;
   protected $dateFormatterMock;
+  protected $moduleListMock;
   protected NlpDataEntryVoterListDisplay $service;
 
   protected function setUp(): void {
@@ -41,8 +42,8 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->dateFormatterMock    = $this->createMock(DateFormatterInterface::class);
     $this->dateFormatterMock->method('format')->willReturn('May 30');
 
-    $moduleListMock = $this->createMock(ModuleExtensionList::class);
-    $moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
+    $this->moduleListMock = $this->createMock(ModuleExtensionList::class);
+    $this->moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
 
     $loggerMock        = $this->createMock(LoggerInterface::class);
     $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
@@ -50,8 +51,6 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
 
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
-    $container->set('date.formatter', $this->dateFormatterMock);
-    $container->set('extension.list.module', $moduleListMock);
     $container->set('logger.factory', $loggerFactoryMock);
     \Drupal::setContainer($container);
 
@@ -59,6 +58,8 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
       $this->reportsMock,
       $this->nlpConfigurationMock,
       $this->sessionDataMock,
+      $this->moduleListMock,
+      $this->dateFormatterMock,
     );
   }
 

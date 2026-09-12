@@ -6,6 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiSurveyQuestion;
   use Drupal\nlpservices\DrupalUser;
+  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpImap;
   use Drupal\nlpservices\NlpMinivan;
   use Drupal\nlpservices\NlpNls;
@@ -24,6 +25,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpImap $imapMock;
     private ApiSurveyQuestion $apiSurveyQuestionMock;
     private DrupalUser $drupalUserMock;
+    private NlpConfiguration $nlpConfigurationMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -34,6 +36,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->imapMock = $this->createMock(NlpImap::class);
       $this->apiSurveyQuestionMock = $this->createMock(ApiSurveyQuestion::class);
       $this->drupalUserMock = $this->createMock(DrupalUser::class);
+      $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
     }
 
     protected function tearDown(): void {
@@ -50,6 +53,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->imapMock,
         $this->apiSurveyQuestionMock,
         $this->drupalUserMock,
+        $this->nlpConfigurationMock,
       );
     }
 
@@ -93,6 +97,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.imap', $this->imapMock);
       $container->set('nlpservices.api_survey_question', $this->apiSurveyQuestionMock);
       $container->set('nlpservices.drupal_user', $this->drupalUserMock);
+      $container->set('nlpservices.configuration', $this->nlpConfigurationMock);
 
       $service = NlpMinivan::create($container);
 

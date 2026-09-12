@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpFileFunctions $fileFunctionsMock;
     private MagicWord $magicWordMock;
     private DatabaseFunctions $dbFunctionsMock;
+    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
     private array $tempFiles = [];
 
     protected function setUp(): void {
@@ -22,6 +23,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->fileFunctionsMock = $this->createMock(NlpFileFunctions::class);
       $this->magicWordMock     = $this->createMock(MagicWord::class);
       $this->dbFunctionsMock   = $this->createMock(DatabaseFunctions::class);
+      $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
     }
 
     protected function tearDown(): void {
@@ -42,6 +44,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->fileFunctionsMock,
         $this->magicWordMock,
         $this->dbFunctionsMock,
+        $this->fileUrlGeneratorMock,
       );
     }
 
@@ -61,11 +64,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->magicWordMock->method('getCredentials')
         ->willReturnCallback(fn($mcid) => $credentialsByMcid[$mcid] ?? []);
 
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
-      $container = new ContainerBuilder();
-      $container->set('file_url_generator', $fileUrlMock);
-      \Drupal::setContainer($container);
+      $this->fileUrlGeneratorMock->method('generateAbsoluteString')->willReturn('https://example.com/file.csv');
 
       return $tmpPath;
     }

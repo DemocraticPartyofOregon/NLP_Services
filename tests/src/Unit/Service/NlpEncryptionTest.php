@@ -12,6 +12,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   class NlpEncryptionTest extends UnitTestCase {
 
     private object $keyStorageMock;
+    private object $entityTypeManagerMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -29,12 +30,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           ['secret_iv',  $secretIvEntity],
         ]);
 
-      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
-      $entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
-
-      $container = new ContainerBuilder();
-      $container->set('entity_type.manager', $entityTypeManagerMock);
-      \Drupal::setContainer($container);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
     }
 
     protected function tearDown(): void {
@@ -47,7 +44,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): NlpEncryption {
-      return new NlpEncryption();
+      return new NlpEncryption($this->entityTypeManagerMock);
     }
 
     // -------------------------------------------------------------------------
@@ -140,12 +137,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $keyStorageMock = $this->createMock(EntityStorageInterface::class);
       $keyStorageMock->method('load')->willReturn(NULL);
 
-      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
-      $entityTypeManagerMock->method('getStorage')->willReturn($keyStorageMock);
-
-      $container = new ContainerBuilder();
-      $container->set('entity_type.manager', $entityTypeManagerMock);
-      \Drupal::setContainer($container);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->willReturn($keyStorageMock);
 
       $this->assertSame('', $this->buildService()->encrypt_decrypt('encrypt', 'hello'));
     }

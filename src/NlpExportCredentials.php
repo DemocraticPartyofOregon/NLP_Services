@@ -2,7 +2,7 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpExportCredentials
@@ -11,7 +11,12 @@ class NlpExportCredentials
   protected MagicWord $magicWordObj;
   protected DatabaseFunctions $dbFunctionsObj;
 
-  public function __construct($fileFunctionsObj, $magicWordObj, $dbFunctionsObj)
+  public function __construct(
+    $fileFunctionsObj,
+    $magicWordObj,
+    $dbFunctionsObj,
+    private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+  )
   {
     $this->fileFunctionsObj = $fileFunctionsObj;
     $this->magicWordObj = $magicWordObj;
@@ -24,6 +29,7 @@ class NlpExportCredentials
       $container->get('nlpservices.file_functions'),
       $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.database_functions'),
+      $container->get('file_url_generator'),
     );
   }
 
@@ -54,7 +60,7 @@ class NlpExportCredentials
       fputcsv($fh, $reordered, escape: '');
     }
     fclose($fh);
-    $userUrl = Drupal::service('file_url_generator')->generateAbsoluteString($userUri);
+    $userUrl = $this->fileUrlGenerator->generateAbsoluteString($userUri);
     $output = "<p>The file is a list of credentials for NL users in CSV format.  It is used to move user accounts
                 and passwords to a new site.</p>";
     $output .= '<p> <a href="' . $userUrl . '">Right-click to download the user accounts file. </a></p>';

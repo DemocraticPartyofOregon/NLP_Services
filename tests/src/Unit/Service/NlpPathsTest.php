@@ -16,6 +16,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private FileSystemInterface $fileSystemMock;
     private ModuleExtensionList $moduleListMock;
+    private RequestStack $requestStack;
 
     protected function setUp(): void {
       parent::setUp();
@@ -23,16 +24,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->moduleListMock = $this->createMock(ModuleExtensionList::class);
       $this->moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
 
-      $requestStack = new RequestStack();
-      $requestStack->push(Request::create('https://example.com'));
+      $this->requestStack = new RequestStack();
+      $this->requestStack->push(Request::create('https://example.com'));
 
       $loggerMock = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
       $container = new ContainerBuilder();
-      $container->set('request_stack', $requestStack);
-      $container->set('extension.list.module', $this->moduleListMock);
       $container->set('logger.factory', $loggerFactoryMock);
       \Drupal::setContainer($container);
     }
@@ -43,12 +42,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function buildService(): NlpPaths {
-      return new NlpPaths($this->fileSystemMock);
+      return new NlpPaths($this->fileSystemMock, $this->requestStack, $this->moduleListMock);
     }
 
     public function testCreateFactoryUsesFileSystemService(): void {
       $container = new ContainerBuilder();
-      $container->set('file.system', $this->fileSystemMock);
+      $container->set('file_system', $this->fileSystemMock);
+      $container->set('request_stack', $this->requestStack);
+      $container->set('extension.list.module', $this->moduleListMock);
 
       $service = NlpPaths::create($container);
 

@@ -6,6 +6,7 @@ use Drupal\Component\Utility\Html;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class NlpNlsListDisplay
 {
@@ -16,7 +17,12 @@ class NlpNlsListDisplay
 
   private array $header = [];
 
-  public function __construct( $drupalUserObj, $coordinatorsObj, $nlsObj ) {
+  public function __construct(
+    $drupalUserObj,
+    $coordinatorsObj,
+    $nlsObj,
+    private readonly RequestStack $requestStack,
+  ) {
     $this->drupalUserObj = $drupalUserObj;
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;
@@ -28,6 +34,7 @@ class NlpNlsListDisplay
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.coordinators'),
       $container->get('nlpservices.nls'),
+      $container->get('request_stack'),
     );
   }
 
@@ -165,7 +172,7 @@ class NlpNlsListDisplay
     // ajax_form=1) would be inherited by the sort links, causing the browser's
     // subsequent GET click to be treated as AJAX and returning a JSON error.
     // Manual links with only ?sort=…&order=… keep the URLs clean.
-    $request = \Drupal::request();
+    $request = $this->requestStack->getCurrentRequest();
     $currentSort  = $request->query->get('sort', '');
     $currentOrder = $request->query->get('order', '');
     foreach ($this->header as &$cell) {

@@ -2,8 +2,8 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryDateBar
@@ -14,14 +14,15 @@ class NlpDataEntryDateBar
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
   public function __construct($turfsObj, $awardsObj,
-                              $dataEntryVotersObj, $sessionDataObj, $nlpConfigurationObj) {
+                              $dataEntryVotersObj, $sessionDataObj, $nlpConfigurationObj,
+                              private readonly ModuleExtensionList $moduleExtensionList) {
     $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->dataEntryVotersObj = $dataEntryVotersObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
-  
+
   public static function create(ContainerInterface $container): NlpDataEntryDateBar
   {
     return new static(
@@ -30,6 +31,7 @@ class NlpDataEntryDateBar
       $container->get('nlpservices.data_entry_voters'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.configuration'),
+      $container->get('extension.list.module'),
     );
   }
   
@@ -161,7 +163,7 @@ class NlpDataEntryDateBar
     $electionCount = (empty($awards['electionCount']))?0:$awards['electionCount'];
     $countPosition = ($electionCount > 9)?'double-digit':'single-digit';
     // Get the icon.
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
     $badge = "/".$modulePath."/img/nlp_award_seal_2.jpg";
     
     $form_element['award_start'] =  [
@@ -443,7 +445,7 @@ class NlpDataEntryDateBar
    */
   public function newNl(): array
   {
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
     $upArrow = $modulePath."/img/nlp_up_arrow_yellow_40.gif";
     $form_element['new_nl_info'] = [
       '#markup' =>

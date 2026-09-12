@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Routing\RouteMatchInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpResyncTurf
@@ -29,7 +30,8 @@ class NlpResyncTurf
                               $syncTurfAddVoterObj, $apiVoterObj, $nlpConfigurationObj,
                               $apiFoldersObj, $activistCodesObj, $coordinatorsObj,
                               $databaseFunctionsObj, $nlsObj, $sendEmailObj,
-                              $sessionDataObj, $turfAssignmentsObj ) {
+                              $sessionDataObj, $turfAssignmentsObj,
+                              private readonly RouteMatchInterface $routeMatch ) {
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
@@ -65,6 +67,7 @@ class NlpResyncTurf
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.turf_assignments'),
+      $container->get('current_route_match'),
     );
   }
 
@@ -259,7 +262,7 @@ class NlpResyncTurf
     if(empty($exportJob)) {
       // This should not happen and needs to be investigated.
       $msg = 'No export job found for listId: '.$listId.' in county: '.$county;
-      if (!str_contains(Drupal::routeMatch()->getRouteName(), 'system.cron')) {
+      if (!str_contains($this->routeMatch->getRouteName(), 'system.cron')) {
         nlp_debug_msg('turfResyncCheckError',$msg);
       }
       Drupal::logger('nlpservices')->notice($msg);

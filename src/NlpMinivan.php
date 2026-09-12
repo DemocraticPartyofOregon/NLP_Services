@@ -53,10 +53,11 @@ class NlpMinivan {
   protected ConfigFactoryInterface $config;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected DrupalUser $drupalUserObj;
+  protected NlpConfiguration $nlpConfigurationObj;
 
 
   public function __construct( $config, $nlpReportsObj, $voterObj, $nlsObj, $imapObj,
-                               $apiSurveyQuestionObj, $drupalUserObj ) {
+                               $apiSurveyQuestionObj, $drupalUserObj, $nlpConfigurationObj ) {
     $this->config = $config;
     $this->nlpReportsObj = $nlpReportsObj;
     $this->voterObj = $voterObj;
@@ -64,6 +65,7 @@ class NlpMinivan {
     $this->imapObj = $imapObj;
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
     $this->drupalUserObj = $drupalUserObj;
+    $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
 
   public static function create(ContainerInterface $container): NlpMinivan
@@ -76,6 +78,7 @@ class NlpMinivan {
       $container->get('nlpservices.imap'),
       $container->get('nlpservices.api_survey_question'),
       $container->get('nlpservices.drupal_user'),
+      $container->get('nlpservices.configuration'),
     );
   }
 
@@ -576,7 +579,7 @@ class NlpMinivan {
   public function processMinivanEmails(): array
   {
     $totals = array_fill_keys($this->minivanCountKeys, 0);
-    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+    $nlpConfigurationObj = $this->nlpConfigurationObj;
     $nlpHostileAC = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
     while (TRUE) {
       $items = $this->imapObj->checkEmail('minivan');
@@ -620,7 +623,7 @@ class NlpMinivan {
     $items = $this->imapObj->checkEmail('minivan');
     if(empty($items)) {return [];}  // No new emails.
 
-    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+    $nlpConfigurationObj = $this->nlpConfigurationObj;
     $nlpHostileAC = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
 
     // Each item has an attachment, but there will only be one for each email.
@@ -726,7 +729,7 @@ class NlpMinivan {
    */
   public function processMinivanQueueReports($reports,$fileType): array
   {
-    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+    $nlpConfigurationObj = $this->nlpConfigurationObj;
     $nlpHostile['activistCodeId'] = $nlpConfigurationObj->getActivistCode('NLPHostileAC');
     $allowedResponseCodes = $nlpConfigurationObj->getCanvassResponseCodes();
     $pledgeSurveyQuestion = $nlpConfigurationObj->getPledgeSurveyQuestion();

@@ -2,7 +2,7 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -36,10 +36,10 @@ class NlpNls {
   
   protected Connection $connection;
   protected DatabaseFunctions $dbFunctionsObj;
-  public function __construct( $connection, $dbFunctionsObj) {
+  public function __construct( $connection, $dbFunctionsObj, ConfigFactoryInterface $configFactory) {
     $this->connection = $connection;
     $this->dbFunctionsObj = $dbFunctionsObj;
-    $nlpConfig = Drupal::service('config.factory')->get('nlpservices.configuration');
+    $nlpConfig = $configFactory->get('nlpservices.configuration');
     $surveyQuestions = $nlpConfig->get('nlpservices_survey_questions');
     if(empty($surveyQuestions['askList'])) {
       $this->askList = $this->askOptions;
@@ -57,6 +57,7 @@ class NlpNls {
     return new static(
       $container->get('database'),
       $container->get('nlpservices.database_functions'),
+      $container->get('config.factory'),
     );
   }
   

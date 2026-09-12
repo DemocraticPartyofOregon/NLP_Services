@@ -3,7 +3,10 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileExists;
+use Drupal\file\FileRepositoryInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Render\Markup;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,7 +28,10 @@ class NlpDataEntryPrint
 
   public function __construct($nlsObj, $sessionData, $coordinators, $votersObj,
                               $turfsObj, $pathsObj, $instructionsObj, $drupalUserObj,
-                              $createWalksheetObj ) {
+                              $createWalksheetObj,
+                              private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+                              private readonly FileRepositoryInterface $fileRepository,
+                              private readonly ModuleExtensionList $moduleExtensionList ) {
     $this->nlsObj = $nlsObj;
     $this->sessionData = $sessionData;
     $this->coordinators = $coordinators;
@@ -48,7 +54,10 @@ class NlpDataEntryPrint
       $container->get('nlpservices.paths'),
       $container->get('nlpservices.instructions'),
       $container->get('nlpservices.drupal_user'),
-      $container->get('nlpservices.create_walksheet')
+      $container->get('nlpservices.create_walksheet'),
+      $container->get('file_url_generator'),
+      $container->get('file.repository'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -115,13 +124,13 @@ recent information from VoteBuilder.)</p>';
     $path = $this->pathsObj->getPath('INST',$county);
     $canvass = $instructions['canvass']['fileName'];
     if(!empty($canvass)) {
-      $canvassUrl = Drupal::service('file_url_generator')->generateAbsoluteString($path . $instructions['canvass']['fileName']);
+      $canvassUrl = $this->fileUrlGenerator->generateAbsoluteString($path . $instructions['canvass']['fileName']);
       $page .= '<p><b>Instructions for canvassing:</b> <a href="' . $canvassUrl . '" target="_blank">Click here</a></p> ';
     }
 
     $postcard = $instructions['postcard']['fileName'];
     if(!empty($postcard)) {
-      $postcardUrl = Drupal::service('file_url_generator')->generateAbsoluteString($path . $instructions['postcard']['fileName']);
+      $postcardUrl = $this->fileUrlGenerator->generateAbsoluteString($path . $instructions['postcard']['fileName']);
       $page .= '<p><b>Instructions for sending postcards:</b> <a href="' . $postcardUrl . '" target="_blank">Click here</a></p> ';
     }
 
@@ -143,7 +152,7 @@ recent information from VoteBuilder.)</p>';
     if(!empty($turf['turfPDF'])) {
       $pdfPath = $this->pathsObj->getPath('PDF',$county);
       $pdfUri = $pdfPath . $turf['turfPDF'];
-      $url = Drupal::service('file_url_generator')->generateAbsoluteString($pdfUri);
+      $url = $this->fileUrlGenerator->generateAbsoluteString($pdfUri);
       $page .=  '<p>The link below takes you to a printable document with a map and a list of voters for you to
 contact.  The document was prepared for you by your coordinator and represents the list of voters in your turf at
 the time the list was created.  If you have had this list for more than 30 days, the actual list of voters may
@@ -246,7 +255,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       '#suffix' => '</div>',
     ];
 
-    $url = Drupal::service('file_url_generator')->generateAbsoluteString($listUri);
+    $url = $this->fileUrlGenerator->generateAbsoluteString($listUri);
     $text =  "<p> * Hasn't voted yet. &nbsp; ** SMS texting optin unknown.</p></div>";
     $text .= "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
     $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
@@ -419,7 +428,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $createDate = date('Y-m-d-H-i-s', time());
     $fileType = ($type == 'call')?self::DD_CALL_FILE:self::DD_POSTCARD_FILE;
     $listUri = "public://temp/$fileType-$mcid-$createDate.html";
-    $file = Drupal::service('file.repository')->writeData('', $listUri, FileExists::Replace);
+    $file = $this->fileRepository->writeData('', $listUri, FileExists::Replace);
     $file->setTemporary();
     try {
       $file->save();
@@ -437,7 +446,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     fputs($fh, '<html lang="EN-uS"><head><title></title>');
 
     // Get the CSS file.
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
     $cssFile = $modulePath.'/css/call-print.css';
     $cssFh = fopen($cssFile, "r");
     if (!$cssFh) {
@@ -511,7 +520,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
     $page = $this->buildMailListDisplay($tableArrays);
     $listUri = $this->buildListPrint('postcard',$page,"Postcard Mailing List");
 
-    $url = Drupal::service('file_url_generator')->generateAbsoluteString($listUri);
+    $url = $this->fileUrlGenerator->generateAbsoluteString($listUri);
     $text = "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
     $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
 If you right-click on the print, you can save the table on your system.  This saved file can be read by

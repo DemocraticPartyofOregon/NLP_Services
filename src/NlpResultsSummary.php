@@ -2,9 +2,10 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\File\FileExists;
+use Drupal\file\FileRepositoryInterface;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -26,7 +27,9 @@ class NlpResultsSummary
 
   public function __construct($votersObj,$matchbacksObj,$nlsObj,$drupalUser,
                               $crosstabsObj,$reportsObj,$turfsObj, $configurationObj,
-                              $sessionObj, $htmlTextObj ) {
+                              $sessionObj, $htmlTextObj,
+                              private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+                              private readonly FileRepositoryInterface $fileRepository ) {
     $this->votersObj = $votersObj;
     $this->matchbacksObj = $matchbacksObj;
     $this->nlsObj = $nlsObj;
@@ -51,7 +54,9 @@ class NlpResultsSummary
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
-      $container->get('nlpservices.html_text')
+      $container->get('nlpservices.html_text'),
+      $container->get('file_url_generator'),
+      $container->get('file.repository'),
     );
   }
 
@@ -134,7 +139,7 @@ class NlpResultsSummary
     fclose($fh);
 
     // A link to allow the user to download the CSV file.
-    $url = Html::escape(Drupal::service('file_url_generator')->generateAbsoluteString($tempUri));
+    $url = Html::escape($this->fileUrlGenerator->generateAbsoluteString($tempUri));
     $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
     $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
     $output['result_file'] = [
@@ -184,7 +189,7 @@ class NlpResultsSummary
     fclose($fh);
 
     // A link to allow the user to download the CSV file.
-    $url = Html::escape(Drupal::service('file_url_generator')->generateAbsoluteString($tempUri));
+    $url = Html::escape($this->fileUrlGenerator->generateAbsoluteString($tempUri));
     $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
     $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
     $output['result_file'] = [
@@ -207,7 +212,7 @@ class NlpResultsSummary
     $contactDate = date('Y-m-d-H-i-s');
     $tempUri = "$tempDir/$prefix-$contactDate.csv";
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
-    $file = Drupal::service('file.repository')->writeData('', $tempUri, FileExists::Replace);
+    $file = $this->fileRepository->writeData('', $tempUri, FileExists::Replace);
     $file->setTemporary();
     try{
       $file->save();

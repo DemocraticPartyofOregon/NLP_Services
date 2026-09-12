@@ -2,8 +2,9 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -43,7 +44,12 @@ class NlpDocuments
   protected Connection $connection;
   protected NlpPaths $pathsObj;
 
-  public function __construct( $connection, $pathsObj ) {
+  public function __construct(
+    $connection,
+    $pathsObj,
+    private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+    private readonly ModuleExtensionList $moduleExtensionList,
+  ) {
     $this->connection = $connection;
     $this->pathsObj = $pathsObj;
   }
@@ -53,6 +59,8 @@ class NlpDocuments
     return new static(
       $container->get('database'),
       $container->get('nlpservices.paths'),
+      $container->get('file_url_generator'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -194,7 +202,7 @@ class NlpDocuments
 
       if (!empty($document['docFileName'])) {
         $docxUri = $docPath . $document['docFileName'];
-        $docUrl = Drupal::service('file_url_generator')->generateAbsoluteString($docxUri);
+        $docUrl = $this->fileUrlGenerator->generateAbsoluteString($docxUri);
         $doc = '(<a href="'.$docUrl.'">'.$document['docFileName'].'</a>) ';
       } else {
         $doc = '-';
@@ -202,7 +210,7 @@ class NlpDocuments
 
       if (!empty($document['pdfFileName'])) {
         $pdfUri = $docPath . $document['pdfFileName'];
-        $pdfUrl = Drupal::service('file_url_generator')->generateAbsoluteString($pdfUri);
+        $pdfUrl = $this->fileUrlGenerator->generateAbsoluteString($pdfUri);
         $pdf = '(<a href="'.$pdfUrl.'">'.$document['pdfFileName'].'</a>) ';
       } else {
         $pdf = '-';
@@ -254,7 +262,7 @@ class NlpDocuments
    */
   public function verifyDefaultDocuments(): array
   {
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
     $defaultDocuments = $this->nameList;
     $currentDocuments = $this->getDocuments();
     $missingDocuments = [];

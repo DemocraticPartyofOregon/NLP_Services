@@ -16,12 +16,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private Connection $connectionMock;
     private NlpPaths $pathsMock;
+    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
+    private ModuleExtensionList $moduleListMock;
     private array $tempDirs = [];
 
     protected function setUp(): void {
       parent::setUp();
       $this->connectionMock = $this->createMock(Connection::class);
       $this->pathsMock      = $this->createMock(NlpPaths::class);
+      $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
+      $this->moduleListMock = $this->createMock(ModuleExtensionList::class);
     }
 
     protected function tearDown(): void {
@@ -38,7 +42,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): NlpDocuments {
-      return new NlpDocuments($this->connectionMock, $this->pathsMock);
+      return new NlpDocuments(
+        $this->connectionMock, $this->pathsMock, $this->fileUrlGeneratorMock, $this->moduleListMock,
+      );
     }
 
     private function buildSelectMock(\ArrayObject $rows): Select {
@@ -69,19 +75,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function setupContainerWithFileUrlGenerator(): void {
-      $fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlGeneratorMock->method('generateAbsoluteString')->willReturn('https://example.com/file');
-      $container = new ContainerBuilder();
-      $container->set('file_url_generator', $fileUrlGeneratorMock);
-      \Drupal::setContainer($container);
+      $this->fileUrlGeneratorMock->method('generateAbsoluteString')->willReturn('https://example.com/file');
     }
 
     private function setupContainerWithModuleList(string $modulePath): void {
-      $moduleListMock = $this->createMock(ModuleExtensionList::class);
-      $moduleListMock->method('getPath')->willReturn($modulePath);
-      $container = new ContainerBuilder();
-      $container->set('extension.list.module', $moduleListMock);
-      \Drupal::setContainer($container);
+      $this->moduleListMock->method('getPath')->willReturn($modulePath);
     }
 
     private function createTempDocsDir(array $fileNames): string {

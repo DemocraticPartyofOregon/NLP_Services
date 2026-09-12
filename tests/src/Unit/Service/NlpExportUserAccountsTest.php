@@ -19,6 +19,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private MagicWord $magicWordMock;
     private NlpNls $nlsMock;
     private ApiNls $apiNlsMock;
+    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
     private array $tempFiles = [];
 
     protected function setUp(): void {
@@ -28,6 +29,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->magicWordMock     = $this->createMock(MagicWord::class);
       $this->nlsMock           = $this->createMock(NlpNls::class);
       $this->apiNlsMock        = $this->createMock(ApiNls::class);
+      $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
     }
 
     protected function tearDown(): void {
@@ -50,6 +52,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->magicWordMock,
         $this->nlsMock,
         $this->apiNlsMock,
+        $this->fileUrlGeneratorMock,
       );
     }
 
@@ -77,11 +80,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->drupalUserMock->method('getUsers')
         ->willReturnCallback(fn($county) => $usersByCounty[$county] ?? []);
 
-      $fileUrlMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $fileUrlMock->method('generateAbsoluteString')->willReturn('https://example.com/users.csv');
-      $container = new ContainerBuilder();
-      $container->set('file_url_generator', $fileUrlMock);
-      \Drupal::setContainer($container);
+      $this->fileUrlGeneratorMock->method('generateAbsoluteString')->willReturn('https://example.com/users.csv');
 
       return $tmpPath;
     }

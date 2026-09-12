@@ -24,12 +24,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private ClientInterface $clientMock;
     private NlpConfiguration $configurationMock;
     private ApiKeyManagement $apiKeyManagementMock;
+    private RouteMatchInterface $routeMatchMock;
 
     protected function setUp(): void {
       parent::setUp();
       $this->clientMock           = $this->createMock(ClientInterface::class);
       $this->configurationMock    = $this->createMock(NlpConfiguration::class);
       $this->apiKeyManagementMock = $this->createMock(ApiKeyManagement::class);
+      $this->routeMatchMock       = $this->createMock(RouteMatchInterface::class);
+      $this->routeMatchMock->method('getRouteName')->willReturn('some.route');
 
       $loggerMock        = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
@@ -53,6 +56,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->clientMock,
         $this->configurationMock,
         $this->apiKeyManagementMock,
+        $this->routeMatchMock,
       );
     }
 
@@ -62,6 +66,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           $this->clientMock,
           $this->configurationMock,
           $this->apiKeyManagementMock,
+          $this->routeMatchMock,
         ])
         ->onlyMethods(['getApiFolders'])
         ->getMock();
@@ -93,13 +98,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       );
     }
 
-    private function addRouteMatchToContainer(string $routeName = 'some.route'): void {
-      $container = \Drupal::getContainer();
-      $routeMatchMock = $this->createMock(RouteMatchInterface::class);
-      $routeMatchMock->method('getRouteName')->willReturn($routeName);
-      $container->set('current_route_match', $routeMatchMock);
-    }
-
     private function addMessengerToContainer(): MessengerInterface {
       $container = \Drupal::getContainer();
       $messengerMock = $this->createMock(MessengerInterface::class);
@@ -120,7 +118,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiFoldersReturnsEmptyOn404(): void {
       $this->stubKeyValues();
-      $this->addRouteMatchToContainer('some.route');
       $this->clientMock->method('request')->willThrowException($this->makeRequestException(404));
 
       $this->assertSame([], $this->buildService()->getApiFolders('TEST', 0, 55));

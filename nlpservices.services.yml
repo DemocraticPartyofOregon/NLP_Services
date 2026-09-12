@@ -18,7 +18,7 @@ services:
 
   nlpservices.api_folders:
     class: Drupal\nlpservices\ApiFolders
-    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management', '@current_route_match' ]
 
   nlpservices.api_key_verification:
     class: Drupal\nlpservices\ApiKeyVerification
@@ -27,7 +27,7 @@ services:
 
   nlpservices.api_key_management:
     class: Drupal\nlpservices\ApiKeyManagement
-    arguments: [ '@nlpservices.encryption' ]
+    arguments: [ '@nlpservices.encryption', '@entity_type.manager', '@file_system' ]
 
   nlpservices.api_map_regions:
     class: Drupal\nlpservices\ApiMapRegions
@@ -52,7 +52,7 @@ services:
 
   nlpservices.folders:
     class: Drupal\nlpservices\ApiFolders
-    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
+    arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management', '@current_route_match' ]
 
   nlpservices.response_codes:
     class: Drupal\nlpservices\ApiResponseCodes
@@ -71,14 +71,15 @@ services:
 
   nlpservices.database_functions:
     class: Drupal\nlpservices\DatabaseFunctions
-    arguments: [ '@database' ]
+    arguments: [ '@database', '@module_handler' ]
 
   nlpservices.drupal_user:
     class: Drupal\nlpservices\DrupalUser
-    arguments: [ '@nlpservices.magic_word', '@request_stack' ]
+    arguments: [ '@nlpservices.magic_word', '@request_stack', '@entity_type.manager', '@current_user', '@user.auth' ]
 
   nlpservices.encryption:
     class: Drupal\nlpservices\NlpEncryption
+    arguments: [ '@entity_type.manager' ]
 
   nlpservices.email_replies:
     class: Drupal\nlpservices\NlpReplies
@@ -111,11 +112,11 @@ services:
 
   nlpservices.paths:
     class: Drupal\nlpservices\NlpPaths
-    arguments: ['@file_system']
+    arguments: ['@file_system', '@request_stack', '@extension.list.module']
 
   nlpservices.pdf_generator:
     class: Drupal\nlpservices\PdfGenerator
-    arguments: []
+    arguments: [ '@file.repository', '@file_url_generator' ]
 
   # Setup or manage
 
@@ -128,14 +129,16 @@ services:
 
   nlpservices.file_functions:
     class: Drupal\nlpservices\NlpFileFunctions
+    arguments: [ '@file.repository' ]
 
   nlpservices.export_credentials:
     class: Drupal\nlpservices\NlpExportCredentials
-    arguments: [ '@nlpservices.file_functions', '@nlpservices.magic_word', '@nlpservices.database_functions' ]
+    arguments: [ '@nlpservices.file_functions', '@nlpservices.magic_word', '@nlpservices.database_functions',
+                 '@file_url_generator' ]
 
   nlpservices.documents:
     class: Drupal\nlpservices\NlpDocuments
-    arguments: ['@database' , '@nlpservices.paths']
+    arguments: ['@database' , '@nlpservices.paths', '@file_url_generator', '@extension.list.module']
 
   nlpservices.export_nls_status:
     class: Drupal\nlpservices\NlpExportNlsStatus
@@ -151,7 +154,8 @@ services:
   nlpservices.export_user_accounts:
     class: Drupal\nlpservices\NlpExportUserAccounts
     arguments: [ '@nlpservices.file_functions', '@nlpservices.drupal_user',
-                 '@nlpservices.magic_word', '@nlpservices.nls', '@nlpservices.api_nls' ]
+                 '@nlpservices.magic_word', '@nlpservices.nls', '@nlpservices.api_nls',
+                 '@file_url_generator' ]
 
   nlpservices.instructions:
     class: Drupal\nlpservices\NlpInstructions
@@ -184,11 +188,11 @@ services:
                  '@nlpservices.nls', '@nlpservices.drupal_user',
                  '@nlpservices.crosstab_counts', '@nlpservices.reports',
                  '@nlpservices.turfs', '@nlpservices.configuration', '@nlpservices.session_data',
-                 '@nlpservices.html_text']
+                 '@nlpservices.html_text', '@file_url_generator', '@file.repository']
 
   nlpservices.turf_delivery_message:
     class: Drupal\nlpservices\NlpTurfDeliveryMessage
-    arguments: [ '@file_system' , '@nlpservices.paths' ]
+    arguments: [ '@file_system' , '@nlpservices.paths', '@extension.list.module' ]
 
 
   # Operational services
@@ -238,18 +242,19 @@ services:
   nlpservices.data_entry_date_bar:
     class: Drupal\nlpservices\NlpDataEntryDateBar
     arguments: [ '@nlpservices.turfs', '@nlpservices.awards' , '@nlpservices.data_entry_voters',
-                 '@nlpservices.session_data', '@nlpservices.configuration' ]
+                 '@nlpservices.session_data', '@nlpservices.configuration', '@extension.list.module' ]
 
   nlpservices.data_entry_helper:
     class: Drupal\nlpservices\NlpDataEntryHelper
-    arguments: [ '@nlpservices.matchbacks', '@nlpservices.configuration' ]
+    arguments: [ '@nlpservices.matchbacks', '@nlpservices.configuration', '@extension.list.module' ]
 
   nlpservices.data_entry_print:
     class: Drupal\nlpservices\NlpDataEntryPrint
     arguments: [ '@nlpservices.nls' , '@nlpservices.session_data',
                  '@nlpservices.coordinators', '@nlpservices.voters',
                  '@nlpservices.turfs', '@nlpservices.paths', '@nlpservices.instructions',
-                 '@nlpservices.drupal_user', '@nlpservices.create_walksheet' ]
+                 '@nlpservices.drupal_user', '@nlpservices.create_walksheet',
+                 '@file_url_generator', '@file.repository', '@extension.list.module' ]
 
   nlpservices.data_entry_reports:
     class: Drupal\nlpservices\NlpDataEntryReports
@@ -263,7 +268,8 @@ services:
 
   nlpservices.data_entry_voter_list_display:
     class: Drupal\nlpservices\NlpDataEntryVoterListDisplay
-    arguments: [ '@nlpservices.reports', '@nlpservices.configuration', '@nlpservices.session_data' ]
+    arguments: [ '@nlpservices.reports', '@nlpservices.configuration', '@nlpservices.session_data',
+                 '@extension.list.module', '@date.formatter' ]
 
   nlpservices.matchbacks:
     class: Drupal\nlpservices\NlpMatchbacks
@@ -272,15 +278,16 @@ services:
   nlpservices.minivan:
     class: Drupal\nlpservices\NlpMinivan
     arguments: [ '@config.factory' , '@nlpservices.reports' , '@nlpservices.voters', '@nlpservices.nls',
-                 '@nlpservices.imap', '@nlpservices.survey_question', '@nlpservices.drupal_user' ]
+                 '@nlpservices.imap', '@nlpservices.survey_question', '@nlpservices.drupal_user',
+                 '@nlpservices.configuration' ]
 
   nlpservices.nls:
     class: Drupal\nlpservices\NlpNls
-    arguments: [ '@database', '@nlpservices.database_functions' ]
+    arguments: [ '@database', '@nlpservices.database_functions', '@config.factory' ]
 
   nlpservices.nls_list_display:
     class: Drupal\nlpservices\NlpNlsListDisplay
-    arguments: [ '@nlpservices.drupal_user', '@nlpservices.coordinators', '@nlpservices.nls' ]
+    arguments: [ '@nlpservices.drupal_user', '@nlpservices.coordinators', '@nlpservices.nls', '@request_stack' ]
 
   nlpservices.resync_turf:
     class: Drupal\nlpservices\NlpResyncTurf
@@ -288,7 +295,7 @@ services:
                  '@nlpservices.sync_turf_add_voter', '@nlpservices.api_voter', '@nlpservices.configuration',
                  '@nlpservices.api_folders', '@nlpservices.activist_codes', '@nlpservices.coordinators',
                  '@nlpservices.database_functions', '@nlpservices.nls', '@nlpservices.send_email',
-                 '@nlpservices.session_data', '@nlpservices.turf_assignments' ]
+                 '@nlpservices.session_data', '@nlpservices.turf_assignments', '@current_route_match' ]
 
   nlpservices.search_bar:
     class: Drupal\nlpservices\NlpSearchBar

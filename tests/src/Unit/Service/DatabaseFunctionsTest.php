@@ -6,20 +6,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Database\Query\Merge;
   use Drupal\Core\Database\Query\Select;
   use Drupal\Core\Database\StatementInterface;
+  use Drupal\Core\Extension\ModuleHandlerInterface;
   use Drupal\nlpservices\DatabaseFunctions;
   use Drupal\Tests\UnitTestCase;
 
   class DatabaseFunctionsTest extends UnitTestCase {
 
     private Connection $connectionMock;
+    private object $moduleHandlerMock;
 
     protected function setUp(): void {
       parent::setUp();
       $this->connectionMock = $this->createMock(Connection::class);
+      $this->moduleHandlerMock = $this->createMock(ModuleHandlerInterface::class);
     }
 
     private function buildDatabaseFunctions(): DatabaseFunctions {
-      return new DatabaseFunctions($this->connectionMock);
+      return new DatabaseFunctions($this->connectionMock, $this->moduleHandlerMock);
     }
 
     private function buildSelectMock(StatementInterface $stmtMock): Select {

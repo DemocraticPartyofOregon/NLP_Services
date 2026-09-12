@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\File\FileUrlGeneratorInterface;
+  use Drupal\file\FileRepositoryInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\HtmlText;
   use Drupal\nlpservices\NlpConfiguration;
@@ -28,6 +30,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpConfiguration $configurationMock;
     private NlpSessionData $sessionMock;
     private HtmlText $htmlTextMock;
+    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
+    private FileRepositoryInterface $fileRepositoryMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -41,6 +45,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->configurationMock = $this->createMock(NlpConfiguration::class);
       $this->sessionMock = $this->createMock(NlpSessionData::class);
       $this->htmlTextMock = $this->createMock(HtmlText::class);
+      $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
+      $this->fileRepositoryMock = $this->createMock(FileRepositoryInterface::class);
     }
 
     private function buildService(): NlpResultsSummary {
@@ -54,7 +60,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->turfsMock,
         $this->configurationMock,
         $this->sessionMock,
-        $this->htmlTextMock
+        $this->htmlTextMock,
+        $this->fileUrlGeneratorMock,
+        $this->fileRepositoryMock,
       );
     }
 
@@ -91,6 +99,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.configuration', $this->configurationMock);
       $container->set('nlpservices.session_data', $this->sessionMock);
       $container->set('nlpservices.html_text', $this->htmlTextMock);
+      $container->set('file_url_generator', $this->fileUrlGeneratorMock);
+      $container->set('file.repository', $this->fileRepositoryMock);
 
       $service = NlpResultsSummary::create($container);
 

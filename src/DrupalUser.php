@@ -6,7 +6,10 @@ use Drupal;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\user\Entity\User;
+use Drupal\user\UserAuthInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Exception;
@@ -17,7 +20,13 @@ class DrupalUser {
   protected MagicWord $magicWordObj;
   protected RequestStack $requestStack;
 
-  public function __construct ($magicWordObj, $requestStack) {
+  public function __construct (
+    $magicWordObj,
+    $requestStack,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly AccountProxyInterface $currentUser,
+    private readonly UserAuthInterface $userAuth,
+  ) {
     $this->magicWordObj = $magicWordObj;
     $this->requestStack = $requestStack;
   }
@@ -27,6 +36,9 @@ class DrupalUser {
     return new static(
       $container->get('nlpservices.magic_word'),
       $container->get('request_stack'),
+      $container->get('entity_type.manager'),
+      $container->get('current_user'),
+      $container->get('user.auth'),
     );
   }
 
@@ -91,7 +103,7 @@ class DrupalUser {
    */
   public function getCurrentUser(): array
   {
-    $uid = Drupal::currentUser()->id();
+    $uid = $this->currentUser->id();
     $user = User::load($uid);
     return $this->extractUserInfo($user);
   }
@@ -126,7 +138,7 @@ class DrupalUser {
   public function getUserByMcid( int $mcid ): array
   {
     try {
-      $userMcid = Drupal::entityTypeManager()
+      $userMcid = $this->entityTypeManager
         ->getStorage('user')
         ->loadByProperties(['field_mcid.value' => $mcid,]);
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
@@ -149,7 +161,7 @@ class DrupalUser {
   public function getUserByName( string $userName ): array
   {
     if(empty($userName)) {return [];}
-    $users = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $userName]);
+    $users = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $userName]);
     $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
@@ -166,7 +178,7 @@ class DrupalUser {
    */
   public function getUserByEmail( string $email ): array
   {
-    $users = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['mail' => $email]);
+    $users = $this->entityTypeManager->getStorage('user')->loadByProperties(['mail' => $email]);
     $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
@@ -279,7 +291,7 @@ class DrupalUser {
     }
 
     try {
-      $newUser = Drupal::entityTypeManager()
+      $newUser = $this->entityTypeManager
         ->getStorage('user')
         ->create($values);
     } catch (InvalidPluginDefinitionException $e) {
@@ -300,7 +312,7 @@ class DrupalUser {
       return $addUserError;
     }
 
-    $newUsers = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $userName]);
+    $newUsers = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $userName]);
     $newUser = reset($newUsers);
 
     $newUser->set("field_first_name", $user['firstName']);
@@ -480,7 +492,7 @@ class DrupalUser {
    */
   public function getCounties(): array
   {
-    $query = Drupal::entityQuery('user')
+    $query = $this->entityTypeManager->getStorage('user')->getQuery()
       ->accessCheck(FALSE)
     ;
     $result = $query->execute();
@@ -505,7 +517,7 @@ class DrupalUser {
    */
   public function getUsers( string $searchCounty=''): array
   {
-    $query = Drupal::entityQuery('user')
+    $query = $this->entityTypeManager->getStorage('user')->getQuery()
       ->accessCheck(FALSE);
     if (!empty($searchCounty)) {
       $query->condition('field_county', $searchCounty);
@@ -561,7 +573,7 @@ class DrupalUser {
   public function deleteUser(int $uid ): void
   {
     try {
-      $userStorage = Drupal::entityTypeManager()->getStorage('user');
+      $userStorage = $this->entityTypeManager->getStorage('user');
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
       nlp_debug_msg('deleteUser', $e->getMessage());
       return;
@@ -587,7 +599,7 @@ class DrupalUser {
   public function verifyPassword( string $userName, string $password ): bool
   {
     if(empty($userName) || empty($password)) {return FALSE;}
-    $uid = Drupal::service('user.auth')->authenticate($userName, $password);
+    $uid = $this->userAuth->authenticate($userName, $password);
     return !empty($uid);
   }
 
@@ -602,7 +614,7 @@ class DrupalUser {
   {
     $nlpRoles = [];
     try {
-      $drupalRoles = Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
+      $drupalRoles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
         nlp_debug_msg('getNlpRoles', $e->getMessage());
         return [];
@@ -666,7 +678,7 @@ class DrupalUser {
   public function getCoordinators( string $county ): array
   {
     $userList = [];
-    $ids = Drupal::entityQuery('user')
+    $ids = $this->entityTypeManager->getStorage('user')->getQuery()
       ->accessCheck(FALSE)
       ->condition('status', 1)
       ->condition('roles', 'nlp_coordinator')

@@ -3,27 +3,35 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 class NlpPaths {
-  
+
   const string NLP_FILES = 'nlp_files';
   const string NLP_DOCUMENTS = 'nlp_documents';
   const string TURF_PDF_DIR = 'turf_pdf';
   const string INSTRUCTIONS_DIR = 'instructions';
   const string TURF_MESSAGE_DIR = 'turf_delivery_msg';
-  
+
   protected FileSystemInterface $fileSystem;
-  
-  public function __construct( $fileSystem) {
+
+  public function __construct(
+    $fileSystem,
+    private readonly RequestStack $requestStack,
+    private readonly ModuleExtensionList $moduleExtensionList,
+  ) {
     $this->fileSystem = $fileSystem;
   }
-  
+
   public static function create(ContainerInterface $container): NlpPaths
   {
     return new static(
-      $container->get('file.system'),
+      $container->get('file_system'),
+      $container->get('request_stack'),
+      $container->get('extension.list.module'),
     );
   }
   
@@ -45,7 +53,7 @@ class NlpPaths {
    */
   public function getPath(string $type, string $county='', bool $full=FALSE): string
   {
-    $baseUrl = Drupal::request()->getSchemeAndHttpHost();
+    $baseUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     $dir = $baseUrl.'/sites/default/files/'.self::NLP_FILES."/";
     if(!$full) {
       $dir = 'public://'.self::NLP_FILES."/";
@@ -65,7 +73,7 @@ class NlpPaths {
         $dir .= "docs/";
         break;
       case 'DEFAULT_DOCS':
-        $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+        $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
         $dir = $modulePath.'/docs/';
         break;
       case 'TURF':

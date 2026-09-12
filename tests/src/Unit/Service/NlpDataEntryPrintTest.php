@@ -2,6 +2,9 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\Extension\ModuleExtensionList;
+  use Drupal\Core\File\FileUrlGeneratorInterface;
+  use Drupal\file\FileRepositoryInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpCreateWalksheet;
@@ -25,6 +28,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpInstructions $instructionsMock;
     private DrupalUser $drupalUserMock;
     private NlpCreateWalksheet $createWalksheetMock;
+    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
+    private FileRepositoryInterface $fileRepositoryMock;
+    private ModuleExtensionList $moduleListMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -37,6 +43,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->instructionsMock    = $this->createMock(NlpInstructions::class);
       $this->drupalUserMock      = $this->createMock(DrupalUser::class);
       $this->createWalksheetMock = $this->createMock(NlpCreateWalksheet::class);
+      $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
+      $this->fileRepositoryMock  = $this->createMock(FileRepositoryInterface::class);
+      $this->moduleListMock      = $this->createMock(ModuleExtensionList::class);
     }
 
     // -------------------------------------------------------------------------
@@ -54,6 +63,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->instructionsMock,
         $this->drupalUserMock,
         $this->createWalksheetMock,
+        $this->fileUrlGeneratorMock,
+        $this->fileRepositoryMock,
+        $this->moduleListMock,
       );
     }
 

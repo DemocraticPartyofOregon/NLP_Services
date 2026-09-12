@@ -24,7 +24,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
 
       $container = new ContainerBuilder();
-      $container->set('nlpservices.matchbacks', $this->matchbacksMock);
       $container->set('logger.factory', $loggerFactoryMock);
       Drupal::setContainer($container);
     }
@@ -39,7 +38,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildWorker(): nlpservices_matchback_queue {
-      return new nlpservices_matchback_queue([], 'nlpservices_matchback_queue', []);
+      return new nlpservices_matchback_queue([], 'nlpservices_matchback_queue', [], $this->matchbacksMock);
     }
 
     // -------------------------------------------------------------------------

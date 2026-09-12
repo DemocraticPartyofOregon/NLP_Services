@@ -8,6 +8,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpNlsListDisplay;
   use Drupal\Tests\UnitTestCase;
+  use Symfony\Component\HttpFoundation\RequestStack;
 
   class NlpNlsListDisplayTest extends UnitTestCase {
 
@@ -30,7 +31,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container = new ContainerBuilder();
       $container->set('string_translation', $this->getStringTranslationStub());
       \Drupal::setContainer($container);
-      $this->service = new NlpNlsListDisplay($this->drupalUserMock, $this->coordinatorsMock, $this->nlsMock);
+      $this->service = new NlpNlsListDisplay(
+        $this->drupalUserMock, $this->coordinatorsMock, $this->nlsMock, new RequestStack(),
+      );
     }
 
     protected function tearDown(): void {
@@ -70,6 +73,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.drupal_user', $this->drupalUserMock);
       $container->set('nlpservices.coordinators', $this->coordinatorsMock);
       $container->set('nlpservices.nls', $this->nlsMock);
+      $container->set('request_stack', new RequestStack());
 
       $service = NlpNlsListDisplay::create($container);
 

@@ -10,6 +10,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Entity\EntityStorageInterface;
   use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Session\AccountProxyInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
   use Drupal\Tests\UnitTestCase;
@@ -23,11 +24,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private MagicWord $magicWordMock;
     private RequestStack $requestStackMock;
+    private object $entityTypeManagerMock;
+    private object $currentUserMock;
+    private object $userAuthMock;
 
     protected function setUp(): void {
       parent::setUp();
-      $this->magicWordMock    = $this->createMock(MagicWord::class);
-      $this->requestStackMock = $this->createMock(RequestStack::class);
+      $this->magicWordMock       = $this->createMock(MagicWord::class);
+      $this->requestStackMock    = $this->createMock(RequestStack::class);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->currentUserMock     = $this->createMock(AccountProxyInterface::class);
+      $this->userAuthMock        = $this->createMock(UserAuthInterface::class);
     }
 
     protected function tearDown(): void {
@@ -40,21 +47,24 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildDrupalUser(): DrupalUser {
-      return new DrupalUser($this->magicWordMock, $this->requestStackMock);
+      return new DrupalUser(
+        $this->magicWordMock,
+        $this->requestStackMock,
+        $this->entityTypeManagerMock,
+        $this->currentUserMock,
+        $this->userAuthMock,
+      );
     }
 
     /**
-     * Wires \Drupal::entityTypeManager()->getStorage('user')->loadByProperties()
+     * Wires entity_type.manager->getStorage('user')->loadByProperties()
      * to return the given result, as consumed by getUserByName()/getUserByEmail().
      */
     private function mockUserStorageResult(array $result): void {
       $storageMock = $this->createMock(EntityStorageInterface::class);
       $storageMock->method('loadByProperties')->willReturn($result);
-      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
-      $entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
-      $container = new ContainerBuilder();
-      $container->set('entity_type.manager', $entityTypeManagerMock);
-      Drupal::setContainer($container);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
     }
 
     /**
@@ -143,21 +153,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testVerifyPasswordReturnsTrueWhenAuthSucceeds(): void {
-      $authMock = $this->createMock(UserAuthInterface::class);
-      $authMock->method('authenticate')->willReturn(42);
-      $container = new ContainerBuilder();
-      $container->set('user.auth', $authMock);
-      Drupal::setContainer($container);
+      $this->userAuthMock->method('authenticate')->willReturn(42);
 
       $this->assertTrue($this->buildDrupalUser()->verifyPassword('alice.smith', 'pass5'));
     }
 
     public function testVerifyPasswordReturnsFalseWhenAuthFails(): void {
-      $authMock = $this->createMock(UserAuthInterface::class);
-      $authMock->method('authenticate')->willReturn(FALSE);
-      $container = new ContainerBuilder();
-      $container->set('user.auth', $authMock);
-      Drupal::setContainer($container);
+      $this->userAuthMock->method('authenticate')->willReturn(FALSE);
 
       $this->assertFalse($this->buildDrupalUser()->verifyPassword('alice.smith', 'wrong5'));
     }

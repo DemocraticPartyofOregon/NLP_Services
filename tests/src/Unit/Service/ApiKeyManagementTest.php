@@ -20,6 +20,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpEncryption $encryptionMock;
     private object $keyStorageMock;
     private object $entityTypeManagerMock;
+    private object $fileSystemMock;
     private ContainerBuilder $container;
 
     protected function setUp(): void {
@@ -31,12 +32,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
       $this->entityTypeManagerMock->method('getStorage')->willReturn($this->keyStorageMock);
 
+      $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
+
       $loggerMock        = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
       $this->container = new ContainerBuilder();
-      $this->container->set('entity_type.manager', $this->entityTypeManagerMock);
       $this->container->set('logger.factory', $loggerFactoryMock);
       \Drupal::setContainer($this->container);
     }
@@ -51,7 +53,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): ApiKeyManagement {
-      return new ApiKeyManagement($this->encryptionMock);
+      return new ApiKeyManagement($this->encryptionMock, $this->entityTypeManagerMock, $this->fileSystemMock);
     }
 
     private function makeKeyEntity(string $keyValue = ''): object {
@@ -67,10 +69,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function addFileSystemToContainer(): FileSystemInterface {
-      $fileSystemMock = $this->createMock(FileSystemInterface::class);
-      $fileSystemMock->method('realpath')->willReturn(sys_get_temp_dir());
-      $this->container->set('file_system', $fileSystemMock);
-      return $fileSystemMock;
+      $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
+      $this->fileSystemMock->method('realpath')->willReturn(sys_get_temp_dir());
+      return $this->fileSystemMock;
     }
 
     // -------------------------------------------------------------------------
@@ -215,9 +216,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateKeyReturnsFalseOnException(): void {
-      $fileSystemMock = $this->createMock(FileSystemInterface::class);
-      $fileSystemMock->method('realpath')->willThrowException(new Exception('FS error'));
-      $this->container->set('file_system', $fileSystemMock);
+      $this->fileSystemMock->method('realpath')->willThrowException(new Exception('FS error'));
 
       $this->assertFalse($this->buildService()->createKey('test_id', 'Test Label', 'key-value'));
     }
@@ -253,9 +252,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateKeyWithValuesReturnsFalseOnException(): void {
-      $fileSystemMock = $this->createMock(FileSystemInterface::class);
-      $fileSystemMock->method('realpath')->willThrowException(new Exception('FS error'));
-      $this->container->set('file_system', $fileSystemMock);
+      $this->fileSystemMock->method('realpath')->willThrowException(new Exception('FS error'));
 
       $this->assertFalse($this->buildService()->createKeyWithValues('test_id', 'Test Label', ['API Key' => 'key']));
     }

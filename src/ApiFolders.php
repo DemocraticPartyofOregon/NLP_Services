@@ -3,17 +3,23 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Routing\RouteMatchInterface;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use Exception;
 
 class ApiFolders {
-  
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
-  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
+  public function __construct(
+    $client,
+    $nlpConfigurationObj,
+    $apiKeyManagementObj,
+    private readonly RouteMatchInterface $routeMatch,
+  ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
@@ -58,7 +64,7 @@ class ApiFolders {
       if ($code == 404) {
         // Handle was not found error
         $msg = "Folder not found, County=$committee, FolderId=$folderId";
-        if (!str_contains(Drupal::routeMatch()->getRouteName(), 'system.cron')) {
+        if (!str_contains($this->routeMatch->getRouteName(), 'system.cron')) {
           nlp_debug_msg('getApiFolders', $msg);
         }
         Drupal::logger('nlpservices')->notice($msg);

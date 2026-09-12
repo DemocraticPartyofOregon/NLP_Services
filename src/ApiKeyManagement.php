@@ -3,6 +3,8 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -13,7 +15,11 @@ class ApiKeyManagement
   use StringTranslationTrait;
 
   protected NlpEncryption $nlpEncryptObj;
-  public function __construct($nlpEncryptObj  )
+  public function __construct(
+    $nlpEncryptObj,
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+    private readonly FileSystemInterface $fileSystem,
+  )
   {
     $this->nlpEncryptObj = $nlpEncryptObj;
   }
@@ -22,6 +28,8 @@ class ApiKeyManagement
   {
     return new static(
       $container->get('nlpservices.encryption'),
+      $container->get('entity_type.manager'),
+      $container->get('file_system'),
     );
   }
 
@@ -40,7 +48,7 @@ class ApiKeyManagement
   public function saveApiKey(string $keyId, string $apiKey): bool {
     try {
       /** @var Drupal\key\Entity\Key $key */
-      $key = Drupal::entityTypeManager()->getStorage('key')->load($keyId);
+      $key = $this->entityTypeManager->getStorage('key')->load($keyId);
       if (!$key) {
         return FALSE;
       }
@@ -67,8 +75,7 @@ class ApiKeyManagement
   {
     try {
       // Get the real filesystem path for private files
-      $fileSystem = Drupal::service('file_system');
-      $privatePath = $fileSystem->realpath('private://');
+      $privatePath = $this->fileSystem->realpath('private://');
       if (!$privatePath) {
         nlp_debug_msg('createKey', 'Private file path is not configured; see nlpservices_requirements().');
         return FALSE;
@@ -83,7 +90,7 @@ class ApiKeyManagement
       $filePath = $dir . '/' . $id . '.key';
       file_put_contents($filePath, $value);
 
-      $key = Drupal::entityTypeManager()->getStorage('key')->create([
+      $key = $this->entityTypeManager->getStorage('key')->create([
         'id' => $id,
         'label' => $label,
         'key_provider' => 'file',
@@ -113,7 +120,7 @@ class ApiKeyManagement
   {
     try {
       /** @var Drupal\key\Entity\Key $key */
-      $key = Drupal::entityTypeManager()->getStorage('key')->load($id);
+      $key = $this->entityTypeManager->getStorage('key')->load($id);
       if (!$key) {
         return '';
       }
@@ -136,7 +143,7 @@ class ApiKeyManagement
   {
     try {
       /** @var Drupal\key\Entity\Key $key */
-      $key = Drupal::entityTypeManager()->getStorage('key')->load($id);
+      $key = $this->entityTypeManager->getStorage('key')->load($id);
       if (!$key) { return FALSE;
       }
       $key->delete();
@@ -162,7 +169,7 @@ class ApiKeyManagement
     $id = (empty($id))? 'State Committee' : $id;
     try {
       /** @var Drupal\key\Entity\Key $key */
-      $key = Drupal::entityTypeManager()->getStorage('key')->load($id);
+      $key = $this->entityTypeManager->getStorage('key')->load($id);
       if (!$key) {
         Drupal::logger('nlpservices')->error('getKeyValues: no key entity found for id @id.', ['@id' => $id]);
         return [];
@@ -203,8 +210,7 @@ class ApiKeyManagement
       }
 
       // Get the real filesystem path for private files
-      $fileSystem = Drupal::service('file_system');
-      $privatePath = $fileSystem->realpath('private://');
+      $privatePath = $this->fileSystem->realpath('private://');
       if (!$privatePath) {
         nlp_debug_msg('createKeyWithValues', 'Private file path is not configured; see nlpservices_requirements().');
         return FALSE;
@@ -219,7 +225,7 @@ class ApiKeyManagement
       $filePath = $dir . '/' . $id . '.key';
       file_put_contents($filePath, json_encode($values));
 
-      $key = Drupal::entityTypeManager()->getStorage('key')->create([
+      $key = $this->entityTypeManager->getStorage('key')->create([
         'id' => $id,
         'label' => $label,
         'key_provider' => 'file',

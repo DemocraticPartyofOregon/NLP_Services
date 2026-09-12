@@ -4,7 +4,9 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\Datetime\DrupalDateTime;
+use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\Render\Markup;
 use DateTimeZone;
 use Exception;
@@ -16,7 +18,13 @@ class NlpDataEntryVoterListDisplay
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
 
-  public function __construct( $reportsObj, $nlpConfigurationObj, $nlpSessionDataObj)
+  public function __construct(
+    $reportsObj,
+    $nlpConfigurationObj,
+    $nlpSessionDataObj,
+    private readonly ModuleExtensionList $moduleExtensionList,
+    private readonly DateFormatterInterface $dateFormatter,
+  )
   {
     $this->reportsObj = $reportsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
@@ -29,6 +37,8 @@ class NlpDataEntryVoterListDisplay
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
+      $container->get('extension.list.module'),
+      $container->get('date.formatter'),
     );
   }
 
@@ -138,7 +148,7 @@ class NlpDataEntryVoterListDisplay
     if(!empty($voter['status']['voted'])) {
       $votedMsg = ' Success! <br>'.$nickname.' voted on '.Html::escape($voter['status']['voted']);
       $color = 'green';
-      $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
+      $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
       $goldStar = $modulePath."/img/nlp-gold-star_rotator-50.gif";
       $star = '<div class="star-box">
                <div class="star-img"><img alt="" src="'.$goldStar.'" ></div>
@@ -159,7 +169,7 @@ class NlpDataEntryVoterListDisplay
     ];
     $contactDate = $scriptQuestion = $response = NULL;
     $fn = $voter['nickname'];
-    $dateFormatter = Drupal::service('date.formatter');
+    $dateFormatter = $this->dateFormatter;
 
     $timeZone = date_default_timezone_get();
     try {

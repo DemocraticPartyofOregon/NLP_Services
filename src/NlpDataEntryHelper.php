@@ -2,8 +2,8 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Component\Utility\Html;
+use Drupal\Core\Extension\ModuleExtensionList;
 use DateTime;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -16,7 +16,7 @@ class NlpDataEntryHelper
   protected NlpMatchbacks $matchbacksObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct( $matchbacksObj, $nlpConfigurationObj) {
+  public function __construct( $matchbacksObj, $nlpConfigurationObj, private readonly ModuleExtensionList $moduleExtensionList) {
     $this->matchbacksObj = $matchbacksObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
@@ -26,6 +26,7 @@ class NlpDataEntryHelper
     return new static(
       $container->get('nlpservices.matchbacks'),
       $container->get('nlpservices.configuration'),
+      $container->get('extension.list.module'),
     );
   }
 
@@ -38,7 +39,7 @@ class NlpDataEntryHelper
    */
   public function dataEntryHelp(): string
   {
-    $version = Html::escape(Drupal::service('extension.list.module')->getExtensionInfo('nlpservices')['version'] ?? 0);
+    $version = Html::escape($this->moduleExtensionList->getExtensionInfo('nlpservices')['version'] ?? 0);
     $output = "<h1>NLP Services Version $version</h1>";
 
     $electionDate = Html::escape($this->nlpConfigurationObj->getElectionDate(TRUE));

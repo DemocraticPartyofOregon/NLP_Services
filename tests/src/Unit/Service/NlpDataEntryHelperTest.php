@@ -37,7 +37,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): NlpDataEntryHelper {
-      return new NlpDataEntryHelper($this->matchbacksMock, $this->configMock);
+      return new NlpDataEntryHelper($this->matchbacksMock, $this->configMock, $this->moduleListMock);
     }
 
     private function setupStandardMocks(string $latestMatchbackDate = ''): void {

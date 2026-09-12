@@ -2,16 +2,19 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Extension\ModuleHandlerInterface;
 use Exception;
 
 class DatabaseFunctions
 {
-  
+
   protected Connection $connection;
-  
-  public function __construct($connection) {
+
+  public function __construct(
+    $connection,
+    private readonly ModuleHandlerInterface $moduleHandler,
+  ) {
     $this->connection = $connection;
   }
   
@@ -122,7 +125,7 @@ class DatabaseFunctions
    */
   public function verifySchema(): array
   {
-    Drupal::moduleHandler()->loadInclude('nlpservices', 'install');
+    $this->moduleHandler->loadInclude('nlpservices', 'install');
     $schema = nlpservices_schema();
     $dbSchema = $this->connection->schema();
     $errors = [];
@@ -238,7 +241,7 @@ class DatabaseFunctions
    */
   public function repairSchema(): array
   {
-    Drupal::moduleHandler()->loadInclude('nlpservices', 'install');
+    $this->moduleHandler->loadInclude('nlpservices', 'install');
     $schema = nlpservices_schema();
     $dbSchema = $this->connection->schema();
     $log = [];

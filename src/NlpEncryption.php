@@ -2,12 +2,25 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\key\Entity\Key;
 use Exception;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpEncryption
 {
+
+  public function __construct(
+    private readonly EntityTypeManagerInterface $entityTypeManager,
+  ) {}
+
+  public static function create(ContainerInterface $container): static
+  {
+    return new static(
+      $container->get('entity_type.manager'),
+    );
+  }
+
   /**
    * encrypt_decrypt
    *
@@ -26,7 +39,7 @@ class NlpEncryption
     $method = "AES-256-CBC";
 
     try {
-      $storage = Drupal::entityTypeManager()->getStorage('key');
+      $storage = $this->entityTypeManager->getStorage('key');
       /** @var Key $keyEntity */
       $keyEntity = $storage->load('secret_key');
       /** @var Key $ivEntity */
