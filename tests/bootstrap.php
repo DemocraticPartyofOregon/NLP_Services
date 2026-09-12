@@ -6,14 +6,6 @@ if (file_exists($drupalBootstrap)) {
   require_once $drupalBootstrap;
 }
 
-// Static holder so user_load_by_* stubs can return test-controlled values.
-if (!class_exists('NlpTestGlobals')) {
-  class NlpTestGlobals {
-    public static mixed $stubUserByName = FALSE;
-    public static mixed $stubUserByMail = FALSE;
-  }
-}
-
 if (!function_exists('nlp_debug_msg')) {
   function nlp_debug_msg($msg, $values = 'EMPTY'): void {}
 }
@@ -25,16 +17,6 @@ if (!function_exists('t')) {
 }
 if (!function_exists('batch_set')) {
   function batch_set(array $batch): void {}
-}
-if (!function_exists('user_load_by_name')) {
-  function user_load_by_name(string $name): mixed {
-    return NlpTestGlobals::$stubUserByName;
-  }
-}
-if (!function_exists('user_load_by_mail')) {
-  function user_load_by_mail(string $mail): mixed {
-    return NlpTestGlobals::$stubUserByMail;
-  }
 }
 // Stand-ins for the Key module's entity/plugin shapes (drupal/key is not a
 // composer dependency here), so tests can mock a real interface instead of

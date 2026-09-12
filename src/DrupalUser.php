@@ -149,7 +149,8 @@ class DrupalUser {
   public function getUserByName( string $userName ): array
   {
     if(empty($userName)) {return [];}
-    $user = user_load_by_name($userName);
+    $users = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $userName]);
+    $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
   }
@@ -165,7 +166,8 @@ class DrupalUser {
    */
   public function getUserByEmail( string $email ): array
   {
-    $user = user_load_by_mail($email);
+    $users = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['mail' => $email]);
+    $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
   }
@@ -298,7 +300,8 @@ class DrupalUser {
       return $addUserError;
     }
 
-    $newUser = user_load_by_name($userName);
+    $newUsers = Drupal::entityTypeManager()->getStorage('user')->loadByProperties(['name' => $userName]);
+    $newUser = reset($newUsers);
 
     $newUser->set("field_first_name", $user['firstName']);
     $newUser->set("field_last_name", $user['lastName']);

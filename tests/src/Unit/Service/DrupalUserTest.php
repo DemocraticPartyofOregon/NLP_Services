@@ -1,12 +1,14 @@
 <?php
 
-// All stubs (nlp_debug_msg, user_load_by_*, constants) are provided by
-// tests/bootstrap.php.  user_load_by_* read from \NlpTestGlobals, which
-// this test controls directly.
+// All stubs (nlp_debug_msg, constants) are provided by tests/bootstrap.php.
+// Lookups against the user storage (getUserByName/getUserByEmail) go through
+// a mocked entity_type.manager service, set up via mockUserStorageResult().
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
+  use Drupal\Core\Entity\EntityStorageInterface;
+  use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
@@ -24,8 +26,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     protected function setUp(): void {
       parent::setUp();
-      \NlpTestGlobals::$stubUserByName = FALSE;
-      \NlpTestGlobals::$stubUserByMail = FALSE;
       $this->magicWordMock    = $this->createMock(MagicWord::class);
       $this->requestStackMock = $this->createMock(RequestStack::class);
     }
@@ -41,6 +41,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private function buildDrupalUser(): DrupalUser {
       return new DrupalUser($this->magicWordMock, $this->requestStackMock);
+    }
+
+    /**
+     * Wires \Drupal::entityTypeManager()->getStorage('user')->loadByProperties()
+     * to return the given result, as consumed by getUserByName()/getUserByEmail().
+     */
+    private function mockUserStorageResult(array $result): void {
+      $storageMock = $this->createMock(EntityStorageInterface::class);
+      $storageMock->method('loadByProperties')->willReturn($result);
+      $entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
+      $container = new ContainerBuilder();
+      $container->set('entity_type.manager', $entityTypeManagerMock);
+      Drupal::setContainer($container);
     }
 
     /**
@@ -157,12 +171,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetUserByNameNotFoundReturnsEmptyArray(): void {
-      \NlpTestGlobals::$stubUserByName = FALSE;
+      $this->mockUserStorageResult([]);
       $this->assertSame([], $this->buildDrupalUser()->getUserByName('nobody'));
     }
 
     public function testGetUserByNameFoundReturnsUserInfoArray(): void {
-      \NlpTestGlobals::$stubUserByName = $this->buildUserStub();
+      $this->mockUserStorageResult([$this->buildUserStub()]);
       $result = $this->buildDrupalUser()->getUserByName('alice.smith');
       $this->assertSame(10, $result['uid']);
       $this->assertSame('alice@example.com', $result['email']);
@@ -175,12 +189,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testGetUserByEmailNotFoundReturnsEmptyArray(): void {
-      \NlpTestGlobals::$stubUserByMail = FALSE;
+      $this->mockUserStorageResult([]);
       $this->assertSame([], $this->buildDrupalUser()->getUserByEmail('nobody@example.com'));
     }
 
     public function testGetUserByEmailFoundReturnsUserInfoArray(): void {
-      \NlpTestGlobals::$stubUserByMail = $this->buildUserStub();
+      $this->mockUserStorageResult([$this->buildUserStub()]);
       $result = $this->buildDrupalUser()->getUserByEmail('alice@example.com');
       $this->assertSame(10, $result['uid']);
       $this->assertSame('Alice', $result['firstName']);
@@ -241,15 +255,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testAddUserExistingUsernameReturnsExistsStatus(): void {
-      // Stub user_load_by_name to return a user so getUserByName returns non-empty.
-      \NlpTestGlobals::$stubUserByName = $this->buildUserStub();
+      // Storage returns a user so getUserByName returns non-empty.
+      $this->mockUserStorageResult([$this->buildUserStub()]);
       $result = $this->buildDrupalUser()->addUser(['userName' => 'alice.smith']);
       $this->assertSame('exists', $result['status']);
     }
 
     public function testAddUserMissingEmailReturnsNoEmailStatus(): void {
       // User does not exist, so getUserByName returns [], but email is absent.
-      \NlpTestGlobals::$stubUserByName = FALSE;
+      $this->mockUserStorageResult([]);
       $result = $this->buildDrupalUser()->addUser(['userName' => 'newuser']);
       $this->assertSame('no email', $result['status']);
     }
@@ -268,7 +282,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn('crane5');
 
       // getUserByName check inside addUser needs a controlled stub.
-      \NlpTestGlobals::$stubUserByName = FALSE;
+      $this->mockUserStorageResult([]);
 
       // addUser will fail past the email check when it hits entity manager —
       // we only care that createMagicWord was called.
