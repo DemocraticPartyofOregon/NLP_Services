@@ -365,12 +365,12 @@ class DataEntryForm extends FormBase
                 $this->dataEntryReportsObj->badPhone('homePhone',$report,$action);
                 break;
               case 'OO':  // Opt out of texting
-                if(empty($action['cellPhone'])) {
+                if(empty($voterArrays[$vanid]['cellPhone'])) {
                   $msg = var_export($action, true);
                   Drupal::logger('nlpservices')->notice('Cell phone number is missing: '.$msg);
                   break;
                 }
-                $cellPhone = $action['cellPhone'];
+                $cellPhone = $voterArrays[$vanid]['cellPhone'];
                 $report['contactType'] = 'Phone';
                 $report['text'] = $cellPhone;
                 $report['value'] = 'Opt out of texting: ';
