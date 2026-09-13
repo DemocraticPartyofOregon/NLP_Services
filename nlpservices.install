@@ -1,5 +1,7 @@
 <?php
 
+use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
+use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Extension\Requirement\RequirementSeverity;
 use Drupal\Core\File\FileSystemInterface;
@@ -15,7 +17,7 @@ use Drupal\field\Entity\FieldStorageConfig;
  *
  * @noinspection PhpUnused
  */
-function nlpservices_requirements($phase): array
+function nlpservices_requirements( string $phase ): array
 {
   $requirements = [];
 
@@ -27,12 +29,11 @@ function nlpservices_requirements($phase): array
       'severity' => RequirementSeverity::Error,
     ];
   }
-
   return $requirements;
 }
 
 /**
- * Creates the private://keys directory, if the private file path is configured.
+ * Creates the private://keys directory if the private file path is configured.
  */
 function _nlpservices_ensure_keys_directory(): void
 {
@@ -81,7 +82,12 @@ function nlpservices_update_10002(): void
     return;
   }
 
-  $storage = Drupal::entityTypeManager()->getStorage('key');
+  try {
+    $storage = Drupal::entityTypeManager()->getStorage('key');
+  } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
+    nlp_debug_msg('nlpservices_update_10002', $e->getMessage());
+    return;
+  }
   /** @var Drupal\key\Entity\Key $key */
   foreach ($storage->loadMultiple() as $key) {
     if ($key->getKeyProvider()->getPluginId() !== 'file') {
@@ -98,7 +104,11 @@ function nlpservices_update_10002(): void
     }
     $settings['file_location'] = $newLocation;
     $key->set('key_provider_settings', $settings);
-    $key->save();
+    try {
+      $key->save();
+    } catch (EntityStorageException $e) {
+      nlp_debug_msg('nlpservices_update_10002', $e->getMessage());
+    }
   }
 }
 
@@ -116,8 +126,6 @@ function nlpservices_uninstall($is_syncing): void
     'mcid',
     'hd',
     'phone',
-    //'shared_email',
-    //'turf_access',
   ];
 
   foreach ($fields as $field) {
@@ -176,6 +184,7 @@ function nlpservices_schema(): array
     ],
   ];
 
+  /** @noinspection DuplicatedCode */
   $schema['nlp_target_voter_count'] = [
     'description' => 'Target voter ballot status counts from VoteBuilder crosstab export.',
     'fields' => [
@@ -196,6 +205,7 @@ function nlpservices_schema(): array
     ],
   ];
 
+  /** @noinspection DuplicatedCode */
   $schema['nlp_all_voter_count'] = [
     'description' => 'All voter ballot status counts from VoteBuilder crosstab export.',
     'fields' => [

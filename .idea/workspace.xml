@@ -7,12 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Replace static call to methods with injection of the object.">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add inspect and repair of database table indexes">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Kernel/DatabaseFunctionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Kernel/DatabaseFunctionsTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -108,60 +106,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.000000005586477" />
-      <entry key="M2" value="1.0001243519995808" />
-      <entry key="M5" value="1.0828908261596268" />
-      <entry key="M10" value="1.79831201592067" />
-      <entry key="M15" value="2.714174158609799" />
-      <entry key="M30" value="4.698925926281188" />
-      <entry key="H1" value="6.71939091526307" />
-      <entry key="H2" value="10.944426656590217" />
-      <entry key="H4" value="21.520914001475603" />
-      <entry key="D1" value="97.03345720329278" />
-      <entry key="W1" value="561.0754802628489" />
+      <entry key="MS500" value="1.000000000000001" />
+      <entry key="S2" value="1.000178164805883" />
+      <entry key="S5" value="1.0316467245932068" />
+      <entry key="S10" value="1.1778952629869845" />
+      <entry key="S30" value="1.5625007931864157" />
+      <entry key="S60" value="1.783776045670074" />
+      <entry key="M2" value="2.5313291381256957" />
+      <entry key="M5" value="5.997128577791624" />
+      <entry key="M10" value="9.68857477291581" />
+      <entry key="M15" value="11.953177510707878" />
+      <entry key="M30" value="15.815135658105898" />
+      <entry key="H1" value="19.281646500952235" />
+      <entry key="H2" value="24.28309838992555" />
+      <entry key="H4" value="35.163837394248525" />
+      <entry key="D1" value="111.18396750233863" />
+      <entry key="W1" value="575.4082161166057" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="0.0" />
-      <entry key="S2" value="1.958557287562487E-288" />
-      <entry key="S5" value="8.256092846640056E-116" />
-      <entry key="S10" value="2.874379429933316E-58" />
-      <entry key="S30" value="7.068705670286185E-20" />
-      <entry key="S60" value="3.2543303103163504E-10" />
-      <entry key="M2" value="2.430713635879859E-5" />
-      <entry key="M5" value="0.02134930998627996" />
-      <entry key="M10" value="0.206188468545924" />
-      <entry key="M15" value="0.43951737582208156" />
-      <entry key="M30" value="0.9373414482189224" />
-      <entry key="H1" value="1.369107650232098" />
-      <entry key="H2" value="1.6547302942331636" />
-      <entry key="H4" value="1.819185400836673" />
-      <entry key="D1" value="1.9687124711809985" />
-      <entry key="W1" value="5.93707537428922" />
+      <entry key="MS500" value="7.718308214200238E-302" />
+      <entry key="S2" value="5.2708484494363495E-76" />
+      <entry key="S5" value="7.740200518689924E-31" />
+      <entry key="S10" value="8.797840938940603E-16" />
+      <entry key="S30" value="9.582055940323565E-6" />
+      <entry key="S60" value="0.0030954896123776385" />
+      <entry key="M2" value="0.05563718914853842" />
+      <entry key="M5" value="0.3168738227928645" />
+      <entry key="M10" value="0.6241440217995535" />
+      <entry key="M15" value="0.8797125121541435" />
+      <entry key="M30" value="1.45615331909379" />
+      <entry key="H1" value="2.0318133331271606" />
+      <entry key="H2" value="2.452048637755349" />
+      <entry key="H4" value="2.7077125833116886" />
+      <entry key="D1" value="2.9485652536111964" />
+      <entry key="W1" value="6.929523157390045" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.1907824011200699" />
-      <entry key="MS500" value="0.7179722553117177" />
-      <entry key="S2" value="0.9205066186324345" />
-      <entry key="S5" value="0.967410431881117" />
-      <entry key="S10" value="0.9835702475579042" />
-      <entry key="S30" value="0.9944931460784443" />
-      <entry key="S60" value="0.9972427776860977" />
-      <entry key="M2" value="0.9987674055808462" />
-      <entry key="M5" value="1.1031680708910696" />
-      <entry key="M10" value="2.0016787710411066" />
-      <entry key="M15" value="3.149855468575482" />
-      <entry key="M30" value="5.632235260840391" />
-      <entry key="H1" value="8.085542664525224" />
-      <entry key="H2" value="12.597285460524379" />
-      <entry key="H4" value="23.33894887847067" />
-      <entry key="D1" value="99.0018735576818" />
-      <entry key="W1" value="567.0123523621296" />
+      <entry key="MS100" value="4.273519659089525E-8" />
+      <entry key="MS500" value="0.03358591165173458" />
+      <entry key="S2" value="0.4282077619244573" />
+      <entry key="S5" value="0.738657666198689" />
+      <entry key="S10" value="1.00652160614577" />
+      <entry key="S30" value="1.4909014698812277" />
+      <entry key="S60" value="1.7475726357485326" />
+      <entry key="M2" value="2.5641225621520825" />
+      <entry key="M5" value="6.300079220529109" />
+      <entry key="M10" value="10.302780392173524" />
+      <entry key="M15" value="12.824402864312892" />
+      <entry key="M30" value="17.26477813154364" />
+      <entry key="H1" value="21.309014819287263" />
+      <entry key="H2" value="26.732409379691337" />
+      <entry key="H4" value="37.86992533284503" />
+      <entry key="D1" value="114.13214960250991" />
+      <entry key="W1" value="582.337523427486" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../../../../../xampp/php/php.exe">
@@ -490,15 +488,8 @@
       <workItem from="1789164402022" duration="607000" />
       <workItem from="1789240083754" duration="9339000" />
       <workItem from="1789311163780" duration="3729000" />
-      <workItem from="1789321164395" duration="2218000" />
-    </task>
-    <task id="LOCAL-00187" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784840826984</created>
-      <option name="number" value="00187" />
-      <option name="presentableId" value="LOCAL-00187" />
-      <option name="project" value="LOCAL" />
-      <updated>1784840826984</updated>
+      <workItem from="1789321164395" duration="2286000" />
+      <workItem from="1789323486505" duration="1044000" />
     </task>
     <task id="LOCAL-00188" summary="Handle empty date of birth for a voter.">
       <option name="closed" value="true" />
@@ -884,7 +875,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789254887259</updated>
     </task>
-    <option name="localTasksCounter" value="236" />
+    <task id="LOCAL-00236" summary="Add inspect and repair of database table indexes">
+      <option name="closed" value="true" />
+      <created>1789323437228</created>
+      <option name="number" value="00236" />
+      <option name="presentableId" value="LOCAL-00236" />
+      <option name="project" value="LOCAL" />
+      <updated>1789323437229</updated>
+    </task>
+    <option name="localTasksCounter" value="237" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -951,7 +950,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
     <MESSAGE value="Add document for configuring NLP Services." />
     <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
     <MESSAGE value="Save the turfId in the session data." />
@@ -976,7 +974,8 @@
     <MESSAGE value="Remove dead code" />
     <MESSAGE value="Remove depreciated functions from DrupalUser" />
     <MESSAGE value="Replace static call to methods with injection of the object." />
-    <option name="LAST_COMMIT_MESSAGE" value="Replace static call to methods with injection of the object." />
+    <MESSAGE value="Add inspect and repair of database table indexes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add inspect and repair of database table indexes" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
