@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Database\Schema;
 use Drupal\Core\Extension\ModuleHandlerInterface;
 use Exception;
 
@@ -141,6 +142,7 @@ class DatabaseFunctions
         }
         array_push($errors, ...$this->verifyFieldParameters($tableName, $fieldName, $fieldSpec));
       }
+      array_push($errors, ...$this->verifyIndexes($tableName, $tableSpec));
     }
     return $errors;
   }
@@ -177,6 +179,17 @@ class DatabaseFunctions
   }
 
   /**
+   * Resolves a schema-declared table name to the physical table name
+   * (including the connection's table prefix, if any) for use in
+   * information_schema lookups, which aren't prefixed automatically the
+   * way the query builder's {table} syntax is.
+   */
+  private function physicalTableName(string $tableName): string
+  {
+    return $this->connection->getPrefix() . $tableName;
+  }
+
+  /**
    * Checks a single live field against its schema spec.
    * Returns error strings for any parameter mismatches.
    */
@@ -188,7 +201,7 @@ class DatabaseFunctions
       $result   = $this->connection->select('information_schema.COLUMNS', 'c')
         ->fields('c', ['DATA_TYPE', 'CHARACTER_MAXIMUM_LENGTH', 'IS_NULLABLE', 'COLUMN_TYPE'])
         ->condition('c.TABLE_SCHEMA', $database)
-        ->condition('c.TABLE_NAME', $tableName)
+        ->condition('c.TABLE_NAME', $this->physicalTableName($tableName))
         ->condition('c.COLUMN_NAME', $fieldName)
         ->execute()
         ->fetchAssoc();
@@ -231,6 +244,93 @@ class DatabaseFunctions
   }
 
   /**
+   * Checks a table's primary key, unique keys, and indexes against its
+   * schema spec. Returns error strings for any mismatches.
+   */
+  private function verifyIndexes(string $tableName, array $tableSpec): array
+  {
+    $actual = $this->getIndexColumns($tableName);
+    $errors = [];
+
+    if (!empty($tableSpec['primary key'])) {
+      array_push($errors, ...$this->compareIndex($tableName, 'PRIMARY', $tableSpec['primary key'], $actual, TRUE, 'primary key'));
+    }
+
+    foreach ($tableSpec['unique keys'] ?? [] as $keyName => $fields) {
+      array_push($errors, ...$this->compareIndex($tableName, $keyName, $fields, $actual, TRUE, 'unique key'));
+    }
+
+    foreach ($tableSpec['indexes'] ?? [] as $indexName => $fields) {
+      array_push($errors, ...$this->compareIndex($tableName, $indexName, $fields, $actual, FALSE, 'index'));
+    }
+
+    return $errors;
+  }
+
+  /**
+   * Fetches the live index/key structure for a table, keyed by index name.
+   *
+   * @return array
+   *   An array of ['columns' => string[], 'unique' => bool] keyed by
+   *   MySQL index name (the primary key is always named 'PRIMARY').
+   */
+  private function getIndexColumns(string $tableName): array
+  {
+    try {
+      $options  = $this->connection->getConnectionOptions();
+      $database = $options['database'];
+      $result   = $this->connection->select('information_schema.STATISTICS', 's')
+        ->fields('s', ['INDEX_NAME', 'COLUMN_NAME', 'SEQ_IN_INDEX', 'NON_UNIQUE'])
+        ->condition('s.TABLE_SCHEMA', $database)
+        ->condition('s.TABLE_NAME', $this->physicalTableName($tableName))
+        ->orderBy('s.INDEX_NAME')
+        ->orderBy('s.SEQ_IN_INDEX')
+        ->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getIndexColumns', $e->getMessage());
+      return [];
+    }
+
+    $indexes = [];
+    do {
+      $row = $result->fetchAssoc();
+      if (empty($row)) {break;}
+      $indexes[$row['INDEX_NAME']]['columns'][] = $row['COLUMN_NAME'];
+      $indexes[$row['INDEX_NAME']]['unique'] = ((int) $row['NON_UNIQUE']) === 0;
+    } while (TRUE);
+
+    return $indexes;
+  }
+
+  /**
+   * Compares one expected key/index against the live index structure.
+   * Returns error strings for a missing key, mismatched column order, or
+   * a uniqueness mismatch.
+   */
+  private function compareIndex(string $tableName, string $indexName, array $fields, array $actualIndexes, bool $expectUnique, string $label): array
+  {
+    $prefix = "$tableName $label $indexName";
+
+    if (!isset($actualIndexes[$indexName])) {
+      return ["Missing $label: $prefix"];
+    }
+
+    $errors           = [];
+    $expectedColumns  = array_map(fn ($field) => is_array($field) ? $field[0] : $field, $fields);
+    $actualColumns    = $actualIndexes[$indexName]['columns'];
+
+    if ($expectedColumns !== $actualColumns) {
+      $errors[] = "Column mismatch for $prefix: expected [" . implode(', ', $expectedColumns) . "], got [" . implode(', ', $actualColumns) . "]";
+    }
+
+    if ($expectUnique && !$actualIndexes[$indexName]['unique']) {
+      $errors[] = "Expected $prefix to be unique but it is not";
+    }
+
+    return $errors;
+  }
+
+  /**
    * repairSchema
    *
    * Creates any missing tables and adds any missing fields found by verifySchema().
@@ -267,8 +367,76 @@ class DatabaseFunctions
           }
         }
       }
+      array_push($log, ...$this->repairIndexes($dbSchema, $tableName, $tableSpec));
     }
     return $log;
+  }
+
+  /**
+   * Creates any missing primary key/unique keys/indexes for a table, and
+   * recreates any that exist but whose columns or uniqueness don't match
+   * the schema. Returns an array of strings describing each action taken
+   * or any errors encountered.
+   */
+  private function repairIndexes(Schema $dbSchema, string $tableName, array $tableSpec): array
+  {
+    $actual = $this->getIndexColumns($tableName);
+    $log = [];
+
+    if (!empty($tableSpec['primary key'])) {
+      array_push($log, ...$this->repairIndex($dbSchema, $tableName, 'PRIMARY', $tableSpec['primary key'], $actual, TRUE, 'primary key', $tableSpec));
+    }
+
+    foreach ($tableSpec['unique keys'] ?? [] as $keyName => $fields) {
+      array_push($log, ...$this->repairIndex($dbSchema, $tableName, $keyName, $fields, $actual, TRUE, 'unique key', $tableSpec));
+    }
+
+    foreach ($tableSpec['indexes'] ?? [] as $indexName => $fields) {
+      array_push($log, ...$this->repairIndex($dbSchema, $tableName, $indexName, $fields, $actual, FALSE, 'index', $tableSpec));
+    }
+
+    return $log;
+  }
+
+  /**
+   * Adds one missing key/index, or drops and recreates one whose live
+   * columns or uniqueness don't match the schema. Leaves a key/index that
+   * already matches untouched.
+   */
+  private function repairIndex(Schema $dbSchema, string $tableName, string $indexName, array $fields, array $actualIndexes, bool $expectUnique, string $label, array $tableSpec): array
+  {
+    $prefix          = "$tableName $label $indexName";
+    $expectedColumns = array_map(fn ($field) => is_array($field) ? $field[0] : $field, $fields);
+    $exists          = isset($actualIndexes[$indexName]);
+    $matches         = $exists
+      && $actualIndexes[$indexName]['columns'] === $expectedColumns
+      && (!$expectUnique || $actualIndexes[$indexName]['unique']);
+
+    if ($matches) {
+      return [];
+    }
+
+    try {
+      if ($exists) {
+        if ($indexName === 'PRIMARY') {
+          $dbSchema->dropPrimaryKey($tableName);
+        } else {
+          $dbSchema->dropIndex($tableName, $indexName);
+        }
+      }
+      if ($indexName === 'PRIMARY') {
+        $dbSchema->addPrimaryKey($tableName, $fields);
+      } elseif ($expectUnique) {
+        $dbSchema->addUniqueKey($tableName, $indexName, $fields);
+      } else {
+        $dbSchema->addIndex($tableName, $indexName, $fields, $tableSpec);
+      }
+    } catch (Exception $e) {
+      nlp_debug_msg('repairIndexes', $e->getMessage());
+      return ["Error repairing $label $prefix: " . $e->getMessage()];
+    }
+
+    return [$exists ? "Repaired $label: $prefix" : "Added $label: $prefix"];
   }
 
   /**

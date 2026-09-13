@@ -71,6 +71,26 @@ class DatabaseFunctionsTest extends KernelTestBase {
     $this->assertSame([], $this->databaseFunctions->verifySchema());
   }
 
+  public function testRepairSchemaFixesMissingAndMismatchedIndexes(): void {
+    $schema = $this->connection->schema();
+
+    // Remove the primary key and the secondary index entirely.
+    $schema->dropPrimaryKey('nlp_ballot_count');
+    $schema->dropIndex('nlp_ballot_count', 'county');
+
+    // Recreate the secondary index with the wrong columns, so repair has
+    // to drop and recreate it rather than just add it.
+    $schema->addIndex('nlp_ballot_count', 'county', ['county'], nlpservices_schema()['nlp_ballot_count']);
+
+    $this->assertNotSame([], $this->databaseFunctions->verifySchema());
+
+    $log = $this->databaseFunctions->repairSchema();
+
+    $this->assertContains('Added primary key: nlp_ballot_count primary key PRIMARY', $log);
+    $this->assertContains('Repaired index: nlp_ballot_count index county', $log);
+    $this->assertSame([], $this->databaseFunctions->verifySchema());
+  }
+
   public function testMergeRecordInsertsThenUpdatesRealRow(): void {
     $inserted = $this->databaseFunctions->mergeRecord(
       'nlp_documents',

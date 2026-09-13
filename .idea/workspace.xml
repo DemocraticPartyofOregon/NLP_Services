@@ -7,56 +7,12 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Remove depreciated functions from DrupalUser">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Replace static call to methods with injection of the object.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.services.yml" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.services.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiFolders.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiFolders.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/DatabaseFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DatabaseFunctions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/DrupalUser.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/DrupalUser.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryDateBar.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryDateBar.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryPrint.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryVoterListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDocuments.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDocuments.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpEncryption.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpEncryption.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportCredentials.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportCredentials.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpExportUserAccounts.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpFileFunctions.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpFileFunctions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpMinivan.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpMinivan.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNls.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpNlsListDisplay.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpPaths.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpPaths.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResultsSummary.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResultsSummary.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpResyncTurf.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpResyncTurf.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpTurfDeliveryMessage.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpTurfDeliveryMessage.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/PdfGenerator.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/PdfGenerator.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_matchback_queue.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_matchback_queue.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_resync_turfs_queue.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_resync_turfs_queue.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_turf_ac_check_queue.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_turf_ac_check_queue.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_voter_ac_queue.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Plugin/QueueWorker/nlpservices_voter_ac_queue.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiFoldersTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiFoldersTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/DatabaseFunctionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/DatabaseFunctionsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/DrupalUserTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/DrupalUserTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryDateBarTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryDateBarTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryHelperTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryHelperTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryPrintTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryPrintTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVoterListDisplayTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDataEntryVoterListDisplayTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDocumentsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpDocumentsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpEncryptionTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpEncryptionTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportCredentialsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpExportUserAccountsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFileFunctionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFileFunctionsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbackQueueTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMatchbackQueueTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMinivanTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpMinivanTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsListDisplayTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsListDisplayTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpNlsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpPathsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpPathsTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResultsSummaryTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResultsSummaryTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpResyncTurfTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfDeliveryMessageTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpTurfDeliveryMessageTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/PdfGeneratorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/PdfGeneratorTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Kernel/DatabaseFunctionsTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Kernel/DatabaseFunctionsTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -113,7 +69,7 @@
     <drupalPath>C:\Users\steve\drupal-11.4.5</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26359" />
+    <option name="cachedIndexableFilesCount" value="26371" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -152,60 +108,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0000000053789875" />
-      <entry key="S2" value="1.019578071635423" />
-      <entry key="S5" value="1.6447041292367055" />
-      <entry key="S10" value="3.4686065348219186" />
-      <entry key="S30" value="7.561148374986999" />
-      <entry key="S60" value="9.475161541174508" />
-      <entry key="M2" value="10.649613424266343" />
-      <entry key="M5" value="11.437032030487533" />
-      <entry key="M10" value="11.714605707833538" />
-      <entry key="M15" value="11.81134005215275" />
-      <entry key="M30" value="12.100387011377428" />
-      <entry key="H1" value="14.181661142211201" />
-      <entry key="H2" value="20.102604570611977" />
-      <entry key="H4" value="28.126285084559207" />
-      <entry key="D1" value="92.04531525059095" />
-      <entry key="W1" value="552.4810007041602" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.000000005586477" />
+      <entry key="M2" value="1.0001243519995808" />
+      <entry key="M5" value="1.0828908261596268" />
+      <entry key="M10" value="1.79831201592067" />
+      <entry key="M15" value="2.714174158609799" />
+      <entry key="M30" value="4.698925926281188" />
+      <entry key="H1" value="6.71939091526307" />
+      <entry key="H2" value="10.944426656590217" />
+      <entry key="H4" value="21.520914001475603" />
+      <entry key="D1" value="97.03345720329278" />
+      <entry key="W1" value="561.0754802628489" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="0.0" />
-      <entry key="M30" value="7.116762259550296E-241" />
-      <entry key="H1" value="1.4601609691640684E-120" />
-      <entry key="H2" value="2.0931862186510054E-60" />
-      <entry key="H4" value="2.5502700554714736E-30" />
-      <entry key="D1" value="6.40683514685268E-5" />
-      <entry key="W1" value="4.0663190911403" />
+      <entry key="S2" value="1.958557287562487E-288" />
+      <entry key="S5" value="8.256092846640056E-116" />
+      <entry key="S10" value="2.874379429933316E-58" />
+      <entry key="S30" value="7.068705670286185E-20" />
+      <entry key="S60" value="3.2543303103163504E-10" />
+      <entry key="M2" value="2.430713635879859E-5" />
+      <entry key="M5" value="0.02134930998627996" />
+      <entry key="M10" value="0.206188468545924" />
+      <entry key="M15" value="0.43951737582208156" />
+      <entry key="M30" value="0.9373414482189224" />
+      <entry key="H1" value="1.369107650232098" />
+      <entry key="H2" value="1.6547302942331636" />
+      <entry key="H4" value="1.819185400836673" />
+      <entry key="D1" value="1.9687124711809985" />
+      <entry key="W1" value="5.93707537428922" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="9.88703714500897E-39" />
-      <entry key="MS500" value="3.037334636599946E-8" />
-      <entry key="S2" value="0.032099596758146935" />
-      <entry key="S5" value="0.8176353740082187" />
-      <entry key="S10" value="2.8838518373373008" />
-      <entry key="S30" value="7.306721828642408" />
-      <entry key="S60" value="9.338527949833832" />
-      <entry key="M2" value="10.578758423913245" />
-      <entry key="M5" value="11.408055655288887" />
-      <entry key="M10" value="11.700009610646465" />
-      <entry key="M15" value="11.801585138270886" />
-      <entry key="M30" value="12.095495911867172" />
-      <entry key="H1" value="14.179204798674036" />
-      <entry key="H2" value="20.101364672470538" />
-      <entry key="H4" value="28.125657595804697" />
-      <entry key="D1" value="92.04523186766937" />
-      <entry key="W1" value="556.5471366364869" />
+      <entry key="MS100" value="0.1907824011200699" />
+      <entry key="MS500" value="0.7179722553117177" />
+      <entry key="S2" value="0.9205066186324345" />
+      <entry key="S5" value="0.967410431881117" />
+      <entry key="S10" value="0.9835702475579042" />
+      <entry key="S30" value="0.9944931460784443" />
+      <entry key="S60" value="0.9972427776860977" />
+      <entry key="M2" value="0.9987674055808462" />
+      <entry key="M5" value="1.1031680708910696" />
+      <entry key="M10" value="2.0016787710411066" />
+      <entry key="M15" value="3.149855468575482" />
+      <entry key="M30" value="5.632235260840391" />
+      <entry key="H1" value="8.085542664525224" />
+      <entry key="H2" value="12.597285460524379" />
+      <entry key="H4" value="23.33894887847067" />
+      <entry key="D1" value="99.0018735576818" />
+      <entry key="W1" value="567.0123523621296" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../../../../../xampp/php/php.exe">
@@ -354,40 +310,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "PHPUnit.Main.executor": "Run",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.mappings": "true",
-    "WebServerToolWindowPanel.toolwindow.highlight.symlinks": "true",
-    "WebServerToolWindowPanel.toolwindow.show.date": "false",
-    "WebServerToolWindowPanel.toolwindow.show.permissions": "false",
-    "WebServerToolWindowPanel.toolwindow.show.size": "false",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "copilot.chat.legacySessionMetadata.migrated": "true",
-    "git-widget-placeholder": "NLP__Services__V7__3",
-    "git.auto.fetch.suggestion.counter": "1",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "C:/Users/steve/code/drupal-site/web/modules/custom/NLP_Services",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.jshint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.jshint": "",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "settings.php.frameworks",
-    "to.speed.mode.migration.done": "true",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ASKED_SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;PHPUnit.Main.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.mappings&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.highlight.symlinks&quot;: &quot;true&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.date&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.permissions&quot;: &quot;false&quot;,
+    &quot;WebServerToolWindowPanel.toolwindow.show.size&quot;: &quot;false&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;copilot.chat.legacySessionMetadata.migrated&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__3&quot;,
+    &quot;git.auto.fetch.suggestion.counter&quot;: &quot;1&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/code/drupal-site/web/modules/custom/NLP_Services&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\tests\fixtures" />
@@ -532,15 +488,9 @@
       <workItem from="1788587194653" duration="39140000" />
       <workItem from="1788881847450" duration="592000" />
       <workItem from="1789164402022" duration="607000" />
-      <workItem from="1789240083754" duration="6295000" />
-    </task>
-    <task id="LOCAL-00186" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784836655332</created>
-      <option name="number" value="00186" />
-      <option name="presentableId" value="LOCAL-00186" />
-      <option name="project" value="LOCAL" />
-      <updated>1784836655332</updated>
+      <workItem from="1789240083754" duration="9339000" />
+      <workItem from="1789311163780" duration="3729000" />
+      <workItem from="1789321164395" duration="2218000" />
     </task>
     <task id="LOCAL-00187" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
       <option name="closed" value="true" />
@@ -926,7 +876,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789250420027</updated>
     </task>
-    <option name="localTasksCounter" value="235" />
+    <task id="LOCAL-00235" summary="Replace static call to methods with injection of the object.">
+      <option name="closed" value="true" />
+      <created>1789254887259</created>
+      <option name="number" value="00235" />
+      <option name="presentableId" value="LOCAL-00235" />
+      <option name="project" value="LOCAL" />
+      <updated>1789254887259</updated>
+    </task>
+    <option name="localTasksCounter" value="236" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -993,7 +951,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the method of retrieving state name and county names" />
     <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
     <MESSAGE value="Add document for configuring NLP Services." />
     <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
@@ -1018,7 +975,8 @@
     <MESSAGE value="API keys are now private and outside the Drupal site" />
     <MESSAGE value="Remove dead code" />
     <MESSAGE value="Remove depreciated functions from DrupalUser" />
-    <option name="LAST_COMMIT_MESSAGE" value="Remove depreciated functions from DrupalUser" />
+    <MESSAGE value="Replace static call to methods with injection of the object." />
+    <option name="LAST_COMMIT_MESSAGE" value="Replace static call to methods with injection of the object." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

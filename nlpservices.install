@@ -170,7 +170,7 @@ function nlpservices_schema(): array
       'registeredVoters' => [ 'type' => 'int', ],
       'registeredVoted' => [ 'type' => 'int',  ],
     ],
-    'primary key' => [ 'county', 'party', ],
+    'primary key' => [ 'cd', 'county', 'party', ],
     'indexes' => [
       'county' => [ 'cd', 'county', ],
     ],
