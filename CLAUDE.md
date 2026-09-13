@@ -75,6 +75,22 @@ Two things Kernel tests need that Unit tests don't:
 
 Run the full suite (both testsuites) by invoking phpunit twice with/without these env vars — there's no single invocation that satisfies both, since the Unit suite doesn't have `drupal/core-dev`'s MySQL fixture running by default and doesn't need it.
 
+### Tier 2 API fixture tests (added 2026-09-13)
+
+The `Api*` classes (`ApiVoter`, `ApiNls`, and eventually the rest) talk to the vendor's VAN-style REST API, protected by a per-committee key the module itself encrypts and stores (via `ApiKeyManagement`/the Key module). The vendor provides a sandbox for safe testing, but nothing in this app should ever see a real key — see the design discussion that led here for the full reasoning. The approach has two tiers:
+
+- **Tier 1 (not yet built)**: live sandbox integration tests, gated by an env var holding the sandbox key, that skip themselves when the var is absent.
+- **Tier 2 (this)**: fast, network-free tests that replay a *real, previously captured* sandbox response through the class's actual parsing logic and diff the result against a frozen snapshot. This exists specifically because the pre-existing `ApiVoterTest`/`ApiNlsTest` hand-type their fake API responses (see `ApiVoterTest::baseApiResult()`) — a hand-typed array only proves the parser handles the shape a developer imagined, not the vendor's actual field casing, null patterns, or extra/missing fields.
+
+**Capturing fixtures** (`tests/bin/record-api-fixtures.php`, run via `drush scr` **on a live site** with sandbox credentials configured — never from this dev environment, which has none):
+```bash
+drush scr tests/bin/record-api-fixtures.php -- voter <vanid> [committee]
+drush scr tests/bin/record-api-fixtures.php -- nl <mcid> [committee]
+```
+It reuses the exact same `nlpservices.api_key_management`/`http_client` services `ApiVoter`/`ApiNls` already use, so the decrypted key is used entirely inside that one PHP process on the live site and is never printed, logged, or written anywhere (the script deliberately avoids echoing raw exception messages, since Guzzle's connection/auth error messages embed the full request URI — which embeds the key as HTTP Basic Auth). It writes two files per capture under `tests/fixtures/api/{voter,nl}/`: the raw sandbox response body, and a frozen snapshot of what this module's own `processVoterResult()`/`processNlResult()` (invoked via reflection, since they're private) produced for it. Both are safe to commit — sandbox data, no key, no URL.
+
+**Replaying them**: `tests/src/Unit/Service/ApiVoterFixtureReplayTest.php` and `ApiNlsFixtureReplayTest.php` glob whatever fixtures exist, mock the Guzzle client to return the raw captured body, call the real public method, and assert the result still matches the frozen snapshot. **This repo currently ships zero real fixtures** (this dev environment has no live sandbox access), so both tests skip cleanly with a message pointing at the recorder — that's expected, not a failure. Once someone runs the recorder on a live site and commits the resulting fixture files, these tests activate automatically with no code change needed. If a vendor contract change ever breaks something, re-running the recorder regenerates both files and the resulting diff shows exactly what changed.
+
 ## Key files
 
 - `nlpservices.routing.yml` — ~60+ routes; `/nlpservices-welcome` is the module's landing page (`Controller\WelcomeController`).
