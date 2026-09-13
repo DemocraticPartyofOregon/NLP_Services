@@ -7,5 +7,8 @@
       <directory>tests/src/Unit/Form</directory>
       <directory>tests/src/Unit/Service</directory>
     </testsuite>
+    <testsuite name="nlpservices-kernel">
+      <directory>tests/src/Kernel</directory>
+    </testsuite>
   </testsuites>
 </phpunit>

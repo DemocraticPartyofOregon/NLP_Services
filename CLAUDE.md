@@ -59,7 +59,21 @@ MSYS_NO_PATHCONV=1 docker exec -w /var/www/html ddev-dog-check-dev-web vendor/bi
 ```
 This requires `drupal/core-dev:^11.4` on the **site's root** `composer.json` (added 2026-09-12; wasn't there before — `ddev composer require --dev drupal/core-dev:^11.4 --with-all-dependencies` was needed since a plain require couldn't resolve without upgrading `sebastian/diff` past what was locked).
 
-As of 2026-09-12: full suite passes clean — **2658 tests, 5970 assertions, 0 failures**.
+As of 2026-09-12: full suite passes clean — **2658 tests, 5978 assertions, 0 failures**.
+
+### Kernel tests (added 2026-09-13)
+
+Unlike the rest of the suite, `tests/src/Kernel/` (currently `DatabaseFunctionsTest`, `NlpMcidRecoveryTest`) boots the real Drupal kernel against a real database rather than mocking `Connection`/`Select`/`Merge` — see `dog_check`'s Kernel-vs-Unit split (`../dog_check/tests/src/Kernel/IpActionTest.php`) for the general rationale, and the class-level docblocks on these two for why each was picked (`DatabaseFunctions` runs raw MySQL-only SQL — `SHOW COLUMNS`, `information_schema.COLUMNS` — that a mock can't validate at all; `NlpMcidRecovery` is a security-sensitive account-recovery flow where the real risk is in boundary conditions mocks always get to skip).
+
+Two things Kernel tests need that Unit tests don't:
+
+1. **A real MySQL/MariaDB connection**, because `DatabaseFunctions`' raw SQL doesn't understand SQLite (Drupal's default `SIMPLETEST_DB` fallback). Point it at ddev's own database container:
+   ```bash
+   MSYS_NO_PATHCONV=1 docker exec -w /var/www/html -e SIMPLETEST_DB=mysql://db:db@db/db -e NLPSERVICES_KERNEL_BOOTSTRAP=1 ddev-dog-check-dev-web vendor/bin/phpunit -c web/modules/custom/NLP_Services/phpunit.xml --testsuite nlpservices-kernel
+   ```
+2. **`NLPSERVICES_KERNEL_BOOTSTRAP=1`** — `tests/bootstrap.php` unconditionally stubs `nlp_debug_msg()`, `nlp_debug_msg_safe()`, `batch_set()`, and several `NLP_*` constants for the Unit tests' benefit (they don't boot a kernel, so nothing else defines these). A Kernel test boots the real kernel, which loads the module's actual `nlpservices.module` (the real `nlp_debug_msg()` etc.) and core's `form.inc` (the real `batch_set()`) — without this env var gating those stubs out, you get fatal "Cannot redeclare" errors. Omit the var for the `nlpservices` (Unit) testsuite; it must be set for `nlpservices-kernel`.
+
+Run the full suite (both testsuites) by invoking phpunit twice with/without these env vars — there's no single invocation that satisfies both, since the Unit suite doesn't have `drupal/core-dev`'s MySQL fixture running by default and doesn't need it.
 
 ## Key files
 
