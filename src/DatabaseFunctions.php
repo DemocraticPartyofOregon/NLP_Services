@@ -18,7 +18,7 @@ class DatabaseFunctions
   ) {
     $this->connection = $connection;
   }
-  
+
   /**
    * getColumnNames
    *
@@ -46,7 +46,7 @@ class DatabaseFunctions
     } while (TRUE);
     return $colNames;
   }
-  
+
   /**
    * ExportTable
    *
@@ -81,16 +81,16 @@ class DatabaseFunctions
       nlp_debug_msg('exportTable', $e->getMessage() );
       return FALSE;
     }
-    
+
     do {
       if(!$award = $result->fetchAssoc()) {break;}
       fputcsv($fh, $award, escape: '');
     } while (TRUE);
     fclose($fh);
-    
+
     return TRUE;
   }
-  
+
   /**
    * MergeRecord
    *
@@ -114,7 +114,7 @@ class DatabaseFunctions
     }
     return TRUE;
   }
-  
+
   /**
    * verifySchema
    *
@@ -148,7 +148,15 @@ class DatabaseFunctions
   }
 
   /**
+   * drupalTypeToMysql
+   *
    * Maps a Drupal schema field spec to the expected MySQL DATA_TYPE string.
+   *
+   * @param array $spec
+   *   The schema specification for the field.
+   *
+   * @return string
+   *   The corresponding MySQL DATA_TYPE string.
    */
   private function drupalTypeToMysql(array $spec): string
   {
@@ -179,10 +187,17 @@ class DatabaseFunctions
   }
 
   /**
+   * physicalTableName
+   *
    * Resolves a schema-declared table name to the physical table name
    * (including the connection's table prefix, if any) for use in
    * information_schema lookups, which aren't prefixed automatically the
    * way the query builder's {table} syntax is.
+   * @param string $tableName
+   *   The name of the table to resolve.
+   *
+   * @return string
+   *   The physical table name including any connection prefix.
    */
   private function physicalTableName(string $tableName): string
   {
@@ -190,6 +205,16 @@ class DatabaseFunctions
   }
 
   /**
+   * verifyFieldParameters
+   * @param string $tableName
+   *   The name of the table containing the field.
+   * @param string $fieldName
+   *   The name of the field to verify.
+   * @param array $spec
+   *   The schema specification for the field.
+   *
+   * @return array
+   *   An array of error messages describing any mismatches found.
    * Checks a single live field against its schema spec.
    * Returns error strings for any parameter mismatches.
    */
@@ -244,8 +269,18 @@ class DatabaseFunctions
   }
 
   /**
+   * verifyIndexes
+   *
    * Checks a table's primary key, unique keys, and indexes against its
    * schema spec. Returns error strings for any mismatches.
+   *
+   * @param string $tableName
+   *   The name of the table to verify.
+   * @param array $tableSpec
+   *   The schema specification for the table.
+   *
+   * @return array
+   *   An array of error messages describing any mismatches found.
    */
   private function verifyIndexes(string $tableName, array $tableSpec): array
   {
@@ -268,8 +303,12 @@ class DatabaseFunctions
   }
 
   /**
+   * getIndexColumns
+   *
    * Fetches the live index/key structure for a table, keyed by index name.
    *
+   * @param string $tableName
+   *   The name of the table to inspect.
    * @return array
    *   An array of ['columns' => string[], 'unique' => bool] keyed by
    *   MySQL index name (the primary key is always named 'PRIMARY').
@@ -303,11 +342,29 @@ class DatabaseFunctions
   }
 
   /**
+   * compareIndex
+   *
    * Compares one expected key/index against the live index structure.
    * Returns error strings for a missing key, mismatched column order, or
    * a uniqueness mismatch.
+   * @param string $tableName
+   *   The name of the table containing the index.
+   * @param string $indexName
+   *   The name of the index to compare.
+   * @param array $fields
+   *   The expected columns for the index.
+   * @param array $actualIndexes
+   *   The actual indexes for the table, as returned by getIndexColumns().
+   * @param bool $expectUnique
+   *   Whether the index is expected to be unique.
+   * @param string $label
+   *   A human-readable label for the index, e.g., 'primary key', 'unique key', or 'index'.
+   *
+   * @return array
+   *   An array of error messages describing any mismatches found.
    */
-  private function compareIndex(string $tableName, string $indexName, array $fields, array $actualIndexes, bool $expectUnique, string $label): array
+  private function compareIndex(string $tableName, string $indexName, array $fields, array $actualIndexes,
+                                bool $expectUnique, string $label): array
   {
     $prefix = "$tableName $label $indexName";
 
@@ -320,7 +377,8 @@ class DatabaseFunctions
     $actualColumns    = $actualIndexes[$indexName]['columns'];
 
     if ($expectedColumns !== $actualColumns) {
-      $errors[] = "Column mismatch for $prefix: expected [" . implode(', ', $expectedColumns) . "], got [" . implode(', ', $actualColumns) . "]";
+      $errors[] = "Column mismatch for $prefix: expected [" . implode(', ', $expectedColumns) .
+        "], got [" . implode(', ', $actualColumns) . "]";
     }
 
     if ($expectUnique && !$actualIndexes[$indexName]['unique']) {
@@ -373,10 +431,17 @@ class DatabaseFunctions
   }
 
   /**
-   * Creates any missing primary key/unique keys/indexes for a table, and
+   * repairIndexes
+   *
+   * Creates any missing primary key/unique keys/indexes for a table and
    * recreates any that exist but whose columns or uniqueness don't match
    * the schema. Returns an array of strings describing each action taken
    * or any errors encountered.
+   *
+   * @param Schema $dbSchema
+   * @param string $tableName
+   * @param array $tableSpec
+   * @return array
    */
   private function repairIndexes(Schema $dbSchema, string $tableName, array $tableSpec): array
   {
@@ -399,11 +464,27 @@ class DatabaseFunctions
   }
 
   /**
-   * Adds one missing key/index, or drops and recreates one whose live
+   * repairIndex
+   *
+   * Adds one missing key/ index or drops and recreates one whose live
    * columns or uniqueness don't match the schema. Leaves a key/index that
    * already matches untouched.
+   *
+   * @param Schema $dbSchema
+   * @param string $tableName
+   * @param string $indexName
+   * @param array $fields
+   * @param array $actualIndexes
+   * @param bool $expectUnique
+   * @param string $label
+   *   A human-readable label for the index, e.g., 'primary key', 'unique key', or 'index'.
+   * @param array $tableSpec
+   *   The full schema definition for the table, as provided to the repairIndexes method.
+   * @return array
+   *   An array of strings describing the action taken or any errors encountered.
    */
-  private function repairIndex(Schema $dbSchema, string $tableName, string $indexName, array $fields, array $actualIndexes, bool $expectUnique, string $label, array $tableSpec): array
+  private function repairIndex(Schema $dbSchema, string $tableName, string $indexName, array $fields,
+                               array $actualIndexes, bool $expectUnique, string $label, array $tableSpec): array
   {
     $prefix          = "$tableName $label $indexName";
     $expectedColumns = array_map(fn ($field) => is_array($field) ? $field[0] : $field, $fields);
@@ -473,5 +554,5 @@ class DatabaseFunctions
     }
     return 0;
   }
-  
+
 }
