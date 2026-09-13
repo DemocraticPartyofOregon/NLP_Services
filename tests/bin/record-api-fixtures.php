@@ -12,8 +12,8 @@
  * the live site - it is never printed, logged, or returned to the caller.
  *
  * Usage (via drush scr, so Drupal's container is already bootstrapped):
- *   drush scr tests/bin/record-api-fixtures.php -- voter <vanid> [committee]
- *   drush scr tests/bin/record-api-fixtures.php -- nl <mcid> [committee]
+ *   drush scr web/modules/custom/nlpservices/tests/bin/record-api-fixtures.php -- voter <vanid> [committee]
+ *   drush scr web/modules/custom/nlpservices/tests/bin/record-api-fixtures.php -- nl <mcid> [committee]
  *
  * committee defaults to '' (ApiKeyManagement treats that as 'State
  * Committee'). Writes two files per capture into tests/fixtures/api/:
@@ -35,7 +35,7 @@ $args = $extra ?? array_slice($_SERVER['argv'] ?? [], 1);
 [$mode, $id, $committee] = array_pad($args, 3, '');
 
 if (!in_array($mode, ['voter', 'nl'], TRUE) || empty($id)) {
-  fwrite(STDERR, "Usage: drush scr tests/bin/record-api-fixtures.php -- voter|nl <id> [committee]\n");
+  fwrite(STDERR, "Usage: drush scr web/modules/custom/nlpservices/tests/bin/record-api-fixtures.php -- voter|nl <id> [committee]\n");
   exit(1);
 }
 

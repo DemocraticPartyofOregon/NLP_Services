@@ -84,8 +84,8 @@ The `Api*` classes (`ApiVoter`, `ApiNls`, and eventually the rest) talk to the v
 
 **Capturing fixtures** (`tests/bin/record-api-fixtures.php`, run via `drush scr` **on a live site** with sandbox credentials configured — never from this dev environment, which has none):
 ```bash
-drush scr tests/bin/record-api-fixtures.php -- voter <vanid> [committee]
-drush scr tests/bin/record-api-fixtures.php -- nl <mcid> [committee]
+drush scr web/modules/custom/nlpservices/tests/bin/record-api-fixtures.php -- voter <vanid> [committee]
+drush scr web/modules/custom/nlpservices/tests/bin/record-api-fixtures.php -- nl <mcid> [committee]
 ```
 It reuses the exact same `nlpservices.api_key_management`/`http_client` services `ApiVoter`/`ApiNls` already use, so the decrypted key is used entirely inside that one PHP process on the live site and is never printed, logged, or written anywhere (the script deliberately avoids echoing raw exception messages, since Guzzle's connection/auth error messages embed the full request URI — which embeds the key as HTTP Basic Auth). It writes two files per capture under `tests/fixtures/api/{voter,nl}/`: the raw sandbox response body, and a frozen snapshot of what this module's own `processVoterResult()`/`processNlResult()` (invoked via reflection, since they're private) produced for it. Both are safe to commit — sandbox data, no key, no URL.
 
