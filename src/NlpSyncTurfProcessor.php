@@ -104,12 +104,13 @@ class NlpSyncTurfProcessor {
    *   This method does not return a value. Results are stored in the context array.
    */
   public function processBatch(array $arg, array &$context): void {
-    $county     = $arg['county'];
-    $folderId   = $arg['folderId'];
-    $folderName = $arg['folderName'];
-    $turfId     = $arg['turfId'];
-    $turfName   = $arg['turfName'];
-    $mcid       = $arg['mcid'];
+    $county        = $arg['county'];
+    $folderId      = $arg['folderId'];
+    $folderName    = $arg['folderName'];
+    $mapRegionName = $arg['mapRegionName'];
+    $turfId        = $arg['turfId'];
+    $turfName      = $arg['turfName'];
+    $mcid          = $arg['mcid'];
 
     if (empty($context['sandbox']['currentBatch'])) {
       $database  = 0;
@@ -165,9 +166,10 @@ class NlpSyncTurfProcessor {
       $context['sandbox']['batchCount']    = count($turfVoters);
       $context['sandbox']['currentBatch'] = 0;
       $context['sandbox']['turfVoters']   = $turfVoters;
-      $context['sandbox']['duplicates']   = [];
-      $context['sandbox']['votersInTurf'] = [];
-      $context['sandbox']['movedVoters']  = [];
+      $context['sandbox']['duplicates']    = [];
+      $context['sandbox']['votersInTurf']  = [];
+      $context['sandbox']['movedVoters']   = [];
+      $context['sandbox']['firstConflict'] = [];
 
       $turf = [
         'county'     => $county,
@@ -220,8 +222,17 @@ class NlpSyncTurfProcessor {
     $duplicates = $this->getDuplicates($voters);
     if (!empty($duplicates)) {
       $movedVoters = $context['sandbox']['movedVoters'];
+      $newNl     = $this->nlsObj->getNlById($mcid);
+      $newNlName = trim(($newNl['firstName'] ?? '') . ' ' . ($newNl['lastName'] ?? ''));
       foreach ($duplicates as $vanid => $duplicate) {
         $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
+        if (empty($context['sandbox']['firstConflict'])) {
+          $context['sandbox']['firstConflict'] = [
+            'folderName'    => $oldTurf['folderName'],
+            'mapRegionName' => $oldTurf['mapRegionName'],
+            'turfName'      => $oldTurf['turfName'],
+          ];
+        }
         $movedVoters[$vanid] = [
           'firstName'   => $duplicate['firstName'],
           'lastName'    => $duplicate['lastName'],
@@ -230,13 +241,15 @@ class NlpSyncTurfProcessor {
           'oldNlName'   => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
         ];
         Drupal::logger('nlpservices')->notice(
-          'Moved voter @firstName @lastName (VANID: @vanid) from turf "@oldTurfName" (NL: @oldNlName)',
+          'Moved voter @firstName @lastName (VANID: @vanid) from turf "@oldTurfName" (NL: @oldNlName) to turf "@newTurfName" (NL: @newNlName)',
           [
-            '@firstName'   => $duplicate['firstName'],
-            '@lastName'    => $duplicate['lastName'],
-            '@vanid'       => $vanid,
-            '@oldTurfName' => $oldTurf['turfName'],
-            '@oldNlName'   => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
+            '@firstName'    => $duplicate['firstName'],
+            '@lastName'     => $duplicate['lastName'],
+            '@vanid'        => $vanid,
+            '@oldTurfName'  => $oldTurf['turfName'],
+            '@oldNlName'    => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
+            '@newTurfName'  => $turfName,
+            '@newNlName'    => $newNlName,
           ]
         );
       }
@@ -247,8 +260,18 @@ class NlpSyncTurfProcessor {
       }
       $context['sandbox']['movedVoters'] = $movedVoters;
       if (count($movedVoters) > 6) {
+        $firstConflict = $context['sandbox']['firstConflict'];
         $context['finished']             = 1;
-        $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count). Sync aborted.', ['@count' => count($movedVoters)])];
+        $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
+          '@count'               => count($movedVoters),
+          '@turfName'            => $turfName,
+          '@folderName'          => $folderName,
+          '@mapRegionName'       => $mapRegionName,
+          '@newNlName'           => $newNlName,
+          '@firstTurfName'       => $firstConflict['turfName'] ?? '',
+          '@firstFolderName'     => $firstConflict['folderName'] ?? '',
+          '@firstMapRegionName'  => $firstConflict['mapRegionName'] ?? '',
+        ])];
         $context['results']['result']    = 'error';
         $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
         $context['results']['mcid']      = $context['sandbox']['mcid'];
