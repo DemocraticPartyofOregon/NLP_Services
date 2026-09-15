@@ -7,11 +7,10 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add upload of state early voting using the stateFileId">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Code review DatabaseFunctions file">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/DataEntryForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/DataEntryForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/DataEntryFormTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Form/SyncTurfFormTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncTurfProcessor.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -65,10 +64,10 @@
     </persistenceIdMap>
   </component>
   <component name="DrupalConfiguration" enabled="true" version="9">
-    <drupalPath>C:\Users\steve\OneDrive\Documents\drupal-10</drupalPath>
+    <drupalPath>C:\Users\steve\drupal-11.4.5</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26299" />
+    <option name="cachedIndexableFilesCount" value="26339" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -106,64 +105,64 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0001014209121" />
-      <entry key="MS500" value="1.2562093850817393" />
-      <entry key="S2" value="2.986883439916163" />
-      <entry key="S5" value="5.329269350082919" />
-      <entry key="S10" value="7.523466634488734" />
-      <entry key="S30" value="10.62238548188249" />
-      <entry key="S60" value="12.490316515105949" />
-      <entry key="M2" value="14.553559868395693" />
-      <entry key="M5" value="16.772797600908703" />
-      <entry key="M10" value="17.7914579326712" />
-      <entry key="M15" value="18.171384024128724" />
-      <entry key="M30" value="18.573744988802755" />
-      <entry key="H1" value="18.815286668761658" />
-      <entry key="H2" value="21.00612506317353" />
-      <entry key="H4" value="37.03598970432471" />
-      <entry key="D1" value="167.05023198583336" />
-      <entry key="W1" value="510.0297714588127" />
+      <entry key="MS100" value="1.0" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0000000000868985" />
+      <entry key="S60" value="1.0000133026005003" />
+      <entry key="M2" value="1.006912684390187" />
+      <entry key="M5" value="1.565539058377587" />
+      <entry key="M10" value="3.975222964207068" />
+      <entry key="M15" value="6.440720932186847" />
+      <entry key="M30" value="11.66987820966546" />
+      <entry key="H1" value="16.837527676608328" />
+      <entry key="H2" value="23.007754597306697" />
+      <entry key="H4" value="34.47588603622385" />
+      <entry key="D1" value="111.27611822756558" />
+      <entry key="W1" value="575.7346590082344" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
       <entry key="MS500" value="0.0" />
-      <entry key="S2" value="0.0" />
-      <entry key="S5" value="0.0" />
-      <entry key="S10" value="0.0" />
-      <entry key="S30" value="0.0" />
-      <entry key="S60" value="0.0" />
-      <entry key="M2" value="0.0" />
-      <entry key="M5" value="0.0" />
-      <entry key="M10" value="0.0" />
-      <entry key="M15" value="0.0" />
-      <entry key="M30" value="4.249015499821726E-172" />
-      <entry key="H1" value="3.5678259828540636E-86" />
-      <entry key="H2" value="3.271970135261655E-43" />
-      <entry key="H4" value="1.0082933519050188E-21" />
-      <entry key="D1" value="0.001735709357151905" />
-      <entry key="W1" value="6.514662914429716" />
+      <entry key="S2" value="7.939024916023662E-230" />
+      <entry key="S5" value="2.290376431142309E-92" />
+      <entry key="S10" value="1.5133989662816313E-46" />
+      <entry key="S30" value="5.329066556567649E-16" />
+      <entry key="S60" value="2.3084771076568206E-8" />
+      <entry key="M2" value="1.519369105930483E-4" />
+      <entry key="M5" value="0.02988172106738005" />
+      <entry key="M10" value="0.19166571659452938" />
+      <entry key="M15" value="0.4004182381543397" />
+      <entry key="M30" value="0.9824119694710007" />
+      <entry key="H1" value="1.6688875556096336" />
+      <entry key="H2" value="2.2222899159675706" />
+      <entry key="H4" value="2.5777356675132714" />
+      <entry key="D1" value="2.924489364908487" />
+      <entry key="W1" value="6.921411647248978" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.9593599930358663" />
-      <entry key="MS500" value="1.2447528424436" />
-      <entry key="S2" value="2.9792136756764482" />
-      <entry key="S5" value="5.323617102151923" />
-      <entry key="S10" value="7.519046142689814" />
-      <entry key="S30" value="10.61992038760813" />
-      <entry key="S60" value="12.488665867259964" />
-      <entry key="M2" value="14.552462806480559" />
-      <entry key="M5" value="16.772234630154625" />
-      <entry key="M10" value="17.791147347932352" />
-      <entry key="M15" value="18.171169688490384" />
-      <entry key="M30" value="18.573633955532333" />
-      <entry key="H1" value="18.81523004326274" />
-      <entry key="H2" value="21.006093273955482" />
-      <entry key="H4" value="37.03596154815969" />
-      <entry key="D1" value="167.05193839780205" />
-      <entry key="W1" value="516.5442074994942" />
+      <entry key="MS100" value="0.3922920489483754" />
+      <entry key="MS500" value="0.8293195458144417" />
+      <entry key="S2" value="0.9542902250321851" />
+      <entry key="S5" value="0.9814590638534793" />
+      <entry key="S10" value="0.9906861581012825" />
+      <entry key="S30" value="0.9968856973032925" />
+      <entry key="S60" value="0.9984546669701828" />
+      <entry key="M2" value="1.0062227517463034" />
+      <entry key="M5" value="1.5937959331454643" />
+      <entry key="M10" value="4.163680793342192" />
+      <entry key="M15" value="6.837172108593943" />
+      <entry key="M30" value="12.647845571351032" />
+      <entry key="H1" value="18.50273820046213" />
+      <entry key="H2" value="25.227550388446087" />
+      <entry key="H4" value="37.05206854776168" />
+      <entry key="D1" value="114.200226484551" />
+      <entry key="W1" value="582.6558549069173" />
     </decayedShown>
   </component>
-  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../xampp/php/php.exe">
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../../../../../xampp/php/php.exe">
     <include_path>
       <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
       <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
@@ -258,6 +257,19 @@
       <path value="$PROJECT_DIR$/vendor/marc-mabe/php-enum" />
       <path value="$PROJECT_DIR$/vendor/twig/html-extra" />
       <path value="$PROJECT_DIR$/vendor/twig/twig" />
+      <path value="$USER_HOME$/drupal-11.4.5/core" />
+      <path value="$USER_HOME$/drupal-11.4.5/modules" />
+      <path value="$USER_HOME$/drupal-11.4.5/vendor" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/deprecations" />
+      <path value="$PROJECT_DIR$/vendor/doctrine/instantiator" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-common" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/reflection-docblock" />
+      <path value="$PROJECT_DIR$/vendor/phpdocumentor/type-resolver" />
+      <path value="$PROJECT_DIR$/vendor/phpspec/prophecy" />
+      <path value="$PROJECT_DIR$/vendor/phpspec/prophecy-phpunit" />
+      <path value="$PROJECT_DIR$/vendor/phpstan/phpdoc-parser" />
+      <path value="$PROJECT_DIR$/vendor/smalot/pdfparser" />
+      <path value="$PROJECT_DIR$/vendor/webmozart/assert" />
     </include_path>
   </component>
   <component name="ProblemsViewState">
@@ -320,7 +332,7 @@
     &quot;git-widget-placeholder&quot;: &quot;NLP__Services__V7__2__1&quot;,
     &quot;git.auto.fetch.suggestion.counter&quot;: &quot;1&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/PhpstormProjects/NLP_Services&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/steve/code/drupal-site/web/modules/custom/NLP_Services&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.jshint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
@@ -328,13 +340,14 @@
     &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\tests\fixtures" />
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\docs" />
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\src\Config" />
     </key>
@@ -348,7 +361,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-9522f28f0b20-com.jetbrains.php.sharedIndexes-PS-262.9437.196" />
+        <option value="bundled-php-predefined-a98d8de5180a-9522f28f0b20-com.jetbrains.php.sharedIndexes-PS-262.10315.130" />
       </set>
     </attachedChunks>
   </component>
@@ -463,254 +476,24 @@
       <workItem from="1786980592493" duration="4511000" />
       <workItem from="1787080669927" duration="10936000" />
       <workItem from="1787419910823" duration="1083000" />
-    </task>
-    <task id="LOCAL-00157" summary="Fix the restoration of user credentials for sync of active NLs.">
-      <option name="closed" value="true" />
-      <created>1782741308521</created>
-      <option name="number" value="00157" />
-      <option name="presentableId" value="LOCAL-00157" />
-      <option name="project" value="LOCAL" />
-      <updated>1782741308521</updated>
-    </task>
-    <task id="LOCAL-00158" summary="Fix attachment of PDF when syncing a turf.">
-      <option name="closed" value="true" />
-      <created>1782881607852</created>
-      <option name="number" value="00158" />
-      <option name="presentableId" value="LOCAL-00158" />
-      <option name="project" value="LOCAL" />
-      <updated>1782881607852</updated>
-    </task>
-    <task id="LOCAL-00159" summary="Drupal migration">
-      <option name="closed" value="true" />
-      <created>1782882493528</created>
-      <option name="number" value="00159" />
-      <option name="presentableId" value="LOCAL-00159" />
-      <option name="project" value="LOCAL" />
-      <updated>1782882493528</updated>
-    </task>
-    <task id="LOCAL-00160" summary="Fix failed emeail for detection of missing NLPVoterAC">
-      <option name="closed" value="true" />
-      <created>1782966840313</created>
-      <option name="number" value="00160" />
-      <option name="presentableId" value="LOCAL-00160" />
-      <option name="project" value="LOCAL" />
-      <updated>1782966840314</updated>
-    </task>
-    <task id="LOCAL-00161" summary="Add guard rails for sync and delete of turf to allow propagation of the change of the activist code.">
-      <option name="closed" value="true" />
-      <created>1783195969163</created>
-      <option name="number" value="00161" />
-      <option name="presentableId" value="LOCAL-00161" />
-      <option name="project" value="LOCAL" />
-      <updated>1783195969164</updated>
-    </task>
-    <task id="LOCAL-00162" summary="Correct title for API key configuration form">
-      <option name="closed" value="true" />
-      <created>1783796184631</created>
-      <option name="number" value="00162" />
-      <option name="presentableId" value="LOCAL-00162" />
-      <option name="project" value="LOCAL" />
-      <updated>1783796184632</updated>
-    </task>
-    <task id="LOCAL-00163" summary="Update readme file">
-      <option name="closed" value="true" />
-      <created>1783796252220</created>
-      <option name="number" value="00163" />
-      <option name="presentableId" value="LOCAL-00163" />
-      <option name="project" value="LOCAL" />
-      <updated>1783796252220</updated>
-    </task>
-    <task id="LOCAL-00164" summary="Add county names for Mississippi and Montana states">
-      <option name="closed" value="true" />
-      <created>1783796304113</created>
-      <option name="number" value="00164" />
-      <option name="presentableId" value="LOCAL-00164" />
-      <option name="project" value="LOCAL" />
-      <updated>1783796304113</updated>
-    </task>
-    <task id="LOCAL-00165" summary="Improve the notes about the secret key and iv">
-      <option name="closed" value="true" />
-      <created>1783833716254</created>
-      <option name="number" value="00165" />
-      <option name="presentableId" value="LOCAL-00165" />
-      <option name="project" value="LOCAL" />
-      <updated>1783833716254</updated>
-    </task>
-    <task id="LOCAL-00166" summary="Use the secret key/iv instead of hardcoded values">
-      <option name="closed" value="true" />
-      <created>1783864981723</created>
-      <option name="number" value="00166" />
-      <option name="presentableId" value="LOCAL-00166" />
-      <option name="project" value="LOCAL" />
-      <updated>1783864981723</updated>
-    </task>
-    <task id="LOCAL-00167" summary="Use the secret key/iv instead of hardcoded values">
-      <option name="closed" value="true" />
-      <created>1783865033947</created>
-      <option name="number" value="00167" />
-      <option name="presentableId" value="LOCAL-00167" />
-      <option name="project" value="LOCAL" />
-      <updated>1783865033948</updated>
-    </task>
-    <task id="LOCAL-00168" summary="Minor code review changes">
-      <option name="closed" value="true" />
-      <created>1783888190745</created>
-      <option name="number" value="00168" />
-      <option name="presentableId" value="LOCAL-00168" />
-      <option name="project" value="LOCAL" />
-      <updated>1783888190745</updated>
-    </task>
-    <task id="LOCAL-00169" summary="Make the welcome page dynamic with election dates">
-      <option name="closed" value="true" />
-      <created>1784123505938</created>
-      <option name="number" value="00169" />
-      <option name="presentableId" value="LOCAL-00169" />
-      <option name="project" value="LOCAL" />
-      <updated>1784123505940</updated>
-    </task>
-    <task id="LOCAL-00170" summary="Convert empty integer fields to 0">
-      <option name="closed" value="true" />
-      <created>1784432240585</created>
-      <option name="number" value="00170" />
-      <option name="presentableId" value="LOCAL-00170" />
-      <option name="project" value="LOCAL" />
-      <updated>1784432240585</updated>
-    </task>
-    <task id="LOCAL-00171" summary="Protect from a null date of birth">
-      <option name="closed" value="true" />
-      <created>1784433454598</created>
-      <option name="number" value="00171" />
-      <option name="presentableId" value="LOCAL-00171" />
-      <option name="project" value="LOCAL" />
-      <updated>1784433454598</updated>
-    </task>
-    <task id="LOCAL-00172" summary="Fix migration of WelcomeController for D11 migrations.">
-      <option name="closed" value="true" />
-      <created>1784434666390</created>
-      <option name="number" value="00172" />
-      <option name="presentableId" value="LOCAL-00172" />
-      <option name="project" value="LOCAL" />
-      <updated>1784434666390</updated>
-    </task>
-    <task id="LOCAL-00173" summary="Remove dead code">
-      <option name="closed" value="true" />
-      <created>1784434845154</created>
-      <option name="number" value="00173" />
-      <option name="presentableId" value="LOCAL-00173" />
-      <option name="project" value="LOCAL" />
-      <updated>1784434845154</updated>
-    </task>
-    <task id="LOCAL-00174" summary="Code review ActivistCodeConfigurationForm">
-      <option name="closed" value="true" />
-      <created>1784435382026</created>
-      <option name="number" value="00174" />
-      <option name="presentableId" value="LOCAL-00174" />
-      <option name="project" value="LOCAL" />
-      <updated>1784435382026</updated>
-    </task>
-    <task id="LOCAL-00175" summary="Remove debug code">
-      <option name="closed" value="true" />
-      <created>1784435596309</created>
-      <option name="number" value="00175" />
-      <option name="presentableId" value="LOCAL-00175" />
-      <option name="project" value="LOCAL" />
-      <updated>1784435596309</updated>
-    </task>
-    <task id="LOCAL-00176" summary="Add generic email subjects for MiniVAN reports.">
-      <option name="closed" value="true" />
-      <created>1784435890601</created>
-      <option name="number" value="00176" />
-      <option name="presentableId" value="LOCAL-00176" />
-      <option name="project" value="LOCAL" />
-      <updated>1784435890601</updated>
-    </task>
-    <task id="LOCAL-00177" summary="Fix form type for targetVoterCrosstabForm">
-      <option name="closed" value="true" />
-      <created>1784436368912</created>
-      <option name="number" value="00177" />
-      <option name="presentableId" value="LOCAL-00177" />
-      <option name="project" value="LOCAL" />
-      <updated>1784436368912</updated>
-    </task>
-    <task id="LOCAL-00178" summary="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining.">
-      <option name="closed" value="true" />
-      <created>1784436591127</created>
-      <option name="number" value="00178" />
-      <option name="presentableId" value="LOCAL-00178" />
-      <option name="project" value="LOCAL" />
-      <updated>1784436591127</updated>
-    </task>
-    <task id="LOCAL-00179" summary="Update ReadMe">
-      <option name="closed" value="true" />
-      <created>1784436635300</created>
-      <option name="number" value="00179" />
-      <option name="presentableId" value="LOCAL-00179" />
-      <option name="project" value="LOCAL" />
-      <updated>1784436635300</updated>
-    </task>
-    <task id="LOCAL-00180" summary="Fix the training manual configuration so the download link work.">
-      <option name="closed" value="true" />
-      <created>1784521353261</created>
-      <option name="number" value="00180" />
-      <option name="presentableId" value="LOCAL-00180" />
-      <option name="project" value="LOCAL" />
-      <updated>1784521353261</updated>
-    </task>
-    <task id="LOCAL-00181" summary="Fix the tests for changes to age and awaitingReply">
-      <option name="closed" value="true" />
-      <created>1784522563979</created>
-      <option name="number" value="00181" />
-      <option name="presentableId" value="LOCAL-00181" />
-      <option name="project" value="LOCAL" />
-      <updated>1784522563979</updated>
-    </task>
-    <task id="LOCAL-00182" summary="Fix type error in map regions">
-      <option name="closed" value="true" />
-      <created>1784769017604</created>
-      <option name="number" value="00182" />
-      <option name="presentableId" value="LOCAL-00182" />
-      <option name="project" value="LOCAL" />
-      <updated>1784769017605</updated>
-    </task>
-    <task id="LOCAL-00183" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784782427189</created>
-      <option name="number" value="00183" />
-      <option name="presentableId" value="LOCAL-00183" />
-      <option name="project" value="LOCAL" />
-      <updated>1784782427189</updated>
-    </task>
-    <task id="LOCAL-00184" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784830028226</created>
-      <option name="number" value="00184" />
-      <option name="presentableId" value="LOCAL-00184" />
-      <option name="project" value="LOCAL" />
-      <updated>1784830028226</updated>
-    </task>
-    <task id="LOCAL-00185" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784836599981</created>
-      <option name="number" value="00185" />
-      <option name="presentableId" value="LOCAL-00185" />
-      <option name="project" value="LOCAL" />
-      <updated>1784836599981</updated>
-    </task>
-    <task id="LOCAL-00186" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784836655332</created>
-      <option name="number" value="00186" />
-      <option name="presentableId" value="LOCAL-00186" />
-      <option name="project" value="LOCAL" />
-      <updated>1784836655332</updated>
-    </task>
-    <task id="LOCAL-00187" summary="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes.">
-      <option name="closed" value="true" />
-      <created>1784840826984</created>
-      <option name="number" value="00187" />
-      <option name="presentableId" value="LOCAL-00187" />
-      <option name="project" value="LOCAL" />
-      <updated>1784840826984</updated>
+      <workItem from="1788388474322" duration="13171000" />
+      <workItem from="1788452079103" duration="3139000" />
+      <workItem from="1788455491619" duration="3474000" />
+      <workItem from="1788482278225" duration="483000" />
+      <workItem from="1788482825370" duration="1810000" />
+      <workItem from="1788496857455" duration="2156000" />
+      <workItem from="1788531611816" duration="3193000" />
+      <workItem from="1788538162987" duration="7550000" />
+      <workItem from="1788581652935" duration="137000" />
+      <workItem from="1788581877309" duration="4697000" />
+      <workItem from="1788587194653" duration="39140000" />
+      <workItem from="1788881847450" duration="592000" />
+      <workItem from="1789164402022" duration="607000" />
+      <workItem from="1789240083754" duration="9339000" />
+      <workItem from="1789311163780" duration="3729000" />
+      <workItem from="1789321164395" duration="2286000" />
+      <workItem from="1789323486505" duration="1044000" />
+      <workItem from="1789507179876" duration="629000" />
     </task>
     <task id="LOCAL-00188" summary="Handle empty date of birth for a voter.">
       <option name="closed" value="true" />
@@ -856,7 +639,255 @@
       <option name="project" value="LOCAL" />
       <updated>1787098366583</updated>
     </task>
-    <option name="localTasksCounter" value="206" />
+    <task id="LOCAL-00206" summary="Fix the &quot;The turf name is missing.&quot; error.">
+      <option name="closed" value="true" />
+      <created>1788274518473</created>
+      <option name="number" value="00206" />
+      <option name="presentableId" value="LOCAL-00206" />
+      <option name="project" value="LOCAL" />
+      <updated>1788274518474</updated>
+    </task>
+    <task id="LOCAL-00207" summary="Save the turfId in the session data.">
+      <option name="closed" value="true" />
+      <created>1788275859337</created>
+      <option name="number" value="00207" />
+      <option name="presentableId" value="LOCAL-00207" />
+      <option name="project" value="LOCAL" />
+      <updated>1788275859337</updated>
+    </task>
+    <task id="LOCAL-00208" summary="Update the tests for recent cherry picks.">
+      <option name="closed" value="true" />
+      <created>1788277683783</created>
+      <option name="number" value="00208" />
+      <option name="presentableId" value="LOCAL-00208" />
+      <option name="project" value="LOCAL" />
+      <updated>1788277683783</updated>
+    </task>
+    <task id="LOCAL-00209" summary="PHPUnit deprecations">
+      <option name="closed" value="true" />
+      <created>1788279340816</created>
+      <option name="number" value="00209" />
+      <option name="presentableId" value="LOCAL-00209" />
+      <option name="project" value="LOCAL" />
+      <updated>1788279340816</updated>
+    </task>
+    <task id="LOCAL-00210" summary="Update tests to remove depreciated functions">
+      <option name="closed" value="true" />
+      <created>1788299907646</created>
+      <option name="number" value="00210" />
+      <option name="presentableId" value="LOCAL-00210" />
+      <option name="project" value="LOCAL" />
+      <updated>1788299907646</updated>
+    </task>
+    <task id="LOCAL-00211" summary="Added test for setup and configuration.">
+      <option name="closed" value="true" />
+      <created>1788378005885</created>
+      <option name="number" value="00211" />
+      <option name="presentableId" value="LOCAL-00211" />
+      <option name="project" value="LOCAL" />
+      <updated>1788378005885</updated>
+    </task>
+    <task id="LOCAL-00212" summary="Added test for new services for Montana and Mississippi.">
+      <option name="closed" value="true" />
+      <created>1788394208635</created>
+      <option name="number" value="00212" />
+      <option name="presentableId" value="LOCAL-00212" />
+      <option name="project" value="LOCAL" />
+      <updated>1788394208635</updated>
+    </task>
+    <task id="LOCAL-00213" summary="Added test for new services for remaining untested files.">
+      <option name="closed" value="true" />
+      <created>1788454470743</created>
+      <option name="number" value="00213" />
+      <option name="presentableId" value="LOCAL-00213" />
+      <option name="project" value="LOCAL" />
+      <updated>1788454470744</updated>
+    </task>
+    <task id="LOCAL-00214" summary="Consolidate all batch files in the Batch directory">
+      <option name="closed" value="true" />
+      <created>1788533446604</created>
+      <option name="number" value="00214" />
+      <option name="presentableId" value="LOCAL-00214" />
+      <option name="project" value="LOCAL" />
+      <updated>1788533446604</updated>
+    </task>
+    <task id="LOCAL-00215" summary="Move the key validation to the src/Config directory">
+      <option name="closed" value="true" />
+      <created>1788534255718</created>
+      <option name="number" value="00215" />
+      <option name="presentableId" value="LOCAL-00215" />
+      <option name="project" value="LOCAL" />
+      <updated>1788534255718</updated>
+    </task>
+    <task id="LOCAL-00216" summary="Move the key validation to the src/Config directory">
+      <option name="closed" value="true" />
+      <created>1788538294439</created>
+      <option name="number" value="00216" />
+      <option name="presentableId" value="LOCAL-00216" />
+      <option name="project" value="LOCAL" />
+      <updated>1788538294439</updated>
+    </task>
+    <task id="LOCAL-00217" summary="Move the Config tests to a new test directory">
+      <option name="closed" value="true" />
+      <created>1788539272349</created>
+      <option name="number" value="00217" />
+      <option name="presentableId" value="LOCAL-00217" />
+      <option name="project" value="LOCAL" />
+      <updated>1788539272350</updated>
+    </task>
+    <task id="LOCAL-00218" summary="Remove dead files">
+      <option name="closed" value="true" />
+      <created>1788563934193</created>
+      <option name="number" value="00218" />
+      <option name="presentableId" value="LOCAL-00218" />
+      <option name="project" value="LOCAL" />
+      <updated>1788563934194</updated>
+    </task>
+    <task id="LOCAL-00219" summary="Rename file that reassigns MCID and fix termonology">
+      <option name="closed" value="true" />
+      <created>1788563999304</created>
+      <option name="number" value="00219" />
+      <option name="presentableId" value="LOCAL-00219" />
+      <option name="project" value="LOCAL" />
+      <updated>1788563999304</updated>
+    </task>
+    <task id="LOCAL-00220" summary="Move the test for the batch files to their own directory">
+      <option name="closed" value="true" />
+      <created>1788564508714</created>
+      <option name="number" value="00220" />
+      <option name="presentableId" value="LOCAL-00220" />
+      <option name="project" value="LOCAL" />
+      <updated>1788564508714</updated>
+    </task>
+    <task id="LOCAL-00221" summary="Remove dead code and fix typos">
+      <option name="closed" value="true" />
+      <created>1788624635243</created>
+      <option name="number" value="00221" />
+      <option name="presentableId" value="LOCAL-00221" />
+      <option name="project" value="LOCAL" />
+      <updated>1788624635243</updated>
+    </task>
+    <task id="LOCAL-00222" summary="Problem report NLP-183: move columns in the sync turf display of turfs.">
+      <option name="closed" value="true" />
+      <created>1788630600522</created>
+      <option name="number" value="00222" />
+      <option name="presentableId" value="LOCAL-00222" />
+      <option name="project" value="LOCAL" />
+      <updated>1788630600522</updated>
+    </task>
+    <task id="LOCAL-00223" summary="Problem report NLP-183: move columns in the sync turf display of turfs.">
+      <option name="closed" value="true" />
+      <created>1788670362717</created>
+      <option name="number" value="00223" />
+      <option name="presentableId" value="LOCAL-00223" />
+      <option name="project" value="LOCAL" />
+      <updated>1788670362717</updated>
+    </task>
+    <task id="LOCAL-00224" summary="Use generic method to get column names">
+      <option name="closed" value="true" />
+      <created>1788670402151</created>
+      <option name="number" value="00224" />
+      <option name="presentableId" value="LOCAL-00224" />
+      <option name="project" value="LOCAL" />
+      <updated>1788670402151</updated>
+    </task>
+    <task id="LOCAL-00225" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788706411243</created>
+      <option name="number" value="00225" />
+      <option name="presentableId" value="LOCAL-00225" />
+      <option name="project" value="LOCAL" />
+      <updated>1788706411245</updated>
+    </task>
+    <task id="LOCAL-00226" summary="Implement secure password reveal and remove redundant code">
+      <option name="closed" value="true" />
+      <created>1788716709249</created>
+      <option name="number" value="00226" />
+      <option name="presentableId" value="LOCAL-00226" />
+      <option name="project" value="LOCAL" />
+      <updated>1788716709249</updated>
+    </task>
+    <task id="LOCAL-00227" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788716751273</created>
+      <option name="number" value="00227" />
+      <option name="presentableId" value="LOCAL-00227" />
+      <option name="project" value="LOCAL" />
+      <updated>1788716751273</updated>
+    </task>
+    <task id="LOCAL-00228" summary="Consolodate redundant code for sending credentials">
+      <option name="closed" value="true" />
+      <created>1788743637355</created>
+      <option name="number" value="00228" />
+      <option name="presentableId" value="LOCAL-00228" />
+      <option name="project" value="LOCAL" />
+      <updated>1788743637355</updated>
+    </task>
+    <task id="LOCAL-00229" summary="API keys are now private and outside the Drupal site">
+      <option name="closed" value="true" />
+      <created>1788811703852</created>
+      <option name="number" value="00229" />
+      <option name="presentableId" value="LOCAL-00229" />
+      <option name="project" value="LOCAL" />
+      <updated>1788811703852</updated>
+    </task>
+    <task id="LOCAL-00230" summary="API keys are now private and outside the Drupal site">
+      <option name="closed" value="true" />
+      <created>1788815743974</created>
+      <option name="number" value="00230" />
+      <option name="presentableId" value="LOCAL-00230" />
+      <option name="project" value="LOCAL" />
+      <updated>1788815743974</updated>
+    </task>
+    <task id="LOCAL-00231" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788816876563</created>
+      <option name="number" value="00231" />
+      <option name="presentableId" value="LOCAL-00231" />
+      <option name="project" value="LOCAL" />
+      <updated>1788816876563</updated>
+    </task>
+    <task id="LOCAL-00232" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788837533765</created>
+      <option name="number" value="00232" />
+      <option name="presentableId" value="LOCAL-00232" />
+      <option name="project" value="LOCAL" />
+      <updated>1788837533765</updated>
+    </task>
+    <task id="LOCAL-00233" summary="Remove dead code">
+      <option name="closed" value="true" />
+      <created>1788838359275</created>
+      <option name="number" value="00233" />
+      <option name="presentableId" value="LOCAL-00233" />
+      <option name="project" value="LOCAL" />
+      <updated>1788838359276</updated>
+    </task>
+    <task id="LOCAL-00234" summary="Remove depreciated functions from DrupalUser">
+      <option name="closed" value="true" />
+      <created>1789250420026</created>
+      <option name="number" value="00234" />
+      <option name="presentableId" value="LOCAL-00234" />
+      <option name="project" value="LOCAL" />
+      <updated>1789250420027</updated>
+    </task>
+    <task id="LOCAL-00235" summary="Replace static call to methods with injection of the object.">
+      <option name="closed" value="true" />
+      <created>1789254887259</created>
+      <option name="number" value="00235" />
+      <option name="presentableId" value="LOCAL-00235" />
+      <option name="project" value="LOCAL" />
+      <updated>1789254887259</updated>
+    </task>
+    <task id="LOCAL-00236" summary="Add inspect and repair of database table indexes">
+      <option name="closed" value="true" />
+      <created>1789323437228</created>
+      <option name="number" value="00236" />
+      <option name="presentableId" value="LOCAL-00236" />
+      <option name="project" value="LOCAL" />
+      <updated>1789323437229</updated>
+    </task>
+    <option name="localTasksCounter" value="237" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -923,46 +954,35 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix form type for targetVoterCrosstabForm" />
-    <MESSAGE value="Remove the dead code for activist code set guard rail.  Test for guard rail now made at begining." />
-    <MESSAGE value="Update ReadMe" />
-    <MESSAGE value="Fix the training manual configuration so the download link work." />
-    <MESSAGE value="Fix the tests for changes to age and awaitingReply" />
-    <MESSAGE value="Fix type error in map regions" />
-    <MESSAGE value="Convert the active NLs display form to avoid use of AJAX so it reliably saves changes." />
-    <MESSAGE value="Handle empty date of birth for a voter." />
-    <MESSAGE value="Remove dead code that causes a fatal error in export contact reports" />
-    <MESSAGE value="Require submit for changes to the active nls form." />
-    <MESSAGE value="Style - line spacing" />
-    <MESSAGE value="Early voting import for Mississippi" />
-    <MESSAGE value="Add needs ride to polls and wants lawn sign for Mississippi" />
-    <MESSAGE value="Add safeguards for cron already running" />
-    <MESSAGE value="Fix the search for an NL in ActiveNlsDisplayForm" />
-    <MESSAGE value="Code Review" />
-    <MESSAGE value="Inhibit form change popup if the only change it the HD select." />
-    <MESSAGE value="Update version number" />
-    <MESSAGE value="Remove the use of configured HD names in favor of using dynamic values based on active NLs." />
-    <MESSAGE value="Move the display of NLP Configuration and Administration" />
-    <MESSAGE value="Use NlpConfiguration for state, county and countyNames." />
-    <MESSAGE value="Remove the configuration of HD names and use structure based on the API keys." />
-    <MESSAGE value="Fix the method of retrieving state name and county names" />
-    <MESSAGE value="Fix the display of county names for the selection of the county for the admin" />
     <MESSAGE value="Add document for configuring NLP Services." />
-    <option name="LAST_COMMIT_MESSAGE" value="Add document for configuring NLP Services." />
+    <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
+    <MESSAGE value="Save the turfId in the session data." />
+    <MESSAGE value="Update the tests for recent cherry picks." />
+    <MESSAGE value="PHPUnit deprecations" />
+    <MESSAGE value="Update tests to remove depreciated functions" />
+    <MESSAGE value="Added test for setup and configuration." />
+    <MESSAGE value="Added test for new services for Montana and Mississippi." />
+    <MESSAGE value="Added test for new services for remaining untested files." />
+    <MESSAGE value="Consolidate all batch files in the Batch directory" />
+    <MESSAGE value="Move the key validation to the src/Config directory" />
+    <MESSAGE value="Move the Config tests to a new test directory" />
+    <MESSAGE value="Remove dead files" />
+    <MESSAGE value="Rename file that reassigns MCID and fix termonology" />
+    <MESSAGE value="Move the test for the batch files to their own directory" />
+    <MESSAGE value="Remove dead code and fix typos" />
+    <MESSAGE value="Problem report NLP-183: move columns in the sync turf display of turfs." />
+    <MESSAGE value="Use generic method to get column names" />
+    <MESSAGE value="Implement secure password reveal and remove redundant code" />
+    <MESSAGE value="Consolodate redundant code for sending credentials" />
+    <MESSAGE value="API keys are now private and outside the Drupal site" />
+    <MESSAGE value="Remove dead code" />
+    <MESSAGE value="Remove depreciated functions from DrupalUser" />
+    <MESSAGE value="Replace static call to methods with injection of the object." />
+    <MESSAGE value="Add inspect and repair of database table indexes" />
+    <option name="LAST_COMMIT_MESSAGE" value="Add inspect and repair of database table indexes" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />
-  </component>
-  <component name="XDebuggerManager">
-    <breakpoint-manager>
-      <breakpoints>
-        <line-breakpoint enabled="true" type="php">
-          <url>file://$PROJECT_DIR$/src/Form/CompareVanidsForm.php</url>
-          <line>7</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-      </breakpoints>
-    </breakpoint-manager>
   </component>
   <component name="XSLT-Support.FileAssociations.UIState">
     <expand />
