@@ -66,7 +66,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'nlp_election_cycle'   => '2024',
         'nlp_cycle_name'       => 'General Election 2024',
         'nlp_election_date'    => '2024-11-05',
-        'nlp_ballot_drop_date' => '2024-10-18',
+        'nlp_early_voting_start_date' => '2024-10-18',
       ];
     }
 

@@ -43,11 +43,11 @@ class NlpDataEntryHelper
     $output = "<h1>NLP Services Version $version</h1>";
 
     $electionDate = Html::escape($this->nlpConfigurationObj->getElectionDate(TRUE));
-    $ballotDropDate = Html::escape($this->nlpConfigurationObj->getBallotDropDate(TRUE));
+    $earlyVotingStartDate = Html::escape($this->nlpConfigurationObj->getBallotDropDate(TRUE));
 
     $output .= "<h1>Election dates</h1>";
     $output .= "<p>Election date: $electionDate<br>
-      The earliest date ballots can be mailed to voters: $ballotDropDate</p>";
+      Start date of early voting: $earlyVotingStartDate</p>";
 
     $latestBallotReceivedDate = $this->matchbacksObj->getLatestMatchbackDate();
     if (!empty($latestBallotReceivedDate)) {

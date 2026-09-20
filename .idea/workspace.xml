@@ -7,10 +7,24 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Add inspect and repair of database table indexes">
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Improve the reporting of turf overlap to identify both turfs.">
+      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/NlpReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/NlpReadMe.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/Controller/WelcomeController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/WelcomeController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpFolderSetup.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpFolderSetup.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFolderSetupTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFolderSetupTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -67,7 +81,7 @@
     <drupalPath>C:\Users\steve\drupal-11.4.5</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26371" />
+    <option name="cachedIndexableFilesCount" value="26375" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -106,60 +120,60 @@
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
       <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.000000000000001" />
-      <entry key="S2" value="1.000178164805883" />
-      <entry key="S5" value="1.0316467245932068" />
-      <entry key="S10" value="1.1778952629869845" />
-      <entry key="S30" value="1.5625007931864157" />
-      <entry key="S60" value="1.783776045670074" />
-      <entry key="M2" value="2.5313291381256957" />
-      <entry key="M5" value="5.997128577791624" />
-      <entry key="M10" value="9.68857477291581" />
-      <entry key="M15" value="11.953177510707878" />
-      <entry key="M30" value="15.815135658105898" />
-      <entry key="H1" value="19.281646500952235" />
-      <entry key="H2" value="24.28309838992555" />
-      <entry key="H4" value="35.163837394248525" />
-      <entry key="D1" value="111.18396750233863" />
-      <entry key="W1" value="575.4082161166057" />
+      <entry key="MS500" value="1.0" />
+      <entry key="S2" value="1.0" />
+      <entry key="S5" value="1.0" />
+      <entry key="S10" value="1.0" />
+      <entry key="S30" value="1.0" />
+      <entry key="S60" value="1.0" />
+      <entry key="M2" value="1.0" />
+      <entry key="M5" value="1.0" />
+      <entry key="M10" value="1.0" />
+      <entry key="M15" value="1.0" />
+      <entry key="M30" value="1.0000000000013702" />
+      <entry key="H1" value="1.0000061204572064" />
+      <entry key="H2" value="1.0130530272884857" />
+      <entry key="H4" value="1.6127407301803187" />
+      <entry key="D1" value="43.6168368184585" />
+      <entry key="W1" value="498.70193705592044" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
-      <entry key="MS500" value="7.718308214200238E-302" />
-      <entry key="S2" value="5.2708484494363495E-76" />
-      <entry key="S5" value="7.740200518689924E-31" />
-      <entry key="S10" value="8.797840938940603E-16" />
-      <entry key="S30" value="9.582055940323565E-6" />
-      <entry key="S60" value="0.0030954896123776385" />
-      <entry key="M2" value="0.05563718914853842" />
-      <entry key="M5" value="0.3168738227928645" />
-      <entry key="M10" value="0.6241440217995535" />
-      <entry key="M15" value="0.8797125121541435" />
-      <entry key="M30" value="1.45615331909379" />
-      <entry key="H1" value="2.0318133331271606" />
-      <entry key="H2" value="2.452048637755349" />
-      <entry key="H4" value="2.7077125833116886" />
-      <entry key="D1" value="2.9485652536111964" />
-      <entry key="W1" value="6.929523157390045" />
+      <entry key="MS500" value="0.0" />
+      <entry key="S2" value="0.0" />
+      <entry key="S5" value="0.0" />
+      <entry key="S10" value="0.0" />
+      <entry key="S30" value="0.0" />
+      <entry key="S60" value="0.0" />
+      <entry key="M2" value="0.0" />
+      <entry key="M5" value="2.128487913578146E-174" />
+      <entry key="M10" value="1.6176226812292797E-87" />
+      <entry key="M15" value="1.6598507691825627E-58" />
+      <entry key="M30" value="2.000189955375895E-29" />
+      <entry key="H1" value="7.53036235630222E-15" />
+      <entry key="H2" value="1.492777617801039E-7" />
+      <entry key="H4" value="6.680909370780303E-4" />
+      <entry key="D1" value="0.7384417558740409" />
+      <entry key="W1" value="5.68596440448035" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="4.273519659089525E-8" />
-      <entry key="MS500" value="0.03358591165173458" />
-      <entry key="S2" value="0.4282077619244573" />
-      <entry key="S5" value="0.738657666198689" />
-      <entry key="S10" value="1.00652160614577" />
-      <entry key="S30" value="1.4909014698812277" />
-      <entry key="S60" value="1.7475726357485326" />
-      <entry key="M2" value="2.5641225621520825" />
-      <entry key="M5" value="6.300079220529109" />
-      <entry key="M10" value="10.302780392173524" />
-      <entry key="M15" value="12.824402864312892" />
-      <entry key="M30" value="17.26477813154364" />
-      <entry key="H1" value="21.309014819287263" />
-      <entry key="H2" value="26.732409379691337" />
-      <entry key="H4" value="37.86992533284503" />
-      <entry key="D1" value="114.13214960250991" />
-      <entry key="W1" value="582.337523427486" />
+      <entry key="MS100" value="0.10511205190671434" />
+      <entry key="MS500" value="0.6372803136596311" />
+      <entry key="S2" value="0.8934754536956513" />
+      <entry key="S5" value="0.9559453175937421" />
+      <entry key="S10" value="0.9777245612102328" />
+      <entry key="S30" value="0.992519028357395" />
+      <entry key="S60" value="0.9962524922716103" />
+      <entry key="M2" value="0.9981244873619775" />
+      <entry key="M5" value="0.9992493724163358" />
+      <entry key="M10" value="0.9996246157515009" />
+      <entry key="M15" value="0.9997497281746841" />
+      <entry key="M30" value="0.999874856258234" />
+      <entry key="H1" value="0.9999435466083159" />
+      <entry key="H2" value="1.013021867228206" />
+      <entry key="H4" value="1.6133922623825354" />
+      <entry key="D1" value="44.35517787935098" />
+      <entry key="W1" value="504.38772344882346" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../../../../../xampp/php/php.exe">
@@ -267,6 +281,9 @@
       <path value="$PROJECT_DIR$/vendor/twig/html-extra" />
       <path value="$PROJECT_DIR$/vendor/twig/twig" />
       <path value="$PROJECT_DIR$/vendor/webmozart/assert" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
+      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
     </include_path>
   </component>
   <component name="ProblemsViewState">
@@ -337,7 +354,7 @@
     &quot;node.js.selected.package.jshint&quot;: &quot;&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;web.server&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
@@ -358,7 +375,7 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-php-predefined-a98d8de5180a-9522f28f0b20-com.jetbrains.php.sharedIndexes-PS-262.10315.130" />
+        <option value="bundled-php-predefined-a98d8de5180a-9522f28f0b20-com.jetbrains.php.sharedIndexes-PS-262.10968.76" />
       </set>
     </attachedChunks>
   </component>
@@ -490,6 +507,9 @@
       <workItem from="1789311163780" duration="3729000" />
       <workItem from="1789321164395" duration="2286000" />
       <workItem from="1789323486505" duration="1044000" />
+      <workItem from="1789705118730" duration="3037000" />
+      <workItem from="1789742849972" duration="8587000" />
+      <workItem from="1789834120629" duration="28557000" />
     </task>
     <task id="LOCAL-00188" summary="Handle empty date of birth for a voter.">
       <option name="closed" value="true" />
@@ -950,7 +970,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Add document for configuring NLP Services." />
     <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
     <MESSAGE value="Save the turfId in the session data." />
     <MESSAGE value="Update the tests for recent cherry picks." />
@@ -975,7 +994,8 @@
     <MESSAGE value="Remove depreciated functions from DrupalUser" />
     <MESSAGE value="Replace static call to methods with injection of the object." />
     <MESSAGE value="Add inspect and repair of database table indexes" />
-    <option name="LAST_COMMIT_MESSAGE" value="Add inspect and repair of database table indexes" />
+    <MESSAGE value="Improve the reporting of turf overlap to identify both turfs." />
+    <option name="LAST_COMMIT_MESSAGE" value="Improve the reporting of turf overlap to identify both turfs." />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

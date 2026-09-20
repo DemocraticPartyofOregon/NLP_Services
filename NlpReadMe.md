@@ -4,9 +4,9 @@
 
 If you are to have a secure site, purchase and install an SSL certificate. This will permit the use of the https scheme.   If you want users who attempt to access the site using http to be automatically switched to https. Find the .htaccess file in the public_html directory.   Edit this file and find the line RewriteEngine on.  Immediately after that line, add the following three lines.
 
-    RewriteCond %{SERVER_PORT} 8
-    RewriteCond %{HTTP_HOST} ^(www.)?mysite.sfx
-    RewriteRule ^(.*)$ https://www.mysite.sfx/$1 [R,L]
+    RewriteCond %{HTTPS} off
+    RewriteCond %{HTTP_HOST} ^(www.)?nlpdebug.org
+    RewriteRule ^(.*)$ https://www.nlpdebug.org/$1 [R,L]
 
 Install the latest version of Drupal 11 using Composer.  Using Composer for the core provides the ability to use it for the many available modules.  Several of which are used by NLP Services and requires Composer.
 
@@ -14,6 +14,9 @@ First, install a TTY console on your local system such as PuTTY.  Access your ac
 typcially easier.
 
 Then install Composer on your site.
+
+    mkdir myStateName
+    cd myStateName
 
     echo 'alias composer="php -d allow\_url\_fopen=On ${HOME}/composer.phar"' >> ~/.bashrc
     source ~/.bashrc
@@ -36,13 +39,18 @@ Now install the core Drupal:
 Use your TTY app to redefine the public html directory (In the commands below, change Oregon to your state):
 
     mv ~/public_html ~/public_html_backup
-    ln -s ~/oregon/web/ ~/public_html
+    ln -s ~/myStateName/web/ ~/public_html
 
 Create a directory for the private files for saving API keys and set the permissions:
 
-    mkdir -p /home/myStateName/private-files/keys
-    chown -R www-data:www-data /home/myStateName/private-files
-    chmod 755 /home/myStateName/private-files /home/myStateName/private-files/keys
+
+    mkdir -p private_files/keys
+    //chown -R www-data:www-data private_files
+    chmod 755 private_files private_files/keys
+
+    mkdir -p /home/myStateName/private_files/keys
+    chown -R www-data:www-data /home/myStateName/private_files
+    chmod 755 /home/myStateName/private_files /home/myStateName/private_files/keys
 
 Then use composer to get the core:
 
@@ -60,6 +68,17 @@ From the admin menu, select Configuration.  In the PEOPLE section, select Accoun
 
 NLP Services is distributed as a compressed file.   Using FTP or File Manager, upload the NLP Compressed file to the directory oregon/web/modules/custom.   Then decompress the uploaded file in that directory to create the nlpservices directory.  When completed, you can delete the compressed file.
 
+## FTP deploy account permissions
+
+If ongoing deploys (e.g. from PhpStorm's Deployment feature, as used for ORDems' own live sites) will use a dedicated FTP account rather than the SSH/install account, that FTP account needs write access into the tree the site was installed under, not just into new files. The Drupal install itself (composer, git, drush) is normally run over SSH as your own login (e.g. `sjpacker`), which leaves every file owned by that user. A separate FTP-only account created later for automated uploads (e.g. via vsftpd, running as e.g. `ftpuser`) is a different Linux user and, unless explicitly granted access, can only create new files inside directories it has write permission on — it cannot overwrite files it doesn't own or share a group with. This is easy to miss because the very first full-tree deploy succeeds (it's all new files); it's only a later deploy that re-uploads an existing file that fails, with something like `553 Could not create file`.
+
+To avoid this, when the FTP account is created, add it to the group that owns the installed site files and make that tree group-writable:
+
+    sudo usermod -aG sjpacker ftpuser
+    sudo chmod -R g+w /home/myStateName/myStateName
+
+Replace `sjpacker` and `ftpuser` with the actual install user and FTP user for the site. The FTP client (PhpStorm) needs a fresh login after this to pick up the new group membership.
+
 ## Install and enable nlpservices module
 
 Use the Extend tab to install the NLP Services module.
@@ -68,7 +87,7 @@ Use the Extend tab to install the NLP Services module.
 
 Edit the `settings.php` file located in `myStateName/web/sites/default/` and add the following line:
 
-    $settings['file_private_path'] = '/home/myStateName/private-files';
+    $settings['file_private_path'] = '/home/myStateName/private_files';
 
 ## Now install the support modules
 

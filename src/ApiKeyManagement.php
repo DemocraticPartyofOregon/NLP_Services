@@ -162,16 +162,22 @@ class ApiKeyManagement
    * Usage: $values = $magicWord->getKeyValues('my_key_id');
    *
    * @param string $id - the ID of the key to be retrieved.
+   * @param bool $logIfMissing - whether to log an error if no key entity exists for the given ID.
+   *   Callers that are merely probing for a not-yet-configured key (e.g. the API Configuration
+   *   form checking for pre-existing credentials before a first-time save) should pass FALSE,
+   *   since a missing key in that case is expected, not an error.
    * @return array - the key values as an associative array, or an empty array if the key is not found.
    */
-  public function getKeyValues(string $id): array
+  public function getKeyValues(string $id, bool $logIfMissing = TRUE): array
   {
     $id = (empty($id))? 'State Committee' : $id;
     try {
       /** @var Drupal\key\Entity\Key $key */
       $key = $this->entityTypeManager->getStorage('key')->load($id);
       if (!$key) {
-        Drupal::logger('nlpservices')->error('getKeyValues: no key entity found for id @id.', ['@id' => $id]);
+        if ($logIfMissing) {
+          Drupal::logger('nlpservices')->error('getKeyValues: no key entity found for id @id.', ['@id' => $id]);
+        }
         return [];
       }
       $apiCredentials = json_decode($key->getKeyValue(), TRUE);

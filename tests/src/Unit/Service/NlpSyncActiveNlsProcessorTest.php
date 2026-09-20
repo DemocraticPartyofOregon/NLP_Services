@@ -200,6 +200,51 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // processBatch — dropout activist code column missing from the file
+    // -------------------------------------------------------------------------
+
+    /**
+     * Regression test: when the uploaded file has no ActivistCode_<code>
+     * column for the configured Dropout activist code (e.g. the code isn't
+     * included in the VAN export, or isn't configured at all), the missing
+     * column used to be silently treated as column 0 (VanID), which is
+     * always non-empty — falsely marking every NL as a dropout.
+     */
+    public function testProcessBatchMissingDropoutColumnDoesNotFalselyRejectNl(): void {
+      // Header has no ActivistCode_22 (the configured dropout code) column.
+      $uri = $this->writeTempCsv([
+        ['VanID', 'ActivistCode_11'],
+        [101, ''],
+      ]);
+      $nl = $this->baseNlRecord();
+      $this->apiNlsMock->method('getNls')->willReturn([101 => $nl]);
+
+      // Full success path (same as testProcessBatchNewNlSuccessPathCreatesNlRecord).
+      $this->magicWordMock->method('getCredentials')->willReturn([]);
+      $this->magicWordMock->method('getCredentialsByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->magicWordMock->method('uniqueUserName')->willReturn('asmith');
+      $this->drupalUserMock->method('getUserByName')->willReturn([]);
+      $this->magicWordMock->method('createMagicWord')->willReturn('secret123');
+      $this->drupalUserMock->method('createDrupalAccount')
+        ->willReturn($this->baseDrupalUser());
+      $this->magicWordMock->method('createNewCredentials')
+        ->willReturn(['mcid' => 101, 'userName' => 'asmith', 'email' => 'alice@example.com',
+                      'vfid' => 50, 'county' => 'Denver', 'hd' => '6',
+                      'roles' => [], 'created' => 0, 'access' => 0]);
+      $this->nlsMock->method('createNl')->willReturn(TRUE);
+      $this->nlsMock->method('getNlsStatus')->willReturn([]);
+
+      $this->nlsMock->expects($this->once())->method('createNl');
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->atLeastOnce())->method('addWarning');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+    }
+
+    // -------------------------------------------------------------------------
     // processBatch — NL has no email address
     // -------------------------------------------------------------------------
 

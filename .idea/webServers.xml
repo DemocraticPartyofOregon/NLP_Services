@@ -37,6 +37,13 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
+      <webServer id="f4a9b8c2-e1d2-4d0a-b8c1-4b968d97ce3b" name="NLP Debug" url="http://192.168.1.217">
+        <fileTransfer host="192.168.1.217" port="21">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
     </option>
   </component>
 </project>

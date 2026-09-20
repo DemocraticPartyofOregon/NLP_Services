@@ -21,6 +21,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private object $keyStorageMock;
     private object $entityTypeManagerMock;
     private object $fileSystemMock;
+    private object $loggerMock;
     private ContainerBuilder $container;
 
     protected function setUp(): void {
@@ -34,9 +35,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
 
-      $loggerMock        = $this->createMock(LoggerInterface::class);
+      $this->loggerMock  = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
-      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
 
       $this->container = new ContainerBuilder();
       $this->container->set('logger.factory', $loggerFactoryMock);
@@ -162,8 +163,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetKeyValuesReturnsEmptyWhenKeyNotFound(): void {
       $this->keyStorageMock->method('load')->willReturn(NULL);
+      $this->loggerMock->expects($this->once())->method('error');
 
       $this->assertSame([], $this->buildService()->getKeyValues('test_key'));
+    }
+
+    public function testGetKeyValuesSuppressesLogWhenLogIfMissingIsFalse(): void {
+      $this->keyStorageMock->method('load')->willReturn(NULL);
+      $this->loggerMock->expects($this->never())->method('error');
+
+      $this->assertSame([], $this->buildService()->getKeyValues('State Committee', FALSE));
     }
 
     public function testGetKeyValuesReturnsEmptyWhenKeyValueIsEmpty(): void {

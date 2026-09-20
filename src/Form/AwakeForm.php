@@ -51,33 +51,19 @@ class AwakeForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $apiVoterObj = Drupal::service('nlpservices.api_voter');
+    $apiNlsObj = Drupal::service('nlpservices.api_nls');
 
     $apiKeyManagementObj = Drupal::service('nlpservices.api_key_management');
     $client = Drupal::service('http_client');
 
+    //$mcid = 102549413;
+    $mcid = 102735234;
+    $committee = 'Wakulla';
 
-    $turfsObj = Drupal::service('nlpservices.turfs');
-    $votersObj = Drupal::service('nlpservices.voters');
-    $counties = $turfsObj->getCountyNames();
-    foreach ($counties as $county) {
-      $turfs = $turfsObj->getCountyTurfs($county);
-      foreach ($turfs as $turfIndex => $turf) {
-        $voters = $votersObj->fetchVotersByTurf($turfIndex);
-        foreach ($voters as $vanid => $voter) {
-          $stateFileId = $voter['stateFileId'] ?? NULL;
-          if (empty($stateFileId)) {
-            $apiVoter = $apiVoterObj->getApiVoter($vanid);
-            $stateFileId = $apiVoter['stateFileId'] ?? NULL;
-            nlp_debug_msg('stateFileId',$stateFileId);
-            if (!empty($stateFileId)) {
-              $apiVoter = $apiVoterObj->getApiVoter($vanid);
-              $votersObj->updateVoter($vanid, 'stateFileId', $apiVoter['stateFileId'] ?? NULL);
-            }
-          }
+    $nl = $apiNlsObj->getApiNls( $committee, $mcid);
+    nlp_debug_msg('nl',$nl);
 
-        }
-      }
-    }
+
 
     $form['submit'] = [
       '#type' => 'submit',

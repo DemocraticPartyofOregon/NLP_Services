@@ -44,6 +44,19 @@ function _nlpservices_ensure_keys_directory(): void
 }
 
 /**
+ * Sets the module's welcome page as the site's front page.
+ *
+ * Sites running NLP Services have no other purpose, so the welcome page
+ * (election status/login notice) should be what visitors land on at '/'.
+ */
+function _nlpservices_ensure_front_page(): void
+{
+  Drupal::configFactory()->getEditable('system.site')
+    ->set('page.front', '/nlpservices-welcome')
+    ->save();
+}
+
+/**
  * Implements hook_install().
  * @noinspection PhpUnused
  * @noinspection PhpUnusedParameterInspection
@@ -51,6 +64,7 @@ function _nlpservices_ensure_keys_directory(): void
 function nlpservices_install($is_syncing): void
 {
   _nlpservices_ensure_keys_directory();
+  _nlpservices_ensure_front_page();
 }
 
 /**
@@ -110,6 +124,15 @@ function nlpservices_update_10002(): void
       nlp_debug_msg('nlpservices_update_10002', $e->getMessage());
     }
   }
+}
+
+/**
+ * Sets the front page to the NLP Services welcome page for existing installs.
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10003(): void
+{
+  _nlpservices_ensure_front_page();
 }
 
 /**

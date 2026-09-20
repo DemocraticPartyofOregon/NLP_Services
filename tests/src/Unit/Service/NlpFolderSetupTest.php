@@ -3,6 +3,7 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Extension\ModuleExtensionList;
+  use Drupal\Core\File\Exception\DirectoryNotReadyException;
   use Drupal\Core\File\FileExists;
   use Drupal\Core\File\FileSystemInterface;
   use Drupal\Core\Messenger\MessengerInterface;
@@ -137,6 +138,33 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame($this->modulePath() . '/img/nlp_favicon.ico', $copiedTo[1][0]);
       $this->assertSame('public://nlp_favicon.ico', $copiedTo[1][1]);
       $this->assertSame(FileExists::Replace, $copiedTo[1][2]);
+    }
+
+    public function testInitializeFoldersWarnsAndContinuesWhenPublicDestinationNotReady(): void {
+      $this->fileSystemMock->method('copy')
+        ->willThrowException(new DirectoryNotReadyException("The specified file 'nlp_logo.png' could not be copied because the destination directory 'public://' is not properly configured."));
+
+      $this->messengerMock->expects($this->once())->method('addWarning');
+      $this->messengerMock->expects($this->once())->method('addStatus');
+      $this->configurationMock->expects($this->once())->method('set');
+
+      $calls = [];
+      $this->pathsMock->method('createDir')
+        ->willReturnCallback(function (string $type, string $county) use (&$calls): void {
+          $calls[] = [$type, $county];
+        });
+
+      $this->buildFolderSetup()->initializeFolders(['Denver']);
+
+      $this->assertSame([
+        ['TEMP', ''],
+        ['NLP', ''],
+        ['TURF', ''],
+        ['COUNTY', 'Denver'],
+        ['INST', 'Denver'],
+        ['PDF', 'Denver'],
+        ['TURF', 'Denver'],
+      ], $calls);
     }
 
   }

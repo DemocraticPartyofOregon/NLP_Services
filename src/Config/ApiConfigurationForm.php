@@ -239,13 +239,13 @@ class ApiConfigurationForm extends FormBase {
       return;
     }
 
-    $apiCredentials = $this->apiKeyManagementObj->getKeyValues('State Committee');
+    $apiCredentials = $this->apiKeyManagementObj->getKeyValues('State Committee', FALSE);
     if (!empty($apiCredentials)) {
       $this->apiKeyManagementObj->deleteKey('State Committee');
     }
     $committees = $this->nlpConfigurationObj->getCountyNames();
     foreach ($committees as $committee) {
-      $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee);
+      $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee, FALSE);
       if (empty($apiCredentials)) { continue; }
       $this->apiKeyManagementObj->deleteKey($committee);
     }

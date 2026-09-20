@@ -96,17 +96,21 @@ class NlpSyncActiveNlsProcessor {
       $dropoutAC          = $this->nlpConfigurationObj->getActivistCode('NLPDropoutAC');
 
       $notRegisteredTitle = 'ActivistCode_' . $notRegisteredAC;
-      $fieldPos['notRegisteredAc'] = 0;
-      if (!empty($fieldPos[$notRegisteredTitle])) {
+      if (array_key_exists($notRegisteredTitle, $fieldPos)) {
         $fieldPos['notRegisteredAc'] = $fieldPos[$notRegisteredTitle];
         unset($fieldPos[$notRegisteredTitle]);
+      } else {
+        $fieldPos['notRegisteredAc'] = NULL;
+        $this->messenger->addWarning(t('Column @title (Not Registered activist code) was not found in the uploaded file. Not-registered status will not be checked for this batch.', ['@title' => $notRegisteredTitle]));
       }
 
       $dropoutTitle = 'ActivistCode_' . $dropoutAC;
-      $fieldPos['dropoutAC'] = 0;
-      if (!empty($fieldPos[$dropoutTitle])) {
+      if (array_key_exists($dropoutTitle, $fieldPos)) {
         $fieldPos['dropoutAC'] = $fieldPos[$dropoutTitle];
         unset($fieldPos[$dropoutTitle]);
+      } else {
+        $fieldPos['dropoutAC'] = NULL;
+        $this->messenger->addWarning(t('Column @title (Dropout activist code) was not found in the uploaded file. Dropout status will not be checked for this batch.', ['@title' => $dropoutTitle]));
       }
       //nlp_debug_msg('$fieldPos',$fieldPos);
 
@@ -130,9 +134,11 @@ class NlpSyncActiveNlsProcessor {
       $recordCount++;
 
       $mcid = (int) $nlRaw[$fieldPos['VanID']];
+      $notRegisteredPos = $fieldPos['notRegisteredAc'];
+      $dropoutPos       = $fieldPos['dropoutAC'];
       $batchData[$mcid] = [
-        'notRegistered' => !empty($nlRaw[$fieldPos['notRegisteredAc']]),
-        'dropout'       => !empty($nlRaw[$fieldPos['dropoutAC']]),
+        'notRegistered' => $notRegisteredPos !== NULL && !empty($nlRaw[$notRegisteredPos]),
+        'dropout'       => $dropoutPos !== NULL && !empty($nlRaw[$dropoutPos]),
       ];
 
       if ($queCnt == self::BATCH_LIMIT) { break; }

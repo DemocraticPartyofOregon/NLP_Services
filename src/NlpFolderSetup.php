@@ -4,6 +4,7 @@ namespace Drupal\nlpservices;
 
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\File\Exception\FileException;
 use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
@@ -65,12 +66,17 @@ class NlpFolderSetup
       return;
     }
 
-    $source = $modulePath . '/img/' . $nlpLogo;
-    $destination = 'public://' . $nlpLogo;
-    $this->fileSystem->copy($source, $destination, FileExists::Replace);
+    try {
+      $source = $modulePath . '/img/' . $nlpLogo;
+      $destination = 'public://' . $nlpLogo;
+      $this->fileSystem->copy($source, $destination, FileExists::Replace);
 
-    $source = $modulePath . '/img/' . $nlpFavicon;
-    $destination = 'public://' . $nlpFavicon;
-    $this->fileSystem->copy($source, $destination, FileExists::Replace);
+      $source = $modulePath . '/img/' . $nlpFavicon;
+      $destination = 'public://' . $nlpFavicon;
+      $this->fileSystem->copy($source, $destination, FileExists::Replace);
+    } catch (FileException $e) {
+      nlp_debug_msg('prepareLogo', $e->getMessage());
+      $this->messenger->addWarning($this->t('The default logo and favicon could not be copied to the public files directory; it may not be configured. Folder setup will continue.'));
+    }
   }
 }

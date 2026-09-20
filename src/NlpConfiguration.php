@@ -176,7 +176,7 @@ class NlpConfiguration
   public function getBallotDropDate(bool $formatted = FALSE): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
-    $ballotDropDate = $electionDates['nlp_ballot_drop_date'];
+    $ballotDropDate = $electionDates['nlp_early_voting_start_date'];
     if($formatted) {
       $electionDate = date('F j, Y',strtotime($ballotDropDate));
       try {
