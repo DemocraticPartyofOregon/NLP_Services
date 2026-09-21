@@ -267,7 +267,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('getVotersInList')
         ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
       $this->turfsMock->method('getTurf')
-        ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+        ->willReturn([
+          'turfName'      => 'Oak Ave',
+          'nlFirstName'   => 'Carol',
+          'nlLastName'    => 'Davis',
+          'folderName'    => 'Denver Folder',
+          'mapRegionName' => 'Denver Region',
+        ]);
 
       $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(101);
 
@@ -291,7 +297,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('getVotersInList')
         ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
       $this->turfsMock->method('getTurf')
-        ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+        ->willReturn([
+          'turfName'      => 'Oak Ave',
+          'nlFirstName'   => 'Carol',
+          'nlLastName'    => 'Davis',
+          'folderName'    => 'Denver Folder',
+          'mapRegionName' => 'Denver Region',
+        ]);
 
       $acSetActions = [];
       $this->activistCodesMock->method('setApiActivistCodeBatch')
@@ -346,7 +358,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('getVotersInList')
         ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
       $this->turfsMock->method('getTurf')
-        ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+        ->willReturn([
+          'turfName'      => 'Oak Ave',
+          'nlFirstName'   => 'Carol',
+          'nlLastName'    => 'Davis',
+          'folderName'    => 'Denver Folder',
+          'mapRegionName' => 'Denver Region',
+        ]);
 
       $context   = [];
       $processor = $this->buildProcessor();
