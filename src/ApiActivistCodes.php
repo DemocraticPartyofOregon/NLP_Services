@@ -13,6 +13,8 @@ use stdClass;
 
 class ApiActivistCodes
 {
+  use ApiRetryTrait;
+
   const string ACTIVIST_CODE = 'ActivistCode';
 
   private array $supportedActivistCodes = [
@@ -270,30 +272,48 @@ class ApiActivistCodes
     }
 
     $hasCode = [];
-    $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL) {
-      foreach ($vanids as $vanid) {
-        $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
-        yield $vanid => new GuzzleRequest('GET', $url);
-      }
-    };
+    $pending = $vanids;
+    $concurrency = self::POOL_CONCURRENCY;
 
-    $pool = new Pool($this->client, $requests(), [
-      'concurrency' => 10,
-      'fulfilled' => function($response, $vanid) use (&$hasCode, $rid) {
-        $result = json_decode($response->getBody(), TRUE);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-          $hasCode[$vanid] = FALSE;
-          return;
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+      if ($attempt > 0) {
+        $this->sleepMs($retryDelayMs);
+        $concurrency = self::REDUCED_CONCURRENCY;
+      }
+      $retry = [];
+      $retryDelayMs = 0;
+
+      $requests = function() use ($pending, $user, $apiKey, $database, $apiURL) {
+        foreach ($pending as $vanid) {
+          $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
+          yield $vanid => new GuzzleRequest('GET', $url);
         }
-        $codes = array_map(fn($item) => (int) $item['activistCodeId'], $result['items'] ?? []);
-        $hasCode[$vanid] = in_array($rid, $codes);
-      },
-      'rejected' => function($reason, $vanid) use (&$hasCode) {
-        nlp_debug_msg('hasApiActivistCodeBatch', $reason->getMessage());
-        $hasCode[$vanid] = FALSE;
-      },
-    ]);
-    $pool->promise()->wait();
+      };
+
+      $pool = new Pool($this->client, $requests(), [
+        'concurrency' => $concurrency,
+        'fulfilled' => function($response, $vanid) use (&$hasCode, $rid) {
+          $result = json_decode($response->getBody(), TRUE);
+          if (json_last_error() !== JSON_ERROR_NONE) {
+            $hasCode[$vanid] = FALSE;
+            return;
+          }
+          $codes = array_map(fn($item) => (int) $item['activistCodeId'], $result['items'] ?? []);
+          $hasCode[$vanid] = in_array($rid, $codes);
+        },
+        'rejected' => function($reason, $vanid) use (&$retry, &$retryDelayMs, &$hasCode, $attempt) {
+          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+            $retry[] = $vanid;
+            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
+            return;
+          }
+          nlp_debug_msg('hasApiActivistCodeBatch', $reason->getMessage());
+          $hasCode[$vanid] = FALSE;
+        },
+      ]);
+      $pool->promise()->wait();
+      $pending = $retry;
+    }
 
     $missing = [];
     foreach ($vanids as $vanid) {
@@ -354,22 +374,40 @@ class ApiActivistCodes
       'Expect'       => '',
     ];
 
-    $requests = function() use ($vanids, $user, $apiKey, $database, $apiURL, $headers, $dataJson) {
-      foreach ($vanids as $vanid) {
-        $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
-        //nlp_debug_msg('setApiActivistCode', "POST $url with data: $dataJson");
-        yield $vanid => new GuzzleRequest('POST', $url, $headers, $dataJson);
-      }
-    };
+    $pending = $vanids;
+    $concurrency = self::POOL_CONCURRENCY;
 
-    $pool = new Pool($this->client, $requests(), [
-      'concurrency' => 10,
-      'fulfilled' => function($response, $vanid) {},
-      'rejected' => function($reason, $vanid) {
-        nlp_debug_msg('setApiActivistCodeBatch', $reason->getMessage());
-      },
-    ]);
-    $pool->promise()->wait();
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+      if ($attempt > 0) {
+        $this->sleepMs($retryDelayMs);
+        $concurrency = self::REDUCED_CONCURRENCY;
+      }
+      $retry = [];
+      $retryDelayMs = 0;
+
+      $requests = function() use ($pending, $user, $apiKey, $database, $apiURL, $headers, $dataJson) {
+        foreach ($pending as $vanid) {
+          $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
+          //nlp_debug_msg('setApiActivistCode', "POST $url with data: $dataJson");
+          yield $vanid => new GuzzleRequest('POST', $url, $headers, $dataJson);
+        }
+      };
+
+      $pool = new Pool($this->client, $requests(), [
+        'concurrency' => $concurrency,
+        'fulfilled' => function($response, $vanid) {},
+        'rejected' => function($reason, $vanid) use (&$retry, &$retryDelayMs, $attempt) {
+          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+            $retry[] = $vanid;
+            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
+            return;
+          }
+          nlp_debug_msg('setApiActivistCodeBatch', $reason->getMessage());
+        },
+      ]);
+      $pool->promise()->wait();
+      $pending = $retry;
+    }
   }
 
   /**
