@@ -7,24 +7,14 @@
     <option name="selectedModelId" value="auto" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Improve the reporting of turf overlap to identify both turfs.">
-      <change beforePath="$PROJECT_DIR$/.idea/deployment.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/deployment.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/webServers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/webServers.xml" afterDir="false" />
+    <list default="true" id="ab31b3e2-80c3-494d-95b1-b211803fb5dd" name="Changes" comment="Fix initialization for Ubuntu install">
+      <change afterPath="$PROJECT_DIR$/img/drupal_menu_logo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/ApiRetryTrait.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/NlpReadMe.md" beforeDir="false" afterPath="$PROJECT_DIR$/NlpReadMe.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nlpservices.install" beforeDir="false" afterPath="$PROJECT_DIR$/nlpservices.install" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/ApiKeyManagement.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiKeyManagement.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Config/ApiConfigurationForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Controller/WelcomeController.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Controller/WelcomeController.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/Form/AwakeForm.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/Form/AwakeForm.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpConfiguration.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpConfiguration.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpDataEntryHelper.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpFolderSetup.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpFolderSetup.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/NlpSyncActiveNlsProcessor.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/ApiKeyManagementTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpConfigurationTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFolderSetupTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpFolderSetupTest.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" beforeDir="false" afterPath="$PROJECT_DIR$/tests/src/Unit/Service/NlpSyncActiveNlsProcessorTest.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiActivistCodes.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiActivistCodes.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiNls.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiNls.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/ApiVoter.php" beforeDir="false" afterPath="$PROJECT_DIR$/src/ApiVoter.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,7 +71,7 @@
     <drupalPath>C:\Users\steve\drupal-11.4.5</drupalPath>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="26375" />
+    <option name="cachedIndexableFilesCount" value="26374" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="Git.Rebase.Settings">
@@ -119,23 +109,23 @@
   </component>
   <component name="NextEditCompletionFeaturesState">
     <decayedCancelled>
-      <entry key="MS100" value="1.0" />
-      <entry key="MS500" value="1.0" />
-      <entry key="S2" value="1.0" />
-      <entry key="S5" value="1.0" />
-      <entry key="S10" value="1.0" />
-      <entry key="S30" value="1.0" />
-      <entry key="S60" value="1.0" />
-      <entry key="M2" value="1.0" />
-      <entry key="M5" value="1.0" />
-      <entry key="M10" value="1.0" />
-      <entry key="M15" value="1.0" />
-      <entry key="M30" value="1.0000000000013702" />
-      <entry key="H1" value="1.0000061204572064" />
-      <entry key="H2" value="1.0130530272884857" />
-      <entry key="H4" value="1.6127407301803187" />
-      <entry key="D1" value="43.6168368184585" />
-      <entry key="W1" value="498.70193705592044" />
+      <entry key="MS100" value="1.0007148855937233" />
+      <entry key="MS500" value="1.2348816148996298" />
+      <entry key="S2" value="1.7282096984529547" />
+      <entry key="S5" value="2.2959761691635876" />
+      <entry key="S10" value="3.590303535778985" />
+      <entry key="S30" value="7.348726590618108" />
+      <entry key="S60" value="10.436232189543654" />
+      <entry key="M2" value="14.086125586255122" />
+      <entry key="M5" value="19.62580372845592" />
+      <entry key="M10" value="23.29642843549111" />
+      <entry key="M15" value="24.91550488358881" />
+      <entry key="M30" value="26.80953357668943" />
+      <entry key="H1" value="27.959105017869703" />
+      <entry key="H2" value="28.74189424751901" />
+      <entry key="H4" value="29.619219448067287" />
+      <entry key="D1" value="68.62716015909781" />
+      <entry key="W1" value="520.9949685607713" />
     </decayedCancelled>
     <decayedSelected>
       <entry key="MS100" value="0.0" />
@@ -146,34 +136,34 @@
       <entry key="S30" value="0.0" />
       <entry key="S60" value="0.0" />
       <entry key="M2" value="0.0" />
-      <entry key="M5" value="2.128487913578146E-174" />
-      <entry key="M10" value="1.6176226812292797E-87" />
-      <entry key="M15" value="1.6598507691825627E-58" />
-      <entry key="M30" value="2.000189955375895E-29" />
-      <entry key="H1" value="7.53036235630222E-15" />
-      <entry key="H2" value="1.492777617801039E-7" />
-      <entry key="H4" value="6.680909370780303E-4" />
-      <entry key="D1" value="0.7384417558740409" />
-      <entry key="W1" value="5.68596440448035" />
+      <entry key="M5" value="3.0605608171641634E-186" />
+      <entry key="M10" value="1.9397338310007455E-93" />
+      <entry key="M15" value="1.8734652955069534E-62" />
+      <entry key="M30" value="2.1250029937830944E-31" />
+      <entry key="H1" value="7.761756728236818E-16" />
+      <entry key="H2" value="4.7925559407473355E-8" />
+      <entry key="H4" value="3.785485774149704E-4" />
+      <entry key="D1" value="0.671733879117368" />
+      <entry key="W1" value="5.609575461242665" />
     </decayedSelected>
     <decayedShown>
-      <entry key="MS100" value="0.10511205190671434" />
-      <entry key="MS500" value="0.6372803136596311" />
-      <entry key="S2" value="0.8934754536956513" />
-      <entry key="S5" value="0.9559453175937421" />
-      <entry key="S10" value="0.9777245612102328" />
-      <entry key="S30" value="0.992519028357395" />
-      <entry key="S60" value="0.9962524922716103" />
-      <entry key="M2" value="0.9981244873619775" />
-      <entry key="M5" value="0.9992493724163358" />
-      <entry key="M10" value="0.9996246157515009" />
-      <entry key="M15" value="0.9997497281746841" />
-      <entry key="M30" value="0.999874856258234" />
-      <entry key="H1" value="0.9999435466083159" />
-      <entry key="H2" value="1.013021867228206" />
-      <entry key="H4" value="1.6133922623825354" />
-      <entry key="D1" value="44.35517787935098" />
-      <entry key="W1" value="504.38772344882346" />
+      <entry key="MS100" value="0.8473300187612668" />
+      <entry key="MS500" value="1.1929024074783385" />
+      <entry key="S2" value="1.7126883024238693" />
+      <entry key="S5" value="2.2876475768701843" />
+      <entry key="S10" value="3.5837593370554477" />
+      <entry key="S30" value="7.344278871377661" />
+      <entry key="S60" value="10.433022740628479" />
+      <entry key="M2" value="14.083904742145142" />
+      <entry key="M5" value="19.62458417777198" />
+      <entry key="M10" value="23.295722798033275" />
+      <entry key="M15" value="24.915007763766308" />
+      <entry key="M30" value="26.809268633263596" />
+      <entry key="H1" value="27.958962622009153" />
+      <entry key="H2" value="28.741815184502027" />
+      <entry key="H4" value="29.61955380650101" />
+      <entry key="D1" value="69.29879659909645" />
+      <entry key="W1" value="526.6043675666313" />
     </decayedShown>
   </component>
   <component name="PhpWorkspaceProjectConfiguration" interpreter_name="$PROJECT_DIR$/../../../../../../../../xampp/php/php.exe">
@@ -361,6 +351,7 @@
 }</component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\steve\code\drupal-site\web\modules\custom\NLP_Services\img" />
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\tests\fixtures" />
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\docs" />
       <recent name="C:\Users\steve\PhpstormProjects\NLP_Services\src\Config" />
@@ -509,15 +500,8 @@
       <workItem from="1789323486505" duration="1044000" />
       <workItem from="1789705118730" duration="3037000" />
       <workItem from="1789742849972" duration="8587000" />
-      <workItem from="1789834120629" duration="28557000" />
-    </task>
-    <task id="LOCAL-00188" summary="Handle empty date of birth for a voter.">
-      <option name="closed" value="true" />
-      <created>1785129289398</created>
-      <option name="number" value="00188" />
-      <option name="presentableId" value="LOCAL-00188" />
-      <option name="project" value="LOCAL" />
-      <updated>1785129289399</updated>
+      <workItem from="1789834120629" duration="35357000" />
+      <workItem from="1790008966248" duration="7750000" />
     </task>
     <task id="LOCAL-00189" summary="Remove dead code that causes a fatal error in export contact reports">
       <option name="closed" value="true" />
@@ -903,7 +887,15 @@
       <option name="project" value="LOCAL" />
       <updated>1789323437229</updated>
     </task>
-    <option name="localTasksCounter" value="237" />
+    <task id="LOCAL-00237" summary="Fix initialization for Ubuntu install">
+      <option name="closed" value="true" />
+      <created>1789926156555</created>
+      <option name="number" value="00237" />
+      <option name="presentableId" value="LOCAL-00237" />
+      <option name="project" value="LOCAL" />
+      <updated>1789926156556</updated>
+    </task>
+    <option name="localTasksCounter" value="238" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -970,7 +962,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Fix the &quot;The turf name is missing.&quot; error." />
     <MESSAGE value="Save the turfId in the session data." />
     <MESSAGE value="Update the tests for recent cherry picks." />
     <MESSAGE value="PHPUnit deprecations" />
@@ -995,7 +986,8 @@
     <MESSAGE value="Replace static call to methods with injection of the object." />
     <MESSAGE value="Add inspect and repair of database table indexes" />
     <MESSAGE value="Improve the reporting of turf overlap to identify both turfs." />
-    <option name="LAST_COMMIT_MESSAGE" value="Improve the reporting of turf overlap to identify both turfs." />
+    <MESSAGE value="Fix initialization for Ubuntu install" />
+    <option name="LAST_COMMIT_MESSAGE" value="Fix initialization for Ubuntu install" />
   </component>
   <component name="WordPressConfiguration">
     <wordpressPath />

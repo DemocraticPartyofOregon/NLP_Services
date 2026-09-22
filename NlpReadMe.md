@@ -119,6 +119,8 @@ Configure the autologout module to inhibit auto logout for the administrator and
 
 Configure the editor so the NLP Admin and the NLP Coordinator have the "Full HTML" option available.  This is needed to permit the use of the "nlpservices" text format for the content that is used in the emails sent to the NLs.  Also, add additional buttons to the toolbar for the "Full HTML" format.  The buttons to add are: "Insert image", "Insert link", and "Remove link".  This will allow the use of images and links in the emails sent to the NLs.
 
+Go to Configuration->User Interface->Navigation Settings.  Choose Custom logo and upload drupal_menu_logo.png.  It can be found at modules/custom/nlpservices/img/drupal_menu_logo.png.
+
 ## Configuring Drupal Theme
 
 NLP Services was developed and tested with the Bartik theme.  There should be no specific dependency on theme but the Bartik standard options produce pleasing NLP displays.
