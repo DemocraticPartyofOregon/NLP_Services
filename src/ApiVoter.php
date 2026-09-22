@@ -11,6 +11,7 @@ use Exception;
 
 class ApiVoter
 {
+  use ApiRetryTrait;
 
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
@@ -157,18 +158,25 @@ class ApiVoter
 
     $expandOptions = '?$expand=phones,addresses,districts,electionRecords,externalIds';
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
-    try {
-      $request = $this->client->request('GET',$url);
-      $result = json_decode($request->getBody(), TRUE);
-      if (json_last_error() !== JSON_ERROR_NONE) {
+    for ($attempt = 0; ; $attempt++) {
+      try {
+        $request = $this->client->request('GET',$url);
+        $result = json_decode($request->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          return [];
+        }
+        break;
+      } catch (GuzzleException $e) {
+        if ($this->isRateLimited($e) && $attempt < self::MAX_RETRIES) {
+          $this->sleepMs($this->retryDelayMs($e, $attempt));
+          continue;
+        }
+        nlp_debug_msg('getApiVoter', $e->getMessage());
+        return [];
+      } catch (Exception $e) {
+        nlp_debug_msg('getApiVoter', $e->getMessage());
         return [];
       }
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiVoter', $e->getMessage());
-      return [];
-    } catch (Exception $e) {
-      nlp_debug_msg('getApiVoter', $e->getMessage());
-      return [];
     }
     return $this->processVoterResult($result);
   }
@@ -427,35 +435,52 @@ class ApiVoter
     $state = $this->nlpConfigurationObj->getStateName();
     $expandOptions = '?$expand=phones,addresses,districts,electionRecords,externalIds';
 
-    $requests = function() use ($listVoters, $user, $apiKey, $apiURL, $expandOptions) {
-      foreach ($listVoters as $vanid) {
-        $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
-        yield $vanid => new GuzzleRequest('GET', $url);
-      }
-    };
-
     $voters = [];
     $failed = FALSE;
+    $pending = $listVoters;
+    $concurrency = self::POOL_CONCURRENCY;
 
-    $pool = new Pool($this->client, $requests(), [
-      'concurrency' => 10,
-      'fulfilled' => function($response, $vanid) use (&$voters, &$failed, $state) {
-        $result = json_decode($response->getBody(), TRUE);
-        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
-          nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, '');
-          $failed = TRUE;
-          return;
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+      if ($attempt > 0) {
+        $this->sleepMs($retryDelayMs);
+        $concurrency = self::REDUCED_CONCURRENCY;
+      }
+      $retry = [];
+      $retryDelayMs = 0;
+
+      $requests = function() use ($pending, $user, $apiKey, $apiURL, $expandOptions) {
+        foreach ($pending as $vanid) {
+          $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
+          yield $vanid => new GuzzleRequest('GET', $url);
         }
-        $voter = $this->normalizeVoter($this->processVoterResult($result), $state);
-        $voters[$voter['vanid']] = $voter;
-      },
-      'rejected' => function($reason, $vanid) use (&$failed) {
-        nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, $reason->getMessage());
-        $failed = TRUE;
-      },
-    ]);
+      };
 
-    $pool->promise()->wait();
+      $pool = new Pool($this->client, $requests(), [
+        'concurrency' => $concurrency,
+        'fulfilled' => function($response, $vanid) use (&$voters, &$failed, $state) {
+          $result = json_decode($response->getBody(), TRUE);
+          if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+            nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, '');
+            $failed = TRUE;
+            return;
+          }
+          $voter = $this->normalizeVoter($this->processVoterResult($result), $state);
+          $voters[$voter['vanid']] = $voter;
+        },
+        'rejected' => function($reason, $vanid) use (&$retry, &$retryDelayMs, &$failed, $attempt) {
+          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+            $retry[] = $vanid;
+            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
+            return;
+          }
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, $reason->getMessage());
+          $failed = TRUE;
+        },
+      ]);
+
+      $pool->promise()->wait();
+      $pending = $retry;
+    }
 
     return $failed ? [] : $voters;
   }

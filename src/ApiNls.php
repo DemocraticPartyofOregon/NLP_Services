@@ -13,7 +13,8 @@ use Exception;
  * @noinspection PhpUnused
  */
 class ApiNls {
-  
+  use ApiRetryTrait;
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
@@ -52,24 +53,30 @@ class ApiNls {
     $user = $committeeKey['App Name'];
     
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid.$expandOptions;
-    try {
-      $request = $this->client->request('GET', $post_url);
-      $results = json_decode($request->getBody(), TRUE);
-      if (json_last_error() !== JSON_ERROR_NONE) {
+    for ($attempt = 0; ; $attempt++) {
+      try {
+        $request = $this->client->request('GET', $post_url);
+        $results = json_decode($request->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          return [];
+        }
+        return $results ?? [];
+      } catch (GuzzleException $e) {
+        $code = $e->getCode();
+        if ($code == 404) {return [];}
+        if ($errorStatus && $code == 401) {
+          return ['Invalid key'];
+        }
+        if ($this->isRateLimited($e) && $attempt < self::MAX_RETRIES) {
+          $this->sleepMs($this->retryDelayMs($e, $attempt));
+          continue;
+        }
+        nlp_debug_msg('nlApiCall', $e->getMessage());
+        return [];
+      } catch (Exception $e) {
+        nlp_debug_msg('nlApiCall', $e->getMessage());
         return [];
       }
-      return $results ?? [];
-    } catch (GuzzleException $e) {
-      $code = $e->getCode();
-      if ($code == 404) {return [];}
-      if ($errorStatus && $code == 401) {
-        return ['Invalid key'];
-      }
-      nlp_debug_msg('nlApiCall', $e->getMessage());
-      return [];
-    } catch (Exception $e) {
-      nlp_debug_msg('nlApiCall', $e->getMessage());
-      return [];
     }
   }
   
@@ -229,32 +236,49 @@ class ApiNls {
     $user = $committeeKey['App Name'];
     $expandOptions = '?$expand=phones,emails,addresses,districts,preferences,externalIds';
 
-    $requests = function() use ($mcids, $user, $apiKey, $apiURL, $expandOptions) {
-      foreach ($mcids as $mcid) {
-        $url = "https://$user:$apiKey|1@$apiURL/people/$mcid$expandOptions";
-        yield $mcid => new GuzzleRequest('GET', $url);
-      }
-    };
-
     $nls = [];
+    $pending = $mcids;
+    $concurrency = self::POOL_CONCURRENCY;
 
-    $pool = new Pool($this->client, $requests(), [
-      'concurrency' => 10,
-      'fulfilled' => function($response, $mcid) use (&$nls) {
-        $result = json_decode($response->getBody(), TRUE);
-        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
-          nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
-          return;
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+      if ($attempt > 0) {
+        $this->sleepMs($retryDelayMs);
+        $concurrency = self::REDUCED_CONCURRENCY;
+      }
+      $retry = [];
+      $retryDelayMs = 0;
+
+      $requests = function() use ($pending, $user, $apiKey, $apiURL, $expandOptions) {
+        foreach ($pending as $mcid) {
+          $url = "https://$user:$apiKey|1@$apiURL/people/$mcid$expandOptions";
+          yield $mcid => new GuzzleRequest('GET', $url);
         }
-        $nl = $this->processNlResult($result);
-        $nls[$nl['mcid']] = $nl;
-      },
-      'rejected' => function($reason, $mcid) {
-        nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
-      },
-    ]);
+      };
 
-    $pool->promise()->wait();
+      $pool = new Pool($this->client, $requests(), [
+        'concurrency' => $concurrency,
+        'fulfilled' => function($response, $mcid) use (&$nls) {
+          $result = json_decode($response->getBody(), TRUE);
+          if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+            nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
+            return;
+          }
+          $nl = $this->processNlResult($result);
+          $nls[$nl['mcid']] = $nl;
+        },
+        'rejected' => function($reason, $mcid) use (&$retry, &$retryDelayMs, $attempt) {
+          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+            $retry[] = $mcid;
+            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
+            return;
+          }
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
+        },
+      ]);
+
+      $pool->promise()->wait();
+      $pending = $retry;
+    }
 
     return $nls;
   }
