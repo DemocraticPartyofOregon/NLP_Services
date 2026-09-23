@@ -237,48 +237,22 @@ class ApiNls {
     $expandOptions = '?$expand=phones,emails,addresses,districts,preferences,externalIds';
 
     $nls = [];
-    $pending = $mcids;
-    $concurrency = self::POOL_CONCURRENCY;
-
-    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
-      if ($attempt > 0) {
-        $this->sleepMs($retryDelayMs);
-        $concurrency = self::REDUCED_CONCURRENCY;
-      }
-      $retry = [];
-      $retryDelayMs = 0;
-
-      $requests = function() use ($pending, $user, $apiKey, $apiURL, $expandOptions) {
-        foreach ($pending as $mcid) {
-          $url = "https://$user:$apiKey|1@$apiURL/people/$mcid$expandOptions";
-          yield $mcid => new GuzzleRequest('GET', $url);
+    $this->sendInRateLimitedGroups(
+      $mcids,
+      fn($mcid) => new GuzzleRequest('GET', "https://$user:$apiKey|1@$apiURL/people/$mcid$expandOptions"),
+      function($response, $mcid) use (&$nls) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
+          return;
         }
-      };
-
-      $pool = new Pool($this->client, $requests(), [
-        'concurrency' => $concurrency,
-        'fulfilled' => function($response, $mcid) use (&$nls) {
-          $result = json_decode($response->getBody(), TRUE);
-          if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
-            nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
-            return;
-          }
-          $nl = $this->processNlResult($result);
-          $nls[$nl['mcid']] = $nl;
-        },
-        'rejected' => function($reason, $mcid) use (&$retry, &$retryDelayMs, $attempt) {
-          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
-            $retry[] = $mcid;
-            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
-            return;
-          }
-          nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
-        },
-      ]);
-
-      $pool->promise()->wait();
-      $pending = $retry;
-    }
+        $nl = $this->processNlResult($result);
+        $nls[$nl['mcid']] = $nl;
+      },
+      function($reason, $mcid) {
+        nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());
+      },
+    );
 
     return $nls;
   }

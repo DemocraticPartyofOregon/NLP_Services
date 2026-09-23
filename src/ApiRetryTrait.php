@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use GuzzleHttp\Pool;
 use Throwable;
 
 /**
@@ -9,17 +10,70 @@ use Throwable;
  *
  * The VAN API enforces a per-key rate limit and responds with HTTP 429
  * (body like `{"errors":[{"code":"429","text":"Rate limit exceeded. Try
- * again in 9 ms."}]}`) once it's exceeded, which single-shot calls and the
- * concurrency-10 Guzzle pools used for batch lookups can trigger under
- * load. These helpers let callers retry only the rate-limited requests,
- * honoring the API's own backoff hint, and fall back to a slower
- * concurrency on retry rounds.
+ * again in 9 ms."}]}`) once it's exceeded (vendor-stated limit: 15 requests
+ * per second). sendInRateLimitedGroups() keeps batch lookups under that limit by
+ * sending requests in groups paced by VanRateLimiter, and retries only the
+ * requests that were still rate-limited, honoring the API's own backoff
+ * hint and using smaller groups on retry rounds.
  */
 trait ApiRetryTrait {
 
   private const int MAX_RETRIES = 4;
-  private const int POOL_CONCURRENCY = 10;
-  private const int REDUCED_CONCURRENCY = 3;
+  private const int RETRY_GROUP_SIZE = 3;
+
+  /**
+   * Sends one request per key and waits for every reply.
+   *
+   * Requests go out in groups of at most VanRateLimiter::MAX_REQUESTS. All
+   * requests in a group must be answered before the next group is sent,
+   * and VanRateLimiter holds each group back until sending it keeps the
+   * rate at or under 15 requests per second. Requests rejected with a 429
+   * are retried in smaller groups after the API's suggested delay; any
+   * other failure, or a 429 on the final attempt, is passed to $onFailed.
+   *
+   * @param array $keys - identifiers (e.g. vanids), one request each.
+   * @param callable $buildRequest - fn($key): RequestInterface
+   * @param callable $onFulfilled - fn(ResponseInterface $response, $key)
+   * @param callable $onFailed - fn(Throwable $reason, $key)
+   */
+  private function sendInRateLimitedGroups(array $keys, callable $buildRequest, callable $onFulfilled, callable $onFailed): void {
+    $pending = $keys;
+    $groupSize = VanRateLimiter::MAX_REQUESTS;
+
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+      if ($attempt > 0) {
+        $this->sleepMs($retryDelayMs);
+        $groupSize = self::RETRY_GROUP_SIZE;
+      }
+      $retry = [];
+      $retryDelayMs = 0;
+
+      foreach (array_chunk($pending, $groupSize) as $group) {
+        VanRateLimiter::acquire(count($group));
+
+        $requests = function() use ($group, $buildRequest) {
+          foreach ($group as $key) {
+            yield $key => $buildRequest($key);
+          }
+        };
+
+        $pool = new Pool($this->client, $requests(), [
+          'concurrency' => count($group),
+          'fulfilled' => fn($response, $key) => $onFulfilled($response, $key),
+          'rejected' => function($reason, $key) use (&$retry, &$retryDelayMs, $attempt, $onFailed) {
+            if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+              $retry[] = $key;
+              $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
+              return;
+            }
+            $onFailed($reason, $key);
+          },
+        ]);
+        $pool->promise()->wait();
+      }
+      $pending = $retry;
+    }
+  }
 
   private function isRateLimited(Throwable $reason): bool {
     return $reason->getCode() == 429;

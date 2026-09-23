@@ -437,50 +437,24 @@ class ApiVoter
 
     $voters = [];
     $failed = FALSE;
-    $pending = $listVoters;
-    $concurrency = self::POOL_CONCURRENCY;
-
-    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
-      if ($attempt > 0) {
-        $this->sleepMs($retryDelayMs);
-        $concurrency = self::REDUCED_CONCURRENCY;
-      }
-      $retry = [];
-      $retryDelayMs = 0;
-
-      $requests = function() use ($pending, $user, $apiKey, $apiURL, $expandOptions) {
-        foreach ($pending as $vanid) {
-          $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
-          yield $vanid => new GuzzleRequest('GET', $url);
-        }
-      };
-
-      $pool = new Pool($this->client, $requests(), [
-        'concurrency' => $concurrency,
-        'fulfilled' => function($response, $vanid) use (&$voters, &$failed, $state) {
-          $result = json_decode($response->getBody(), TRUE);
-          if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
-            nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, '');
-            $failed = TRUE;
-            return;
-          }
-          $voter = $this->normalizeVoter($this->processVoterResult($result), $state);
-          $voters[$voter['vanid']] = $voter;
-        },
-        'rejected' => function($reason, $vanid) use (&$retry, &$retryDelayMs, &$failed, $attempt) {
-          if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
-            $retry[] = $vanid;
-            $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
-            return;
-          }
-          nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, $reason->getMessage());
+    $this->sendInRateLimitedGroups(
+      $listVoters,
+      fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions"),
+      function($response, $vanid) use (&$voters, &$failed, $state) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE || empty($result)) {
+          nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, '');
           $failed = TRUE;
-        },
-      ]);
-
-      $pool->promise()->wait();
-      $pending = $retry;
-    }
+          return;
+        }
+        $voter = $this->normalizeVoter($this->processVoterResult($result), $state);
+        $voters[$voter['vanid']] = $voter;
+      },
+      function($reason, $vanid) use (&$failed) {
+        nlp_debug_msg('Something is wrong.  Contact NLP Support,  VANID: ' . $vanid, $reason->getMessage());
+        $failed = TRUE;
+      },
+    );
 
     return $failed ? [] : $voters;
   }

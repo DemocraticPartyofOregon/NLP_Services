@@ -11,6 +11,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpConfiguration;
+  use Drupal\nlpservices\VanRateLimiter;
   use Drupal\Tests\UnitTestCase;
   use GuzzleHttp\ClientInterface;
   use GuzzleHttp\Exception\RequestException;
@@ -28,6 +29,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     protected function setUp(): void {
       parent::setUp();
+      VanRateLimiter::reset();
       $this->clientMock           = $this->createMock(ClientInterface::class);
       $this->configurationMock    = $this->createMock(NlpConfiguration::class);
       $this->apiKeyManagementMock = $this->createMock(ApiKeyManagement::class);
@@ -380,6 +382,24 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->buildService()->setApiActivistCodeBatch([111], 'NLPVoterAC');
       $this->assertTrue(TRUE); // Reached without exception.
+    }
+
+    public function testSetApiActivistCodeBatchSendsAtMostFifteenPerSecond(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+
+      $sentAt = [];
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function() use (&$sentAt) {
+          $sentAt[] = microtime(TRUE);
+          return new FulfilledPromise($this->createMock(ResponseInterface::class));
+        });
+
+      $this->buildService()->setApiActivistCodeBatch(range(1, 16), 'NLPVoterAC');
+
+      $this->assertCount(16, $sentAt);
+      $this->assertLessThan(0.5, $sentAt[14] - $sentAt[0], 'The first 15 go out together.');
+      $this->assertGreaterThanOrEqual(0.95, $sentAt[15] - $sentAt[0], 'The 16th waits for the next second.');
     }
 
   }
