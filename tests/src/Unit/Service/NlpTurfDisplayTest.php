@@ -51,44 +51,54 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testBuildTurfTableArrayOtherTypeIncludesCbColumn(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertArrayHasKey('cb', $rows[1]);
+      $this->assertArrayHasKey('cb', $rows[7]);
     }
 
     public function testBuildTurfTableArrayOtherTypeIncludesNlLastName(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertArrayHasKey('nlLastName', $rows[1]);
+      $this->assertArrayHasKey('nlLastName', $rows[7]);
     }
 
     public function testBuildTurfTableArrayCbColumnHasTurfIndex(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertSame(7, $rows[1]['cb']['turfIndex']);
+      $this->assertSame(7, $rows[7]['cb']['turfIndex']);
     }
 
     public function testBuildTurfTableArrayCbColumnHasRowCount(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertSame(1, $rows[1]['cb']['rowCount']);
+      $this->assertSame(1, $rows[7]['cb']['rowCount']);
     }
 
-    public function testBuildTurfTableArrayRowNumbersStartAtOne(): void {
-      $rows = $this->service->buildTurfTableArray([$this->baseTurf(), $this->baseTurf()]);
-      $this->assertArrayHasKey(1, $rows);
-      $this->assertArrayHasKey(2, $rows);
+    public function testBuildTurfTableArrayRowsKeyedByTurfIndex(): void {
+      $second = array_merge($this->baseTurf(), ['turfIndex' => 9]);
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf(), $second]);
+      $this->assertSame([7, 9], array_keys($rows));
+      $this->assertSame(2, $rows[9]['cb']['rowCount']);
+    }
+
+    public function testDisplayTurfsCheckboxForRemovedTurfIsAbsent(): void {
+      // A rebuilt table without turf 7 must not expose a checkbox that a stale
+      // contacts[7][cb] submission could map onto a different turf.
+      $second = array_merge($this->baseTurf(), ['turfIndex' => 9]);
+      $result = $this->service->displayTurfs($this->service->buildTurfTableArray([$second]));
+      $this->assertArrayNotHasKey(7, $result['contacts']);
+      $this->assertStringStartsWith('CB_9_', $result['contacts'][9]['cb']['#return_value']);
     }
 
     public function testBuildTurfTableArrayNlLastNameContainsBothNames(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertStringContainsString('Doe', $rows[1]['nlLastName']);
-      $this->assertStringContainsString('Jane', $rows[1]['nlLastName']);
+      $this->assertStringContainsString('Doe', $rows[7]['nlLastName']);
+      $this->assertStringContainsString('Jane', $rows[7]['nlLastName']);
     }
 
     public function testBuildTurfTableArrayTurfNameContainsMapRegion(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertStringContainsString('Region A', $rows[1]['turfName']);
+      $this->assertStringContainsString('Region A', $rows[7]['turfName']);
     }
 
     public function testBuildTurfTableArrayFolderNameSet(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
-      $this->assertSame('Folder1', $rows[1]['folderName']);
+      $this->assertSame('Folder1', $rows[7]['folderName']);
     }
 
     public function testBuildTurfTableArrayEmptyTurfsReturnsEmptyArray(): void {
@@ -97,13 +107,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testBuildTurfTableArrayDisplayTypeExcludesCb(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
-      $this->assertArrayNotHasKey('cb', $rows[1]);
+      $this->assertArrayNotHasKey('cb', $rows[7]);
     }
 
     public function testBuildTurfTableArrayDisplayTypeIncludesMinivanNumberEmpty(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
-      $this->assertArrayHasKey('minivanNumber', $rows[1]);
-      $this->assertSame('', $rows[1]['minivanNumber']);
+      $this->assertArrayHasKey('minivanNumber', $rows[7]);
+      $this->assertSame('', $rows[7]['minivanNumber']);
     }
 
     public function testBuildTurfTableArrayDisplayTypeShowsMinivanWhenSet(): void {
@@ -112,39 +122,39 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'minivanCreateDate' => '2024-10-15 00:00:00',
       ]);
       $rows = $this->service->buildTurfTableArray([$turf], 'display');
-      $this->assertStringContainsString('99', $rows[1]['minivanNumber']);
-      $this->assertStringContainsString('2024-10-15', $rows[1]['minivanNumber']);
+      $this->assertStringContainsString('99', $rows[7]['minivanNumber']);
+      $this->assertStringContainsString('2024-10-15', $rows[7]['minivanNumber']);
     }
 
     public function testBuildTurfTableArrayDisplayTypeIncludesNlLastName(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
-      $this->assertArrayHasKey('nlLastName', $rows[1]);
+      $this->assertArrayHasKey('nlLastName', $rows[7]);
     }
 
     public function testBuildTurfTableArrayReplacementTypeExcludesNlLastName(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'replacement');
-      $this->assertArrayNotHasKey('nlLastName', $rows[1]);
+      $this->assertArrayNotHasKey('nlLastName', $rows[7]);
     }
 
     public function testBuildTurfTableArrayReplacementTypeIncludesCb(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'replacement');
-      $this->assertArrayHasKey('cb', $rows[1]);
+      $this->assertArrayHasKey('cb', $rows[7]);
     }
 
     public function testBuildTurfTableArrayWalksheetTypeIncludesEmail(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'walksheet');
-      $this->assertSame('jane@example.com', $rows[1]['email']);
+      $this->assertSame('jane@example.com', $rows[7]['email']);
     }
 
     public function testBuildTurfTableArrayWalksheetTypeAddsNoPdfWhenPdfEmpty(): void {
       $turf = array_merge($this->baseTurf(), ['turfPDF' => '']);
       $rows = $this->service->buildTurfTableArray([$turf], 'walksheet');
-      $this->assertStringContainsString('&#134;', $rows[1]['turfIndex']);
+      $this->assertStringContainsString('&#134;', $rows[7]['turfIndex']);
     }
 
     public function testBuildTurfTableArrayWalksheetTypeNoMarkerWhenPdfSet(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'walksheet');
-      $this->assertSame((string) 7, (string) $rows[1]['turfIndex']);
+      $this->assertSame((string) 7, (string) $rows[7]['turfIndex']);
     }
 
     // -------------------------------------------------------------------------
@@ -172,19 +182,19 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testDisplayTurfsCbColumnIsCheckbox(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
       $result = $this->service->displayTurfs($rows);
-      $this->assertSame('checkbox', $result['contacts'][1]['cb']['#type']);
+      $this->assertSame('checkbox', $result['contacts'][7]['cb']['#type']);
     }
 
     public function testDisplayTurfsCbReturnValueContainsTurfIndex(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
       $result = $this->service->displayTurfs($rows);
-      $this->assertStringContainsString('7', $result['contacts'][1]['cb']['#return_value']);
+      $this->assertStringContainsString('7', $result['contacts'][7]['cb']['#return_value']);
     }
 
     public function testDisplayTurfsNonCbColumnHasMarkup(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
       $result = $this->service->displayTurfs($rows);
-      $this->assertArrayHasKey('#markup', $result['contacts'][1]['turfIndex']);
+      $this->assertArrayHasKey('#markup', $result['contacts'][7]['turfIndex']);
     }
 
     public function testDisplayTurfsEmptyRowsReturnsTableWithNoRows(): void {

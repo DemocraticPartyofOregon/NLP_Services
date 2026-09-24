@@ -228,9 +228,9 @@ class NlpSyncTurfProcessor {
         $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
         if (empty($context['sandbox']['firstConflict'])) {
           $context['sandbox']['firstConflict'] = [
-            'folderName'    => $oldTurf['folderName'],
-            'mapRegionName' => $oldTurf['mapRegionName'],
-            'turfName'      => $oldTurf['turfName'],
+            'folderName'    => $oldTurf['folderName'] ?? '',
+            'mapRegionName' => $oldTurf['mapRegionName'] ?? '',
+            'turfName'      => $oldTurf['turfName'] ?? '',
           ];
         }
         $movedVoters[$vanid] = [

@@ -160,8 +160,16 @@ class DeleteTurfForm extends FormBase
     
     if (count($selections) == 0) {
       $form_state->setErrorByName('submit', 'You must select at least one turf to delete.');
+      return;
     }
-    
+
+    $turfArray = $form_state->get('turfArray') ?? [];
+    $missing = array_diff(array_keys($selections), array_keys($turfArray));
+    if (!empty($missing)) {
+      $form_state->setErrorByName('submit', t('The list of turfs has changed since this page was loaded. Please reload the page and select the turf(s) again.'));
+      Drupal::logger('nlpservices')->notice('Delete turf: turf index(es) @missing not found in the displayed turf list.', ['@missing' => implode(', ', $missing)]);
+    }
+
   }
   
   /**
@@ -190,7 +198,10 @@ class DeleteTurfForm extends FormBase
         
         foreach ($selections as $turfIndex => $selection) {
           
-            $turfChoice = $turfArray[$turfIndex];
+            $turfChoice = $turfArray[$turfIndex] ?? NULL;
+            if (empty($turfChoice)) {
+              continue;
+            }
             $nickname = $turfChoice['nickname'];
             $lastName = $turfChoice['nlLastName'];
             $turfName = $turfChoice['turfName'];
