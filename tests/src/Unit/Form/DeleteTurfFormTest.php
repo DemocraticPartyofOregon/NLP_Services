@@ -4,6 +4,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
   use Drupal\Core\Form\FormStateInterface;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Logger\LoggerChannelInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiFolders;
   use Drupal\nlpservices\NlpAwards;
@@ -241,12 +243,58 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
       $formState->method('getValues')->willReturn(['contacts' => [7 => 1]]);
+      $formState->method('get')->with('turfArray')->willReturn([7 => $this->baseTurfRecord()]);
       $formState->expects($this->never())->method('setErrorByName');
 
       $this->turfDisplayMock->method('validateTurfSelection')->willReturn([7 => 7]);
 
       $form = [];
       $this->buildForm()->validateForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // validateForm — selected turf no longer in the displayed list → form error
+    // -------------------------------------------------------------------------
+
+    public function testValidateFormSelectionNotInTurfArraySetsFormError(): void {
+      $loggerChannel = $this->createMock(LoggerChannelInterface::class);
+      $loggerChannel->expects($this->once())->method('notice');
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->with('nlpservices')->willReturn($loggerChannel);
+      \Drupal::getContainer()->set('logger.factory', $loggerFactory);
+      \Drupal::getContainer()->set('string_translation', $this->getStringTranslationStub());
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('getValues')->willReturn(['contacts' => [73 => 1]]);
+      $formState->method('get')->with('turfArray')->willReturn([7 => $this->baseTurfRecord()]);
+      $formState->expects($this->once())
+        ->method('setErrorByName')
+        ->with('submit', $this->anything());
+
+      $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73]);
+
+      $form = [];
+      $this->buildForm()->validateForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // submitForm — selection missing from turfArray → skipped, nothing deleted
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormSkipsSelectionMissingFromTurfArray(): void {
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('get')->willReturnMap([
+        ['county',     'Denver'],
+        ['turfArray',  [7 => $this->baseTurfRecord()]],
+        ['selections', [73 => 73]],
+      ]);
+
+      $this->turfsMock->expects($this->never())->method('deleteTurf');
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
     }
 
     // -------------------------------------------------------------------------

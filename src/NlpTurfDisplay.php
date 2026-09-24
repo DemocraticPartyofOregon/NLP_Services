@@ -56,7 +56,10 @@ class NlpTurfDisplay
       if($displayType == 'walksheet') {
         $columns['email'] = $turf['email'];
       }
-      $rows[$row++] = $columns;
+      // Key rows by turfIndex so a checkbox always refers to the same turf even
+      // if the turf list changes between page load and submit.
+      $rows[$turf['turfIndex']] = $columns;
+      $row++;
     }
     return $rows;
   }
