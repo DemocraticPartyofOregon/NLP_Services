@@ -259,7 +259,10 @@ class NlpResyncTurf
     }
 
     $exportJob = $this->exportJobsObj->getExportJobs($county,0,$listId,'NLPVoterAC');
-    if(empty($exportJob)) {
+    if(($exportJob['result'] ?? '') == 'error') {
+      return ['result' => 'error', 'message' => $exportJob['msg']];
+    }
+    if(empty($exportJob['downloadUrl'])) {
       // This should not happen and needs to be investigated.
       $msg = 'No export job found for listId: '.$listId.' in county: '.$county;
       if (!str_contains(Drupal::routeMatch()->getRouteName(), 'system.cron')) {
