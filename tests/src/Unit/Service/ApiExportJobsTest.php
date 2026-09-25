@@ -280,6 +280,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString('turf', $result['msg']);
     }
 
+    public function testGetExportJobsReturnsErrorArrayWhenVanRejectsListId(): void {
+      $this->stubKeyValues();
+      $body = '{ "errors": [ { "code": "INVALID_PARAMETER", "text": "\'savedListId\' must be a valid saved list ID" } ] }';
+      $stream = $this->createMock(StreamInterface::class);
+      $stream->method('__toString')->willReturn($body);
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getBody')->willReturn($stream);
+      $this->clientMock->method('request')->willThrowException(
+        new RequestException('400 Bad Request (truncated...)', $this->createMock(RequestInterface::class), $response)
+      );
+
+      $result = $this->buildPartialService()->getExportJobs('TEST', 0, 99);
+
+      $this->assertSame('error', $result['result']);
+      $this->assertStringContainsString('turf', $result['msg']);
+    }
+
     public function testGetExportJobsReturnsExportJobArrayOnSuccess(): void {
       $this->stubKeyValues();
       $this->clientMock->method('request')->willReturn(

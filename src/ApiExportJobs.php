@@ -6,6 +6,7 @@ use Drupal\Core\Database\Connection;
 use Exception;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use stdClass;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -91,14 +92,13 @@ class ApiExportJobs {
     $dataJson = json_encode($jobObj);
     $headers = ['Content-Type' => 'application/json'];
     try {
-      try {
-        $response = $this->client->request('POST', $post_url, ['headers' => $headers, 'body' => $dataJson]);
-      } catch (GuzzleException $e) {
-        nlp_debug_msg('getExportJobs', $e->getMessage());
-        return [];
-      }
-    } catch (Exception $e) {
+      $response = $this->client->request('POST', $post_url, ['headers' => $headers, 'body' => $dataJson]);
+    } catch (GuzzleException|Exception $e) {
       $errorMessage = $e->getMessage();
+      // Guzzle truncates the message, so check the full response body when there is one.
+      if ($e instanceof RequestException && $e->hasResponse()) {
+        $errorMessage .= (string) $e->getResponse()->getBody();
+      }
       $lostList = str_contains($errorMessage, "must be a valid saved list ID");
       if($lostList) {
         return [
