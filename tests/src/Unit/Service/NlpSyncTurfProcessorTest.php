@@ -3,6 +3,8 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
+  use Drupal\Core\Database\Connection;
+  use Drupal\Core\Database\Transaction;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiActivistCodes;
@@ -39,6 +41,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpTurfAssignments $turfAssignmentsMock;
     private NlpTurfStatus $turfStatusMock;
     private MessengerInterface $messengerMock;
+    private Connection $connectionMock;
+    private Transaction $transactionMock;
+
+    /** Order of transaction and activist code events, to check what happens when. */
+    private array $events = [];
 
     private array $tempFiles = [];
 
@@ -58,6 +65,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfAssignmentsMock = $this->createMock(NlpTurfAssignments::class);
       $this->turfStatusMock      = $this->createMock(NlpTurfStatus::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
+      $this->connectionMock      = $this->createMock(Connection::class);
+
+      // A PHPUnit mock of Transaction still runs its real destructor, which needs a
+      // real connection, so use a double that records what the processor does.
+      $events = &$this->events;
+      $this->transactionMock = new class($events) extends Transaction {
+        private array $log;
+        public function __construct(array &$log) { $this->log = &$log; }
+        public function __destruct() {}
+        public function commitOrRelease(): void { $this->log[] = 'commit'; }
+        public function rollBack(): void { $this->log[] = 'rollback'; }
+      };
+      $this->connectionMock->method('startTransaction')
+        ->willReturnCallback(function () {
+          $this->events[] = 'begin';
+          return $this->transactionMock;
+        });
+      $this->activistCodesMock->method('setApiActivistCodeBatch')
+        ->willReturnCallback(function (array $vanids, string $codeName, string $action = 'Apply'): void {
+          $this->events[] = 'ac:' . $action;
+        });
 
       $loggerMock = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
@@ -65,6 +93,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
+      $container->set('string_translation', $this->getStringTranslationStub());
       Drupal::setContainer($container);
     }
 
@@ -96,7 +125,21 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->turfAssignmentsMock,
         $this->messengerMock,
         $this->turfStatusMock,
+        $this->connectionMock,
       );
+    }
+
+    /**
+     * Run processBatch until the batch reports it is finished, as the Batch API would.
+     */
+    private function runBatch(array $arg): array {
+      $context   = [];
+      $processor = $this->buildProcessor();
+      for ($i = 0; $i < 50; $i++) {
+        $processor->processBatch($arg, $context);
+        if (($context['finished'] ?? 0) >= 1) { break; }
+      }
+      return $context;
     }
 
     /**
@@ -115,7 +158,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return $path;
     }
 
-    private function baseArg(string $downloadUrl): array {
+    private function useCsv(array $vanids): void {
+      $uri = $this->writeTurfCsv($vanids);
+      $this->exportJobsMock->method('getExportJobs')->willReturn(['downloadUrl' => $uri]);
+    }
+
+    private function baseArg(): array {
       return [
         'county'        => 'Denver',
         'folderId'      => 5,
@@ -130,7 +178,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'doorCount'     => 1,
         'walksheetInfo' => [],
         'minivan'       => FALSE,
-        'downloadUrl'   => $downloadUrl,
       ];
     }
 
@@ -165,6 +212,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     /**
      * Stub all mocks needed for the per-voter processing loop and finalizeTurf.
      * Tests that verify error paths before this code runs do NOT need this.
+     * Mocks replaced after this call must be stubbed again by the test.
      */
     private function stubForSuccess(): void {
       $this->turfsMock->method('createTurf')->willReturn(7);
@@ -185,8 +233,29 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfAssignmentsMock->method('getTurfAssignmentByTurfName')->willReturn([]);
     }
 
+    /**
+     * The given voters are already in turf 3, assigned to another NL.
+     */
+    private function stubDuplicates(array $vanids): void {
+      $dups = $voters = [];
+      foreach ($vanids as $vanid) {
+        $dups[$vanid]   = ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver'];
+        $voters[$vanid] = ['vanid' => $vanid, 'firstName' => 'Bob', 'lastName' => 'Jones'];
+      }
+      $this->votersMock->method('duplicateVoters')->willReturn($dups);
+      $this->votersMock->method('getVotersInList')->willReturn($voters);
+      $this->turfsMock->method('getTurf')
+        ->willReturn([
+          'turfName'      => 'Oak Ave',
+          'nlFirstName'   => 'Carol',
+          'nlLastName'    => 'Davis',
+          'folderName'    => 'Denver Folder',
+          'mapRegionName' => 'Denver Region',
+        ]);
+    }
+
     // -------------------------------------------------------------------------
-    // processBatch — no downloadUrl, recovery fails
+    // Errors before any voter is fetched
     // -------------------------------------------------------------------------
 
     public function testProcessBatchExportJobRecoveryFailsSetsErrorResult(): void {
@@ -195,14 +264,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['result' => 'error', 'message' => 'List not found.']);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(''), $context);
+      $this->buildProcessor()->processBatch($this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
     }
-
-    // -------------------------------------------------------------------------
-    // processBatch — no downloadUrl, recovery succeeds but second job still empty
-    // -------------------------------------------------------------------------
 
     public function testProcessBatchRecoveredJobHasNoDownloadUrlSetsErrorResult(): void {
       $this->exportJobsMock->method('getExportJobs')->willReturn([]);
@@ -210,132 +275,112 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['result' => 'ok', 'turfId' => 99]);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(''), $context);
+      $this->buildProcessor()->processBatch($this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
     }
-
-    // -------------------------------------------------------------------------
-    // processBatch — downloadUrl points to a file that cannot be opened
-    // -------------------------------------------------------------------------
 
     public function testProcessBatchFileNotOpenableSetsErrorResult(): void {
       $this->exportJobsMock->method('getExportJobs')
         ->willReturn(['downloadUrl' => '/nonexistent/missing.csv']);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(''), $context);
+      $this->buildProcessor()->processBatch($this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
       $this->assertSame(1, $context['finished']);
     }
 
-    // -------------------------------------------------------------------------
-    // processBatch — voters span multiple precincts → abort
-    // -------------------------------------------------------------------------
-
-    public function testProcessBatchMixedPrecinctVotersAbortsWithErrorResult(): void {
-      $uri = $this->writeTurfCsv([101, 102]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
-      $this->turfsMock->method('createTurf')->willReturn(7);
-
-      $this->apiVoterMock->method('getVoters')->willReturn([
-        101 => $this->baseVoter(101, ['address' => ['precinct' => '6.1', 'hd' => '6', 'cd' => 1]]),
-        102 => $this->baseVoter(102, ['address' => ['precinct' => '7.2', 'hd' => '7', 'cd' => 1]]),
-      ]);
+    public function testProcessBatchEmptyTurfSetsErrorResult(): void {
+      $this->useCsv([]);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $this->buildProcessor()->processBatch($this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
-      $this->assertSame(7, $context['results']['turfIndex']);
+      $this->assertSame(1, $context['finished']);
+    }
+
+    public function testAbortDeletesStagedWalksheet(): void {
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => '/nonexistent/missing.csv']);
+      $walksheet = tempnam(sys_get_temp_dir(), 'nlp_ws_');
+      $this->tempFiles[] = $walksheet;
+      $arg = $this->baseArg();
+      $arg['walksheetInfo'] = ['tempName' => $walksheet];
+
+      $context = [];
+      $this->buildProcessor()->processBatch($arg, $context);
+
+      $this->assertFileDoesNotExist($walksheet);
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — duplicate voter: deleteVoterInTurf is called
+    // Fetch phase — nothing is written until every voter has been fetched
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchDuplicateVoterIsDeletedFromOldTurf(): void {
-      $uri = $this->writeTurfCsv([101]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testFetchPhaseWritesNothing(): void {
+      // 18 voters → two fetch requests.
+      $this->useCsv(range(101, 118));
       $this->stubForSuccess();
+      $this->connectionMock->expects($this->never())->method('startTransaction');
+      $this->turfsMock->expects($this->never())->method('createTurf');
+      $this->votersMock->expects($this->never())->method('createVoter');
+      $this->activistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
 
-      $this->votersMock->expects($this->once())->method('duplicateVoters')
-        ->willReturn([101 => ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver']]);
-      $this->votersMock->method('getVotersInList')
-        ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
-      $this->turfsMock->method('getTurf')
-        ->willReturn([
-          'turfName'      => 'Oak Ave',
-          'nlFirstName'   => 'Carol',
-          'nlLastName'    => 'Davis',
-          'folderName'    => 'Denver Folder',
-          'mapRegionName' => 'Denver Region',
-        ]);
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg(), $context);
 
-      $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(101);
-
-      $context    = [];
-      $processor  = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
+      $this->assertGreaterThan(0, $context['finished']);
+      $this->assertLessThan(1, $context['finished']);
+      $this->assertArrayNotHasKey('result', $context['results'] ?? []);
     }
 
-    // -------------------------------------------------------------------------
-    // processBatch — duplicate voter: NLPVoterAC is removed before re-apply
-    // -------------------------------------------------------------------------
-
-    public function testProcessBatchDuplicateVoterActivistCodeRemovedThenReapplied(): void {
-      $uri = $this->writeTurfCsv([101]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
-      $this->stubForSuccess();
-
-      $this->votersMock->method('duplicateVoters')
-        ->willReturn([101 => ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver']]);
-      $this->votersMock->method('getVotersInList')
-        ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
-      $this->turfsMock->method('getTurf')
-        ->willReturn([
-          'turfName'      => 'Oak Ave',
-          'nlFirstName'   => 'Carol',
-          'nlLastName'    => 'Davis',
-          'folderName'    => 'Denver Folder',
-          'mapRegionName' => 'Denver Region',
-        ]);
-
-      $acSetActions = [];
-      $this->activistCodesMock->method('setApiActivistCodeBatch')
-        ->willReturnCallback(function (array $vanids, string $codeName, string $action = 'Apply') use (&$acSetActions): void {
-          $acSetActions[] = $action;
+    public function testMixedPrecinctInLaterChunkAbortsWithoutDatabaseWrites(): void {
+      $this->useCsv(range(101, 118));
+      $calls = 0;
+      $this->apiVoterMock->method('getVoters')
+        ->willReturnCallback(function ($ids) use (&$calls) {
+          $calls++;
+          $voters = $this->makeVoters($ids);
+          if ($calls == 2) {
+            foreach ($voters as $vanid => $voter) {
+              $voters[$vanid]['address'] = ['precinct' => '7.2', 'hd' => '7', 'cd' => 1];
+            }
+          }
+          return $voters;
         });
+      $this->connectionMock->expects($this->never())->method('startTransaction');
+      $this->turfsMock->expects($this->never())->method('createTurf');
 
-      $context   = [];
-      $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
+      $context = $this->runBatch($this->baseArg());
 
-      $this->assertContains('Remove', $acSetActions, 'setApiActivistCodeBatch Remove should be called to clear old turf AC');
-      $this->assertContains('Apply',  $acSetActions, 'setApiActivistCodeBatch Apply should be called to set new turf AC');
-      $removePos = array_search('Remove', $acSetActions);
-      $applyPos  = array_search('Apply',  $acSetActions);
-      $this->assertLessThan($applyPos, $removePos, 'Remove must precede Apply');
+      $this->assertSame(2, $calls);
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertArrayNotHasKey('turfIndex', $context['results']);
+    }
+
+    public function testNoVoterDataAbortsWithoutDatabaseWrites(): void {
+      $this->useCsv([101]);
+      $this->apiVoterMock->method('getVoters')->willReturn([]);
+      $this->connectionMock->expects($this->never())->method('startTransaction');
+
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame('error', $context['results']['result']);
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — single batch, happy path → success result
+    // Commit phase — happy path
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchSingleBatchSuccessHasCorrectResults(): void {
-      $uri = $this->writeTurfCsv([101]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testSuccessHasCorrectResults(): void {
+      $this->useCsv([101]);
       $this->stubForSuccess();
 
-      $context   = [];
-      $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
+      $context = $this->runBatch($this->baseArg());
 
+      $this->assertSame(1,            $context['finished']);
       $this->assertSame('success',    $context['results']['result']);
       $this->assertSame(1,            $context['results']['turfCnt']);
       $this->assertSame('Elm Street', $context['results']['turfName']);
@@ -343,119 +388,219 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(7,            $context['results']['turfIndex']);
     }
 
-    // -------------------------------------------------------------------------
-    // processBatch — moved voter appears in success results
-    // -------------------------------------------------------------------------
-
-    public function testProcessBatchMovedVoterCarriedIntoSuccessResults(): void {
-      $uri = $this->writeTurfCsv([101]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testMultiChunkSyncCompletes(): void {
+      $this->useCsv(range(101, 118));
       $this->stubForSuccess();
 
-      $this->votersMock->method('duplicateVoters')
-        ->willReturn([101 => ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver']]);
-      $this->votersMock->method('getVotersInList')
-        ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
-      $this->turfsMock->method('getTurf')
-        ->willReturn([
-          'turfName'      => 'Oak Ave',
-          'nlFirstName'   => 'Carol',
-          'nlLastName'    => 'Davis',
-          'folderName'    => 'Denver Folder',
-          'mapRegionName' => 'Denver Region',
-        ]);
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame('success', $context['results']['result']);
+      $this->assertSame(18, $context['results']['turfCnt']);
+      // Two activist code requests of up to 17 voters each.
+      $this->assertSame(['begin', 'commit', 'ac:Apply', 'ac:Apply'], $this->events);
+    }
+
+    public function testTurfRecordIsCompleteWhenCreated(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $created = [];
+      $this->turfsMock = $this->createMock(NlpTurfs::class);
+      $this->turfsMock->method('createTurf')
+        ->willReturnCallback(function (array $turf) use (&$created) {
+          $created = $turf;
+          return 7;
+        });
+
+      $this->runBatch($this->baseArg());
+
+      $this->assertSame('Alice', $created['nlFirstName']);
+      $this->assertSame('Smith', $created['nlLastName']);
+      $this->assertSame('6',     $created['turfHd']);
+      $this->assertSame('6.1',   $created['turfPrecinct']);
+      $this->assertSame(10,      $created['listId']);
+      $this->assertSame(42,      $created['mcid']);
+    }
+
+    public function testCreatesTurfVoterRecordForEachVoter(): void {
+      $this->useCsv([101, 102]);
+      $this->stubForSuccess();
+      $this->votersMock->expects($this->exactly(2))->method('createTurfVoter');
+
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame(2, $context['results']['turfCnt']);
+    }
+
+    public function testCallsNlParticipationOnSuccess(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->awardsMock->expects($this->once())->method('nlParticipation')->with(42, 'Turf synced');
+
+      $this->runBatch($this->baseArg());
+    }
+
+    public function testActivistCodesAreSetOnlyAfterCommit(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+
+      $this->runBatch($this->baseArg());
+
+      $this->assertSame(['begin', 'commit', 'ac:Apply'], $this->events);
+    }
+
+    public function testCommittedFlagSetBeforeActivistCodes(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
 
       $context   = [];
       $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
+      // Fetch, then commit.
+      $processor->processBatch($this->baseArg(), $context);
+      $processor->processBatch($this->baseArg(), $context);
+
+      $this->assertTrue($context['results']['committed']);
+      $this->assertArrayNotHasKey('result', $context['results']);
+      $this->assertLessThan(1, $context['finished']);
+    }
+
+    public function testOrphanVoterRecordsAreCleanedForTheseVoters(): void {
+      $this->useCsv([101, 102]);
+      $this->stubForSuccess();
+      $this->votersMock->expects($this->once())->method('deleteOrphanTurfVoters')->with([101, 102]);
+
+      $this->runBatch($this->baseArg());
+    }
+
+    // -------------------------------------------------------------------------
+    // Voters moved from another turf
+    // -------------------------------------------------------------------------
+
+    public function testDuplicateVoterIsDeletedFromOldTurf(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->stubDuplicates([101]);
+      $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(101);
+      $this->votersMock->expects($this->once())->method('deleteAddressInTurf')->with(101);
+
+      $this->runBatch($this->baseArg());
+    }
+
+    public function testDuplicateVoterActivistCodeRemovedThenReapplied(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->stubDuplicates([101]);
+
+      $this->runBatch($this->baseArg());
+
+      $this->assertSame(['begin', 'commit', 'ac:Remove', 'ac:Apply'], $this->events);
+    }
+
+    public function testMovedVoterCarriedIntoSuccessResults(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->stubDuplicates([101]);
+
+      $context = $this->runBatch($this->baseArg());
 
       $this->assertSame('success', $context['results']['result']);
-      $this->assertArrayHasKey(101, $context['results']['movedVoters']);
       $moved = $context['results']['movedVoters'][101];
       $this->assertSame('Bob',     $moved['firstName']);
       $this->assertSame('Oak Ave', $moved['oldTurfName']);
       $this->assertSame(55,        $moved['oldMcid']);
     }
 
-    // -------------------------------------------------------------------------
-    // processBatch — createTurfVoter called once per voter on completion
-    // -------------------------------------------------------------------------
-
-    public function testProcessBatchCreatesTurfVoterRecordForEachVoter(): void {
-      $uri = $this->writeTurfCsv([101, 102]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testTooManyMovedVotersRollsBackAndChangesNothing(): void {
+      $vanids = range(101, 107);
+      $this->useCsv($vanids);
       $this->stubForSuccess();
+      $this->stubDuplicates($vanids);
+      $this->turfsMock->expects($this->never())->method('createTurf');
+      $this->votersMock->expects($this->never())->method('deleteVoterInTurf');
 
-      $this->votersMock->expects($this->exactly(2))->method('createTurfVoter');
+      $context = $this->runBatch($this->baseArg());
 
-      $context   = [];
-      $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
-
-      $this->assertSame(2, $context['results']['turfCnt']);
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertStringContainsString('Too many voters moved', (string) $context['results']['message'][0]);
+      $this->assertSame(['begin', 'rollback'], $this->events);
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — nlParticipation called on successful completion
+    // Failure inside the transaction
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchCallsNlParticipationOnSuccess(): void {
-      $uri = $this->writeTurfCsv([101]);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testCreateVoterFailureRollsBackAndSetsNoActivistCodes(): void {
+      $this->useCsv([101, 102]);
       $this->stubForSuccess();
+      $this->votersMock = $this->createMock(NlpVoters::class);
+      $this->votersMock->method('createVoter')->willReturnOnConsecutiveCalls(TRUE, FALSE);
+      $this->votersMock->method('getVoterStatus')->willReturn([]);
+      $this->votersMock->method('createTurfVoter')->willReturn(TRUE);
 
-      $this->awardsMock->expects($this->once())->method('nlParticipation')
-        ->with(42, 'Turf synced');
+      $context = $this->runBatch($this->baseArg());
 
-      $context   = [];
-      $processor = $this->buildProcessor();
-      $processor->processBatch($this->baseArg($uri), $context);
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertArrayNotHasKey('committed', $context['results']);
+      $this->assertSame(['begin', 'rollback'], $this->events);
+    }
+
+    public function testCreateTurfFailureRollsBack(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->turfsMock = $this->createMock(NlpTurfs::class);
+      $this->turfsMock->method('createTurf')->willReturn(0);
+      $this->votersMock->expects($this->never())->method('createTurfVoter');
+
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame(['begin', 'rollback'], $this->events);
+    }
+
+    public function testUnexpectedExceptionRollsBack(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->awardsMock->method('nlParticipation')->willThrowException(new \RuntimeException('boom'));
+
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame(['begin', 'rollback'], $this->events);
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — multi-batch: first call reports fractional progress
+    // An earlier sync of the same turf
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchMultiBatchFirstCallReportsFractionalProgress(): void {
-      // 18 voters → batch 0 gets 17, batch 1 gets 1 → batchCount = 2
-      $vanids = range(101, 118);
-      $uri    = $this->writeTurfCsv($vanids);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
+    public function testIncompleteTurfFromFailedSyncIsReplaced(): void {
+      $this->useCsv([101]);
       $this->stubForSuccess();
+      $residue = ['turfIndex' => 3, 'county' => 'Denver', 'mcid' => 42, 'turfName' => 'Elm Street',
+        'nlFirstName' => NULL, 'nlLastName' => NULL, 'turfHd' => NULL];
+      $this->turfsMock->method('getTurfsForSync')->with(5, 10, 'Elm Street')->willReturn([3 => $residue]);
+      $this->turfsMock->method('isIncompleteTurf')->willReturn(TRUE);
+      $this->turfsMock->expects($this->once())->method('removeTurf')->with($residue)->willReturn(TRUE);
+      $this->votersMock->expects($this->once())->method('deleteVotersInTurf')->with(3);
+      $this->votersMock->expects($this->once())->method('deleteAddressesInTurf')->with(3);
 
-      $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      $context = $this->runBatch($this->baseArg());
 
-      // After processing batch 0 of 2, finished = 1/2
-      $this->assertSame(0.5, $context['finished']);
-      $this->assertArrayNotHasKey('result', $context['results'] ?? [],
-        'Success result must not be set until the final batch completes');
-    }
-
-    // -------------------------------------------------------------------------
-    // processBatch — multi-batch: second call finalises and sets success
-    // -------------------------------------------------------------------------
-
-    public function testProcessBatchMultiBatchSecondCallFinalisesSuccessfully(): void {
-      $vanids = range(101, 118);
-      $uri    = $this->writeTurfCsv($vanids);
-      $this->exportJobsMock->method('getExportJobs')
-        ->willReturn(['downloadUrl' => $uri]);
-      $this->stubForSuccess();
-
-      $context   = [];
-      $processor = $this->buildProcessor();
-
-      $processor->processBatch($this->baseArg($uri), $context);
-      $this->assertSame(0.5, $context['finished']);
-
-      $processor->processBatch($this->baseArg($uri), $context);
-      $this->assertSame(1, $context['finished'], 'Second call should finalise');
       $this->assertSame('success', $context['results']['result']);
+    }
+
+    public function testCompleteTurfAlreadyAssignedIsRefused(): void {
+      $this->useCsv([101]);
+      $this->stubForSuccess();
+      $this->turfsMock->method('getTurfsForSync')->willReturn([3 => [
+        'turfIndex' => 3, 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis', 'turfHd' => 6,
+      ]]);
+      $this->turfsMock->method('isIncompleteTurf')->willReturn(FALSE);
+      $this->turfsMock->expects($this->never())->method('removeTurf');
+
+      $context = $this->runBatch($this->baseArg());
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertStringContainsString('already assigned to Carol Davis', (string) $context['results']['message'][0]);
+      $this->assertSame(['begin', 'rollback'], $this->events);
     }
 
   }

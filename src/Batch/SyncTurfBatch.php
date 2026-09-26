@@ -32,13 +32,7 @@ class SyncTurfBatch {
         foreach ($messages as $message) {
           $messenger->addError($message);
         }
-        if (!empty($results['turfIndex'])) {
-          $turf              = [];
-          $turf['mcid']      = $results['mcid'];
-          $turf['county']    = $results['county'];
-          $turf['turfIndex'] = $results['turfIndex'];
-          $turfsObj->deleteTurf($turf);
-        }
+        // Nothing from a failed sync is left in the database, so there is nothing to delete.
         return;
       }
       $messages  = [];
@@ -98,8 +92,11 @@ class SyncTurfBatch {
           $sendMailObj->sendEmail('deliver_turf', $nl['email'], $subject, $body);
         }
       }
+    } elseif (!empty($results['committed'])) {
+      // The batch failed after the turf was saved, while setting activist codes in VoteBuilder.
+      $messenger->addWarning(t('@turfName was checked in, but the NLP voter activist codes may not all be set in VoteBuilder. The nightly turf resync will add any that are missing.', ['@turfName' => $results['turfName']]));
     } else {
-      $messenger->addError(t('An error occurred.'));
+      $messenger->addError(t('An error occurred. The turf was not checked in and nothing was changed. Please try the sync again.'));
     }
   }
 

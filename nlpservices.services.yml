@@ -220,7 +220,8 @@ services:
                  '@nlpservices.turfs', '@nlpservices.configuration',
                  '@nlpservices.awards', '@nlpservices.reports',
                  '@nlpservices.paths', '@nlpservices.turf_assignments',
-                 '@messenger', '@nlpservices.turf_status' ]
+                 '@messenger', '@nlpservices.turf_status',
+                 '@database' ]
 
   nlpservices.voter_ac_processor:
     class: Drupal\nlpservices\NlpVoterAcProcessor

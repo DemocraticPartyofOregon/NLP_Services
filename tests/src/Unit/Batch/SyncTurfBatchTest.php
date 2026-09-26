@@ -95,14 +95,21 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
       SyncTurfBatch::finished(FALSE, [], []);
     }
 
+    public function testFinishedBatchFailureAfterCommitWarnsInsteadOfError(): void {
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->once())->method('addWarning');
+      SyncTurfBatch::finished(FALSE, ['committed' => TRUE, 'turfName' => 'Elm Street'], []);
+    }
+
     // -------------------------------------------------------------------------
     // finished — result = error
     // -------------------------------------------------------------------------
 
-    public function testFinishedErrorResultAddsErrorMessageAndDeletesTurf(): void {
+    public function testFinishedErrorResultNeverDeletesATurf(): void {
+      // A failed sync leaves nothing in the database, so even a stale turfIndex
+      // in the results must not trigger a delete.
       $this->messengerMock->expects($this->once())->method('addError');
-      $this->turfsMock->expects($this->once())->method('deleteTurf')
-        ->with($this->arrayHasKey('turfIndex'));
+      $this->turfsMock->expects($this->never())->method('deleteTurf');
 
       SyncTurfBatch::finished(TRUE, [
         'result'     => 'error',
@@ -110,16 +117,6 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
         'turfIndex'  => 7,
         'mcid'       => 42,
         'county'     => 'Denver',
-      ], []);
-    }
-
-    public function testFinishedErrorResultWithNoTurfIndexSkipsDelete(): void {
-      $this->messengerMock->expects($this->once())->method('addError');
-      $this->turfsMock->expects($this->never())->method('deleteTurf');
-
-      SyncTurfBatch::finished(TRUE, [
-        'result'  => 'error',
-        'message' => ['No turf was created yet.'],
       ], []);
     }
 

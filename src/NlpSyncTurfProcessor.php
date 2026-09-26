@@ -3,12 +3,38 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
+use Drupal\Core\Database\Connection;
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Throwable;
 
+/**
+ * Syncs a VoteBuilder turf into NLP Services and assigns it to an NL.
+ *
+ * The VoteBuilder API is slow, so a sync spans many batch requests, and any one of
+ * them can fail (a timeout, a dropped connection, an API error).  To keep a failure
+ * from leaving part of a turf in the database, the sync runs in three phases:
+ *
+ *  1. fetch: download the turf's voter list and the voter details from the API, one
+ *     chunk per request.  Nothing is written to the database.  A failure here leaves
+ *     nothing behind.
+ *  2. commit: one request, one database transaction.  Removes the residue of any
+ *     earlier failed sync of the same turf, moves voters out of other turfs, and
+ *     writes the turf, its voters and the NL's assignment.  Either all of it is
+ *     written or, on any failure, none of it.
+ *  3. activistCodes: set the NLP voter activist code in VoteBuilder, one chunk per
+ *     request.  The turf is already complete in the database, so a failure here only
+ *     leaves some activist codes unset.  The nightly turf resync adds missing codes,
+ *     and a delete of the turf removes them all.
+ */
 class NlpSyncTurfProcessor {
 
   const int MAX_QUEUE_LIMIT = 17;
+  const int MAX_MOVED_VOTERS = 6;
+
+  const string PHASE_FETCH = 'fetch';
+  const string PHASE_COMMIT = 'commit';
+  const string PHASE_ACTIVIST_CODES = 'activistCodes';
 
   protected ApiExportJobs $exportJobsObj;
   protected ApiSavedLists $savedListsObj;
@@ -24,6 +50,7 @@ class NlpSyncTurfProcessor {
   protected NlpTurfAssignments $turfAssignmentsObj;
   protected MessengerInterface $messenger;
   protected NlpTurfStatus $turfStatusObj;
+  protected Connection $connection;
 
   public function __construct(
     $exportJobsObj,
@@ -39,7 +66,8 @@ class NlpSyncTurfProcessor {
     $pathsObj,
     $turfAssignmentsObj,
     $messenger,
-    $turfStatusObj
+    $turfStatusObj,
+    $connection
   ) {
     $this->exportJobsObj      = $exportJobsObj;
     $this->savedListsObj      = $savedListsObj;
@@ -55,6 +83,7 @@ class NlpSyncTurfProcessor {
     $this->turfAssignmentsObj = $turfAssignmentsObj;
     $this->messenger          = $messenger;
     $this->turfStatusObj      = $turfStatusObj;
+    $this->connection         = $connection;
   }
 
   public static function create(ContainerInterface $container): self {
@@ -73,18 +102,14 @@ class NlpSyncTurfProcessor {
       $container->get('nlpservices.turf_assignments'),
       $container->get('messenger'),
       $container->get('nlpservices.turf_status'),
+      $container->get('database'),
     );
   }
 
   /**
    * processBatch
    *
-   * Processes a batch of voters for the turf syncing operation.
-   *
-   * This method handles the synchronization of voter data for a specified turf,
-   * managing batch processing, processing duplicates, applying activist codes,
-   * updating voter statuses, and finalizing the operation. It interacts with
-   * multiple objects to download, validate, and process voter information.
+   * Runs one step of the turf sync.  See the class comment for the phases.
    *
    * @param array $arg
    *   An associative array containing necessary parameters for the process. Expected keys include:
@@ -104,258 +129,361 @@ class NlpSyncTurfProcessor {
    *   This method does not return a value. Results are stored in the context array.
    */
   public function processBatch(array $arg, array &$context): void {
-    $county        = $arg['county'];
-    $folderId      = $arg['folderId'];
-    $folderName    = $arg['folderName'];
-    $mapRegionName = $arg['mapRegionName'];
-    $turfId        = $arg['turfId'];
-    $turfName      = $arg['turfName'];
-    $mcid          = $arg['mcid'];
+    if (empty($context['sandbox']['phase'])) {
+      if (!$this->startSync($arg, $context)) { return; }
+    }
 
-    if (empty($context['sandbox']['currentBatch'])) {
-      $database  = 0;
-      $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $turfId);
-      $context['sandbox']['votersInTurf'] = [];
+    switch ($context['sandbox']['phase']) {
+      case self::PHASE_FETCH:
+        $this->fetchVoters($arg, $context);
+        break;
+      case self::PHASE_COMMIT:
+        $this->commitTurf($arg, $context);
+        break;
+      case self::PHASE_ACTIVIST_CODES:
+        $this->setActivistCodes($context);
+        break;
+    }
+
+    if (($context['finished'] ?? 0) >= 1) { return; }
+    $sandbox = $context['sandbox'];
+    $chunkCount = count($sandbox['turfVoters']);
+    // Until the commit, assume one activist code step per fetch step.
+    $acCount = ($sandbox['phase'] == self::PHASE_ACTIVIST_CODES) ? count($sandbox['acQueue']) : $chunkCount;
+    $done = $sandbox['fetchIndex'] + (($sandbox['phase'] == self::PHASE_ACTIVIST_CODES) ? 1 + $sandbox['acIndex'] : 0);
+    $context['finished'] = $done / ($chunkCount + 1 + $acCount);
+  }
+
+  /**
+   * startSync
+   *
+   * Downloads the turf's voter list from VoteBuilder and splits it into chunks
+   * for the fetch phase.
+   *
+   * @param array $arg
+   * @param array $context
+   * @return bool - FALSE if the sync was aborted.
+   */
+  private function startSync(array $arg, array &$context): bool {
+    $county   = $arg['county'];
+    $database = 0;
+    $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $arg['turfId']);
+    if (empty($exportJob['downloadUrl'])) {
+      $result = $this->savedListsObj->recoverTurfId($county, $arg['folderId'], $arg['turfName']);
+      if ($result['result'] == 'error') {
+        $this->abortSync($arg, $context, $result['message']);
+        return FALSE;
+      }
+      $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $result['turfId']);
       if (empty($exportJob['downloadUrl'])) {
-        $result = $this->savedListsObj->recoverTurfId($county, $folderId, $turfName);
-        if ($result['result'] == 'error') {
-          $context['finished']              = 1;
-          $context['results']['message']    = [0 => $result['message']];
-          $context['results']['result']     = 'error';
-          return;
-        }
-        $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $result['turfId']);
-        if (empty($exportJob['downloadUrl'])) {
-          $context['finished']           = 1;
-          $context['results']['message'] = [0 => t('The turf is not accessible by ID.')];
-          $context['results']['result']  = 'error';
-          return;
-        }
+        $this->abortSync($arg, $context, t('The turf is not accessible by ID.'));
+        return FALSE;
       }
-      $fh = @fopen($exportJob['downloadUrl'], 'r');
-      if (!$fh) {
-        $context['finished']           = 1;
-        $context['results']['message'] = [0 => t('Unable to download the turf voter list.')];
-        $context['results']['result']  = 'error';
-        return;
-      }
-      fgetcsv($fh, escape: '');
-      $turfVoters = [];
-      $voterCount = 0;
-      $voterBatch = 0;
-      do {
-        $listRecord = fgetcsv($fh, escape: '');
-        if ($listRecord === FALSE) { break; }
-        if (empty($listRecord)) { continue; }
-        $turfVoters[$voterBatch][] = $listRecord[1];
-        $voterCount++;
-        if ($voterCount == self::MAX_QUEUE_LIMIT) {
-          $voterCount = 0;
-          $voterBatch++;
-        }
-      } while (TRUE);
-      if (!feof($fh)) {
-        fclose($fh);
-        $context['finished']           = 1;
-        $context['results']['message'] = [0 => t('The turf voter download was interrupted. Please try again.')];
-        $context['results']['result']  = 'error';
-        return;
-      }
+    }
+    $fh = @fopen($exportJob['downloadUrl'], 'r');
+    if (!$fh) {
+      $this->abortSync($arg, $context, t('Unable to download the turf voter list.'));
+      return FALSE;
+    }
+    fgetcsv($fh, escape: '');
+    $vanids = [];
+    do {
+      $listRecord = fgetcsv($fh, escape: '');
+      if ($listRecord === FALSE) { break; }
+      if (empty($listRecord)) { continue; }
+      $vanids[] = $listRecord[1];
+    } while (TRUE);
+    if (!feof($fh)) {
       fclose($fh);
-
-      $context['sandbox']['batchCount']    = count($turfVoters);
-      $context['sandbox']['currentBatch'] = 0;
-      $context['sandbox']['turfVoters']   = $turfVoters;
-      $context['sandbox']['duplicates']    = [];
-      $context['sandbox']['votersInTurf']  = [];
-      $context['sandbox']['movedVoters']   = [];
-      $context['sandbox']['firstConflict'] = [];
-
-      $turf = [
-        'county'     => $county,
-        'mcid'       => $mcid,
-        'turfName'   => $turfName,
-        'turfPdf'    => '',
-        'folderId'   => $folderId,
-        'folderName' => $folderName,
-        'listId'     => $turfId,
-      ];
-      $turfIndex = $this->turfsObj->createTurf($turf);
-      $context['sandbox']['turfIndex']            = $turfIndex;
-      $context['sandbox']['mcid']                 = $mcid;
-      $context['sandbox']['county']               = $county;
-      $context['sandbox']['legislativeDistricts'] = [];
+      $this->abortSync($arg, $context, t('The turf voter download was interrupted. Please try again.'));
+      return FALSE;
+    }
+    fclose($fh);
+    if (empty($vanids)) {
+      $this->abortSync($arg, $context, t('The turf has no voters.'));
+      return FALSE;
     }
 
-    $currentBatch         = $context['sandbox']['currentBatch'];
-    $batchCount           = $context['sandbox']['batchCount'];
-    $turfVoters           = $context['sandbox']['turfVoters'];
-    $turfIndex            = $context['sandbox']['turfIndex'];
-    $votersInTurf         = $context['sandbox']['votersInTurf'];
-    $legislativeDistricts = $context['sandbox']['legislativeDistricts'];
+    $context['sandbox'] = [
+      'phase'                => self::PHASE_FETCH,
+      'turfVoters'           => array_chunk($vanids, self::MAX_QUEUE_LIMIT),
+      'fetchIndex'           => 0,
+      'voters'               => [],
+      'legislativeDistricts' => [],
+      'acQueue'              => [],
+      'acIndex'              => 0,
+    ];
+    return TRUE;
+  }
 
-    $voters = $this->apiVoterObj->getVoters($turfVoters[$currentBatch]);
+  /**
+   * fetchVoters
+   *
+   * Gets the details for the next chunk of voters from VoteBuilder.  Only the batch
+   * sandbox is changed.
+   *
+   * @param array $arg
+   * @param array $context
+   * @return void
+   */
+  private function fetchVoters(array $arg, array &$context): void {
+    $fetchIndex = $context['sandbox']['fetchIndex'];
+    $voters = $this->apiVoterObj->getVoters($context['sandbox']['turfVoters'][$fetchIndex]);
     if (empty($voters)) {
-      $context['finished']              = 1;
-      $context['results']['message']    = [0 => t('No voter data was returned for this turf. Please try the sync again.')];
-      $context['results']['result']     = 'error';
-      $context['results']['turfIndex']  = $context['sandbox']['turfIndex'];
-      $context['results']['mcid']       = $context['sandbox']['mcid'];
-      $context['results']['county']     = $context['sandbox']['county'];
+      $this->abortSync($arg, $context, t('No voter data was returned for this turf. Please try the sync again.'));
       return;
     }
 
-    $onePrecinct = $this->validateTurfPrecinct($legislativeDistricts, $voters);
+    $legislativeDistricts = $context['sandbox']['legislativeDistricts'];
+    if (!$this->validateTurfPrecinct($legislativeDistricts, $voters)) {
+      $this->abortSync($arg, $context, t('The turf must be for one precinct. This error likely means
+      the saved list is old and the map region should be refreshed.'));
+      return;
+    }
     $context['sandbox']['legislativeDistricts'] = $legislativeDistricts;
+    $context['sandbox']['voters'] += $voters;
 
-    if (!$onePrecinct) {
-      $context['finished']              = 1;
-      $context['results']['message']    = [0 => t('The turf must be for one precinct. This error likely means 
-      the saved list is old and the map region should be refreshed.')];
-      $context['results']['result']     = 'error';
-      $context['results']['turfIndex']  = $context['sandbox']['turfIndex'];
-      $context['results']['mcid']       = $context['sandbox']['mcid'];
-      $context['results']['county']     = $context['sandbox']['county'];
+    $fetchIndex++;
+    $context['sandbox']['fetchIndex'] = $fetchIndex;
+    if ($fetchIndex >= count($context['sandbox']['turfVoters'])) {
+      $context['sandbox']['phase'] = self::PHASE_COMMIT;
+    }
+  }
+
+  /**
+   * commitTurf
+   *
+   * Writes the turf in a single database transaction, then queues the activist
+   * code changes for VoteBuilder.
+   *
+   * @param array $arg
+   * @param array $context
+   * @return void
+   */
+  private function commitTurf(array $arg, array &$context): void {
+    $sandbox = $context['sandbox'];
+    $movedVoters = [];
+    $transaction = $this->connection->startTransaction();
+    try {
+      $turfIndex = $this->writeTurf($arg, $sandbox, $movedVoters);
+    }
+    catch (NlpSyncTurfException $e) {
+      $transaction->rollBack();
+      $this->abortSync($arg, $context, $e->getMessage());
       return;
     }
+    catch (Throwable $e) {
+      $transaction->rollBack();
+      Drupal::logger('nlpservices')->error('Sync of turf "@turfName" rolled back: @msg',
+        ['@turfName' => $arg['turfName'], '@msg' => $e->getMessage()]);
+      $this->abortSync($arg, $context, t('The turf could not be saved and nothing was changed. Please try the sync again.'));
+      return;
+    }
+    $transaction->commitOrRelease();
+    unset($transaction);
 
+    $this->storeWalksheet($arg, $turfIndex);
+
+    // Voters taken from another turf get their activist code removed and then
+    // applied again for the new turf.
+    $acQueue = [];
+    foreach (array_chunk(array_keys($movedVoters), self::MAX_QUEUE_LIMIT) as $vanids) {
+      $acQueue[] = ['action' => 'Remove', 'vanids' => $vanids];
+    }
+    foreach (array_chunk(array_keys($sandbox['voters']), self::MAX_QUEUE_LIMIT) as $vanids) {
+      $acQueue[] = ['action' => 'Apply', 'vanids' => $vanids];
+    }
+    $context['sandbox']['acQueue'] = $acQueue;
+    $context['sandbox']['acIndex'] = 0;
+    $context['sandbox']['phase']   = self::PHASE_ACTIVIST_CODES;
+
+    // The turf is saved.  Record the results now so the finished callback can
+    // report the turf even if an activist code step fails.
+    $nl = $this->nlsObj->getNlById($arg['mcid']);
+    $context['results'] = [
+      'committed'   => TRUE,
+      'mcid'        => $arg['mcid'],
+      'turfName'    => $arg['turfName'],
+      'county'      => $arg['county'],
+      'voterCount'  => $arg['voterCount'],
+      'turfCnt'     => count($sandbox['voters']),
+      'nickname'    => $nl['nickname'] ?? '',
+      'turfIndex'   => $turfIndex,
+      'movedVoters' => $movedVoters,
+    ];
+  }
+
+  /**
+   * writeTurf
+   *
+   * All the database changes for the sync.  Runs inside the transaction started by
+   * commitTurf(), so any exception undoes everything written here.
+   *
+   * @param array $arg
+   * @param array $sandbox
+   * @param array $movedVoters - Set to the voters moved from other turfs, keyed by vanid.
+   * @return int - The turfIndex of the new turf.
+   * @throws NlpSyncTurfException
+   */
+  private function writeTurf(array $arg, array $sandbox, array &$movedVoters): int {
+    $county    = $arg['county'];
+    $folderId  = $arg['folderId'];
+    $turfId    = $arg['turfId'];
+    $turfName  = $arg['turfName'];
+    $mcid      = $arg['mcid'];
+    $voters    = $sandbox['voters'];
+    $vanids    = array_keys($voters);
+
+    // Another coordinator may have synced this turf while the voters were fetched.
+    // What is left of an earlier failed sync of this turf is removed.
+    $existingTurfs = $this->turfsObj->getTurfsForSync($folderId, $turfId, $turfName);
+    foreach ($existingTurfs as $existingIndex => $existingTurf) {
+      if (!$this->turfsObj->isIncompleteTurf($existingTurf)) {
+        throw new NlpSyncTurfException((string) t('@turfName is already assigned to @nl. Delete it before syncing it again.', [
+          '@turfName' => $turfName,
+          '@nl'       => trim($existingTurf['nlFirstName'] . ' ' . $existingTurf['nlLastName']),
+        ]));
+      }
+      $this->votersObj->deleteVotersInTurf($existingIndex);
+      $this->votersObj->deleteAddressesInTurf($existingIndex);
+      if (!$this->turfsObj->removeTurf($existingTurf)) {
+        throw new \RuntimeException("Unable to remove incomplete turf $existingIndex.");
+      }
+      Drupal::logger('nlpservices')->notice('Removed incomplete turf @turfIndex left by a failed sync of "@turfName".',
+        ['@turfIndex' => $existingIndex, '@turfName' => $turfName]);
+    }
+    // Voter records pointing at a turf that no longer exists would look like
+    // assignments to another turf.
+    $this->votersObj->deleteOrphanTurfVoters($vanids);
+
+    $nl        = $this->nlsObj->getNlById($mcid);
+    $newNlName = trim(($nl['firstName'] ?? '') . ' ' . ($nl['lastName'] ?? ''));
+
+    // A voter can be in only one turf.  Voters in another turf are moved to this one.
     $duplicates = $this->getDuplicates($voters);
-    if (!empty($duplicates)) {
-      $movedVoters = $context['sandbox']['movedVoters'];
-      $newNl     = $this->nlsObj->getNlById($mcid);
-      $newNlName = trim(($newNl['firstName'] ?? '') . ' ' . ($newNl['lastName'] ?? ''));
-      foreach ($duplicates as $vanid => $duplicate) {
-        $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
-        if (empty($context['sandbox']['firstConflict'])) {
-          $context['sandbox']['firstConflict'] = [
-            'folderName'    => $oldTurf['folderName'] ?? '',
-            'mapRegionName' => $oldTurf['mapRegionName'] ?? '',
-            'turfName'      => $oldTurf['turfName'] ?? '',
-          ];
-        }
-        $movedVoters[$vanid] = [
-          'firstName'   => $duplicate['firstName'],
-          'lastName'    => $duplicate['lastName'],
-          'oldTurfName' => $oldTurf['turfName'],
-          'oldMcid'     => $duplicate['mcid'],
-          'oldNlName'   => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
-        ];
-        Drupal::logger('nlpservices')->notice(
-          'Moved voter @firstName @lastName (VANID: @vanid) from turf "@oldTurfName" (NL: @oldNlName) to turf "@newTurfName" (NL: @newNlName)',
-          [
-            '@firstName'    => $duplicate['firstName'],
-            '@lastName'     => $duplicate['lastName'],
-            '@vanid'        => $vanid,
-            '@oldTurfName'  => $oldTurf['turfName'],
-            '@oldNlName'    => $oldTurf['nlFirstName'] . ' ' . $oldTurf['nlLastName'],
-            '@newTurfName'  => $turfName,
-            '@newNlName'    => $newNlName,
-          ]
-        );
+    $firstConflict = [];
+    foreach ($duplicates as $vanid => $duplicate) {
+      $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
+      if (empty($firstConflict)) {
+        $firstConflict = $oldTurf;
       }
-      $duplicateVanids = array_keys($duplicates);
-      $this->activistCodesObj->setApiActivistCodeBatch($duplicateVanids, 'NLPVoterAC', 'Remove');
-      foreach ($duplicateVanids as $vanid) {
-        $this->votersObj->deleteVoterInTurf($vanid);
-      }
-      $context['sandbox']['movedVoters'] = $movedVoters;
-      if (count($movedVoters) > 6) {
-        $firstConflict = $context['sandbox']['firstConflict'];
-        $context['finished']             = 1;
-        $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
-          '@count'               => count($movedVoters),
-          '@turfName'            => $turfName,
-          '@folderName'          => $folderName,
-          '@mapRegionName'       => $mapRegionName,
-          '@newNlName'           => $newNlName,
-          '@firstTurfName'       => $firstConflict['turfName'] ?? '',
-          '@firstFolderName'     => $firstConflict['folderName'] ?? '',
-          '@firstMapRegionName'  => $firstConflict['mapRegionName'] ?? '',
-        ])];
-        $context['results']['result']    = 'error';
-        $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
-        $context['results']['mcid']      = $context['sandbox']['mcid'];
-        $context['results']['county']    = $context['sandbox']['county'];
-        return;
-      }
+      $oldNlName = ($oldTurf['nlFirstName'] ?? '') . ' ' . ($oldTurf['nlLastName'] ?? '');
+      $movedVoters[$vanid] = [
+        'firstName'   => $duplicate['firstName'],
+        'lastName'    => $duplicate['lastName'],
+        'oldTurfName' => $oldTurf['turfName'] ?? '',
+        'oldMcid'     => $duplicate['mcid'],
+        'oldNlName'   => $oldNlName,
+      ];
+    }
+    if (count($movedVoters) > self::MAX_MOVED_VOTERS) {
+      throw new NlpSyncTurfException((string) t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
+        '@count'               => count($movedVoters),
+        '@turfName'            => $turfName,
+        '@folderName'          => $arg['folderName'],
+        '@mapRegionName'       => $arg['mapRegionName'],
+        '@newNlName'           => $newNlName,
+        '@firstTurfName'       => $firstConflict['turfName'] ?? '',
+        '@firstFolderName'     => $firstConflict['folderName'] ?? '',
+        '@firstMapRegionName'  => $firstConflict['mapRegionName'] ?? '',
+      ]));
+    }
+    foreach ($movedVoters as $vanid => $movedVoter) {
+      $this->votersObj->deleteVoterInTurf($vanid);
+      $this->votersObj->deleteAddressInTurf($vanid);
+      Drupal::logger('nlpservices')->notice(
+        'Moved voter @firstName @lastName (VANID: @vanid) from turf "@oldTurfName" (NL: @oldNlName) to turf "@newTurfName" (NL: @newNlName)',
+        [
+          '@firstName'    => $movedVoter['firstName'],
+          '@lastName'     => $movedVoter['lastName'],
+          '@vanid'        => $vanid,
+          '@oldTurfName'  => $movedVoter['oldTurfName'],
+          '@oldNlName'    => $movedVoter['oldNlName'],
+          '@newTurfName'  => $turfName,
+          '@newNlName'    => $newNlName,
+        ]
+      );
     }
 
-    $applyVanids = [];
-    foreach ($voters as $voter) {
-      $vanid = $voter['vanid'];
-      $applyVanids[] = $vanid;
+    $turfIndex = $this->turfsObj->createTurf($this->buildTurfRecord($arg, $sandbox, $nl));
+    if (empty($turfIndex)) {
+      throw new \RuntimeException('createTurf failed.');
+    }
 
+    $cycle = $this->configurationObj->getCycle();
+    foreach ($voters as $vanid => $voter) {
       $voter['address']['turfIndex'] = $turfIndex;
       $voter['address']['moved']     = NULL;
-      $this->votersObj->createVoter($voter);
+      if (!$this->votersObj->createVoter($voter)) {
+        throw new \RuntimeException("createVoter failed for $vanid.");
+      }
 
       $voterStatus            = $this->votersObj->getVoterStatus($vanid);
-      $cycle                  = $this->configurationObj->getCycle();
       $voterStatus['vanid']   = $vanid;
       $voterStatus['cycle']   = $cycle;
       $voterStatus['hostile'] = (!empty($voter['activistCodes']['hostile'])) ? 1 : 0;
       $this->votersObj->setVoterStatus($vanid, $voterStatus);
 
-      $votersInTurf[$vanid] = $voter;
-    }
-
-    $this->activistCodesObj->setApiActivistCodeBatch($applyVanids, 'NLPVoterAC');
-
-    $currentBatch++;
-    $context['sandbox']['currentBatch'] = $currentBatch;
-    $context['sandbox']['votersInTurf'] = $votersInTurf;
-
-    if ($currentBatch >= $batchCount) {
-
-      $mcid         = $context['sandbox']['mcid'];
-      $county       = $context['sandbox']['county'];
-      $turfIndex    = $context['sandbox']['turfIndex'];
-      $votersInTurf = $context['sandbox']['votersInTurf'];
-
-      foreach ($votersInTurf as $voter) {
-        $turfVoter              = [];
-        $turfVoter['mcid']      = $mcid;
-        $turfVoter['county']    = $county;
-        $turfVoter['turfIndex'] = $turfIndex;
-        $turfVoter['vanid']     = $voter['vanid'];
-        $this->votersObj->createTurfVoter($turfVoter);
-        $this->reloadVoterStatus($voter, $turfIndex, $mcid);
+      $turfVoter = [
+        'mcid'      => $mcid,
+        'county'    => $county,
+        'turfIndex' => $turfIndex,
+        'vanid'     => $vanid,
+      ];
+      if (!$this->votersObj->createTurfVoter($turfVoter)) {
+        throw new \RuntimeException("createTurfVoter failed for $vanid.");
       }
-
-      $this->awardsObj->nlParticipation($mcid, 'Turf synced');
-      $this->finalizeTurf($arg, $context['sandbox']);
-
-      $voterCount = $arg['voterCount'];
-      $expirySecs = ($voterCount < 60)
-        ? NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS
-        : NlpTurfStatus::CREATED_EXPIRY_LARGE_SECS;
-      $now = time();
-      $this->turfStatusObj->createTurfStatus([
-        'folderName'     => $arg['folderName'],
-        'folderId'       => $arg['folderId'],
-        'turfName'       => $arg['turfName'],
-        'turfId'         => $arg['turfId'],
-        'createTime'     => date('c', $now),
-        'expirationTime' => date('c', $now + $expirySecs),
-        'status'         => NlpTurfStatus::TURF_CREATED,
-      ]);
-
-      $nl = $this->nlsObj->getNlById($mcid);
-
-      $context['results']['mcid']        = $mcid;
-      $context['results']['turfName']    = $arg['turfName'];
-      $context['results']['county']      = $county;
-      $context['results']['voterCount']  = $arg['voterCount'];
-      $context['results']['turfCnt']     = count($votersInTurf);
-      $context['results']['nickname']    = $nl['nickname'];
-      $context['results']['result']      = 'success';
-      $context['results']['turfIndex']   = $turfIndex;
-      $context['results']['movedVoters'] = $context['sandbox']['movedVoters'];
-      $context['finished']               = 1;
-      return;
+      $this->reloadVoterStatus($voter, $turfIndex, $mcid);
     }
 
-    $context['finished'] = $currentBatch / $batchCount;
+    $this->awardsObj->nlParticipation($mcid, 'Turf synced');
+    $this->finalizeTurf($arg, $nl);
+    return $turfIndex;
+  }
+
+  /**
+   * setActivistCodes
+   *
+   * Sends the next queued activist code change to VoteBuilder.
+   *
+   * @param array $context
+   * @return void
+   */
+  private function setActivistCodes(array &$context): void {
+    $acIndex = $context['sandbox']['acIndex'];
+    $acQueue = $context['sandbox']['acQueue'];
+    if (!empty($acQueue[$acIndex])) {
+      $this->activistCodesObj->setApiActivistCodeBatch($acQueue[$acIndex]['vanids'], 'NLPVoterAC', $acQueue[$acIndex]['action']);
+    }
+    $acIndex++;
+    $context['sandbox']['acIndex'] = $acIndex;
+    if ($acIndex >= count($acQueue)) {
+      $context['results']['result'] = 'success';
+      $context['finished'] = 1;
+    }
+  }
+
+  /**
+   * abortSync
+   *
+   * Ends the batch with an error.  Nothing from this sync is in the database when
+   * this is called.
+   *
+   * @param array $arg
+   * @param array $context
+   * @param mixed $message
+   * @return void
+   */
+  private function abortSync(array $arg, array &$context, mixed $message): void {
+    $tempName = $arg['walksheetInfo']['tempName'] ?? '';
+    if (!empty($tempName) && file_exists($tempName)) {
+      unlink($tempName);
+    }
+    $context['finished'] = 1;
+    $context['results']  = [
+      'result'  => 'error',
+      'message' => [0 => $message],
+    ];
   }
 
   /**
@@ -485,9 +613,48 @@ class NlpSyncTurfProcessor {
   }
 
   /**
+   * buildTurfRecord
+   *
+   * The complete turf record.  It is written in one insert so a turf record never
+   * exists without its NL and district fields.
+   *
+   * @param array $arg
+   * @param array $sandbox
+   * @param array $nl - The NL record.
+   * @return array
+   */
+  private function buildTurfRecord(array $arg, array $sandbox, array $nl): array {
+    $legislativeDistricts = $sandbox['legislativeDistricts'];
+    $turf = [
+      'county'        => $arg['county'],
+      'mcid'          => $arg['mcid'],
+      'turfName'      => $arg['turfName'],
+      'turfPDF'       => '',
+      'folderId'      => $arg['folderId'],
+      'folderName'    => $arg['folderName'],
+      'listId'        => $arg['turfId'],
+      'nlFirstName'   => $nl['firstName'] ?? '',
+      'nlLastName'    => $nl['lastName'] ?? '',
+      'mapRegionName' => $arg['mapRegionName'],
+      'mapRegionId'   => $arg['mapRegionId'],
+      'turfHd'        => $legislativeDistricts['hd'],
+      'turfPrecinct'  => $legislativeDistricts['precinct'],
+      'turfCd'        => $legislativeDistricts['cd'],
+      'voterCount'    => $arg['voterCount'],
+      'doorCount'     => $arg['doorCount'],
+    ];
+    if (!empty($arg['minivan'])) {
+      $turf['minivanNumber']     = $arg['minivanNumber'];
+      $turf['minivanCreateDate'] = $arg['minivanCreateDate'];
+    }
+    return $turf;
+  }
+
+  /**
    * finalizeTurf
    *
-   * Finalizes and updates the details of a turf assignment based on the provided parameters.
+   * Records the NL's status, the turf assignment and the turf status.  Runs inside
+   * the sync transaction.
    *
    * @param array $arg An associative array containing turf-related details, including:
    *                   - 'county': The county associated with the turf.
@@ -499,32 +666,17 @@ class NlpSyncTurfProcessor {
    *                   - 'turfId': The unique identifier of the turf.
    *                   - 'turfName': The name of the turf.
    *                   - 'mcid': The ID of the managing coordinator.
-   *                   - 'walksheetInfo': Information about the walksheet file.
-   *                   - 'minivan': (Optional) Indicates if Minivan data is present.
-   *                   - 'minivanNumber': (Optional) The Minivan number associated with the turf.
-   *                   - 'minivanCreateDate': (Optional) The creation date of the Minivan entry.
    *                   - 'voterCount': The number of voters in the turf.
-   *                   - 'doorCount': The number of doors in the turf.
-   * @param array $sandbox An associative array containing additional data related to the turf, including:
-   *                       - 'turfIndex': The index of the turf within the system.
-   *                       - 'legislativeDistricts': An array of legislative district details, such as 'hd', 'precinct', and 'cd'.
+   * @param array $nl - The NL record.
    *
    * @return void
    */
-  private function finalizeTurf(array $arg, array $sandbox): void {
+  private function finalizeTurf(array $arg, array $nl): void {
     $county        = $arg['county'];
     $folderId      = $arg['folderId'];
     $folderName    = $arg['folderName'];
-    $showLists     = $arg['showLists'];
-    $mapRegionId   = $arg['mapRegionId'];
-    $mapRegionName = $arg['mapRegionName'];
-    $turfId        = $arg['turfId'];
     $turfName      = $arg['turfName'];
     $mcid          = $arg['mcid'];
-    $walksheetInfo = $arg['walksheetInfo'];
-    $turfIndex     = $sandbox['turfIndex'];
-
-    $nl = $this->nlsObj->getNlById($mcid);
 
     $nlsStatus             = $this->nlsObj->getNlsStatus($mcid, $county);
     $nlsStatus['mcid']     = $mcid;
@@ -536,13 +688,13 @@ class NlpSyncTurfProcessor {
     $isoDate = explode('T', date('c'));
 
     $assignment = [
-      'turfId'        => $turfId,
+      'turfId'        => $arg['turfId'],
       'mcid'          => $mcid,
       'vfid'          => $nl['vfid'],
       'turfName'      => $turfName,
-      'savedList'     => $showLists,
-      'mapRegionId'   => $mapRegionId,
-      'mapRegionName' => $mapRegionName,
+      'savedList'     => $arg['showLists'],
+      'mapRegionId'   => $arg['mapRegionId'],
+      'mapRegionName' => $arg['mapRegionName'],
       'folderId'      => $folderId,
       'folderName'    => $folderName,
       'firstName'     => $nl['firstName'],
@@ -559,34 +711,41 @@ class NlpSyncTurfProcessor {
 
     $this->turfAssignmentsObj->setTurfAssignment($assignment);
 
-    $legislativeDistricts = $sandbox['legislativeDistricts'];
+    $voterCount = $arg['voterCount'];
+    $expirySecs = ($voterCount < 60)
+      ? NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS
+      : NlpTurfStatus::CREATED_EXPIRY_LARGE_SECS;
+    $now = time();
+    $this->turfStatusObj->createTurfStatus([
+      'folderName'     => $folderName,
+      'folderId'       => $folderId,
+      'turfName'       => $turfName,
+      'turfId'         => $arg['turfId'],
+      'createTime'     => date('c', $now),
+      'expirationTime' => date('c', $now + $expirySecs),
+      'status'         => NlpTurfStatus::TURF_CREATED,
+    ]);
+  }
 
-    $turf = [
-      'nlFirstName'   => $nl['firstName'],
-      'nlLastName'    => $nl['lastName'],
-      'mapRegionName' => $arg['mapRegionName'],
-      'mapRegionId'   => $arg['mapRegionId'],
-      'turfPdf'       => '',
-      'turfHd'        => $legislativeDistricts['hd'],
-      'turfPrecinct'  => $legislativeDistricts['precinct'],
-      'turfCd'        => $legislativeDistricts['cd'],
-      'voterCount'    => $arg['voterCount'],
-      'doorCount'     => $arg['doorCount'],
-    ];
-    if (!empty($arg['minivan'])) {
-      $turf['minivanNumber']     = $arg['minivanNumber'];
-      $turf['minivanCreateDate'] = $arg['minivanCreateDate'];
-    }
-    $this->turfsObj->updateTurfFields($turfIndex, $turf);
-
-    if (!empty($walksheetInfo['tempName'])) {
-      $uniqueWalksheetName = 'MCID' . $mcid . '_' . $walksheetInfo['fileNameBase']
-        . '_TI' . $turfIndex . '.' . $walksheetInfo['fileType'];
-      $uri = $this->pathsObj->getPath('PDF', $county) . $uniqueWalksheetName;
-      copy($walksheetInfo['tempName'], $uri);
-      unlink($walksheetInfo['tempName']);
-      $this->turfsObj->updateTurf($turfIndex, 'turfPDF', $uniqueWalksheetName);
-    }
+  /**
+   * storeWalksheet
+   *
+   * Moves the uploaded walksheet, if any, to the county's PDF folder.  Done after the
+   * commit since file operations cannot be rolled back.
+   *
+   * @param array $arg
+   * @param int $turfIndex
+   * @return void
+   */
+  private function storeWalksheet(array $arg, int $turfIndex): void {
+    $walksheetInfo = $arg['walksheetInfo'] ?? [];
+    if (empty($walksheetInfo['tempName'])) { return; }
+    $uniqueWalksheetName = 'MCID' . $arg['mcid'] . '_' . $walksheetInfo['fileNameBase']
+      . '_TI' . $turfIndex . '.' . $walksheetInfo['fileType'];
+    $uri = $this->pathsObj->getPath('PDF', $arg['county']) . $uniqueWalksheetName;
+    copy($walksheetInfo['tempName'], $uri);
+    unlink($walksheetInfo['tempName']);
+    $this->turfsObj->updateTurf($turfIndex, 'turfPDF', $uniqueWalksheetName);
   }
 
 }

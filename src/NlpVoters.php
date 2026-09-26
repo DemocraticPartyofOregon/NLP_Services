@@ -491,6 +491,34 @@ class NlpVoters {
   }
 
   /**
+   * deleteOrphanTurfVoters
+   *
+   * Delete the turf voter and address records for the given voters that point at a
+   * turf which no longer exists.  These are left behind when a turf sync or delete
+   * fails part way, and would otherwise make the voters look like they are still
+   * assigned to a turf.
+   *
+   * @param array $vanids
+   * @return void
+   */
+  public function deleteOrphanTurfVoters(array $vanids): void
+  {
+    if (empty($vanids)) { return; }
+    foreach ([self::VOTER_TURF_TBL, self::VOTER_ADDRESS_TBL] as $table) {
+      try {
+        $turfIndexes = $this->connection->select(NlpTurfs::TURF_TBL, 't');
+        $turfIndexes->addField('t', 'turfIndex');
+        $this->connection->delete($table)
+          ->condition('vanid', $vanids, 'IN')
+          ->condition('turfIndex', $turfIndexes, 'NOT IN')
+          ->execute();
+      } catch (Exception $e) {
+        nlp_debug_msg('deleteOrphanTurfVoters', $e->getMessage() );
+      }
+    }
+  }
+
+  /**
    * deleteAddressInTurf
    *
    * Delete a voter address in a turf table.  This is used when a voter address is removed from a turf.

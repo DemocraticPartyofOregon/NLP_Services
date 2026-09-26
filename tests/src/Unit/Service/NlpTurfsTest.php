@@ -867,6 +867,25 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('Jane Doe', $result['nl']);
     }
 
+    public function testTurfInUseIncompleteTurfIsNotAssigned(): void {
+      // Residue of a failed sync: no NL name or districts.  It must stay selectable
+      // so syncing it again can replace it.
+      $turf = array_merge($this->baseTurf(), ['nlFirstName' => NULL, 'nlLastName' => NULL, 'turfHd' => NULL]);
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn($turf);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $result = $this->buildTurfs()->turfInUse(50, 999, 'Denver-001');
+      $this->assertSame('', $result['turfAssigned']);
+      $this->assertStringContainsString('Incomplete sync', $result['nl']);
+    }
+
+    public function testIsIncompleteTurf(): void {
+      $turfs = $this->buildTurfs();
+      $this->assertTrue($turfs->isIncompleteTurf(['nlFirstName' => NULL, 'nlLastName' => NULL, 'turfHd' => NULL]));
+      $this->assertFalse($turfs->isIncompleteTurf(['nlFirstName' => 'Jane', 'nlLastName' => 'Doe', 'turfHd' => 6]));
+      $this->assertFalse($turfs->isIncompleteTurf(['nlFirstName' => NULL, 'nlLastName' => NULL, 'turfHd' => 6]));
+    }
+
     public function testTurfInUseNotFoundReturnsEmptyValues(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturn(false);

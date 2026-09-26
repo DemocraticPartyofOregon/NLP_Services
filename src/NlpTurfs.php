@@ -765,6 +765,11 @@ class NlpTurfs
    *
    * Deletes a turf and its associated voters and activist codes.
    *
+   * The turf record is removed last.  If anything fails part way (the activist code
+   * API is slow), the turf record is still there, so the turf stays visible and the
+   * delete can simply be repeated.  Removing the turf record first would orphan the
+   * voter records, which then block any later sync of those voters.
+   *
    * @param array $turf - An associative array containing turf information.
    * @return bool - Returns TRUE on success, FALSE on failure.
    */
@@ -774,9 +779,6 @@ class NlpTurfs
     $turfIndex = $turf['turfIndex'];
     $mcid = $turf['mcid'];
 
-    $status = $this->removeTurf($turf);
-    if (!$status) { return FALSE; }
-
     $voters = $this->votersObj->fetchVotersByTurf($turfIndex);
     $vanids = array_keys($voters);
     $this->apiActivistCodesObj->setApiActivistCodeBatch($vanids, 'NLPVoterAC', 'Remove');
@@ -784,6 +786,9 @@ class NlpTurfs
     // remove the list of voters.
     $this->votersObj->deleteVotersInTurf($turfIndex);
     $this->votersObj->deleteAddressesInTurf($turfIndex);
+
+    $status = $this->removeTurf($turf);
+    if (!$status) { return FALSE; }
     // Clear the turf-cut and turf-delivered status.
     $nlsStatus = $this->nlsObj->getNlsStatus($mcid, $county);
     $nlsStatus['turfCut'] = $nlsStatus['turfDelivered'] = '';
@@ -856,6 +861,61 @@ class NlpTurfs
     $assignment = $result->fetchAssoc();
     if (empty($assignment)) { return []; }
     return $assignment;
+  }
+
+  /**
+   * getTurfsForSync
+   *
+   * Returns every turf record that corresponds to a VoteBuilder turf, matched either by
+   * the VoteBuilder list ID or by folder and turf name (the list ID changes when a map
+   * region is refreshed).  Used by the turf sync to find a prior assignment or the
+   * residue of a failed sync of the same turf.
+   *
+   * @param int $folderId
+   * @param int $listId - The VoteBuilder turf (saved list) ID.
+   * @param string $turfName
+   * @return array - Turf records keyed by turfIndex.
+   */
+  public function getTurfsForSync(int $folderId, int $listId, string $turfName): array
+  {
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 't');
+      $query->fields('t');
+      $byName = $query->andConditionGroup()
+        ->condition('t.folderId', $folderId)
+        ->condition('t.turfName', $turfName);
+      $match = $query->orConditionGroup()
+        ->condition('t.listId', $listId)
+        ->condition($byName);
+      $query->condition($match);
+      $result = $query->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getTurfsForSync', $e->getMessage());
+      return [];
+    }
+    $turfs = [];
+    do {
+      $turf = $result->fetchAssoc();
+      if (empty($turf)) { break; }
+      $turfs[$turf['turfIndex']] = $turf;
+    } while (TRUE);
+    return $turfs;
+  }
+
+  /**
+   * isIncompleteTurf
+   *
+   * A turf record left behind by a sync that failed part way.  Earlier versions of the
+   * turf sync created the turf record first and filled in the NL name and districts only
+   * after every voter was processed, so a failed sync left a record with neither.  Such a
+   * record is not a real assignment and is replaced when the same turf is synced again.
+   *
+   * @param array $turf - A turf record.
+   * @return bool
+   */
+  public function isIncompleteTurf(array $turf): bool
+  {
+    return empty($turf['nlFirstName']) && empty($turf['nlLastName']) && empty($turf['turfHd']);
   }
 
   /**
@@ -959,45 +1019,47 @@ class NlpTurfs
       'turfAssigned' => '',
     ];
     $turf = $this->getTurfByListId($turfId);
-    if(!empty($turf)) {
+    if(empty($turf)) {
+      $turf = $this->getTurfByTurfName($folderId, $turfName);
+    }
+    if(!empty($turf) && $this->isIncompleteTurf($turf)) {
+      // Residue of a failed sync.  Leave the turf selectable; syncing it again
+      // replaces the residue.
+      $turfInUse = [
+        'nl' => '<span class="nlp-footnote-warning">Incomplete sync - sync again to repair</span>',
+        'mcid' => $turf['mcid'],
+        'turfAssigned' => '',
+      ];
+    } elseif(!empty($turf)) {
       $turfInUse = [
         'nl' => $turf['nlFirstName'] . ' ' . $turf['nlLastName'],
         'mcid' => $turf['mcid'],
         'turfAssigned' => 'X',
       ];
     } else {
-      $turf = $this->getTurfByTurfName($folderId, $turfName);
-      if(!empty($turf)) {
-        $turfInUse = [
-          'nl' => $turf['nlFirstName'] . ' ' . $turf['nlLastName'],
-          'mcid' => $turf['mcid'],
-          'turfAssigned' => 'X',
-        ];
-      } else {
-        // The turf known to VoteBuilder has not yet been assigned to an NL.   So, check if the turfID known
-        // to VoteBuilder matches a turf previously assigned to an NL.
-        $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignment($turfId);
-        if(empty($previousTurfAssignment)) {
-          $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignmentByTurfName($folderId, $turfName);
-          if(!empty($previousTurfAssignment)) {
-            // Update the assignment record.
-            $previousTurfAssignment['turfId'] = $turfId;
-            $this->turfAssignmentsObj->deleteTurfAssignment($turfId);
-            $this->turfAssignmentsObj->setTurfAssignment($previousTurfAssignment);
-          }
-        }
-
+      // The turf known to VoteBuilder has not yet been assigned to an NL.   So, check if the turfID known
+      // to VoteBuilder matches a turf previously assigned to an NL.
+      $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignment($turfId);
+      if(empty($previousTurfAssignment)) {
+        $previousTurfAssignment = $this->turfAssignmentsObj->getTurfAssignmentByTurfName($folderId, $turfName);
         if(!empty($previousTurfAssignment)) {
-          $nls = $this->nlsObj->getNlById($previousTurfAssignment['mcid']);
-          $footnote = (!empty($nls)) ? '*' : '**';
-          $footnote = '<span class="nlp-footnote-warning">' . $footnote . '</span>';
-          $turfInUse = [
-            'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'] . $footnote,
-            'mcid' => $previousTurfAssignment['mcid'],
-            'hintPrevious' => $previousTurfAssignment['mcid'],
-            'turfAssigned' => '',
-          ];
+          // Update the assignment record.
+          $previousTurfAssignment['turfId'] = $turfId;
+          $this->turfAssignmentsObj->deleteTurfAssignment($turfId);
+          $this->turfAssignmentsObj->setTurfAssignment($previousTurfAssignment);
         }
+      }
+
+      if(!empty($previousTurfAssignment)) {
+        $nls = $this->nlsObj->getNlById($previousTurfAssignment['mcid']);
+        $footnote = (!empty($nls)) ? '*' : '**';
+        $footnote = '<span class="nlp-footnote-warning">' . $footnote . '</span>';
+        $turfInUse = [
+          'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'] . $footnote,
+          'mcid' => $previousTurfAssignment['mcid'],
+          'hintPrevious' => $previousTurfAssignment['mcid'],
+          'turfAssigned' => '',
+        ];
       }
     }
     return $turfInUse;
