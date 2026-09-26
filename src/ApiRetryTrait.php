@@ -2,7 +2,11 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
+use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Pool;
+use ReflectionClass;
 use Throwable;
 
 /**
@@ -15,6 +19,12 @@ use Throwable;
  * sending requests in groups paced by VanRateLimiter, and retries only the
  * requests that were still rate-limited, honoring the API's own backoff
  * hint and using smaller groups on retry rounds.
+ *
+ * VAN also occasionally accepts a request and then never answers it (cURL
+ * error 28, "Operation timed out ... with 0 bytes received"), or answers
+ * with a 502/503/504. Those are retried too, but only for GET/HEAD
+ * requests: a POST that timed out may already have been applied by VAN,
+ * and sending it again could record the same canvass response twice.
  */
 trait ApiRetryTrait {
 
@@ -22,14 +32,28 @@ trait ApiRetryTrait {
   private const int RETRY_GROUP_SIZE = 3;
 
   /**
+   * Guzzle options for every VAN request. Without them Drupal's http_client
+   * waits 30 seconds on a stalled request; failing sooner lets the retry
+   * start sooner.
+   */
+  private const array REQUEST_OPTIONS = [
+    'connect_timeout' => 10,
+    'timeout' => 20,
+  ];
+
+  private const array TRANSIENT_STATUS_CODES = [502, 503, 504];
+  private const array RETRYABLE_TRANSIENT_METHODS = ['GET', 'HEAD'];
+
+  /**
    * Sends one request per key and waits for every reply.
    *
    * Requests go out in groups of at most VanRateLimiter::MAX_REQUESTS. All
    * requests in a group must be answered before the next group is sent,
    * and VanRateLimiter holds each group back until sending it keeps the
-   * rate at or under 15 requests per second. Requests rejected with a 429
-   * are retried in smaller groups after the API's suggested delay; any
-   * other failure, or a 429 on the final attempt, is passed to $onFailed.
+   * rate at or under 15 requests per second. Requests rejected with a 429,
+   * or GET requests that timed out or got a 502/503/504, are retried in
+   * smaller groups after a delay; any other failure, or a retryable failure
+   * on the final attempt, is passed to $onFailed.
    *
    * @param array $keys - identifiers (e.g. vanids), one request each.
    * @param callable $buildRequest - fn($key): RequestInterface
@@ -59,9 +83,11 @@ trait ApiRetryTrait {
 
         $pool = new Pool($this->client, $requests(), [
           'concurrency' => count($group),
+          'options' => self::REQUEST_OPTIONS,
           'fulfilled' => fn($response, $key) => $onFulfilled($response, $key),
           'rejected' => function($reason, $key) use (&$retry, &$retryDelayMs, $attempt, $onFailed) {
-            if ($this->isRateLimited($reason) && $attempt < self::MAX_RETRIES) {
+            if ($this->isRetryable($reason) && $attempt < self::MAX_RETRIES) {
+              $this->logRetry($reason, $key, $attempt);
               $retry[] = $key;
               $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
               return;
@@ -75,8 +101,70 @@ trait ApiRetryTrait {
     }
   }
 
+  /**
+   * Whether a failed request is worth sending again.
+   *
+   * A 429 means VAN rejected the request without acting on it, so it is
+   * always safe to resend. Timeouts, dropped connections and 502/503/504
+   * are only resent for GET/HEAD, since VAN may have already acted on them.
+   */
+  private function isRetryable(Throwable $reason): bool {
+    if ($this->isRateLimited($reason)) {
+      return TRUE;
+    }
+    return $this->isTransient($reason) && $this->isSafeToResend($reason);
+  }
+
   private function isRateLimited(Throwable $reason): bool {
     return $reason->getCode() == 429;
+  }
+
+  /**
+   * A network-level failure (timeout, refused/reset connection) or a
+   * gateway/unavailable response from VAN.
+   */
+  private function isTransient(Throwable $reason): bool {
+    if ($reason instanceof ConnectException) {
+      return TRUE;
+    }
+    if ($reason instanceof RequestException && !$reason->hasResponse()) {
+      return TRUE;
+    }
+    return in_array((int) $reason->getCode(), self::TRANSIENT_STATUS_CODES, TRUE);
+  }
+
+  private function isSafeToResend(Throwable $reason): bool {
+    if (!method_exists($reason, 'getRequest')) {
+      return FALSE;
+    }
+    $method = strtoupper($reason->getRequest()->getMethod());
+    return in_array($method, self::RETRYABLE_TRANSIENT_METHODS, TRUE);
+  }
+
+  /**
+   * Records a retry in the Drupal log, so a VAN support ticket can cite the
+   * time and the person ID of a request VAN didn't answer. Only the cURL
+   * error text and status code are logged, never the exception message:
+   * Guzzle's message embeds the request URL, which carries the API
+   * credentials.
+   */
+  private function logRetry(Throwable $reason, int|string $key, int $attempt): void {
+    if (!Drupal::hasContainer()) {
+      return;
+    }
+    $context = method_exists($reason, 'getHandlerContext') ? $reason->getHandlerContext() : [];
+    $detail = $context['error'] ?? '';
+    Drupal::logger('nlpservices')->warning(
+      'VAN request for ID @key failed (@class, status @code: @detail); retry @retry of @max.',
+      [
+        '@key' => $key,
+        '@class' => (new ReflectionClass($reason))->getShortName(),
+        '@code' => $reason->getCode(),
+        '@detail' => $detail,
+        '@retry' => $attempt + 1,
+        '@max' => self::MAX_RETRIES,
+      ],
+    );
   }
 
   /**

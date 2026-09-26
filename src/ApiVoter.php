@@ -160,14 +160,15 @@ class ApiVoter
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
     for ($attempt = 0; ; $attempt++) {
       try {
-        $request = $this->client->request('GET',$url);
+        $request = $this->client->request('GET', $url, self::REQUEST_OPTIONS);
         $result = json_decode($request->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
         }
         break;
       } catch (GuzzleException $e) {
-        if ($this->isRateLimited($e) && $attempt < self::MAX_RETRIES) {
+        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+          $this->logRetry($e, $vanid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
         }
