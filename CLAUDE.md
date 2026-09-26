@@ -8,7 +8,12 @@ Drupal 11 custom module ("NLP Services") supporting the Neighborhood Leader Prog
 
 ## Dev / test / deploy workflow
 
-Deploys to **five** live NLP sites via FTP (per `.idea/webServers.xml` / `.idea/deployment.xml`, both already configured): `ftp.oregonnlp.org`, `ftp.sandboxnlp.org`, `ftp.specialnlp.org`, `ftp.mtdemsnlp.org`, `ftp.mississippinlp.org`, all port 21 with explicit FTPS, deploying to `/modules/custom/nlpservices` on each. This app can't handle the FTP passwords (password-based auth, credentials live in PhpStorm's own store). If asked to help deploy, hand over ready-to-run `curl --ftp-ssl-reqd --ftp-pasv -u <user> -T <file> ftp://<host>:21/modules/custom/nlpservices/<path>` commands for the user to run themselves, or point them to PhpStorm's Deployment menu.
+Five NLP sites are configured for FTP deploys (per `.idea/webServers.xml` / `.idea/deployment.xml`, both already configured), all port 21 with explicit FTPS, deploying to `/modules/custom/nlpservices` on each — but they run **different branches** and must not mix:
+
+- **`ftp.sandboxnlp.org`** — the only site running this branch (`NLP_Services_V7_3`, Drupal 11). **V7_3 work deploys here and nowhere else.**
+- **`ftp.oregonnlp.org`, `ftp.specialnlp.org`, `ftp.mtdemsnlp.org`, `ftp.mississippinlp.org`** — sites in active use, running `NLP_Services_V7_2_1` on Drupal 10 until that line is retired (December 2026). Never deploy V7_3 code to them.
+
+The only crossover between the branches is cherry-picking bug fixes **from V7_2_1 into V7_3**. This app can't handle the FTP passwords (password-based auth, credentials live in PhpStorm's own store). If asked to help deploy, hand over ready-to-run `curl --ftp-ssl-reqd --ftp-pasv -u <user> -T <file> ftp://<host>:21/modules/custom/nlpservices/<path>` commands for the user to run themselves, or point them to PhpStorm's Deployment menu.
 
 `NlpReadMe.md` documents full from-scratch site setup (SSL, database, private file path, required contrib modules — autologout, mpdf, bartik, views_bulk_operations, token, smtp, real_aes, key, file_entity, encrypt — SMTP config, theme setup). `readme.md` is just Drupal core's stock README (not NLP-specific) — ignore it.
 
