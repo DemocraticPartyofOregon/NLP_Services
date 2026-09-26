@@ -7,7 +7,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\Tests\UnitTestCase;
   use GuzzleHttp\ClientInterface;
+  use GuzzleHttp\Exception\ConnectException;
   use GuzzleHttp\Exception\RequestException;
+  use GuzzleHttp\Psr7\Request as GuzzleRequest;
   use GuzzleHttp\Promise\FulfilledPromise;
   use GuzzleHttp\Promise\RejectedPromise;
   use Psr\Http\Message\RequestInterface;
@@ -544,6 +546,45 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ));
 
       $this->assertSame([], $this->buildApiVoter()->getVoters([100123]));
+    }
+
+    public function testGetVotersRetriesVoterWhoseRequestTimedOut(): void {
+      // cURL error 28 on one voter used to fail the whole turf sync.
+      $this->stubKeyValues();
+      $this->stubCycle();
+      $this->configurationMock->method('getStateName')->willReturn('Oregon');
+      $calls = 0;
+      $this->clientMock->method('sendAsync')->willReturnCallback(
+        function (RequestInterface $request) use (&$calls) {
+          if ($calls++ === 0) {
+            return new RejectedPromise(new ConnectException('cURL error 28', $request));
+          }
+          return new FulfilledPromise($this->makeResponse($this->baseApiResult(3034261)));
+        }
+      );
+
+      $result = $this->buildApiVoter()->getVoters([3034261]);
+
+      $this->assertArrayHasKey(3034261, $result);
+      $this->assertSame(2, $calls);
+    }
+
+    public function testGetApiVoterRetriesAfterTimeout(): void {
+      $this->stubKeyValues();
+      $this->stubCycle();
+      $calls = 0;
+      $this->clientMock->expects($this->exactly(2))->method('request')
+        ->willReturnCallback(function (string $method, string $url, array $options) use (&$calls) {
+          $this->assertSame(20, $options['timeout']);
+          if ($calls++ === 0) {
+            throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
+          }
+          return $this->makeResponse($this->baseApiResult());
+        });
+
+      $result = $this->buildApiVoter()->getApiVoter(100123);
+
+      $this->assertSame(100123, $result['vanid']);
     }
 
     public function testGetVotersEmptyListReturnsEmpty(): void {

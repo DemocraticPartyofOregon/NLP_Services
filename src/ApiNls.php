@@ -55,7 +55,7 @@ class ApiNls {
     $post_url = 'https://'.$user.':'.$apiKey.'|1'.'@'.$apiURL.'/people/'.$mcid.$expandOptions;
     for ($attempt = 0; ; $attempt++) {
       try {
-        $request = $this->client->request('GET', $post_url);
+        $request = $this->client->request('GET', $post_url, self::REQUEST_OPTIONS);
         $results = json_decode($request->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
@@ -67,7 +67,8 @@ class ApiNls {
         if ($errorStatus && $code == 401) {
           return ['Invalid key'];
         }
-        if ($this->isRateLimited($e) && $attempt < self::MAX_RETRIES) {
+        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+          $this->logRetry($e, $mcid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
         }
