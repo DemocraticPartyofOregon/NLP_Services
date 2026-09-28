@@ -471,6 +471,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayHasKey(200457, $result);
     }
 
+    public function testGetNlsKeysByRequestedMcidWhenVanReturnsDifferentVanId(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse($this->baseApiResult(999999))));
+
+      $result = $this->buildApiNls()->getNls('', [200456]);
+
+      $this->assertArrayHasKey(200456, $result);
+      $this->assertSame(999999, $result[200456]['mcid']);
+    }
+
     public function testGetNlsEmptyListReturnsEmpty(): void {
       $this->assertSame([], $this->buildApiNls()->getNls('', []));
     }

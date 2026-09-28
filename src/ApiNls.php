@@ -247,8 +247,10 @@ class ApiNls {
           nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, '');
           return;
         }
-        $nl = $this->processNlResult($result);
-        $nls[$nl['mcid']] = $nl;
+        // Key by the requested MCID, not the vanId in the response: VAN can
+        // answer with a different vanId (e.g. a merged record), and the
+        // caller needs to see that rather than lose the record.
+        $nls[$mcid] = $this->processNlResult($result);
       },
       function($reason, $mcid) {
         nlp_debug_msg('Something is wrong.  Contact NLP Support,  MCID: ' . $mcid, $reason->getMessage());

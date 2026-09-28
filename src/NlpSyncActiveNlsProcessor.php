@@ -151,8 +151,16 @@ class NlpSyncActiveNlsProcessor {
     //nlp_debug_msg('$nlRecords',$nlRecords);
     // Phase 3: Process each NL record.
     foreach ($batchData as $mcid => $flags) {
-      if (empty($nlRecords[$mcid])) { continue; }
-      $this->processNlRecord($nlRecords[$mcid], $flags, $county, $legislativeFixes);
+      if (empty($nlRecords[$mcid])) {
+        $this->messenger->addError(t('NL rejected. MyCampaign did not return a record for this volunteer.<br>.. MCID:@mcid', ['@mcid' => $mcid]));
+        continue;
+      }
+      $nlRecord = $nlRecords[$mcid];
+      if ($nlRecord['mcid'] != $mcid) {
+        $this->messenger->addError(t('NL rejected. MyCampaign returned MCID:@returnedMcid @firstName @lastName when asked for MCID:@mcid. The record was probably merged; update the list to use the current MCID.', ['@mcid' => $mcid, '@returnedMcid' => $nlRecord['mcid'], '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']]));
+        continue;
+      }
+      $this->processNlRecord($nlRecord, $flags, $county, $legislativeFixes);
     }
 
     $context['sandbox']['seek']        = $seek;
@@ -239,7 +247,9 @@ class NlpSyncActiveNlsProcessor {
       }
     }
     $nlRecord['notRegistered'] = $notRegistered;
-    $this->createNlsRecord($nlRecord);
+    if (!$this->createNlsRecord($nlRecord)) {
+      $this->messenger->addError(t('NL rejected. The NL record could not be saved to the database; a field may be too long (precinct: @precinct, HD: @hd, address: @address).<br>.. MCID:@mcid @firstName @lastName', ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName'], '@precinct' => $nlRecord['precinct'], '@hd' => $nlRecord['hd'], '@address' => $nlRecord['address']]));
+    }
   }
 
   /**

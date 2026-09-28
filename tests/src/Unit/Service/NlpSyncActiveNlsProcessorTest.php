@@ -3,6 +3,7 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Messenger\MessengerInterface;
+  use Drupal\Core\StringTranslation\TranslatableMarkup;
   use Drupal\nlpservices\ApiNls;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
@@ -12,6 +13,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpSyncActiveNlsProcessor;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\Constraint\Callback;
 
   class NlpSyncActiveNlsProcessorTest extends UnitTestCase {
 
@@ -99,6 +101,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return [$mcid, $notRegistered ? '1' : '', $dropout ? '1' : ''];
     }
 
+    /** Matches a messenger message (string or TranslatableMarkup) by its untranslated text. */
+    private function messageContains(string $needle): Callback {
+      return $this->callback(function ($message) use ($needle) {
+        $text = $message instanceof TranslatableMarkup ? $message->getUntranslatedString() : (string) $message;
+        return str_contains($text, $needle);
+      });
+    }
+
     private function baseArg(string $uri): array {
       return ['uri' => $uri, 'county' => 'Denver'];
     }
@@ -172,16 +182,35 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // processBatch — NL not returned by API (unknown mcid)
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchUnknownMcidFromApiIsSkippedQuietly(): void {
+    public function testProcessBatchUnknownMcidFromApiAddsError(): void {
       $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
       $this->apiNlsMock->method('getNls')->willReturn([]);  // API knows nothing about mcid 101
 
-      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('did not return a record'));
+      $this->nlsMock->expects($this->never())->method('createNl');
 
       $context = [];
       $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame(1, $context['results']['recordCount']);
+    }
+
+    // -------------------------------------------------------------------------
+    // processBatch — API returned a different MCID (merged record)
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchMismatchedMcidFromApiAddsErrorAndDoesNotCreateRecord(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
+      $this->apiNlsMock->method('getNls')
+        ->willReturn([101 => $this->baseNlRecord(['mcid' => 456])]);
+
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('probably merged'));
+      $this->nlsMock->expects($this->never())->method('createNl');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
     }
 
     // -------------------------------------------------------------------------
@@ -381,6 +410,37 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame(1, $context['finished']);
+    }
+
+    // -------------------------------------------------------------------------
+    // processBatch — database insert fails
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchInsertFailureAddsError(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
+      $this->apiNlsMock->method('getNls')->willReturn([101 => $this->baseNlRecord()]);
+
+      $this->magicWordMock->method('getCredentials')->willReturn([]);
+      $this->magicWordMock->method('getCredentialsByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->magicWordMock->method('uniqueUserName')->willReturn('asmith');
+      $this->drupalUserMock->method('getUserByName')->willReturn([]);
+      $this->magicWordMock->method('createMagicWord')->willReturn('secret123');
+      $this->drupalUserMock->method('createDrupalAccount')
+        ->willReturn($this->baseDrupalUser());
+      $this->magicWordMock->method('createNewCredentials')
+        ->willReturn(['mcid' => 101, 'userName' => 'asmith', 'email' => 'alice@example.com',
+                      'vfid' => 50, 'county' => 'Denver', 'hd' => '6',
+                      'roles' => [], 'created' => 0, 'access' => 0]);
+
+      $this->nlsMock->method('createNl')->willReturn(FALSE);
+      $this->nlsMock->expects($this->never())->method('setNlsStatus');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('could not be saved'));
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
     }
 
     // -------------------------------------------------------------------------
