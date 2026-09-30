@@ -114,6 +114,19 @@ class DisplayTurfsForm extends FormBase
       $this->turfDisplayObj->sortTurfTable($turfTableArray,$sort,$query->get('order', ''));
     }
 
+    // Always show the HD selector when there are HDs with turfs, even if the
+    // selected HD shows nothing, so the user can pick a different HD.
+    $hdOptions = $this->sessionDataObj->getHdOptions();
+    if(!empty($hdOptions)) {
+      $form['hd-change'] = [
+        '#prefix' => '<div id="selectbox-div">',
+        '#suffix' => '</div>',
+        '#type' => 'fieldset',
+      ];
+      $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
+      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+    }
+
     if(empty($turfTableArray)) {
       $form['turf-table']['turf-form'] = [
         '#markup' => '<p>There is no turf to display.</p>',
@@ -121,15 +134,6 @@ class DisplayTurfsForm extends FormBase
       return $form;
     }
 
-    $form['hd-change'] = [
-      '#prefix' => '<div id="selectbox-div">',
-      '#suffix' => '</div>',
-      '#type' => 'fieldset',
-    ];
-
-    $hdOptions = $this->sessionDataObj->getHdOptions();
-    $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
-    $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
     $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfTableArray,'display');
 
     return $form;

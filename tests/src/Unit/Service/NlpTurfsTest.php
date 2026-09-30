@@ -258,6 +258,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([6 => 6, 8 => 8], $result);
     }
 
+    public function testGetTurfHdNamesSkipsMissingHds(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')
+        ->willReturnOnConsecutiveCalls(['turfHd' => 8], ['turfHd' => 0], ['turfHd' => NULL], ['turfHd' => 6], false);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $result = $this->buildTurfs()->getTurfHdNames('Denver');
+      $this->assertSame([6 => 6, 8 => 8], $result);
+    }
+
     public function testGetTurfHdNamesEmptyResultReturnsEmptyArray(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturn(false);

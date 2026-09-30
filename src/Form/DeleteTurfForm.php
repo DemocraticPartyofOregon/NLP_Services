@@ -110,6 +110,19 @@ class DeleteTurfForm extends FormBase
 
     $form_state->set('turfArray',$turfArray);
 
+    // Always show the HD selector when there are HDs with turfs, even if the
+    // selected HD shows nothing, so the user can pick a different HD.
+    $hdOptions = $this->nlpSessionDataObj->getHdOptions();
+    if(!empty($hdOptions)) {
+      $form['hd-change'] = [
+        '#prefix' => '<div id="selectbox-div">',
+        '#suffix' => '</div>',
+        '#type' => 'fieldset',
+      ];
+      $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
+      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+    }
+
     $turfCount = count($turfArray);
     if(empty($turfCount)) {
       $form['turf-table']['turf-form'] = [
@@ -117,17 +130,7 @@ class DeleteTurfForm extends FormBase
       ];
       return $form;
     }
-    
-    $form['hd-change'] = [
-      '#prefix' => '<div id="selectbox-div">',
-      '#suffix' => '</div>',
-      '#type' => 'fieldset',
-    ];
-    
-    $hdOptions = $this->nlpSessionDataObj->getHdOptions();
-    $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
-    $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
-    
+
     $turfRows = $this->turfDisplayObj->buildTurfTableArray($turfArray);
     $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfRows);
     

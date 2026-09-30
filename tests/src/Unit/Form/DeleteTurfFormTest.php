@@ -128,6 +128,32 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — no turfs for the selected HD still shows the HD selector
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormNoTurfsStillShowsHdSelector(): void {
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->turfsMock->method('getTurfHD')->willReturn(['0', '01', '02']);
+      $this->turfsMock->method('getCountyTurfCount')->willReturn(500); // >= TURF_ALL_MAX → no 'All'
+      $this->sessionDataMock->method('getSavedHd')->willReturn('');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['0', '01', '02']);
+      $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+      $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',       NULL],
+        ['county',        'Denver'],
+        ['search-needle', NULL],
+      ]);
+
+      $result = $this->buildForm()->buildForm([], $formState);
+      $this->assertSame(['#type' => 'select'], $result['hd-change']['options_display']);
+      $this->assertStringContainsString('no turf to display', $result['turf-table']['turf-form']['#markup']);
+      $this->assertArrayNotHasKey('submit', $result);
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — county set with turfs → full form with submit button
     // -------------------------------------------------------------------------
 
