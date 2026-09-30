@@ -143,11 +143,18 @@ class DeliverTurfForm extends FormBase
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle, $turfArray);
     } else {
-      $turfArray = $this->turfsObj->getTurfs($county, $currentHd);
+      $turfArray = (!empty($currentHd)) ? $this->turfsObj->getTurfs($county, $currentHd) : [];
     }
     $form_state->set('turfArray', $turfArray);
 
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+
+    if (empty($turfArray)) {
+      $form['turf-table']['turf-form'] = [
+        '#markup' => '<p>There is no turf to display.</p>',
+      ];
+      return $form;
+    }
 
     // Create the AJAX wrapper for updating the form changes.
     $form['turf-form'] = [

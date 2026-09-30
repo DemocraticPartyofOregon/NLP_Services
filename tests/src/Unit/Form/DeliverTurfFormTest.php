@@ -143,7 +143,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn('All');
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
-    $this->turfsMock->method('getTurfs')->willReturn([]);
+    $this->turfsMock->method('getTurfs')->willReturn([10 => $this->baseTurfChoice()]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
     $this->turfDisplayMock->method('displayTurfs')->willReturn([]);
@@ -226,6 +226,42 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->assertArrayHasKey('turf_pdf', $form);
     $this->assertArrayHasKey('note', $form);
     $this->assertArrayHasKey('submit', $form);
+  }
+
+  public function testBuildFormShowsHdSelectorAndNoTurfMarkupWhenHdHasNoTurfs(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->instructionsMock->method('getInstructions')
+      ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
+    $this->turfsMock->method('getTurfHD')->willReturn([3, 5]);
+    $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('3');
+    $this->sessionDataMock->method('getHdOptions')->willReturn([3, 5]);
+    $this->turfsMock->method('getTurfs')->willReturn([]);
+    $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+
+    $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertSame(['#type' => 'select'], $form['options_display']);
+    $this->assertStringContainsString('no turf to display', $form['turf-table']['turf-form']['#markup']);
+    $this->assertArrayNotHasKey('submit', $form);
+  }
+
+  public function testBuildFormDoesNotQueryTurfsWhenSavedHdIsEmpty(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->instructionsMock->method('getInstructions')
+      ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
+    $this->turfsMock->method('getTurfHD')->willReturn([3]);
+    $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
+    $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+    $this->sessionDataMock->method('getSavedHd')->willReturn('');
+    $this->sessionDataMock->method('getHdOptions')->willReturn([3]);
+    $this->turfsMock->expects($this->never())->method('getTurfs');
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+
+    $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+    $this->assertStringContainsString('no turf to display', $form['turf-table']['turf-form']['#markup']);
   }
 
   public function testBuildFormAttachesRequiredLibraries(): void {

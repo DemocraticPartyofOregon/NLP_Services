@@ -531,6 +531,9 @@ class NlpTurfs
       $hdRecord = $result->fetchAssoc();
       if (empty($hdRecord)) { break; }
       $hd = $hdRecord['turfHd'];
+      // Turfs synced without an HD (0 or NULL) can't be selected by HD; if kept,
+      // they sort first and become the default selection, which shows no turfs.
+      if (empty($hd)) { continue; }
       $hdNameList[$hd] = $hd;
     } while (TRUE);
     if (empty($hdNameList)) { return []; }
