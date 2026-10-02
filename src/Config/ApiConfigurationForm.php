@@ -245,6 +245,8 @@ class ApiConfigurationForm extends FormBase {
     }
     $committees = $this->nlpConfigurationObj->getCountyNames();
     foreach ($committees as $committee) {
+      // The statewide 'State' entry uses the State Committee key.
+      if ($committee == 'State') { continue; }
       $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee, FALSE);
       if (empty($apiCredentials)) { continue; }
       $this->apiKeyManagementObj->deleteKey($committee);
