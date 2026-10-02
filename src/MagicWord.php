@@ -212,7 +212,7 @@ class MagicWord {
       unset($credentials['magicWordEncrypted']);
     }
 
-    $credentials['roles'] = (!empty($credentials['roles']))?json_decode($credentials['roles'], true):[];
+    $credentials['roles'] = $this->decodeRoles($credentials['roles'] ?? NULL);
     return $credentials;
   }
 
@@ -240,7 +240,7 @@ class MagicWord {
     $credentials = $result->fetchAssoc();
     if(empty($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = $this->decodeRoles($credentials['roles'] ?? NULL);
     return $credentials;
   }
 
@@ -270,7 +270,7 @@ class MagicWord {
     $credentials = $result->fetchAssoc();
     if(empty($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = $this->decodeRoles($credentials['roles'] ?? NULL);
     return $credentials;
   }
 
@@ -300,7 +300,7 @@ class MagicWord {
     $credentials = $result->fetchAssoc();
     if (empty($credentials)) {return [];}
     unset($credentials['magicWordEncrypted']);
-    $credentials['roles'] = json_decode($credentials['roles'], true);
+    $credentials['roles'] = $this->decodeRoles($credentials['roles'] ?? NULL);
     return $credentials;
   }
 
@@ -331,9 +331,6 @@ class MagicWord {
       $current[$field] = $value;
     }
 
-    if(!empty($current['roles'])) {
-      $current['roles'] = json_encode($current['roles']);
-    }
     $this->deleteCredentials($mcid);
     return $this->createCredentials($current);
   }
@@ -375,7 +372,9 @@ class MagicWord {
         : '';
       unset($credentials['magicWord']);
     }
-    if(!empty($credentials['roles'])) {
+    // Encode only arrays (an empty role list included) so a role string is
+    // never double-encoded and an array never reaches the database.
+    if(isset($credentials['roles']) && is_array($credentials['roles'])) {
       $credentials['roles'] = json_encode($credentials['roles']);
     }
     $mcid = $credentials['mcid'];
@@ -559,7 +558,26 @@ class MagicWord {
     return TRUE;
   }
 
-  public function removeCoordinatorRole($mcid): void
+  /**
+   * decodeRoles
+   *
+   * Decode the stored roles column. Older rows were double-encoded by
+   * updateCredentials, so a decoded string is decoded once more.
+   *
+   * @param string|null $roles
+   * @return array
+   */
+  private function decodeRoles(?string $roles): array
+  {
+    if(empty($roles)) {return [];}
+    $decoded = json_decode($roles, true);
+    if(is_string($decoded)) {
+      $decoded = json_decode($decoded, true);
+    }
+    return is_array($decoded) ? $decoded : [];
+  }
+
+    public function removeCoordinatorRole($mcid): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);
     if(is_array($credentials['roles'])) {

@@ -305,6 +305,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(json_encode($roles), $captured['roles']);
     }
 
+    public function testCreateCredentialsEmptyRolesArrayIsJsonEncoded(): void {
+      $captured = NULL;
+      $mergeMock = $this->buildMergeMock();
+      $mergeMock->method('fields')->willReturnCallback(
+        function (array $fields) use (&$captured, $mergeMock): Merge {
+          $captured = $fields;
+          return $mergeMock;
+        }
+      );
+      $this->connectionMock->method('merge')->willReturn($mergeMock);
+      $this->buildMagicWord()->createCredentials(['mcid' => 42, 'roles' => []]);
+      $this->assertSame('[]', $captured['roles']);
+    }
+
     public function testCreateCredentialsReturnsFalseOnException(): void {
       $this->connectionMock->method('merge')->willThrowException(new \Exception('DB error'));
       $this->assertFalse($this->buildMagicWord()->createCredentials(['mcid' => 42]));
@@ -349,6 +363,51 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildMagicWord()->updateCredentials(['mcid' => 42, 'email' => 'new@example.com']);
       $this->assertSame('alice.smith', $stored['userName']);  // preserved from current.
       $this->assertSame('new@example.com', $stored['email']); // overwritten by incoming.
+    }
+
+    public function testUpdateCredentialsRolesAreEncodedOnce(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn($this->baseRawCredentials());
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->connectionMock->method('delete')->willReturn($this->buildDeleteMock());
+      $stored = NULL;
+      $mergeMock = $this->buildMergeMock();
+      $mergeMock->method('fields')->willReturnCallback(
+        function (array $fields) use (&$stored, $mergeMock): Merge {
+          $stored = $fields;
+          return $mergeMock;
+        }
+      );
+      $this->connectionMock->method('merge')->willReturn($mergeMock);
+      $this->buildMagicWord()->updateCredentials(['mcid' => 42, 'roles' => ['nlp_admin' => 'NLP Admin']]);
+      $this->assertSame('{"nlp_admin":"NLP Admin"}', $stored['roles']);
+    }
+
+    public function testUpdateCredentialsEmptyRolesStoredAsJson(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn($this->baseRawCredentials());
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->connectionMock->method('delete')->willReturn($this->buildDeleteMock());
+      $stored = NULL;
+      $mergeMock = $this->buildMergeMock();
+      $mergeMock->method('fields')->willReturnCallback(
+        function (array $fields) use (&$stored, $mergeMock): Merge {
+          $stored = $fields;
+          return $mergeMock;
+        }
+      );
+      $this->connectionMock->method('merge')->willReturn($mergeMock);
+      $this->buildMagicWord()->updateCredentials(['mcid' => 42, 'roles' => []]);
+      $this->assertSame('[]', $stored['roles']);
+    }
+
+    public function testGetCredentialsDecodesLegacyDoubleEncodedRoles(): void {
+      $raw = array_merge($this->baseRawCredentials(), ['roles' => json_encode('{"nlp_leader":"NLP Leader"}')]);
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn($raw);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $result = $this->buildMagicWord()->getCredentials(42, FALSE);
+      $this->assertSame(['nlp_leader' => 'NLP Leader'], $result['roles']);
     }
 
     // -------------------------------------------------------------------------
