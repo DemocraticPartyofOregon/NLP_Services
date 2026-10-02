@@ -226,6 +226,9 @@ class NlpSyncTurfProcessor {
       $newNlName = trim(($newNl['firstName'] ?? '') . ' ' . ($newNl['lastName'] ?? ''));
       foreach ($duplicates as $vanid => $duplicate) {
         $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
+        // A voter-in-turf row left behind by a deleted turf is not a real
+        // conflict; its row is still deleted below.
+        if (empty($oldTurf)) { continue; }
         if (empty($context['sandbox']['firstConflict'])) {
           $context['sandbox']['firstConflict'] = [
             'folderName'    => $oldTurf['folderName'] ?? '',

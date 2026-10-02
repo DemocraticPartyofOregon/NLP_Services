@@ -279,6 +279,32 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // processBatch — duplicate voter whose old turf was deleted
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchOrphanedDuplicateIsDeletedButNotReportedAsMoved(): void {
+      $uri = $this->writeTurfCsv([101]);
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubForSuccess();
+
+      $this->votersMock->method('duplicateVoters')
+        ->willReturn([101 => ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver']]);
+      $this->votersMock->method('getVotersInList')
+        ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
+      $this->turfsMock->method('getTurf')->willReturn([]);
+
+      $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(101);
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame('success', $context['results']['result']);
+      $this->assertEmpty($context['results']['movedVoters'] ?? []);
+    }
+
+    // -------------------------------------------------------------------------
     // processBatch — duplicate voter: NLPVoterAC is removed before re-apply
     // -------------------------------------------------------------------------
 
