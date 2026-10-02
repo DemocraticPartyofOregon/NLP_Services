@@ -185,7 +185,7 @@ class MagicWord {
    *
    * Get NL credentials from the database.
    * 1. If the NL has a password, decrypt it.
-   * 2. If the NL has no password, return an empty string.''
+   * 2. If the NL has no password, return an empty string.
    * @param int $mcid
    * @param bool $decrypted
    * @return array
@@ -372,7 +372,7 @@ class MagicWord {
         : '';
       unset($credentials['magicWord']);
     }
-    // Encode only arrays (an empty role list included) so a role string is
+    // Encode only arrays (an empty role list included), so a role string is
     // never double-encoded and an array never reaches the database.
     if(isset($credentials['roles']) && is_array($credentials['roles'])) {
       $credentials['roles'] = json_encode($credentials['roles']);
@@ -561,7 +561,7 @@ class MagicWord {
   /**
    * decodeRoles
    *
-   * Decode the stored roles column. Older rows were double-encoded by
+   * Decode the stored roles' column. Older rows were double-encoded by
    * updateCredentials, so a decoded string is decoded once more.
    *
    * @param string|null $roles
