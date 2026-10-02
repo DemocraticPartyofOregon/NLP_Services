@@ -158,26 +158,18 @@ class ApiVoter
 
     $expandOptions = '?$expand=phones,addresses,districts,electionRecords,externalIds';
     $url = "https://$user:$apiKey|0@$apiURL/people/$vanid$expandOptions";
-    for ($attempt = 0; ; $attempt++) {
-      try {
-        $request = $this->client->request('GET', $url, self::REQUEST_OPTIONS);
-        $result = json_decode($request->getBody(), TRUE);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-          return [];
-        }
-        break;
-      } catch (GuzzleException $e) {
-        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
-          $this->logRetry($e, $vanid, $attempt);
-          $this->sleepMs($this->retryDelayMs($e, $attempt));
-          continue;
-        }
-        nlp_debug_msg('getApiVoter', $e->getMessage());
-        return [];
-      } catch (Exception $e) {
-        nlp_debug_msg('getApiVoter', $e->getMessage());
+    try {
+      $request = $this->requestWithRetry('GET', $url, $vanid);
+      $result = json_decode($request->getBody(), TRUE);
+      if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
       }
+    } catch (GuzzleException $e) {
+      nlp_debug_msg('getApiVoter', $e->getMessage());
+      return [];
+    } catch (Exception $e) {
+      nlp_debug_msg('getApiVoter', $e->getMessage());
+      return [];
     }
     return $this->processVoterResult($result);
   }
@@ -479,7 +471,7 @@ class ApiVoter
 
     $url = 'https://'.$user.':'.$apiKey.'|0@'.$apiURL.'/people/'.$vanid;
     try {
-      $this->client->request('GET',$url);
+      $this->requestWithRetry('GET', $url, $vanid);
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return FALSE;}
@@ -504,7 +496,8 @@ class ApiVoter
       . "streetAddress=" . urlencode($address['addressLine1'])
       . "&city=" . urlencode($address['city']);
     try {
-      $request = $this->client->request('GET',$url);
+      // Log the city, not the street address, with any retry.
+      $request = $this->requestWithRetry('GET', $url, 'address in ' . $address['city']);
       $results = json_decode($request->getBody(), TRUE);
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];

@@ -364,6 +364,54 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertFalse($this->buildApiVoter()->voterExists(100123));
     }
 
+    /**
+     * Fakes VAN timing out on the first request and answering the second with
+     * $response.  Returns the options each request was sent with, filled in
+     * as requests are made.  (Asserting inside the callback wouldn't work:
+     * the methods under test catch every Exception, assertion failures too.)
+     */
+    private function timeoutThenRespond(ResponseInterface $response): \ArrayObject {
+      $sentOptions = new \ArrayObject();
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method, string $url, array $options = []) use ($sentOptions, $response) {
+          $sentOptions[] = $options;
+          if (count($sentOptions) === 1) {
+            throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
+          }
+          return $response;
+        });
+      return $sentOptions;
+    }
+
+    private function assertRetriedWithTimeouts(\ArrayObject $sentOptions): void {
+      $this->assertCount(2, $sentOptions, 'The timed-out request should be sent a second time.');
+      foreach ($sentOptions as $options) {
+        $this->assertSame(10, $options['connect_timeout'] ?? NULL, 'Every request should set a 10s connect timeout.');
+        $this->assertSame(20, $options['timeout'] ?? NULL, 'Every request should set a 20s total timeout.');
+      }
+    }
+
+    public function testVoterExistsRetriesAfterTimeout(): void {
+      $this->stubKeyValues();
+      $sentOptions = $this->timeoutThenRespond($this->createMock(ResponseInterface::class));
+
+      $exists = $this->buildApiVoter()->voterExists(100123);
+
+      $this->assertRetriedWithTimeouts($sentOptions);
+      $this->assertTrue($exists);
+    }
+
+    public function testVoterExistsDoesNotRetry404(): void {
+      $this->stubKeyValues();
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn(404);
+      $request = new GuzzleRequest('GET', 'https://api.example.com/v4/people/100123');
+      $this->clientMock->expects($this->once())->method('request')
+        ->willThrowException(new RequestException('Not Found', $request, $response));
+
+      $this->assertFalse($this->buildApiVoter()->voterExists(100123));
+    }
+
     // -------------------------------------------------------------------------
     // getVotersByAddress
     // -------------------------------------------------------------------------
@@ -402,6 +450,36 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $response->method('getStatusCode')->willReturn(401);
       $guzzleException = new RequestException('Unauthorized', $this->createMock(RequestInterface::class), $response);
       $this->clientMock->method('request')->willThrowException($guzzleException);
+
+      $result = $this->buildApiVoter()->getVotersByAddress([
+        'addressLine1' => '1234 Main St',
+        'city'         => 'Portland',
+      ]);
+
+      $this->assertSame(['Invalid key'], $result);
+    }
+
+    public function testGetVotersByAddressRetriesAfterTimeout(): void {
+      $this->stubKeyValues();
+      $payload = [['vanId' => 100123, 'firstName' => 'Jane']];
+      $sentOptions = $this->timeoutThenRespond($this->makeResponse($payload));
+
+      $result = $this->buildApiVoter()->getVotersByAddress([
+        'addressLine1' => '1234 Main St',
+        'city'         => 'Portland',
+      ]);
+
+      $this->assertRetriedWithTimeouts($sentOptions);
+      $this->assertSame($payload, $result);
+    }
+
+    public function testGetVotersByAddressDoesNotRetry401(): void {
+      $this->stubKeyValues();
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn(401);
+      $request = new GuzzleRequest('GET', 'https://api.example.com/v4/people');
+      $this->clientMock->expects($this->once())->method('request')
+        ->willThrowException(new RequestException('Unauthorized', $request, $response));
 
       $result = $this->buildApiVoter()->getVotersByAddress([
         'addressLine1' => '1234 Main St',

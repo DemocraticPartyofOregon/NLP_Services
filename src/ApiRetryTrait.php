@@ -4,8 +4,10 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use GuzzleHttp\Exception\ConnectException;
+use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Pool;
+use Psr\Http\Message\ResponseInterface;
 use ReflectionClass;
 use Throwable;
 
@@ -98,6 +100,33 @@ trait ApiRetryTrait {
         $pool->promise()->wait();
       }
       $pending = $retry;
+    }
+  }
+
+  /**
+   * Sends a single request with the VAN timeouts, retrying it on the same
+   * failures sendInRateLimitedGroups() retries.  Callers keep their own
+   * handling of the final failure (e.g. a 404 meaning "no such person").
+   *
+   * @param string $method
+   * @param string $url
+   * @param int|string $logKey - identifier logged with each retry (e.g. a vanid), never the URL.
+   * @return ResponseInterface
+   * @throws GuzzleException - the last failure, when it can't be retried or the retries ran out.
+   */
+  private function requestWithRetry(string $method, string $url, int|string $logKey): ResponseInterface {
+    for ($attempt = 0; ; $attempt++) {
+      try {
+        return $this->client->request($method, $url, self::REQUEST_OPTIONS);
+      }
+      catch (GuzzleException $e) {
+        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+          $this->logRetry($e, $logKey, $attempt);
+          $this->sleepMs($this->retryDelayMs($e, $attempt));
+          continue;
+        }
+        throw $e;
+      }
     }
   }
 
