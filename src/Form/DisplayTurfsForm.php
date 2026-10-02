@@ -18,6 +18,7 @@ use Drupal\nlpservices\ApiMapRegions;
  */
 class DisplayTurfsForm extends FormBase
 {
+  use TurfPrecinctFilterTrait;
 
   protected NlpTurfs $turfsObj;
   protected NlpAwards $awardsObj;
@@ -91,6 +92,7 @@ class DisplayTurfsForm extends FormBase
     $county = $form_state->get('county');
     $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->sessionDataObj, $county, $currentHd);
 
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
@@ -99,6 +101,7 @@ class DisplayTurfsForm extends FormBase
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
       $turfArray = (!empty($currentHd))?$this->turfsObj->getTurfs($county,$currentHd):[];
+      $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->sessionDataObj);
     }
 
     // Update the latest minivan information.
@@ -124,7 +127,7 @@ class DisplayTurfsForm extends FormBase
         '#type' => 'fieldset',
       ];
       $currentHdIndex = $this->sessionDataObj->getSavedHdIndex();
-      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex, $pctOptions, $currentPctIndex);
     }
 
     if(empty($turfTableArray)) {

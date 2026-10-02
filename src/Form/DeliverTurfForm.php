@@ -27,6 +27,8 @@ use Drupal\nlpservices\ApiMapRegions;
  */
 class DeliverTurfForm extends FormBase
 {
+  use TurfPrecinctFilterTrait;
+
   protected NlpTurfs $turfsObj;
   protected NlpPaths $pathsObj;
   protected FileSystemInterface $fileSystemObj;
@@ -137,6 +139,8 @@ class DeliverTurfForm extends FormBase
       return $form;
     }
 
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->nlpSessionDataObj, $county, $currentHd);
+
     $needle = $form_state->get('search-needle');
     if (!empty($needle)) {
       $turfArray = $this->turfsObj->getTurfs($county, 'All');
@@ -144,10 +148,11 @@ class DeliverTurfForm extends FormBase
       $turfArray = $this->searchBarObj->searchInfoArray($needle, $turfArray);
     } else {
       $turfArray = (!empty($currentHd)) ? $this->turfsObj->getTurfs($county, $currentHd) : [];
+      $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
     $form_state->set('turfArray', $turfArray);
 
-    $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+    $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex, $pctOptions, $currentPctIndex);
 
     if (empty($turfArray)) {
       $form['turf-table']['turf-form'] = [

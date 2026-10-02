@@ -20,6 +20,7 @@ use Drupal\nlpservices\NlpTurfStatus;
  */
 class DeleteTurfForm extends FormBase
 {
+  use TurfPrecinctFilterTrait;
 
   protected NlpTurfs $turfs;
 
@@ -34,7 +35,7 @@ class DeleteTurfForm extends FormBase
 
   public function __construct(   $turfs, $awardsObj, $searchBarObj, $turfDisplayObj,
                                  $nlpSessionDataObj, $nlpConfigurationObj, $foldersObj,
-                                 $turfStatusObj) {
+                                 $turfStatusObj, $requestStack) {
     $this->turfs = $turfs;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;
@@ -43,6 +44,7 @@ class DeleteTurfForm extends FormBase
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->foldersObj = $foldersObj;
     $this->turfStatusObj = $turfStatusObj;
+    $this->setRequestStack($requestStack);
   }
 
   /**
@@ -59,6 +61,7 @@ class DeleteTurfForm extends FormBase
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.folders'),
       $container->get('nlpservices.turf_status'),
+      $container->get('request_stack'),
     );
   }
   
@@ -99,6 +102,9 @@ class DeleteTurfForm extends FormBase
 
     $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
+
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfs, $this->nlpSessionDataObj, $county, $currentHd);
+
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
       $turfArray = $this->turfs->getTurfs($county,'All');
@@ -106,6 +112,7 @@ class DeleteTurfForm extends FormBase
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
       $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd):[];
+      $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
 
     $form_state->set('turfArray',$turfArray);
@@ -120,7 +127,7 @@ class DeleteTurfForm extends FormBase
         '#type' => 'fieldset',
       ];
       $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
-      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+      $form['hd-change']['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex, $pctOptions, $currentPctIndex);
     }
 
     $turfCount = count($turfArray);
@@ -132,6 +139,13 @@ class DeleteTurfForm extends FormBase
     }
 
     $turfRows = $this->turfDisplayObj->buildTurfTableArray($turfArray);
+
+    // If there is a sort request, sort the turf rows.
+    $query = $this->requestStack->getCurrentRequest()->query;
+    $sort = $query->get('sort', '');
+    if(!empty($sort)) {
+      $this->turfDisplayObj->sortTurfTable($turfRows,$sort,$query->get('order', ''));
+    }
     $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfRows);
     
     // add a button to delete the selected turf or turfs.

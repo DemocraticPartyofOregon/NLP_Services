@@ -303,6 +303,107 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
+  // buildForm — precinct selector
+  // -------------------------------------------------------------------------
+
+  private function reenterFormState(): FormState {
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('county', 'TestCounty');
+    return $formState;
+  }
+
+  private function turfInPrecinct(int $turfIndex, string $precinct): array {
+    return ['turfIndex' => $turfIndex, 'turfPrecinct' => $precinct] + $this->baseTurfChoice($turfIndex);
+  }
+
+  public function testBuildFormSingleHdListsOnlyThatHdsPrecincts(): void {
+    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
+    $this->turfsMock->expects($this->once())
+      ->method('getTurfPrecinctNames')
+      ->with('TestCounty', 12)
+      ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+    $this->searchBarMock->expects($this->once())
+      ->method('searchBar')
+      ->with(['All', '12', '13'], $this->anything(), ['All', 'P-101', 'P-102'], 0)
+      ->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], $this->reenterFormState());
+  }
+
+  public function testBuildFormAllHdsListsAllPrecincts(): void {
+    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
+    $this->turfsMock->expects($this->once())
+      ->method('getTurfPrecinctNames')
+      ->with('TestCounty', 0)
+      ->willReturn(['P-101' => 'P-101', 'P-201' => 'P-201']);
+    $this->searchBarMock->expects($this->once())
+      ->method('searchBar')
+      ->with($this->anything(), $this->anything(), ['All', 'P-101', 'P-201'], 0)
+      ->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], $this->reenterFormState());
+  }
+
+  public function testBuildFormSelectedPrecinctShowsOnlyItsTurfs(): void {
+    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+    $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(2);
+    $this->sessionDataMock->method('getSavedPct')->willReturn('P-102');
+    $this->turfsMock->method('getTurfPrecinctNames')
+      ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+    $this->turfsMock->method('getTurfs')->willReturn([
+      7 => $this->turfInPrecinct(7, 'P-101'),
+      8 => $this->turfInPrecinct(8, 'P-102'),
+      9 => $this->turfInPrecinct(9, 'P-102'),
+    ]);
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+    $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
+    $this->turfDisplayMock->method('displayTurfs')->willReturn([]);
+
+    $formState = $this->reenterFormState();
+    $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertSame([8, 9], array_keys($formState->get('turfArray')));
+  }
+
+  public function testBuildFormAllPrecinctsShowsEveryTurfInHd(): void {
+    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+    $this->sessionDataMock->method('getSavedPct')->willReturn('');
+    $this->turfsMock->method('getTurfPrecinctNames')
+      ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+    $this->turfsMock->method('getTurfs')->willReturn([
+      7 => $this->turfInPrecinct(7, 'P-101'),
+      8 => $this->turfInPrecinct(8, 'P-102'),
+    ]);
+    $this->searchBarMock->method('searchBar')->willReturn([]);
+    $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
+    $this->turfDisplayMock->method('displayTurfs')->willReturn([]);
+
+    $formState = $this->reenterFormState();
+    $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertSame([7, 8], array_keys($formState->get('turfArray')));
+  }
+
+  public function testBuildFormStalePrecinctIndexFallsBackToAll(): void {
+    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+    $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(5);
+    $this->turfsMock->method('getTurfPrecinctNames')->willReturn(['P-101' => 'P-101']);
+    $this->sessionDataMock->expects($this->once())->method('savePrecinctIndex')->with(0);
+    $this->searchBarMock->expects($this->once())
+      ->method('searchBar')
+      ->with($this->anything(), $this->anything(), ['All', 'P-101'], 0)
+      ->willReturn([]);
+
+    $this->buildFormInstance()->buildForm([], $this->reenterFormState());
+  }
+
+  // -------------------------------------------------------------------------
   // validateForm
   // -------------------------------------------------------------------------
 

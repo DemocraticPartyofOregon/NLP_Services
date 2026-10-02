@@ -18,6 +18,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\Form\DeleteTurfForm;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
+  use Symfony\Component\HttpFoundation\Request;
+  use Symfony\Component\HttpFoundation\RequestStack;
 
   class DeleteTurfFormTest extends UnitTestCase {
 
@@ -58,7 +60,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private function buildForm(): DeleteTurfForm {
+    private function buildForm(array $queryParams = []): DeleteTurfForm {
+      $requestStack = new RequestStack();
+      $requestStack->push(new Request($queryParams));
+
       return new DeleteTurfForm(
         $this->turfsMock,
         $this->awardsMock,
@@ -68,6 +73,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->configurationMock,
         $this->foldersMock,
         $this->turfStatusMock,
+        $requestStack,
       );
     }
 
@@ -182,6 +188,58 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — sort query param calls sortTurfTable
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormWithSortQueryCallsSortTurfTable(): void {
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
+      $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
+      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
+      $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
+      $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+      $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+      $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([7 => []]);
+      $this->turfDisplayMock->expects($this->once())
+        ->method('sortTurfTable')
+        ->with($this->anything(), 'desc', 'HD');
+      $this->turfDisplayMock->method('displayTurfs')->willReturn(['#type' => 'table']);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',       NULL],
+        ['county',        'Denver'],
+        ['search-needle', NULL],
+      ]);
+
+      $this->buildForm(['sort' => 'desc', 'order' => 'HD'])->buildForm([], $formState);
+    }
+
+    public function testBuildFormWithoutSortQueryDoesNotSort(): void {
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
+      $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
+      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
+      $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
+      $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+      $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+      $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([7 => []]);
+      $this->turfDisplayMock->expects($this->never())->method('sortTurfTable');
+      $this->turfDisplayMock->method('displayTurfs')->willReturn(['#type' => 'table']);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',       NULL],
+        ['county',        'Denver'],
+        ['search-needle', NULL],
+      ]);
+
+      $this->buildForm()->buildForm([], $formState);
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — reenter=TRUE skips county/HD initialisation
     // -------------------------------------------------------------------------
 
@@ -225,6 +283,110 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       ]);
 
       $this->buildForm()->buildForm([], $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildForm — precinct selector
+    // -------------------------------------------------------------------------
+
+    private function precinctFormState(): FormStateInterface {
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',       TRUE],
+        ['county',        'Denver'],
+        ['search-needle', NULL],
+      ]);
+      return $formState;
+    }
+
+    private function turfInPrecinct(int $turfIndex, string $precinct): array {
+      return ['turfIndex' => $turfIndex, 'turfPrecinct' => $precinct] + $this->baseTurfRecord();
+    }
+
+    public function testBuildFormSingleHdListsOnlyThatHdsPrecincts(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
+      $this->turfsMock->expects($this->once())
+        ->method('getTurfPrecinctNames')
+        ->with('Denver', 12)
+        ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+      $this->searchBarMock->expects($this->once())
+        ->method('searchBar')
+        ->with(['All', '12', '13'], $this->anything(), ['All', 'P-101', 'P-102'], 0)
+        ->willReturn(['#type' => 'select']);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
+    }
+
+    public function testBuildFormAllHdsListsAllPrecincts(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
+      $this->turfsMock->expects($this->once())
+        ->method('getTurfPrecinctNames')
+        ->with('Denver', 0)
+        ->willReturn(['P-101' => 'P-101', 'P-201' => 'P-201']);
+      $this->searchBarMock->expects($this->once())
+        ->method('searchBar')
+        ->with($this->anything(), $this->anything(), ['All', 'P-101', 'P-201'], 0)
+        ->willReturn(['#type' => 'select']);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
+    }
+
+    public function testBuildFormSelectedPrecinctShowsOnlyItsTurfs(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+      $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(2);
+      $this->sessionDataMock->method('getSavedPct')->willReturn('P-102');
+      $this->turfsMock->method('getTurfPrecinctNames')
+        ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+      $this->turfsMock->method('getTurfs')->willReturn([
+        7 => $this->turfInPrecinct(7, 'P-101'),
+        8 => $this->turfInPrecinct(8, 'P-102'),
+        9 => $this->turfInPrecinct(9, 'P-102'),
+      ]);
+      $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+      $this->turfDisplayMock->expects($this->once())
+        ->method('buildTurfTableArray')
+        ->with($this->callback(fn($turfs) => array_keys($turfs) === [8, 9]))
+        ->willReturn([8 => [], 9 => []]);
+      $this->turfDisplayMock->method('displayTurfs')->willReturn(['#type' => 'table']);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
+    }
+
+    public function testBuildFormAllPrecinctsShowsEveryTurfInHd(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+      $this->sessionDataMock->method('getSavedPct')->willReturn('');
+      $this->turfsMock->method('getTurfPrecinctNames')
+        ->willReturn(['P-101' => 'P-101', 'P-102' => 'P-102']);
+      $this->turfsMock->method('getTurfs')->willReturn([
+        7 => $this->turfInPrecinct(7, 'P-101'),
+        8 => $this->turfInPrecinct(8, 'P-102'),
+      ]);
+      $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
+      $this->turfDisplayMock->expects($this->once())
+        ->method('buildTurfTableArray')
+        ->with($this->callback(fn($turfs) => array_keys($turfs) === [7, 8]))
+        ->willReturn([7 => [], 8 => []]);
+      $this->turfDisplayMock->method('displayTurfs')->willReturn(['#type' => 'table']);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
+    }
+
+    public function testBuildFormStalePrecinctIndexFallsBackToAll(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
+      $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(5);
+      $this->turfsMock->method('getTurfPrecinctNames')->willReturn(['P-101' => 'P-101']);
+      $this->sessionDataMock->expects($this->once())->method('savePrecinctIndex')->with(0);
+      $this->searchBarMock->expects($this->once())
+        ->method('searchBar')
+        ->with($this->anything(), $this->anything(), ['All', 'P-101'], 0)
+        ->willReturn(['#type' => 'select']);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
     }
 
     // -------------------------------------------------------------------------
