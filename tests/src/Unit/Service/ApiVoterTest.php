@@ -572,11 +572,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetApiVoterRetriesAfterTimeout(): void {
       $this->stubKeyValues();
       $this->stubCycle();
-      $calls = 0;
-      $this->clientMock->expects($this->exactly(2))->method('request')
-        ->willReturnCallback(function (string $method, string $url, array $options) use (&$calls) {
-          $this->assertSame(20, $options['timeout']);
-          if ($calls++ === 0) {
+      // Record each call's options and assert after getApiVoter() returns.
+      // getApiVoter() catches every Exception, and PHPUnit's assertion failure
+      // is one, so an assert inside this callback would be swallowed and
+      // reported later as an unrelated failure.
+      $sentOptions = [];
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method, string $url, array $options = []) use (&$sentOptions) {
+          $sentOptions[] = $options;
+          if (count($sentOptions) === 1) {
             throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
           }
           return $this->makeResponse($this->baseApiResult());
@@ -584,7 +588,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $result = $this->buildApiVoter()->getApiVoter(100123);
 
-      $this->assertSame(100123, $result['vanid']);
+      $this->assertCount(2, $sentOptions, 'The timed-out request should be sent a second time.');
+      foreach ($sentOptions as $options) {
+        $this->assertSame(10, $options['connect_timeout'] ?? NULL, 'Every request should set a 10s connect timeout.');
+        $this->assertSame(20, $options['timeout'] ?? NULL, 'Every request should set a 20s total timeout.');
+      }
+      $this->assertSame(100123, $result['vanid'] ?? NULL);
     }
 
     public function testGetVotersEmptyListReturnsEmpty(): void {
