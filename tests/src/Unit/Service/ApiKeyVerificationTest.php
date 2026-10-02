@@ -105,6 +105,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertCount(1, $results);
     }
 
+    public function testApiKeyVerificationDoesNotLookUpKeyForStateEntry(): void {
+      $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
+      $requestedIds = [];
+      $this->apiKeyManagementMock->method('getKeyValues')
+        ->willReturnCallback(function (string $id) use ($key, &$requestedIds): array {
+          $requestedIds[] = $id;
+          return $key;
+        });
+      $this->configurationMock->method('getCountyNames')->willReturn(['State', 'Benton']);
+      $this->stubAllOk();
+
+      $results = $this->buildService()->apiKeyVerification();
+
+      $this->assertNotContains('State', $requestedIds);
+      $this->assertCount(2, $results); // State Committee + Benton
+    }
+
     // -------------------------------------------------------------------------
     // testApiKey — myCampaign status (via apiKeyVerification)
     // -------------------------------------------------------------------------
