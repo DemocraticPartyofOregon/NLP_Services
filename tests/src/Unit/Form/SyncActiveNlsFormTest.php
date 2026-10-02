@@ -152,6 +152,24 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertStringContainsString('15', $option);
     }
 
+    public function testBuildFormListSelectorHasNoDefaultOutsideTheOptions(): void {
+      // A default that isn't a saved list ID is what Drupal submits when no
+      // list is chosen, and it then rejects it as "The submitted value 0 ...
+      // is not allowed." instead of saying the field is required.
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
+      $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
+      $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
+      $element = $result['file_select'];
+      $this->assertTrue($element['#required']);
+      if (isset($element['#default_value'])) {
+        $this->assertArrayHasKey($element['#default_value'], $element['#options']);
+      }
+      else {
+        $this->assertArrayNotHasKey('#default_value', $element);
+      }
+    }
+
     public function testBuildFormPassesCorrectFolderIdToSavedLists(): void {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([

@@ -123,10 +123,13 @@ the NLP Services Admin.</p>',
         ' <b>NL Count:</b> ' . $list['listCount'];
     }
     
+    // No #default_value: the options are keyed by saved list ID, so a default
+    // of 0 matched no list and, if the user clicked Synchronize without
+    // choosing one, Drupal rejected it as "The submitted value 0 ... is not
+    // allowed." With no default, #required gives a plain "field is required".
     $form['file_select'] = [
       '#title' => t('Select file with list of NLs.'),
       '#type' => 'radios',
-      '#default_value' => 0,
       '#options' => $options,
       '#required' => TRUE,
     ];
