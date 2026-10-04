@@ -90,13 +90,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return array_replace([
         'turfIndex' => 1,
         'turfName'  => 'Turf-01',
+        'doorCount' => 0,
       ], $overrides);
     }
 
     /**
      * Configures mocks for a single-NL run with no turfs and no report counts.
-     * Does not configure fetchVotersByTurf or getDoorCount; tests that need
-     * turfs must set those up after calling this helper.
      */
     private function setupSingleNlRun(
       array $nlOverrides     = [],
@@ -279,8 +278,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->baseTurf(['turfIndex' => 2, 'turfName' => 'Turf-B']),
       ];
       $this->setupSingleNlRun([], [], $turfs);
-      $this->votersMock->method('fetchVotersByTurf')->willReturn([]);
-      $this->votersMock->method('getDoorCount')->willReturn(0);
 
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
@@ -290,12 +287,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testCreateNlsStatusFileDoorCountSumsAcrossAllTurfs(): void {
       $turfs = [
-        $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1']),
-        $this->baseTurf(['turfIndex' => 2, 'turfName' => 'T2']),
+        $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1', 'doorCount' => 4]),
+        $this->baseTurf(['turfIndex' => 2, 'turfName' => 'T2', 'doorCount' => 4]),
       ];
       $this->setupSingleNlRun([], [], $turfs);
-      $this->votersMock->method('fetchVotersByTurf')->willReturn([]);
-      $this->votersMock->method('getDoorCount')->willReturn(4);  // 4 per turf
 
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
@@ -304,10 +299,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateNlsStatusFileStampsEqualDoorsForMailContact(): void {
-      $turf = $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1']);
+      $turf = $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1', 'doorCount' => 5]);
       $this->setupSingleNlRun([], ['contact' => 'mail'], [$turf]);
-      $this->votersMock->method('fetchVotersByTurf')->willReturn([]);
-      $this->votersMock->method('getDoorCount')->willReturn(5);
 
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
@@ -316,10 +309,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateNlsStatusFileStampsAreZeroForNonMailContact(): void {
-      $turf = $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1']);
+      $turf = $this->baseTurf(['turfIndex' => 1, 'turfName' => 'T1', 'doorCount' => 5]);
       $this->setupSingleNlRun([], ['contact' => 'canvass'], [$turf]);
-      $this->votersMock->method('fetchVotersByTurf')->willReturn([]);
-      $this->votersMock->method('getDoorCount')->willReturn(5);
 
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');

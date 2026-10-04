@@ -125,15 +125,13 @@ class NlpExportNlsStatus
         $turfs = $this->turfsObj->getTurfsById($mcid);
         $turfNames = '';
         foreach ($turfs as $turf) {
-          $turfIndex = $turf['turfIndex'];
           if(!empty($turfNames)) {
             $turfNames .= ', ';
           }
           $turfNames .= $turf['turfName'];
-          $votersInTurf = $this->voters->fetchVotersByTurf($turfIndex);
-          $vanidsInTurf = array_keys($votersInTurf);
-          $doorCount = $this->voters->getDoorCount($vanidsInTurf);
-          $doors += $doorCount;
+          // Use the door count saved from VoteBuilder at sync.  Recounting from the
+          // voter addresses costs several queries per voter, too slow for an all-county export.
+          $doors += (int) $turf['doorCount'];
         }
 
         $stamps = ($contactMethod === 'mail') ? $doors : 0;
