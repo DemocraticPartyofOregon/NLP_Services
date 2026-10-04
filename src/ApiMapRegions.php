@@ -88,7 +88,8 @@ class ApiMapRegions
     }
     $turfOptions = [];
     foreach ($mapRegionIds as $mapRegionId) {
-      if(empty($mapRegionId)) {continue;}
+      // The region may have been deleted in VoteBuilder since the turf was created.
+      if(empty($mapRegionId) || empty($this->mapRegions[$mapRegionId])) {continue;}
       $mapRegion = $this->mapRegions[$mapRegionId];
       foreach ($mapRegion['turfInfo'] as $turfId => $turfInfo) {
         if(!empty($turfInfo['printedList'])) {
@@ -123,6 +124,8 @@ class ApiMapRegions
    */
   public function getMapRegionInfo( string $committee, int $folderId, int $mapRegionId=0): array
   {
+    // Clear any previous folder's regions so a failed request can't leave stale data.
+    if(empty($mapRegionId)) {$this->mapRegions = [];}
     if(empty($folderId)) {return [];}
     $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
@@ -254,7 +257,7 @@ class ApiMapRegions
       
       $mapRegionId = $turf['mapRegionId'];
       if(empty($mapRegionId)) {continue;}
-      if (!empty($mapRegionOptions[$mapRegionId])) {
+      if (array_key_exists($mapRegionId, $mapRegionOptionsSaved)) {
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];
       } else {
         $folderId = $turf['folderId'];
