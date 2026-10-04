@@ -9,6 +9,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\ExportNlsStatusForm;
+  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpExportNlsStatus;
   use Drupal\nlpservices\NlpFileFunctions;
   use Drupal\nlpservices\NlpNls;
@@ -22,6 +23,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpExportNlsStatus $exportNlsStatusMock;
     private DrupalUser $drupalUserMock;
     private NlpFileFunctions $fileFunctionsMock;
+    private NlpConfiguration $configurationMock;
     private MessengerInterface $messengerMock;
 
     protected function setUp(): void {
@@ -31,6 +33,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->exportNlsStatusMock = $this->createMock(NlpExportNlsStatus::class);
       $this->drupalUserMock      = $this->createMock(DrupalUser::class);
       $this->fileFunctionsMock   = $this->createMock(NlpFileFunctions::class);
+      $this->configurationMock   = $this->createMock(NlpConfiguration::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
@@ -55,6 +58,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->exportNlsStatusMock,
         $this->drupalUserMock,
         $this->fileFunctionsMock,
+        $this->configurationMock,
       );
       $form->setStringTranslation($this->getStringTranslationStub());
       $form->setMessenger($this->messengerMock);
@@ -135,8 +139,54 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formState->method('get')->with('reenter')->willReturn(NULL);
 
       $result = $this->buildForm()->buildForm([], $formState);
-      $this->assertArrayHasKey('districtSelect', $result);
+      $this->assertArrayHasKey('districtSelect', $result['hdSelect']);
+      $this->assertArrayNotHasKey('countySelect', $result);
       $this->assertArrayHasKey('save', $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildForm — first render, admin → county select defaults to all, no HD select
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormAdminShowsCountySelectWithAllOption(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+      $this->configurationMock->method('getCountyNames')->willReturn(['Denver', 'Boulder']);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->with('reenter')->willReturn(NULL);
+
+      $result = $this->buildForm()->buildForm([], $formState);
+      $options = $result['countySelect']['#options'];
+      $this->assertSame(['all', 'Denver', 'Boulder'], array_keys($options));
+      $this->assertSame('::countySelectedCallback', $result['countySelect']['#ajax']['callback']);
+      $this->assertArrayNotHasKey('districtSelect', $result['hdSelect']);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildForm — admin rebuild after selecting one county → HD select shown
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormAdminWithCountySelectedShowsDistrictSelect(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+      $this->configurationMock->method('getCountyNames')->willReturn(['Denver']);
+      $this->nlsMock->method('getHdList')->with('Denver')->willReturn([1, 2]);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->with('reenter')->willReturn(NULL);
+      $formState->method('getValue')->with('countySelect')->willReturn('Denver');
+
+      $result = $this->buildForm()->buildForm([], $formState);
+      $this->assertSame(['All' => 'All', 1 => 1, 2 => 2], $result['hdSelect']['districtSelect']['#options']);
+    }
+
+    // -------------------------------------------------------------------------
+    // countySelectedCallback — returns the HD wrapper
+    // -------------------------------------------------------------------------
+
+    public function testCountySelectedCallbackReturnsHdSelect(): void {
+      $form = ['hdSelect' => ['#type' => 'container', 'districtSelect' => []]];
+      $formState = $this->createMock(FormStateInterface::class);
+      $this->assertSame($form['hdSelect'], $this->buildForm()->countySelectedCallback($form, $formState));
     }
 
     // -------------------------------------------------------------------------
@@ -157,6 +207,26 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $result = $this->buildForm()->buildForm([], $formState);
       $this->assertArrayHasKey('result', $result);
       $this->assertStringContainsString('all counties', $result['result']['#markup']);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildForm — reenter, admin with one county → county/HD heading
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormReenterAdminSingleCountyShowsCountyHeading(): void {
+      $this->setupFileUrlContainer();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',  TRUE],
+        ['fileName', 'public://temp/nls-status.csv'],
+        ['county',   'Boulder'],
+        ['hd',       0],
+      ]);
+
+      $result = $this->buildForm()->buildForm([], $formState);
+      $this->assertStringContainsString('Boulder County, HD All', $result['result']['#markup']);
     }
 
     // -------------------------------------------------------------------------
@@ -261,6 +331,50 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // submitForm — admin with one county → county and HD from form values
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormAdminSingleCountyPassesCountyAndHd(): void {
+      $this->setupFileFunctions();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getValue')->willReturnMap([
+        ['countySelect',   NULL, 'Denver'],
+        ['districtSelect', NULL, '5'],
+      ]);
+
+      $this->exportNlsStatusMock->expects($this->once())
+        ->method('createNlsStatusFile')
+        ->with($this->anything(), 'Denver', 5);
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // submitForm — admin with one county and 'All' HD → hd=0
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormAdminSingleCountyAllHdPassesZero(): void {
+      $this->setupFileFunctions();
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getValue')->willReturnMap([
+        ['countySelect',   NULL, 'Denver'],
+        ['districtSelect', NULL, 'All'],
+      ]);
+
+      $this->exportNlsStatusMock->expects($this->once())
+        ->method('createNlsStatusFile')
+        ->with($this->anything(), 'Denver', 0);
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
     // submitForm — createTempCsvFile fails → addError, createNlsStatusFile skipped
     // -------------------------------------------------------------------------
 
@@ -293,6 +407,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formState->expects($this->atLeastOnce())->method('set')
         ->with($this->logicalOr(
           $this->equalTo('reenter'),
+          $this->equalTo('county'),
           $this->equalTo('hd'),
           $this->equalTo('fileName'),
         ), $this->anything());

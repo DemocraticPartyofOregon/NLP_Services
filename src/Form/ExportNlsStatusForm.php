@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\DrupalUser;
+use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpFileFunctions;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpSessionData;
@@ -23,14 +24,16 @@ class ExportNlsStatusForm extends FormBase
   protected NlpExportNlsStatus $nlpExportNlsStatusObj;
   protected DrupalUser $drupalUserObj;
   protected NlpFileFunctions $fileFunctionsObj;
+  protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct($nlpSessionObj, $nlsObj, $nlpExportNlsStatusObj, $drupalUserObj, $fileFunctionsObj)
+  public function __construct($nlpSessionObj, $nlsObj, $nlpExportNlsStatusObj, $drupalUserObj, $fileFunctionsObj, $nlpConfigurationObj)
   {
     $this->nlpSessionObj = $nlpSessionObj;
     $this->nlsObj = $nlsObj;
     $this->nlpExportNlsStatusObj = $nlpExportNlsStatusObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->fileFunctionsObj = $fileFunctionsObj;
+    $this->nlpConfigurationObj = $nlpConfigurationObj;
   }
 
   /**
@@ -44,6 +47,7 @@ class ExportNlsStatusForm extends FormBase
       $container->get('nlpservices.export_nls_status'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.file_functions'),
+      $container->get('nlpservices.configuration'),
     );
   }
 
@@ -62,24 +66,47 @@ class ExportNlsStatusForm extends FormBase
   {
     if (empty($form_state->get('reenter'))) {
       if ($this->drupalUserObj->isNlpAdminUser()) {
-        $county = 'all';
+        // An admin can export all counties or just one.
+        $countyOptions = ['all' => $this->t('All counties')];
+        foreach ($this->nlpConfigurationObj->getCountyNames() as $countyName) {
+          $countyOptions[$countyName] = $countyName;
+        }
+        $county = $form_state->getValue('countySelect') ?? 'all';
+        $form['countySelect'] = [
+          '#type' => 'select',
+          '#options' => $countyOptions,
+          '#default_value' => 'all',
+          '#title' => $this->t('Select the county for export'),
+          '#ajax' => [
+            'callback' => '::countySelectedCallback',
+            'wrapper' => 'hd-select-wrapper',
+          ],
+        ];
       } else {
         $county = $this->nlpSessionObj->getCounty();
         if (empty($county)) {
           $this->messenger()->addError($this->t('The county is missing'));
           return [];
         }
+      }
+      $form_state->set('county', $county);
+
+      // The HD select is only offered when a single county is selected.
+      $form['hdSelect'] = [
+        '#type' => 'container',
+        '#attributes' => ['id' => 'hd-select-wrapper'],
+      ];
+      if ($county !== 'all') {
         $hdNames = ['All' => 'All'];
         foreach ($this->nlsObj->getHdList($county) as $hd) {
           $hdNames[$hd] = $hd;
         }
-        $form['districtSelect'] = [
+        $form['hdSelect']['districtSelect'] = [
           '#type' => 'select',
           '#options' => $hdNames,
           '#title' => $this->t('Select the HD for export'),
         ];
       }
-      $form_state->set('county', $county);
       $form['save'] = [
         '#type' => 'submit',
         '#value' => $this->t('Export NLs status.'),
@@ -87,7 +114,7 @@ class ExportNlsStatusForm extends FormBase
     } else {
       $tempFileName = $form_state->get('fileName');
       $county = $form_state->get('county');
-      if ($this->drupalUserObj->isNlpAdminUser()) {
+      if ($county === 'all') {
         $page = '<h2>' . $this->t('Export of NLs status for all counties.') . '</h2>';
       } else {
         $hd = $form_state->get('hd');
@@ -114,8 +141,12 @@ class ExportNlsStatusForm extends FormBase
     $form_state->setRebuild();
     $form_state->set('reenter', TRUE);
 
-    $county = $form_state->get('county');
-    $hd = $this->drupalUserObj->isNlpAdminUser() ? 0 : (int) $form_state->getValue('districtSelect');
+    $county = $this->drupalUserObj->isNlpAdminUser()
+      ? ($form_state->getValue('countySelect') ?? 'all')
+      : $form_state->get('county');
+    $form_state->set('county', $county);
+    // The 'All' HD option casts to 0, which exports every HD in the county.
+    $hd = ($county === 'all') ? 0 : (int) $form_state->getValue('districtSelect');
     $form_state->set('hd', $hd);
 
     $tempFile = $this->fileFunctionsObj->createTempCsvFile('nls-status');
@@ -128,5 +159,15 @@ class ExportNlsStatusForm extends FormBase
     $form_state->set('fileName', $tempFileName);
 
     $this->nlpExportNlsStatusObj->createNlsStatusFile($tempFileName, $county, $hd);
+  }
+
+  /**
+   * countySelectedCallback
+   *
+   * AJAX callback for the county select; refreshes the HD select.
+   */
+  public function countySelectedCallback(array $form, FormStateInterface $form_state): array
+  {
+    return $form['hdSelect'];
   }
 }
