@@ -341,18 +341,21 @@ class VanidFormTest extends UnitTestCase {
   /**
    * @covers ::submitForm
    */
-  public function testSubmitFormPreviousUserFoundNewUserMissingTransfersMagicWord(): void {
+  public function testSubmitFormPreviousUserFoundNewUserMissingTransfersCredentials(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
         [self::PREV_ID, ['uid' => 10, 'mcid' => self::PREV_ID]],
         [self::NEW_ID,  []],
       ]);
-    $this->magicWordMock->method('getMagicWord')
-      ->with(self::PREV_ID)
-      ->willReturn('secret');
+    $credentials = ['mcid' => self::PREV_ID, 'magicWordEncrypted' => 'enc', 'userName' => 'asmith',
+      'email' => 'a@example.com', 'roles' => ['nlp_leader' => 'NL'], 'vfid' => 50];
+    $this->magicWordMock->method('getCredentials')
+      ->with(self::PREV_ID, FALSE)
+      ->willReturn($credentials);
     $this->magicWordMock->expects($this->once())
-      ->method('setMagicWord')
-      ->with(self::NEW_ID, 'secret');
+      ->method('createCredentials')
+      ->with(['mcid' => self::NEW_ID] + $credentials);
+    $this->magicWordMock->expects($this->never())->method('setMagicWord');
     $this->magicWordMock->expects($this->once())
       ->method('deleteMagicWord')
       ->with(self::PREV_ID);
@@ -540,9 +543,30 @@ class VanidFormTest extends UnitTestCase {
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')
       ->with(self::PREV_ID)
       ->willReturn([['turfId' => 9], ['turfId' => 10]]);
-    $this->turfsMock->expects($this->exactly(2))
-      ->method('updateTurf')
-      ->with($this->anything(), 'mcid', self::NEW_ID);
+    $this->turfsMock->expects($this->never())->method('updateTurf');
+    $updated = [];
+    $this->turfAssignmentsMock->expects($this->exactly(2))
+      ->method('setTurfAssignment')
+      ->willReturnCallback(function (array $assignment) use (&$updated) {
+        $updated[] = $assignment;
+      });
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $this->submitState());
+
+    $this->assertSame([
+      ['turfId' => 9, 'mcid' => self::NEW_ID],
+      ['turfId' => 10, 'mcid' => self::NEW_ID],
+    ], $updated);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormTurfVotersReassignedToNewId(): void {
+    $this->votersMock->expects($this->once())
+      ->method('reassignNlVoters')
+      ->with(self::PREV_ID, self::NEW_ID);
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $this->submitState());

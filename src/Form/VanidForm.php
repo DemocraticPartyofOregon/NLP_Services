@@ -167,8 +167,13 @@ class VanidForm extends FormBase
           'mcid' => $newId,
         ];
         $this->drupalUserObj->updateUser($editUpdate);
-        $magicWord = $this->magicWordObj->getMagicWord($previousId);
-        $this->magicWordObj->setMagicWord($newId,$magicWord);
+        // Move the whole credentials record (userName, email, roles, vfid),
+        // not just the magic word.
+        $credentials = $this->magicWordObj->getCredentials($previousId, FALSE);
+        if(!empty($credentials)) {
+          $credentials['mcid'] = $newId;
+          $this->magicWordObj->createCredentials($credentials);
+        }
         $this->magicWordObj->deleteMagicWord($previousId);
       }
     } else {
@@ -227,9 +232,12 @@ class VanidForm extends FormBase
     $turfAssignments = $this->turfAssignmentsObj->getTurfAssignmentsById($previousId);
     if(!empty($turfAssignments)) {
       foreach ($turfAssignments as $turfAssignment) {
-        $this->turfsObj->updateTurf($turfAssignment['turfId'],'mcid',$newId);
+        $this->turfAssignmentsObj->setTurfAssignment(['turfId' => $turfAssignment['turfId'], 'mcid' => $newId]);
       }
     }
+
+    // Move the voters in the NL's turfs.
+    $this->votersObj->reassignNlVoters($previousId, $newId);
     
     // Convert NL record to the new ID.
     $newNlRecord = $this->nlsObj->getNlById($newId);
