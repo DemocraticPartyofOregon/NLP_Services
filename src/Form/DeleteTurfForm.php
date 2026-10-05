@@ -105,13 +105,15 @@ class DeleteTurfForm extends FormBase
 
     [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfs, $this->nlpSessionDataObj, $county, $currentHd);
 
+    // Include turfs whose NL was removed from the active NLs, so they aren't
+    // stranded with no way to delete them.
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $turfArray = $this->turfs->getTurfs($county,'All');
+      $turfArray = $this->turfs->getTurfs($county,'All', TRUE);
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
-      $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd):[];
+      $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd, TRUE):[];
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
 
@@ -219,7 +221,8 @@ class DeleteTurfForm extends FormBase
             if (empty($turfChoice)) {
               continue;
             }
-            $nickname = $turfChoice['nickname'];
+            // The nickname is NULL when the NL was removed from the active NLs.
+            $nickname = $turfChoice['nickname'] ?? $turfChoice['nlFirstName'];
             $lastName = $turfChoice['nlLastName'];
             $turfName = $turfChoice['turfName'];
             $mcid = $turfChoice['mcid'];

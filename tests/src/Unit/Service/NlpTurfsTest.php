@@ -725,6 +725,37 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayHasKey(7, $result);
     }
 
+    public function testGetTurfsDefaultInnerJoinsNls(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn(false);
+      $selectMock = $this->buildSelectMock($stmtMock);
+      $selectMock->expects($this->once())->method('join');
+      $selectMock->expects($this->never())->method('leftJoin');
+      $this->connectionMock->method('select')->willReturn($selectMock);
+      $this->buildTurfs()->getTurfs('Denver', 'All');
+    }
+
+    public function testGetTurfsIncludeRemovedNlsLeftJoinsWithoutOverwritingTurfMcid(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($this->baseTurf(), false);
+      $selectMock = $this->buildSelectMock($stmtMock);
+      $selectMock->expects($this->never())->method('join');
+      $selectMock->expects($this->once())->method('leftJoin');
+      // n.* would let a missing NL's NULL mcid/county overwrite the turf's.
+      $nlFields = [];
+      $selectMock->method('fields')->willReturnCallback(
+        function (string $alias, array $fields = []) use ($selectMock, &$nlFields) {
+          if ($alias === 'n') { $nlFields = $fields; }
+          return $selectMock;
+        });
+      $this->connectionMock->method('select')->willReturn($selectMock);
+      $result = $this->buildTurfs()->getTurfs('Denver', 'All', TRUE);
+      $this->assertArrayHasKey(7, $result);
+      $this->assertNotEmpty($nlFields);
+      $this->assertNotContains('mcid', $nlFields);
+      $this->assertNotContains('county', $nlFields);
+    }
+
     public function testGetTurfsExceptionReturnsEmptyArray(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
       $this->assertSame([], $this->buildTurfs()->getTurfs('Denver', 'All'));

@@ -286,6 +286,38 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — turfs whose NL was removed from the active NLs are included
+    // -------------------------------------------------------------------------
+
+    public function testBuildFormIncludesTurfsOfRemovedNls(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->turfsMock->expects($this->once())
+        ->method('getTurfs')
+        ->with('Denver', '12', TRUE)
+        ->willReturn([]);
+
+      $this->buildForm()->buildForm([], $this->precinctFormState());
+    }
+
+    public function testBuildFormSearchIncludesTurfsOfRemovedNls(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->turfsMock->expects($this->once())
+        ->method('getTurfs')
+        ->with('Denver', 'All', TRUE)
+        ->willReturn([]);
+      $this->searchBarMock->method('searchInfoArray')->willReturn([]);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',       TRUE],
+        ['county',        'Denver'],
+        ['search-needle', 'Smith'],
+      ]);
+
+      $this->buildForm()->buildForm([], $formState);
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — precinct selector
     // -------------------------------------------------------------------------
 
@@ -522,6 +554,35 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->turfsMock->expects($this->once())->method('deleteTurf')->willReturn(TRUE);
       $this->awardsMock->expects($this->once())->method('nlParticipation')->with(42, 'Yes');
       $this->messengerMock->expects($this->once())->method('addStatus');
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // submitForm — turf of an NL removed from the active NLs can be deleted
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormDeletesTurfOfRemovedNl(): void {
+      // A removed NL has no NLs-table row, so the NL columns are NULL.
+      $turf = ['nickname' => NULL, 'nlFirstName' => 'Alicia'] + $this->baseTurfRecord();
+      \Drupal::getContainer()->set('string_translation', $this->getStringTranslationStub());
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('get')->willReturnMap([
+        ['county',     'Denver'],
+        ['turfArray',  [7 => $turf]],
+        ['selections', [7 => 7]],
+      ]);
+
+      $this->turfsMock->expects($this->once())
+        ->method('deleteTurf')
+        ->with(['mcid' => 42, 'county' => 'Denver', 'turfIndex' => 7])
+        ->willReturn(TRUE);
+      $this->messengerMock->expects($this->once())
+        ->method('addStatus')
+        ->with($this->callback(fn($msg) => str_contains((string) $msg, 'Alicia, Smith')));
 
       $form = [];
       $this->buildForm()->submitForm($form, $formState);

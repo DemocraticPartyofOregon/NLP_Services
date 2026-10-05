@@ -583,17 +583,31 @@ class NlpTurfs
    * Returns an array of turfs for a specific county and house district.
    * If the house district is 'All', then all turfs for the county are returned.
    *
+   * By default only turfs assigned to an NL in the NLs table are returned.  With
+   * $includeRemovedNls, turfs whose NL has been removed from the list of active
+   * NLs are returned too (the NL columns are NULL), so they can still be deleted.
+   *
    * @param string $county - The name of the county.
    * @param mixed $hd - The house district or 'All'.
+   * @param bool $includeRemovedNls - Include turfs whose NL is not in the NLs table.
    * @return array - An associative array of turf records.
    */
-  public function getTurfs(string $county, mixed $hd): array
+  public function getTurfs(string $county, mixed $hd, bool $includeRemovedNls = FALSE): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
-      $query->join($this->nlsObj::NLS_TBL, 'n', 'n.mcid = t.mcid');
       $query->fields('t');
-      $query->fields('n');
+      if ($includeRemovedNls) {
+        $query->leftJoin($this->nlsObj::NLS_TBL, 'n', 'n.mcid = t.mcid');
+        // Name the NL columns rather than n.*: mcid and county are in both tables,
+        // and the NULLs from a missing NL would overwrite the turf's own values.
+        $query->fields('n', ['lastName', 'firstName', 'middleName', 'nickname', 'hd',
+          'precinct', 'address', 'email', 'phone', 'homePhone', 'homePhoneId',
+          'cellPhone', 'cellPhoneId', 'userName', 'notRegistered', 'vfid']);
+      } else {
+        $query->join($this->nlsObj::NLS_TBL, 'n', 'n.mcid = t.mcid');
+        $query->fields('n');
+      }
       $query->condition('t.county', $county);
       if ($hd != 'All') {
         $query->condition('t.turfHd', $hd);
