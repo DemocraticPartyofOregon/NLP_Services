@@ -113,6 +113,50 @@ class ApiNls {
     return TRUE;
   }
   
+  const string MCID_EXISTS = 'exists';
+  const string MCID_MERGED = 'merged';
+  const string MCID_MISSING = 'missing';
+  const string MCID_UNKNOWN = 'unknown';
+
+  /**
+   * getMcidStatus
+   *
+   * Check whether a MyCampaign record still exists under this MCID.
+   *
+   * Unlike nlExists(), a failed request is reported as unknown rather than
+   * missing, so a caller that acts on a missing record (like re-pointing the
+   * NLP database to a new MCID) never acts on an API outage.
+   *
+   * @param string $committee
+   * @param int $mcid
+   * VAN answers a request for an MCID destroyed by a merge with a 404, not
+   * the surviving record, so that is reported as MCID_MISSING. MCID_MERGED
+   * covers a different vanId in the response, in case VAN ever starts
+   * answering with the surviving record.
+   *
+   * @return string - MCID_EXISTS; MCID_MISSING on a 404; MCID_MERGED when VAN
+   *   answers with a different vanId; MCID_UNKNOWN when the API can't be reached.
+   */
+  public function getMcidStatus(string $committee, int $mcid): string
+  {
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+    try {
+      $response = $this->requestWithRetry('GET', "https://$user:$apiKey|1@$apiURL/people/$mcid", $mcid);
+    } catch (GuzzleException $e) {
+      if ($e->getCode() == 404) {return self::MCID_MISSING;}
+      nlp_debug_msg('getMcidStatus', 'MCID: ' . $mcid . ' HTTP code: ' . $e->getCode());
+      return self::MCID_UNKNOWN;
+    }
+    $result = json_decode($response->getBody(), TRUE);
+    if (json_last_error() !== JSON_ERROR_NONE || empty($result['vanId'])) {
+      return self::MCID_UNKNOWN;
+    }
+    return ((int) $result['vanId'] == $mcid) ? self::MCID_EXISTS : self::MCID_MERGED;
+  }
+
   /**
    * getApiNls
    *

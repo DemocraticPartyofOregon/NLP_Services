@@ -247,9 +247,9 @@ class MagicWord {
   /**
    * getCredentialsByVfid
    *
-   * Retrieves user credentials by their VoterFile VANID.
+   * Retrieves user credentials by their state voter ID (vfid).
    *
-   * @param int $vfid The VoterFile VANID to search for.
+   * @param int $vfid The state voter ID to search for.
    * @return array An associative array of user credentials, or empty array if not found.
    */
   public function getCredentialsByVfid(int $vfid): array

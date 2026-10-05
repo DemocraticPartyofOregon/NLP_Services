@@ -4,12 +4,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\Core\StringTranslation\TranslatableMarkup;
+  use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiNls;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
   use Drupal\nlpservices\NlpAwards;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpLegislativeFixes;
+  use Drupal\nlpservices\NlpMcidReassignment;
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpSyncActiveNlsProcessor;
   use Drupal\Tests\UnitTestCase;
@@ -25,6 +27,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpNls $nlsMock;
     private NlpAwards $awardsMock;
     private MessengerInterface $messengerMock;
+    private ApiActivistCodes $activistCodesMock;
+    private NlpMcidReassignment $reassignmentMock;
 
     /** Temp files created during a test — cleaned up in tearDown. */
     private array $tempFiles = [];
@@ -42,6 +46,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->nlsMock        = $this->createMock(NlpNls::class);
       $this->awardsMock     = $this->createMock(NlpAwards::class);
       $this->messengerMock  = $this->createMock(MessengerInterface::class);
+      $this->activistCodesMock = $this->createMock(ApiActivistCodes::class);
+      $this->reassignmentMock  = $this->createMock(NlpMcidReassignment::class);
 
       // Default stubs so tests only need to override what they care about.
       $this->legFixesMock->method('getLegFixes')->willReturnCallback(fn() => $this->legFixesData);
@@ -73,6 +79,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->nlsMock,
         $this->awardsMock,
         $this->messengerMock,
+        $this->activistCodesMock,
+        $this->reassignmentMock,
       );
     }
 
@@ -467,6 +475,161 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       // Second call starts at EOF so reads zero records; total stays at 2.
       $this->assertSame(2, $context['results']['recordCount']);
+    }
+
+      // -------------------------------------------------------------------------
+    // checkVoterId — vfid, duplicates and the Not Registered code
+    // -------------------------------------------------------------------------
+
+    private function checkVoterId(array $nlRecord, bool &$notRegistered): bool {
+      return $this->buildProcessor()->checkVoterId($nlRecord, $notRegistered, 'Denver');
+    }
+
+    public function testMissingVfidWithoutNotRegisteredCodeIsRejected(): void {
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('vfid is missing'));
+
+      $notRegistered = FALSE;
+      $this->assertFalse($this->checkVoterId($this->baseNlRecord(['vfid' => 0]), $notRegistered));
+    }
+
+    public function testMissingVfidWithNotRegisteredCodeIsAcceptedWithWarning(): void {
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('accepted without a vfid'));
+      $this->activistCodesMock->expects($this->never())->method('setApiActivistCode');
+
+      $notRegistered = TRUE;
+      $this->assertTrue($this->checkVoterId($this->baseNlRecord(['vfid' => 0]), $notRegistered));
+      $this->assertTrue($notRegistered);
+    }
+
+    public function testVfidWithNotRegisteredCodeRemovesTheCode(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn([]);
+      $this->activistCodesMock->expects($this->once())->method('setApiActivistCode')
+        ->with(['codeName' => 'NLPNotRegisteredAC', 'vanid' => 101, 'action' => 'Remove', 'committee' => 'Denver'])
+        ->willReturn(TRUE);
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('activist code was removed'));
+
+      $notRegistered = TRUE;
+      $this->assertTrue($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+      $this->assertFalse($notRegistered);
+    }
+
+    public function testFailedActivistCodeRemovalStillAcceptsWithWarning(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn([]);
+      $this->activistCodesMock->method('setApiActivistCode')->willReturn(FALSE);
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('could not be removed'));
+
+      $notRegistered = TRUE;
+      $this->assertTrue($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+      $this->assertFalse($notRegistered);
+    }
+
+    public function testVfidKnownUnderSameMcidIsAccepted(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 101, 'vfid' => 50]);
+      $this->apiNlsMock->expects($this->never())->method('getMcidStatus');
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->never())->method('addWarning');
+
+      $notRegistered = FALSE;
+      $this->assertTrue($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+    }
+
+    public function testDuplicateIsRejectedWhenOriginalMcidStillExists(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 900, 'vfid' => 50]);
+      $this->apiNlsMock->expects($this->once())->method('getMcidStatus')->with('Denver', 900)
+        ->willReturn(ApiNls::MCID_EXISTS);
+      $this->reassignmentMock->expects($this->never())->method('reassign');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('is a duplicate'));
+
+      $notRegistered = FALSE;
+      $this->assertFalse($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+    }
+
+    public function testDuplicateIsRejectedWhenMyCampaignCannotBeReached(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 900, 'vfid' => 50]);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn(ApiNls::MCID_UNKNOWN);
+      $this->reassignmentMock->expects($this->never())->method('reassign');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('could not be reached'));
+
+      $notRegistered = FALSE;
+      $this->assertFalse($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+    }
+
+    public static function destroyedStatuses(): array {
+      return [[ApiNls::MCID_MISSING], [ApiNls::MCID_MERGED]];
+    }
+
+    #[\PHPUnit\Framework\Attributes\DataProvider('destroyedStatuses')]
+    public function testDestroyedOriginalMcidIsReassignedToTheNewMcid(string $status): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 900, 'vfid' => 50]);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn($status);
+      $this->reassignmentMock->expects($this->once())->method('reassign')->with(900, 101)
+        ->willReturn(['ok' => TRUE]);
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('was merged into'));
+
+      $notRegistered = FALSE;
+      $this->assertTrue($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+    }
+
+    public function testFailedReassignmentRejectsTheNl(): void {
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 900, 'vfid' => 50]);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn(ApiNls::MCID_MISSING);
+      $this->reassignmentMock->method('reassign')
+        ->willReturn(['ok' => FALSE, 'message' => 'MCID 101 already has a login.']);
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('Reassign MCID'));
+
+      $notRegistered = FALSE;
+      $this->assertFalse($this->checkVoterId($this->baseNlRecord(), $notRegistered));
+    }
+
+    public function testProcessBatchRejectsDuplicateBeforeCreatingAnAccount(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
+      $this->apiNlsMock->method('getNls')->willReturn([101 => $this->baseNlRecord()]);
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 900, 'vfid' => 50]);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn(ApiNls::MCID_EXISTS);
+
+      $this->drupalUserMock->expects($this->never())->method('createDrupalAccount');
+      $this->magicWordMock->expects($this->never())->method('createCredentials');
+      $this->nlsMock->expects($this->never())->method('createNl');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+    }
+
+    public function testProcessBatchSavesNotRegisteredClearedAfterCodeRemoved(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101, TRUE)]);
+      $this->apiNlsMock->method('getNls')->willReturn([101 => $this->baseNlRecord()]);
+      $this->magicWordMock->method('getCredentialsByVfid')->willReturn([]);
+      $this->activistCodesMock->method('setApiActivistCode')->willReturn(TRUE);
+      $this->magicWordMock->method('getCredentials')->willReturn([]);
+      $this->magicWordMock->method('getCredentialsByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->magicWordMock->method('uniqueUserName')->willReturn('asmith');
+      $this->drupalUserMock->method('getUserByName')->willReturn([]);
+      $this->magicWordMock->method('createMagicWord')->willReturn('secret123');
+      $this->drupalUserMock->method('createDrupalAccount')->willReturn($this->baseDrupalUser());
+      $this->magicWordMock->method('createNewCredentials')
+        ->willReturn(['mcid' => 101, 'userName' => 'asmith', 'email' => 'alice@example.com',
+                      'vfid' => 50, 'county' => 'Denver', 'hd' => '6',
+                      'roles' => [], 'created' => 0, 'access' => 0]);
+      $this->nlsMock->method('getNlsStatus')->willReturn([]);
+
+      $this->nlsMock->expects($this->once())->method('createNl')
+        ->with($this->callback(fn($nl) => $nl['notRegistered'] === FALSE))
+        ->willReturn(TRUE);
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
     }
 
   }

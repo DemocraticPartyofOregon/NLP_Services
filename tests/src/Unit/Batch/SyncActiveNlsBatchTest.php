@@ -4,6 +4,7 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
 
   use Drupal;
   use Drupal\Core\Messenger\MessengerInterface;
+  use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiNls;
   use Drupal\nlpservices\Batch\SyncActiveNlsBatch;
   use Drupal\nlpservices\DrupalUser;
@@ -11,6 +12,7 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
   use Drupal\nlpservices\NlpAwards;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpLegislativeFixes;
+  use Drupal\nlpservices\NlpMcidReassignment;
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpSyncActiveNlsProcessor;
   use Drupal\Tests\UnitTestCase;
@@ -54,6 +56,8 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
         $this->createMock(NlpNls::class),
         $this->createMock(NlpAwards::class),
         $this->messengerMock,
+        $this->createMock(ApiActivistCodes::class),
+        $this->createMock(NlpMcidReassignment::class),
       );
     }
 
@@ -184,54 +188,6 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
       $nl  = array_merge($this->baseNlRecord(), ['hd' => '', 'nickname' => 'Ali']);
       $fix = ['hd' => '9', 'precinct' => '9.1'];
       $this->assertTrue($this->buildProcessor()->checkDistricts($nl, $fix));
-    }
-
-    // -------------------------------------------------------------------------
-    // NlpSyncActiveNlsProcessor::checkVoterId
-    // -------------------------------------------------------------------------
-
-    public function testCheckVoterIdMissingVfidAddsWarning(): void {
-      $this->messengerMock->expects($this->once())->method('addWarning');
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 0];
-      $this->buildProcessor()->checkVoterId(0, 5, $nl);
-    }
-
-    public function testCheckVoterIdMismatchedVfidAddsWarning(): void {
-      $this->messengerMock->expects($this->once())->method('addWarning');
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 99];
-      $this->buildProcessor()->checkVoterId(99, 88, $nl);
-    }
-
-    public function testCheckVoterIdMatchingVfidAddsNoMessage(): void {
-      $this->messengerMock->expects($this->never())->method('addWarning');
-      $this->messengerMock->expects($this->never())->method('addError');
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 50];
-      $this->buildProcessor()->checkVoterId(50, 50, $nl);
-    }
-
-    public function testCheckVoterIdUnknownSavedVfidUpdatesCredentials(): void {
-      $this->magicWordMock->expects($this->once())->method('updateCredentials')
-        ->with(['mcid' => 42, 'vfid' => 77]);
-      $this->magicWordMock->method('getCredentialsByVfid')->willReturn([]);
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 77];
-      $this->buildProcessor()->checkVoterId(77, 0, $nl);
-    }
-
-    public function testCheckVoterIdDuplicateVfidAddsErrorAndReturnsFalse(): void {
-      $this->messengerMock->expects($this->once())->method('addError');
-      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 99]);
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 55];
-      $result = $this->buildProcessor()->checkVoterId(55, 0, $nl);
-      $this->assertFalse($result);
-    }
-
-    public function testCheckVoterIdSameMcidVfidMatchContinues(): void {
-      $this->messengerMock->expects($this->never())->method('addError');
-      $this->messengerMock->expects($this->never())->method('addWarning');
-      $this->magicWordMock->method('getCredentialsByVfid')->willReturn(['mcid' => 42]);
-      $nl = ['mcid' => 42, 'firstName' => 'Alice', 'lastName' => 'Smith', 'vfid' => 55];
-      $result = $this->buildProcessor()->checkVoterId(55, 55, $nl);
-      $this->assertTrue($result);
     }
 
   }

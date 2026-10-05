@@ -17,6 +17,8 @@ class NlpSyncActiveNlsProcessor {
   protected NlpNls $nlsObj;
   protected NlpAwards $awardsObj;
   protected MessengerInterface $messenger;
+  protected ApiActivistCodes $activistCodesObj;
+  protected NlpMcidReassignment $mcidReassignmentObj;
 
   public function __construct(
     $apiNlsObj,
@@ -26,7 +28,9 @@ class NlpSyncActiveNlsProcessor {
     $drupalUserObj,
     $nlsObj,
     $awardsObj,
-    $messenger
+    $messenger,
+    $activistCodesObj,
+    $mcidReassignmentObj
   ) {
     $this->apiNlsObj           = $apiNlsObj;
     $this->legislativeFixesObj = $legislativeFixesObj;
@@ -36,6 +40,8 @@ class NlpSyncActiveNlsProcessor {
     $this->nlsObj              = $nlsObj;
     $this->awardsObj           = $awardsObj;
     $this->messenger           = $messenger;
+    $this->activistCodesObj    = $activistCodesObj;
+    $this->mcidReassignmentObj = $mcidReassignmentObj;
   }
 
   public static function create(ContainerInterface $container): self {
@@ -48,6 +54,8 @@ class NlpSyncActiveNlsProcessor {
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.awards'),
       $container->get('messenger'),
+      $container->get('nlpservices.activist_codes'),
+      $container->get('nlpservices.mcid_reassignment'),
     );
   }
 
@@ -200,6 +208,8 @@ class NlpSyncActiveNlsProcessor {
       return;
     }
 
+    if (!$this->checkVoterId($nlRecord, $notRegistered, $county)) { return; }
+
     if (empty($nlRecord['email'])) {
       $this->messenger->addError(t("NL rejected. This volunteer does not have an email address and can't be an active NL.<br>.. MCID:@mcid @firstName @lastName", ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']]));
       return;
@@ -238,14 +248,8 @@ class NlpSyncActiveNlsProcessor {
       return;
     }
 
-    $credentials = $this->verifyCredentials($nlRecord, $drupalUser, $credentials, $magicWord);
+    $this->verifyCredentials($nlRecord, $drupalUser, $credentials, $magicWord);
 
-    if (!$notRegistered) {
-      $lastKnownVfId = $credentials['vfid'] ?? 0;
-      if (!$this->checkVoterId($nlRecord['vfid'], $lastKnownVfId, $nlRecord)) {
-        return;
-      }
-    }
     $nlRecord['notRegistered'] = $notRegistered;
     if (!$this->createNlsRecord($nlRecord)) {
       $this->messenger->addError(t('NL rejected. The NL record could not be saved to the database; a field may be too long (precinct: @precinct, HD: @hd, address: @address).<br>.. MCID:@mcid @firstName @lastName', ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName'], '@precinct' => $nlRecord['precinct'], '@hd' => $nlRecord['hd'], '@address' => $nlRecord['address']]));
@@ -302,42 +306,83 @@ class NlpSyncActiveNlsProcessor {
   /**
    * checkVoterId
    *
-   * Confirms the validity of the VoterFile VANID for the given record and updates credentials if necessary.
+   * Checks the NL's state voter ID (vfid). The state assigns and controls it,
+   * so unlike the MCID it is never duplicated and identifies the NL across
+   * duplicate MyCampaign records.
    *
-   * @param int $vfid
-   *   The current VoterFile VANID being verified.
-   * @param int $savedVfid
-   *   The previously saved VoterFile VANID for comparison.
-   * @param array $nl
-   *   An associative array containing voter information. It must include keys:
-   *   - 'mcid': The member contact ID associated with the record.
-   *   - 'firstName': The first name of the voter.
-   *   - 'lastName': The last name of the voter.
-   *   - 'vfid': The VoterFile VANID to be updated if required.
+   * 1. No vfid: rejected, unless the NL has the Not Registered activist code
+   *    (not yet 18, or lives in another state), in which case accepted with a
+   *    warning.
+   * 2. The vfid is saved under a different MCID: the record is a potential
+   *    duplicate. If MyCampaign still has the saved MCID, the record is a
+   *    duplicate and is rejected. If the saved MCID was destroyed by a merge,
+   *    the NLP database is moved to this MCID so the NL keeps their login and
+   *    history.
+   * 3. A vfid and the Not Registered activist code: the NL is registered now,
+   *    so the activist code is removed in MyCampaign.
+   *
+   * @param array $nlRecord
+   *   The NL record from MyCampaign; must include 'mcid', 'vfid', 'firstName'
+   *   and 'lastName'.
+   * @param bool $notRegistered
+   *   The NL has the Not Registered activist code; cleared when it is removed.
+   * @param string $county
+   *   The county whose committee owns the MyCampaign record.
    *
    * @return bool
-   *   TRUE if the voter ID is valid and processing should continue, FALSE if the
-   *   NL should be rejected due to a database corruption or missing voter ID.
+   *   TRUE if the NL should continue to be processed, FALSE if rejected.
    */
-  public function checkVoterId(int $vfid, int $savedVfid, array $nl): bool {
+  public function checkVoterId(array $nlRecord, bool &$notRegistered, string $county): bool {
+    $mcid = $nlRecord['mcid'];
+    $vfid = (int) ($nlRecord['vfid'] ?? 0);
+    $who  = ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']];
+
     if (empty($vfid)) {
-      $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, The VoterFile VANID is missing for this NL. Check if the MyCampaign record is a duplicate.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName']]));
-      return FALSE;
-    }
-    $existingCredentials = $this->magicWordObj->getCredentialsByVfid($vfid);
-    if (!empty($existingCredentials) && $existingCredentials['mcid'] != $nl['mcid']) {
-      $this->messenger->addError(t('NL rejected. MCID:@mcid @firstName @lastName, VoterFile VANID @vfid is already associated with MCID:@existingMcid. This indicates a suspected duplicate MyCampaign record. Please resolve the duplicate before processing this NL.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@existingMcid' => $existingCredentials['mcid']]));
-      return FALSE;
-    }
-    if (empty($savedVfid)) {
-      $this->magicWordObj->updateCredentials(['mcid' => $nl['mcid'], 'vfid' => $nl['vfid']]);
+      if (!$notRegistered) {
+        $this->messenger->addError(t('NL rejected. The vfid is missing and the volunteer does not have the NLP Not Registered activist code. Check if the MyCampaign record is a duplicate.<br>.. MCID:@mcid @firstName @lastName', $who));
+        return FALSE;
+      }
+      $this->messenger->addWarning(t('NL accepted without a vfid because the volunteer has the NLP Not Registered activist code.<br>.. MCID:@mcid @firstName @lastName', $who));
       return TRUE;
     }
-    if ($vfid != $savedVfid) {
-      $this->messenger->addWarning(t('MCID:@mcid @firstName @lastName, VoterFile VANID @vfid does not match the saved VANID @savedVfid. Please verify this NL\'s MyCampaign record.', ['@mcid' => $nl['mcid'], '@firstName' => $nl['firstName'], '@lastName' => $nl['lastName'], '@vfid' => $vfid, '@savedVfid' => $savedVfid]));
-      return FALSE;
+
+    $existingCredentials = $this->magicWordObj->getCredentialsByVfid($vfid);
+    $savedMcid = (int) ($existingCredentials['mcid'] ?? 0);
+    if (!empty($savedMcid) && $savedMcid != $mcid) {
+      $who += ['@vfid' => $vfid, '@savedMcid' => $savedMcid];
+      $status = $this->apiNlsObj->getMcidStatus($county, $savedMcid);
+      if ($status == ApiNls::MCID_EXISTS) {
+        $this->messenger->addError(t('NL rejected. This MyCampaign record is a duplicate: vfid @vfid belongs to the NL with MCID:@savedMcid, which still exists in MyCampaign.<br>.. MCID:@mcid @firstName @lastName', $who));
+        return FALSE;
+      }
+      if ($status == ApiNls::MCID_UNKNOWN) {
+        $this->messenger->addError(t('NL rejected. vfid @vfid belongs to the NL with MCID:@savedMcid, and MyCampaign could not be reached to check whether that record still exists. Sync again later.<br>.. MCID:@mcid @firstName @lastName', $who));
+        return FALSE;
+      }
+      $reassigned = $this->mcidReassignmentObj->reassign($savedMcid, $mcid);
+      if (!$reassigned['ok']) {
+        $who['@reason'] = $reassigned['message'];
+        $this->messenger->addError(t('NL rejected. vfid @vfid belongs to MCID:@savedMcid, which no longer exists in MyCampaign, but the NLP database could not be moved to the new MCID: @reason Use the Reassign MCID page to finish the merge.<br>.. MCID:@mcid @firstName @lastName', $who));
+        return FALSE;
+      }
+      $this->messenger->addWarning(t('MCID:@savedMcid was merged into MCID:@mcid in MyCampaign. The NLP database was updated to use the new MCID.<br>.. MCID:@mcid @firstName @lastName', $who));
     }
 
+    if ($notRegistered) {
+      $removed = $this->activistCodesObj->setApiActivistCode([
+        'codeName'  => 'NLPNotRegisteredAC',
+        'vanid'     => $mcid,
+        'action'    => 'Remove',
+        'committee' => $county,
+      ]);
+      if ($removed) {
+        $this->messenger->addWarning(t('The NLP Not Registered activist code was removed because the volunteer has a vfid.<br>.. MCID:@mcid @firstName @lastName', $who));
+      } else {
+        $this->messenger->addWarning(t('The volunteer has a vfid but the NLP Not Registered activist code could not be removed. Remove it in MyCampaign.<br>.. MCID:@mcid @firstName @lastName', $who));
+      }
+      // The vfid shows the NL is registered, whether or not VAN caught up.
+      $notRegistered = FALSE;
+    }
     return TRUE;
   }
 

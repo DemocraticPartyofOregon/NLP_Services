@@ -210,7 +210,12 @@ services:
     arguments: [ '@nlpservices.api_nls', '@nlpservices.legislative_fixes',
                  '@nlpservices.configuration', '@nlpservices.magic_word',
                  '@nlpservices.drupal_user', '@nlpservices.nls',
-                 '@nlpservices.awards', '@messenger' ]
+                 '@nlpservices.awards', '@messenger',
+                 '@nlpservices.activist_codes', '@nlpservices.mcid_reassignment' ]
+
+  nlpservices.mcid_reassignment:
+    class: Drupal\nlpservices\NlpMcidReassignment
+    arguments: [ '@database', '@nlpservices.drupal_user', '@nlpservices.magic_word' ]
 
   nlpservices.sync_turf_processor:
     class: Drupal\nlpservices\NlpSyncTurfProcessor

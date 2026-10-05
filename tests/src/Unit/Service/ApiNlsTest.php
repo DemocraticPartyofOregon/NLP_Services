@@ -394,6 +394,45 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // getMcidStatus
+    // -------------------------------------------------------------------------
+
+    public function testGetMcidStatusExistsWhenVanAnswersWithTheSameMcid(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['vanId' => 200456]));
+
+      $this->assertSame(ApiNls::MCID_EXISTS, $this->buildApiNls()->getMcidStatus('Denver', 200456));
+    }
+
+    public function testGetMcidStatusMergedWhenVanAnswersWithAnotherMcid(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('request')->willReturn($this->makeResponse(['vanId' => 300789]));
+
+      $this->assertSame(ApiNls::MCID_MERGED, $this->buildApiNls()->getMcidStatus('Denver', 200456));
+    }
+
+    public function testGetMcidStatusMissingOn404(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(404));
+
+      $this->assertSame(ApiNls::MCID_MISSING, $this->buildApiNls()->getMcidStatus('Denver', 200456));
+    }
+
+    public function testGetMcidStatusUnknownOnOtherFailures(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('request')->willThrowException($this->makeGuzzleException(500));
+
+      $this->assertSame(ApiNls::MCID_UNKNOWN, $this->buildApiNls()->getMcidStatus('Denver', 200456));
+    }
+
+    public function testGetMcidStatusUnknownOnUnreadableBody(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('request')->willReturn($this->makeResponse([]));
+
+      $this->assertSame(ApiNls::MCID_UNKNOWN, $this->buildApiNls()->getMcidStatus('Denver', 200456));
+    }
+
+    // -------------------------------------------------------------------------
     // apiKeyVerify
     // -------------------------------------------------------------------------
 
