@@ -438,6 +438,22 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // validateForm — search clicked with no turf selected → no error
+    // -------------------------------------------------------------------------
+
+    public function testValidateFormSearchWithoutSelectionDoesNotSetError(): void {
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'search_submit']);
+      $formState->method('getValues')->willReturn(['contacts' => [], 'search-needle' => 'Smith']);
+      $formState->expects($this->never())->method('setErrorByName');
+
+      $this->turfDisplayMock->method('validateTurfSelection')->willReturn([]);
+
+      $form = [];
+      $this->buildForm()->validateForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
     // validateForm — delete clicked, no selection → form error
     // -------------------------------------------------------------------------
 

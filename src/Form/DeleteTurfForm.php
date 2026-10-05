@@ -167,11 +167,16 @@ class DeleteTurfForm extends FormBase
     $form_state->set('reenter',TRUE);
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    if ($elementClicked=='hd-select') {
-      $newHdIndex = $form_state->getValue('hd-select');
-      // The user changed the HD to display.
-      $this->nlpSessionDataObj->saveHdIndex($newHdIndex);
-      return;
+    switch ($elementClicked) {
+      case 'search_submit':
+        // A search doesn't delete anything, so no turf needs to be selected.
+        return;
+
+      case 'hd-select':
+        $newHdIndex = $form_state->getValue('hd-select');
+        // The user changed the HD to display.
+        $this->nlpSessionDataObj->saveHdIndex($newHdIndex);
+        return;
     }
     $values = $form_state->getValues();
     $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
