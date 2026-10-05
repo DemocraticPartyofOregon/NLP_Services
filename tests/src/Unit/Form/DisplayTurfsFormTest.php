@@ -393,20 +393,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // submitForm — hd_submit saves hd index
-    // -------------------------------------------------------------------------
-
-    public function testSubmitFormHdSubmitSavesHdIndex(): void {
-      $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('getTriggeringElement')->willReturn(['#name' => 'hd_submit']);
-      $formState->method('getValue')->with('hd-select')->willReturn(3);
-      $this->sessionDataMock->expects($this->once())->method('saveHdIndex')->with(3);
-
-      $form = [];
-      $this->buildForm()->submitForm($form, $formState);
-    }
-
-    // -------------------------------------------------------------------------
     // submitForm — search_submit stores needle and returns early
     // -------------------------------------------------------------------------
 
@@ -433,8 +419,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testSubmitFormSetsReenterAndRebuild(): void {
       $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('getTriggeringElement')->willReturn(['#name' => 'hd_submit']);
-      $formState->method('getValue')->willReturn(0);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'op']);
       $formState->expects($this->atLeastOnce())->method('set')->with('reenter', TRUE);
       $formState->expects($this->once())->method('setRebuild');
 

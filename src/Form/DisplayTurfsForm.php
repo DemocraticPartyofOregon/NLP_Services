@@ -152,19 +152,9 @@ class DisplayTurfsForm extends FormBase
 
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
-    switch ($elementClicked) {
-
-      // The user changed the HD to display.
-      case 'hd_submit':
-        $newHdIndex = $form_state->getValue('hd-select');
-        $this->sessionDataObj->saveHdIndex($newHdIndex);
-        break;
-
-      case 'search_submit':
-        $needle = $form_state->getValue('search-needle');
-        $form_state->set('search-needle', $needle);
-        return;
-
+    if ($elementClicked == 'search_submit') {
+      $needle = $form_state->getValue('search-needle');
+      $form_state->set('search-needle', $needle);
     }
 
   }
