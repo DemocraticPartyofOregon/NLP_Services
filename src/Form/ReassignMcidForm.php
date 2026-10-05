@@ -14,6 +14,7 @@ use Drupal\nlpservices\NlpLegislativeFixes;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
+use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpNls;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -28,6 +29,7 @@ class ReassignMcidForm extends FormBase
   protected NlpReports $reportsObj;
   protected NlpTurfAssignments $turfAssignmentsObj;
   protected NlpTurfs $turfsObj;
+  protected NlpVoters $votersObj;
 
   protected NlpNls $nlsObj;
   protected MagicWord $magicWordObj;
@@ -35,7 +37,7 @@ class ReassignMcidForm extends FormBase
 
   public function __construct( $drupalUserObj, $apiNlsObj, $nlpEncryptObj, $awardsObj,
                                $coordinatorObj, $legFixesObj, $reportsObj, $turfsObj,
-                               $nlsObj, $magicWordObj, $turfAssignmentsObj)
+                               $nlsObj, $magicWordObj, $turfAssignmentsObj, $votersObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->apiNlsObj = $apiNlsObj;
@@ -48,6 +50,7 @@ class ReassignMcidForm extends FormBase
     $this->nlsObj = $nlsObj;
     $this->magicWordObj = $magicWordObj;
     $this->turfAssignmentsObj = $turfAssignmentsObj;
+    $this->votersObj = $votersObj;
   }
 
   public static function create(ContainerInterface $container): ReassignMcidForm
@@ -64,6 +67,7 @@ class ReassignMcidForm extends FormBase
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.turf_assignments'),
+      $container->get('nlpservices.voters'),
     );
   }
   /**
@@ -172,8 +176,13 @@ MyCampaign database.</p>'),
           'mcid' => $newId,
         ];
         $this->drupalUserObj->updateUser($editUpdate);
-        $magicWord = $this->magicWordObj->getMagicWord($previousId);
-        $this->magicWordObj->setMagicWord($newId,$magicWord);
+        // Move the whole credentials record (userName, email, roles, vfid),
+        // not just the magic word.
+        $credentials = $this->magicWordObj->getCredentials($previousId, FALSE);
+        if(!empty($credentials)) {
+          $credentials['mcid'] = $newId;
+          $this->magicWordObj->createCredentials($credentials);
+        }
         $this->magicWordObj->deleteMagicWord($previousId);
       }
     } else {
@@ -232,9 +241,12 @@ MyCampaign database.</p>'),
     $turfAssignments = $this->turfAssignmentsObj->getTurfAssignmentsById($previousId);
     if(!empty($turfAssignments)) {
       foreach ($turfAssignments as $turfAssignment) {
-        $this->turfsObj->updateTurf($turfAssignment['turfId'],'mcid',$newId);
+        $this->turfAssignmentsObj->setTurfAssignment(['turfId' => $turfAssignment['turfId'], 'mcid' => $newId]);
       }
     }
+
+    // Move the voters in the NL's turfs.
+    $this->votersObj->reassignNlVoters($previousId, $newId);
 
     // Convert NL record to the new ID.
     $newNlRecord = $this->nlsObj->getNlById($newId);

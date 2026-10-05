@@ -18,6 +18,7 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpTurfAssignments;
 use Drupal\nlpservices\NlpTurfs;
+use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpEncryption;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -46,6 +47,7 @@ class ReassignMcidFormTest extends UnitTestCase {
   private NlpTurfs $turfsMock;
   private NlpNls $nlsMock;
   private MagicWord $magicWordMock;
+  private NlpVoters $votersMock;
 
   protected function setUp(): void {
     parent::setUp();
@@ -61,6 +63,7 @@ class ReassignMcidFormTest extends UnitTestCase {
     $this->turfsMock           = $this->createMock(NlpTurfs::class);
     $this->nlsMock             = $this->createMock(NlpNls::class);
     $this->magicWordMock       = $this->createMock(MagicWord::class);
+    $this->votersMock          = $this->createMock(NlpVoters::class);
 
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
@@ -89,6 +92,7 @@ class ReassignMcidFormTest extends UnitTestCase {
       $this->nlsMock,
       $this->magicWordMock,
       $this->turfAssignmentsMock,
+      $this->votersMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     return $form;
@@ -294,18 +298,21 @@ class ReassignMcidFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $this->submitState());
   }
 
-  public function testSubmitFormPreviousUserFoundNewUserMissingTransfersMagicWord(): void {
+  public function testSubmitFormPreviousUserFoundNewUserMissingTransfersCredentials(): void {
     $this->drupalUserMock->method('getUserByMcid')
       ->willReturnMap([
         [self::PREV_ID, ['uid' => 10, 'mcid' => self::PREV_ID]],
         [self::NEW_ID,  []],
       ]);
-    $this->magicWordMock->method('getMagicWord')
-      ->with(self::PREV_ID)
-      ->willReturn('secret');
+    $credentials = ['mcid' => self::PREV_ID, 'magicWordEncrypted' => 'enc', 'userName' => 'asmith',
+      'email' => 'a@example.com', 'roles' => ['nlp_leader' => 'NL'], 'vfid' => 50];
+    $this->magicWordMock->method('getCredentials')
+      ->with(self::PREV_ID, FALSE)
+      ->willReturn($credentials);
     $this->magicWordMock->expects($this->once())
-      ->method('setMagicWord')
-      ->with(self::NEW_ID, 'secret');
+      ->method('createCredentials')
+      ->with(['mcid' => self::NEW_ID] + $credentials);
+    $this->magicWordMock->expects($this->never())->method('setMagicWord');
     $this->magicWordMock->expects($this->once())
       ->method('deleteMagicWord')
       ->with(self::PREV_ID);
@@ -457,9 +464,27 @@ class ReassignMcidFormTest extends UnitTestCase {
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')
       ->with(self::PREV_ID)
       ->willReturn([['turfId' => 9], ['turfId' => 10]]);
-    $this->turfsMock->expects($this->exactly(2))
-      ->method('updateTurf')
-      ->with($this->anything(), 'mcid', self::NEW_ID);
+    $this->turfsMock->expects($this->never())->method('updateTurf');
+    $updated = [];
+    $this->turfAssignmentsMock->expects($this->exactly(2))
+      ->method('setTurfAssignment')
+      ->willReturnCallback(function (array $assignment) use (&$updated) {
+        $updated[] = $assignment;
+      });
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $this->submitState());
+
+    $this->assertSame([
+      ['turfId' => 9, 'mcid' => self::NEW_ID],
+      ['turfId' => 10, 'mcid' => self::NEW_ID],
+    ], $updated);
+  }
+
+  public function testSubmitFormTurfVotersReassignedToNewId(): void {
+    $this->votersMock->expects($this->once())
+      ->method('reassignNlVoters')
+      ->with(self::PREV_ID, self::NEW_ID);
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $this->submitState());

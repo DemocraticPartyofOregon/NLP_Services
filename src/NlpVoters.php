@@ -72,6 +72,28 @@ class NlpVoters {
   }
 
   /**
+   * reassignNlVoters
+   *
+   * Move the voters in an NL's turfs from one MCID to another.
+   *
+   * @param int $previousMcid
+   * @param int $newMcid
+   * @return void
+   */
+  public function reassignNlVoters(int $previousMcid, int $newMcid): void
+  {
+    try {
+      $this->connection->update(self::VOTER_TURF_TBL)
+        ->fields(['mcid' => $newMcid])
+        ->condition('mcid', $previousMcid)
+        ->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('reassignNlVoters', $e->getMessage() );
+    }
+  }
+
+  /**
    * getVoterCountByNl
    *
    * Get the number of voters in all turfs assigned to an NL.
