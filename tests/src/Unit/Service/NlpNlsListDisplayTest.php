@@ -184,6 +184,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('lastAccess', $this->service->getSortField('Last access', false));
     }
 
+    public function testGetSortFieldPrecinctLabelIsPrecinctWhenBriefAndPctOtherwise(): void {
+      // The brief (Sync Turf selection) table says "Precinct"; the Active NLs table keeps "Pct".
+      $this->assertSame('precinct', $this->service->getSortField('Precinct', true));
+      $this->assertSame('', $this->service->getSortField('Pct', true));
+      $this->assertSame('precinct', $this->service->getSortField('Pct', false));
+    }
+
     public function testGetSortFieldUnknownReturnsEmptyString(): void {
       $this->assertSame('', $this->service->getSortField('Unknown Header', false));
     }

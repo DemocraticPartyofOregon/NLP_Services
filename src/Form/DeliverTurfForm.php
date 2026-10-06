@@ -21,6 +21,7 @@ use Drupal\nlpservices\NlpTurfDisplay;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\ApiMapRegions;
+use Drupal\nlpservices\NlpSyncTurfBuilder;
 
 /**
  * @noinspection PhpUnused
@@ -28,6 +29,9 @@ use Drupal\nlpservices\ApiMapRegions;
 class DeliverTurfForm extends FormBase
 {
   use TurfPrecinctFilterTrait;
+
+  // Upload field name of the shared walksheet box (see NlpSyncTurfBuilder::walksheet()).
+  private const WALKSHEET_FIELD = NlpSyncTurfBuilder::walksheetBaseName . NlpSyncTurfBuilder::selectType['dt'];
 
   protected NlpTurfs $turfsObj;
   protected NlpPaths $pathsObj;
@@ -42,11 +46,12 @@ class DeliverTurfForm extends FormBase
   protected NlpSessionData $nlpSessionDataObj;
   protected  NlpNls $nlsObj;
   protected ApiMapRegions $foldersObj;
+  protected NlpSyncTurfBuilder $syncTurfBuilderObj;
   public function __construct( $turfsObj, $pathsObj, $fileSystemObj,
                               $instructionsObj, $coordinatorsObj, $credentialsEmailObj, $turfMsgObj,
                               $turfDisplayObj, $searchBarObj,
                               $nlpSessionDataObj, $nlsObj, $foldersObj,
-                              $requestStack)
+                              $requestStack, $syncTurfBuilderObj)
   {
     $this->turfsObj = $turfsObj;
     $this->pathsObj = $pathsObj;
@@ -61,6 +66,7 @@ class DeliverTurfForm extends FormBase
     $this->nlsObj = $nlsObj;
     $this->foldersObj = $foldersObj;
     $this->setRequestStack($requestStack);
+    $this->syncTurfBuilderObj = $syncTurfBuilderObj;
   }
 
   /**
@@ -82,6 +88,7 @@ class DeliverTurfForm extends FormBase
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.api_map_regions'),
       $container->get('request_stack'),
+      $container->get('nlpservices.sync_turf_builder'),
     );
   }
 
@@ -101,6 +108,7 @@ class DeliverTurfForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
     $form['#attached']['library'][] = 'nlpservices/search-boxes';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
+    $form['#attached']['library'][] = 'nlpservices/walksheet-form';
 
     $messenger = Drupal::messenger();
 
@@ -185,13 +193,8 @@ class DeliverTurfForm extends FormBase
                     turf that needs a walksheet.  It\'s better if you attached the walk sheet when you
                     synced the turf.'
     ];
-    // Name of the walksheet PDF for the turf.
-    $form['turf_pdf'] = [
-      '#type' => 'file',
-      '#title' => t('NL turf walksheet'),
-      '#description' => 'Associate this PDF, XLSX or XLS file with the turf or replace an existing file.',
-      '#size' => 75,
-    ];
+    // Walksheet PDF/XLSX/XLS for the turf, in the same box Sync Turf uses.
+    $form['walksheet'] = $this->syncTurfBuilderObj->walksheet('dt');
     // Allow the sender to add a paragraph to the email.
     $form['note'] = [
       '#title' => 'Additional note for the NL',
@@ -241,18 +244,18 @@ class DeliverTurfForm extends FormBase
     }
 
     $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
-    $uploadedFile = $files['turf_pdf'] ?? NULL;
+    $uploadedFile = $files[self::WALKSHEET_FIELD] ?? NULL;
     if (!empty($uploadedFile)) {
       $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
       $pdfFileNameParts = explode('.', $pdfFileName);
       $pdfFileNameType = end($pdfFileNameParts);
       $allowed = ['pdf', 'xls', 'xlsx'];
       if (!in_array($pdfFileNameType, $allowed)) {
-        $form_state->setErrorByName('turf_pdf',
+        $form_state->setErrorByName(self::WALKSHEET_FIELD,
           'The walksheet must be a PDF, XLS, or XLSX type.');
       }
       if(count($selections) > 1) {
-        $form_state->setErrorByName('turf_pdf',
+        $form_state->setErrorByName(self::WALKSHEET_FIELD,
           'You can only attach a walksheet to one NL at a time.');
       }
     }
@@ -281,7 +284,7 @@ class DeliverTurfForm extends FormBase
         $selections = $form_state->get('selections');
 
         $files = $this->requestStack->getCurrentRequest()->files->get('files', []);
-        $uploadedFile = $files['turf_pdf'] ?? NULL;
+        $uploadedFile = $files[self::WALKSHEET_FIELD] ?? NULL;
 
         foreach ($selections as $turfIndex => $selection) {
 

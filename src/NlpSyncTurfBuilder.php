@@ -16,6 +16,7 @@ class NlpSyncTurfBuilder
     'ns' => '_nameSearch',
     'ds' => '_districtSelect',
     're' => '_replacement',
+    'dt' => '_deliverTurf',
   ];
 
   public function __construct( $turfListDisplayVoteBuilderObj,

@@ -21,11 +21,15 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpPaths;
 use Drupal\nlpservices\NlpSearchBar;
 use Drupal\nlpservices\NlpSessionData;
+use Drupal\nlpservices\NlpSyncTurfBuilder;
+use Drupal\nlpservices\NlpNlsListDisplay;
+use Drupal\nlpservices\NlpTurfListDisplayVoteBuilder;
 use Drupal\nlpservices\NlpTurfDeliveryMessage;
 use Drupal\nlpservices\NlpTurfDisplay;
 use Drupal\nlpservices\NlpTurfs;
 use Drupal\Tests\UnitTestCase;
 use Psr\Log\LoggerInterface;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -94,9 +98,9 @@ class DeliverTurfFormTest extends UnitTestCase {
   // Helpers
   // -------------------------------------------------------------------------
 
-  private function buildFormInstance(): DeliverTurfForm {
+  private function buildFormInstance(array $files = []): DeliverTurfForm {
     $requestStack = new RequestStack();
-    $requestStack->push(new Request([], [], [], [], [], ['SERVER_NAME' => 'test.example.com']));
+    $requestStack->push(new Request([], [], [], [], $files, ['SERVER_NAME' => 'test.example.com']));
 
     $form = new DeliverTurfForm(
       $this->turfsMock,
@@ -112,6 +116,12 @@ class DeliverTurfFormTest extends UnitTestCase {
       $this->nlsMock,
       $this->foldersMock,
       $requestStack,
+      // Real builder: walksheet() only builds render arrays, so the box under test is the shared one.
+      new NlpSyncTurfBuilder(
+        $this->createMock(NlpTurfListDisplayVoteBuilder::class),
+        $this->createMock(NlpNlsListDisplay::class),
+        $this->sessionDataMock,
+      ),
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
@@ -223,7 +233,10 @@ class DeliverTurfFormTest extends UnitTestCase {
 
     $this->assertArrayHasKey('turf-form', $form);
     $this->assertArrayHasKey('footnote', $form);
-    $this->assertArrayHasKey('turf_pdf', $form);
+    $this->assertArrayNotHasKey('turf_pdf', $form);
+    $this->assertSame('file', $form['walksheet']['turf_walksheet_deliverTurf']['#type']);
+    $this->assertStringContainsString('walksheet-box', $form['walksheet']['walk-sheet-box']['#markup']);
+    $this->assertContains('nlpservices/walksheet-form', $form['#attached']['library']);
     $this->assertArrayHasKey('note', $form);
     $this->assertArrayHasKey('submit', $form);
   }
@@ -451,6 +464,25 @@ class DeliverTurfFormTest extends UnitTestCase {
 
     $form = [];
     $this->buildFormInstance()->validateForm($form, $formState);
+  }
+
+  public function testValidateFormRejectsWalksheetOfWrongTypeFromWalksheetBox(): void {
+    $this->turfDisplayMock->method('validateTurfSelection')
+      ->willReturn([10 => ['turfIndex' => 10, 'rowCount' => 1]]);
+    $upload = new UploadedFile(__FILE__, 'walksheet.txt', 'text/plain', UPLOAD_ERR_OK, TRUE);
+
+    $formState = $this->createMock(FormStateInterface::class);
+    $formState->method('getTriggeringElement')->willReturn(['#name' => 'submit']);
+    $formState->method('getValues')->willReturn(['contacts' => []]);
+    $formState->method('set');
+    // The upload is read from the shared walksheet box's field, not the old turf_pdf field.
+    $formState->expects($this->once())
+      ->method('setErrorByName')
+      ->with('turf_walksheet_deliverTurf', 'The walksheet must be a PDF, XLS, or XLSX type.');
+
+    $form = [];
+    $this->buildFormInstance(['files' => ['turf_walksheet_deliverTurf' => $upload]])
+      ->validateForm($form, $formState);
   }
 
   public function testValidateFormValidSelectionStoresSelections(): void {

@@ -179,6 +179,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNotEmpty($result['contacts']['#header']);
     }
 
+    public function testDisplayTurfsHeaderLabels(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
+      $result = $this->service->displayTurfs($rows);
+      $labels = array_map(fn($cell) => (string) $cell['data'], array_slice($result['contacts']['#header'], 0, 4));
+      // The selection column has no label.
+      $this->assertSame(['', 'turfIndex', 'HD', 'Precinct'], $labels);
+    }
+
     public function testDisplayTurfsCbColumnIsCheckbox(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()]);
       $result = $this->service->displayTurfs($rows);
@@ -236,16 +244,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // getSortField
     // -------------------------------------------------------------------------
 
-    public function testGetSortFieldReturnsTurfIndexForTi(): void {
-      $this->assertSame('turfIndex', $this->service->getSortField('ti'));
+    public function testGetSortFieldReturnsTurfIndexForTurfIndex(): void {
+      $this->assertSame('turfIndex', $this->service->getSortField('turfIndex'));
     }
 
     public function testGetSortFieldReturnsHdForHD(): void {
       $this->assertSame('hd', $this->service->getSortField('HD'));
     }
 
-    public function testGetSortFieldReturnsPrecinctForPct(): void {
-      $this->assertSame('precinct', $this->service->getSortField('Pct'));
+    public function testGetSortFieldReturnsPrecinctForPrecinct(): void {
+      $this->assertSame('precinct', $this->service->getSortField('Precinct'));
     }
 
     public function testGetSortFieldReturnsNlLastNameForNameMcid(): void {
@@ -265,7 +273,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetSortFieldDisplayTypeExcludesCbFromSearchableFields(): void {
-      $this->assertSame('', $this->service->getSortField('cb', 'display'));
+      $this->assertSame('', $this->service->getSortField('', 'display'));
     }
 
     public function testGetSortFieldReplacementTypeExcludesNlLastName(): void {
@@ -286,7 +294,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfTableSortsAscendingByTurfIndex(): void {
       $table = $this->buildTurfTable();
-      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $this->service->sortTurfTable($table, 'asc', 'turfIndex');
       $values = array_column($table, 'turfIndex');
       $this->assertSame('5', $values[0]);
       $this->assertSame('10', $values[2]);
@@ -294,7 +302,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfTableSortsDescendingByTurfIndex(): void {
       $table = $this->buildTurfTable();
-      $this->service->sortTurfTable($table, 'desc', 'ti');
+      $this->service->sortTurfTable($table, 'desc', 'turfIndex');
       $values = array_column($table, 'turfIndex');
       $this->assertSame('10', $values[0]);
       $this->assertSame('5', $values[2]);
@@ -310,7 +318,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfTableEmptyTableDoesNotError(): void {
       $table = [];
-      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $this->service->sortTurfTable($table, 'asc', 'turfIndex');
       $this->assertSame([], $table);
     }
 
@@ -323,7 +331,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testSortTurfTablePreservesKeysAfterSort(): void {
       $table = $this->buildTurfTable();
-      $this->service->sortTurfTable($table, 'asc', 'ti');
+      $this->service->sortTurfTable($table, 'asc', 'turfIndex');
       $this->assertArrayHasKey(2, $table);
     }
 

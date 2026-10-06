@@ -293,7 +293,8 @@ class NlpNlsListDisplay
       $this->header[] = ['data' => '', 'field' => 'cb', 'class' => ['nlp-th-color']];
     }
     $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ];
-    $this->header[] = ['data' => t('Pct'), 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
+    $pctLabel = ($brief) ? t('Precinct') : t('Pct');
+    $this->header[] = ['data' => $pctLabel, 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Name<br>MCID<br>(Coordinator)'), 'field' => 'name', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Address'), 'field' => 'address', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Email<br>Phone<br>VFID'), 'field' => 'email', 'class' => ['nlp-th-color'] ];

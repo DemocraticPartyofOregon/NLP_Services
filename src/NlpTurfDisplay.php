@@ -127,12 +127,12 @@ class NlpTurfDisplay
     $this->header = [];
 
     if($displayType != 'display') {
-      $this->header[] = ['data' => t('cb'), 'class' => ['nlp-th-color']];
+      $this->header[] = ['data' => '', 'class' => ['nlp-th-color']];
     }
 
-    $this->header[] = ['data' => t('ti'), 'field' => 'turfIndex', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('turfIndex'), 'field' => 'turfIndex', 'class' => ['nlp-th-color']];
     $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color']];
-    $this->header[] = ['data' => t('Pct'), 'field' => 'precinct', 'class' => ['nlp-th-color']];
+    $this->header[] = ['data' => t('Precinct'), 'field' => 'precinct', 'class' => ['nlp-th-color']];
 
     if($displayType != 'replacement') {
       $this->header[] = ['data' => t('Name<br>MCID'), 'field' => 'nlLastName', 'class' => ['nlp-th-color']];
