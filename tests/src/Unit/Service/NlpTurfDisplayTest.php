@@ -131,6 +131,33 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayHasKey('nlLastName', $rows[7]);
     }
 
+    public function testBuildTurfTableArrayDisplayTypeShowsVotersOverDoors(): void {
+      $turf = array_merge($this->baseTurf(), ['voterCount' => 84, 'doorCount' => 51]);
+      $rows = $this->service->buildTurfTableArray([$turf], 'display');
+      $this->assertSame('84<br>51', $rows[7]['voterDoorCount']);
+    }
+
+    public function testBuildTurfTableArrayDisplayTypeMissingCountsAreBlank(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
+      $this->assertSame('<br>', $rows[7]['voterDoorCount']);
+    }
+
+    public function testBuildTurfTableArrayOtherTypesExcludeVoterDoorCount(): void {
+      foreach (['other', 'walksheet', 'replacement'] as $type) {
+        $rows = $this->service->buildTurfTableArray([$this->baseTurf()], $type);
+        $this->assertArrayNotHasKey('voterDoorCount', $rows[7], $type);
+      }
+    }
+
+    public function testDisplayTurfsDisplayTypeLastHeaderIsVotersDoors(): void {
+      $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'display');
+      $result = $this->service->displayTurfs($rows, 'display');
+      $header = $result['contacts']['#header'];
+      $this->assertSame('Voters<br>Doors', (string) end($header)['data']);
+      // One header cell per row cell, so the new column lines up.
+      $this->assertCount(count($rows[7]), $header);
+    }
+
     public function testBuildTurfTableArrayReplacementTypeExcludesNlLastName(): void {
       $rows = $this->service->buildTurfTableArray([$this->baseTurf()], 'replacement');
       $this->assertArrayNotHasKey('nlLastName', $rows[7]);

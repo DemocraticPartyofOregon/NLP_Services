@@ -52,6 +52,7 @@ class NlpTurfDisplay
           $createDate = date('Y-m-d', strtotime($turf['minivanCreateDate']));
           $columns['minivanNumber'] = $turf['minivanNumber'] . '<br>' . $createDate;
         }
+        $columns['voterDoorCount'] = ($turf['voterCount'] ?? '') . '<br>' . ($turf['doorCount'] ?? '');
       }
       if($displayType == 'walksheet') {
         $columns['email'] = $turf['email'];
@@ -142,6 +143,7 @@ class NlpTurfDisplay
 
     if($displayType == 'display') {
       $this->header[] = ['data' => t('MiniVan#<br>Create Date'), 'class' => ['nlp-th-color']];
+      $this->header[] = ['data' => t('Voters<br>Doors'), 'class' => ['nlp-th-color']];
     }
 
     if($displayType == 'walksheet') {
