@@ -77,9 +77,21 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNotEmpty($result['contacts']['#header']);
     }
 
-    public function testDisplayVoteBuilderTurfsCbColumnIsCheckbox(): void {
+    public function testDisplayVoteBuilderTurfsCbColumnIsRadio(): void {
       $result = $this->service->displayVoteBuilderTurfs([7 => $this->baseTurf()], FALSE);
-      $this->assertSame('checkbox', $result['contacts'][0]['cb']['#type']);
+      $this->assertSame('radio', $result['contacts'][0]['cb']['#type']);
+    }
+
+    public function testDisplayVoteBuilderTurfsRadiosShareOneGroup(): void {
+      $turfs = [7 => $this->baseTurf(), 8 => $this->baseTurf()];
+      $result = $this->service->displayVoteBuilderTurfs($turfs, FALSE);
+      $this->assertSame(['contacts', 'selected', 'cb'], $result['contacts'][0]['cb']['#parents']);
+      $this->assertSame($result['contacts'][0]['cb']['#parents'], $result['contacts'][1]['cb']['#parents']);
+    }
+
+    public function testValidateTurfSelectionReadsRadioGroupValue(): void {
+      $result = $this->service->validateTurfSelection(['selected' => ['cb' => 'CB_7_42']]);
+      $this->assertSame([7 => ['turfId' => 7, 'mcid' => 42]], $result);
     }
 
     public function testDisplayVoteBuilderTurfsCbReturnValueContainsTurfId(): void {

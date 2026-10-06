@@ -56,8 +56,13 @@ class NlpTurfListDisplayVoteBuilder
     foreach ($rows as $rowNumber => $row) {
       foreach($row as $columnName => $columnValue) {
         if(is_array($columnValue) && $columnValue['type'] == 'cb') {
+          // Only one turf can be synced at a time, so every row's radio shares
+          // the same #parents (and so the same name attribute) to form a single
+          // radio group. The value lands at contacts[selected][cb], which keeps
+          // the row shape validateTurfSelection() expects.
           $form_element['contacts'][$rowNumber][$columnName] = [
-            '#type' => 'checkbox',
+            '#type' => 'radio',
+            '#parents' => ['contacts', 'selected', 'cb'],
             '#return_value' => 'CB_' . $columnValue['turfId'] . '_' . $columnValue['mcid'],
           ];
         } else {
@@ -86,7 +91,7 @@ and cannot be assigned to this turf.<br>
   private function headerBuild(): void
   {
     $this->header = [
-      ['data' => t('cb'), 'class' => ['nlp-th-color']],
+      ['data' => '', 'class' => ['nlp-th-color']],
       ['data' => t('A'), 'field' => 'turfAssigned', 'class' => ['nlp-th-color']],
       ['data' => t('Turf Name'), 'field' => 'turfName', 'class' => ['nlp-th-color']],
       ['data' => t('Previous NL'), 'field' => 'nl', 'class' => ['nlp-th-color']],
