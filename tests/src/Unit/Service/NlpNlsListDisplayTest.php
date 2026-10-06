@@ -173,6 +173,28 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame($result['nlsForm'][42]['cb-42']['#parents'], $result['nlsForm'][77]['cb-77']['#parents']);
     }
 
+    public function testBuildNlsTableHdHeaderDoesNotWrap(): void {
+      $result = $this->buildBriefNlsTable('search');
+
+      $hdHeaders = array_filter($result['search']['#header'],
+        fn($cell) => str_contains((string) $cell['data'], '>HD<'));
+      $this->assertCount(1, $hdHeaders);
+      $this->assertContains('nlp-th-nowrap', reset($hdHeaders)['class']);
+    }
+
+    public function testFullTableTcAndTdHeadersHaveHoverNotes(): void {
+      $header = (new \ReflectionClass($this->service))->getMethod('headerBuild');
+      $header->invoke($this->service, false);
+      $cells = array_map(fn($cell) => (string) $cell['data'],
+        (new \ReflectionProperty($this->service, 'header'))->getValue($this->service));
+
+      $tc = current(array_filter($cells, fn($data) => str_contains($data, '<p>TC<span')));
+      $td = current(array_filter($cells, fn($data) => str_contains($data, '<p>TD<span')));
+      $this->assertStringContainsString('class="hint_note', $tc);
+      $this->assertStringContainsString('<span class="hint-list">The turf is cut and synced with NLP Services.</span>', $tc);
+      $this->assertStringContainsString('<span class="hint-list">The turf was delivered to the NL either by email or in person.</span>', $td);
+    }
+
     public function testValidateNlSelectionReadsRadioGroupValue(): void {
       $result = $this->service->validateNlSelection(['selected' => ['cb' => 'CB_42_42']]);
 
@@ -184,11 +206,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('lastAccess', $this->service->getSortField('Last access', false));
     }
 
-    public function testGetSortFieldPrecinctLabelIsPrecinctWhenBriefAndPctOtherwise(): void {
-      // The brief (Sync Turf selection) table says "Precinct"; the Active NLs table keeps "Pct".
-      $this->assertSame('precinct', $this->service->getSortField('Precinct', true));
-      $this->assertSame('', $this->service->getSortField('Pct', true));
-      $this->assertSame('precinct', $this->service->getSortField('Pct', false));
+    public function testGetSortFieldPrecinctLabelIsPrecinctInBothTables(): void {
+      // Both the brief (Sync Turf selection) and full (Active NLs) tables say "Precinct".
+      foreach ([true, false] as $brief) {
+        $this->assertSame('precinct', $this->service->getSortField('Precinct', $brief));
+        $this->assertSame('', $this->service->getSortField('Pct', $brief));
+      }
     }
 
     public function testGetSortFieldUnknownReturnsEmptyString(): void {

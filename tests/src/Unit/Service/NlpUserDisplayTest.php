@@ -152,6 +152,29 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('jane@example.com', $result['contacts'][1]['email']['#markup']);
     }
 
+    public function testDisplayUsersLoginReminderModeOmitsUidAndCounty(): void {
+      $result = $this->service->displayUsers([$this->baseUser()], TRUE);
+      $this->assertArrayNotHasKey('uid', $result['contacts'][1]);
+      $this->assertArrayNotHasKey('county', $result['contacts'][1]);
+
+      $labels = array_map(fn($cell) => (string) $cell['data'], $result['contacts']['#header']);
+      $this->assertSame('', $labels[0]);
+      $this->assertNotContains('UID', $labels);
+      $this->assertNotContains('County', $labels);
+      // One header cell per row cell, so the columns still line up.
+      $this->assertCount(count(array_filter(array_keys($result['contacts'][1]), 'is_string')), $labels);
+    }
+
+    public function testDisplayUsersStandardModeKeepsUidAndCounty(): void {
+      $result = $this->service->displayUsers([$this->baseUser()]);
+      $this->assertArrayHasKey('uid', $result['contacts'][1]);
+      $this->assertArrayHasKey('county', $result['contacts'][1]);
+
+      $labels = array_map(fn($cell) => (string) $cell['data'], $result['contacts']['#header']);
+      $this->assertSame(['cb', 'UID'], array_slice($labels, 0, 2));
+      $this->assertContains('County', $labels);
+    }
+
     // -------------------------------------------------------------------------
     // validateUserSelection
     // -------------------------------------------------------------------------

@@ -99,6 +99,17 @@ table.nlp-nls-table th.nl-notes-col {
     min-width: 12rem;
 }
 
+/* Short headers like "HD" must not wrap when the table is squeezed. */
+table.nlp-nls-table th.nlp-th-nowrap {
+    white-space: nowrap;
+}
+
+/* Header labels with a hover popup note (hint-note library). */
+table.nlp-nls-table th .nlp-th-hint p {
+    cursor: help;
+    text-decoration: underline dotted;
+}
+
 table.nlp-nls-table textarea.nl-notes-textarea {
     min-width: 12rem;
     width: 100%;

@@ -194,6 +194,69 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — narrowing by precinct
+    // -------------------------------------------------------------------------
+
+    /**
+     * Builds the display page for three users in HD 32 whose NL records are in
+     * precincts "Westside 12", "Eastside 3" and "Westside 12", with the given
+     * precinct index selected.  Returns [pctOptions passed to the search bar,
+     * uids passed to the table].
+     */
+    private function buildWithPrecinctIndex(int $pctIndex): array {
+      $users = [
+        1 => ['mcid' => 101] + $this->sampleUser(1),
+        2 => ['mcid' => 102] + $this->sampleUser(2),
+        3 => ['mcid' => 103] + $this->sampleUser(3),
+      ];
+      $this->drupalUserMock->method('getUsers')->willReturn($users);
+      $this->nlsObjMock->method('getPrecinctsByMcid')->with('Denver')
+        ->willReturn([101 => 'Westside 12', 102 => 'Eastside 3', 103 => 'Westside 12']);
+      $this->nlpSessionDataMock->method('getSavedPrecinctIndex')->willReturn($pctIndex);
+
+      $captured = ['pctOptions' => NULL, 'uids' => NULL];
+      $this->searchBarMock->method('searchBar')->willReturnCallback(
+        function ($hdOptions, $hdIndex, $pctOptions, $pctIndex) use (&$captured) {
+          $captured['pctOptions'] = $pctOptions;
+          return [];
+        });
+      $this->userDisplayMock->method('displayUsers')->willReturnCallback(
+        function ($users) use (&$captured) {
+          $captured['uids'] = array_keys($users);
+          return [];
+        });
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter',        TRUE],
+        ['currentHdIndex', 0],
+        ['hdOptions',      ['All', '32']],
+        ['county',         'Denver'],
+        ['page',           'displayUsers'],
+        ['search-needle',  NULL],
+      ]);
+      $this->buildForm()->buildForm([], $formState);
+      return [$captured['pctOptions'], $captured['uids']];
+    }
+
+    public function testBuildFormOffersPrecinctsOfUsersWithAllFirst(): void {
+      [$pctOptions, $uids] = $this->buildWithPrecinctIndex(0);
+      $this->assertSame(['All', 'Eastside 3', 'Westside 12'], $pctOptions);
+      $this->assertSame([1, 2, 3], $uids);
+    }
+
+    public function testBuildFormSelectedPrecinctNarrowsUsers(): void {
+      [, $uids] = $this->buildWithPrecinctIndex(2);  // 'Westside 12'
+      $this->assertSame([1, 3], $uids);
+    }
+
+    public function testBuildFormStalePrecinctIndexFallsBackToAll(): void {
+      $this->nlpSessionDataMock->expects($this->once())->method('savePrecinctIndex')->with(0);
+      [, $uids] = $this->buildWithPrecinctIndex(9);
+      $this->assertSame([1, 2, 3], $uids);
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — needle set → calls searchInfoArray and clears needle
     // -------------------------------------------------------------------------
 

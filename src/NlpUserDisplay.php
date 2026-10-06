@@ -31,7 +31,10 @@ class NlpUserDisplay
     foreach ($users as $user) {
       $column = [];
       $column['cb'] = ['type'=>'cb','uid'=>$user['uid'], 'rowCount'=>$row];
-      $column['uid'] = $user['uid'];
+      // The login reminder table leaves out UID and County to keep its width manageable.
+      if(!$loginReminder) {
+        $column['uid'] = $user['uid'];
+      }
       $column['hd'] = $user['hd'];
       $column['mcid'] = $user['mcid'];
       $column['lastName'] = $user['lastName'];
@@ -46,7 +49,9 @@ class NlpUserDisplay
         $column['phone'] = $user['phone'];
         $column['email'] = $user['email'];
       }
-      $column['county'] = $user['county'];
+      if(!$loginReminder) {
+        $column['county'] = $user['county'];
+      }
       $roleDisplay = '';
       $roles = $user['roles'];
       foreach ($roles as $roleId => $role) {
@@ -96,15 +101,20 @@ class NlpUserDisplay
    */
   private function headerBuild(bool $loginReminder=FALSE):void
   {
-    $this->header = [
-      ['data' => t('cb'), 'class' => ['nlp-th-color'] ],
-      ['data' => t('UID'), 'field' => 'uid', 'class' => ['nlp-th-color'] ],
+    $this->header = [];
+    if(!$loginReminder) {
+      $this->header[] = ['data' => t('cb'), 'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => t('UID'), 'field' => 'uid', 'class' => ['nlp-th-color'] ];
+    } else {
+      $this->header[] = ['data' => '', 'class' => ['nlp-th-color'] ];
+    }
+    $this->header = array_merge($this->header, [
       ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ],
       ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color'] ],
       ['data' => t('Last&nbsp;Name'), 'field' => 'lastName', 'class' => ['nlp-th-color'] ],
       ['data' => t('First&nbsp;Name'), 'field' => 'firstName', 'class' => ['nlp-th-color'] ],
       ['data' => t('Username'), 'field' => 'userName', 'class' => ['nlp-th-color'] ],
-    ];
+    ]);
     if(!$loginReminder) {
       $this->header[] = ['data' => t('Create'), 'field' => 'created', 'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Access'), 'field' => 'access', 'class' => ['nlp-th-color'] ];
@@ -112,7 +122,9 @@ class NlpUserDisplay
       $this->header[] = ['data' => t('Phone'), 'field' => 'phone', 'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Email'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     }
-    $this->header[] = ['data' => t('County'), 'class' => ['nlp-th-color'] ];
+    if(!$loginReminder) {
+      $this->header[] = ['data' => t('County'), 'class' => ['nlp-th-color'] ];
+    }
     $this->header[] = ['data' => t('Roles'), 'class' => ['nlp-th-color'] ];
   }
   

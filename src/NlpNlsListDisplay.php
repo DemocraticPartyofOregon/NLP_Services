@@ -292,23 +292,39 @@ class NlpNlsListDisplay
     if($brief) {
       $this->header[] = ['data' => '', 'field' => 'cb', 'class' => ['nlp-th-color']];
     }
-    $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ];
-    $pctLabel = ($brief) ? t('Precinct') : t('Pct');
-    $this->header[] = ['data' => $pctLabel, 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
+    $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color', 'nlp-th-nowrap'] ];
+    $this->header[] = ['data' => t('Precinct'), 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Name<br>MCID<br>(Coordinator)'), 'field' => 'name', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Address'), 'field' => 'address', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Email<br>Phone<br>VFID'), 'field' => 'email', 'class' => ['nlp-th-color'] ];
     if(!$brief) {
       $this->header[] = ['data' => t('Notes'), 'field' => 'notes', 'class' => ['nlp-th-color', 'nl-notes-col'] ];
       $this->header[] = ['data' => t('NLP<br>Participation'),  'class' => ['nlp-th-color'] ];
-      $this->header[] = ['data' => t('TC'),  'class' => ['nlp-th-color'] ];
-      $this->header[] = ['data' => t('TD'),  'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => $this->hintHeader('TC', 'The turf is cut and synced with NLP Services.'),
+        'class' => ['nlp-th-color'] ];
+      $this->header[] = ['data' => $this->hintHeader('TD', 'The turf was delivered to the NL either by email or in person.'),
+        'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Contact<br>Method'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Last access'), 'field' => 'lastAccess', 'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Vtrs<br>Drs'),  'class' => ['nlp-th-color'] ];
       $this->header[] = ['data' => t('Att<br>P2V'),  'class' => ['nlp-th-color'] ];
     }
 
+  }
+
+  /**
+   * hintHeader
+   *
+   * A header label that shows a popup note on hover (styled by the hint-note library).
+   *
+   * @param string $label - The column label.
+   * @param string $hint - The popup text.
+   * @return Markup
+   */
+  private function hintHeader(string $label, string $hint): Markup
+  {
+    return Markup::create('<div class="hint_note nlp-th-hint"><p>' . Html::escape($label)
+      . '<span class="hint-list">' . Html::escape($hint) . '</span></p></div>');
   }
 
   /**

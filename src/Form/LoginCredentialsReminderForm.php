@@ -104,7 +104,13 @@ class LoginCredentialsReminderForm extends FormBase
     $county = $form_state->get('county');
 
     $page = $form_state->get('page');
-    $users = $this->drupalUser->getUsers($county);
+    $users = $this->addPrecincts($this->drupalUser->getUsers($county), $county);
+
+    // Precinct choices are the precincts of the users in the selected HD, taken
+    // before any name search so an option's position doesn't move.
+    $hdUsers = $users;
+    $this->hdsWithUsers($hdUsers, $currentHd);
+    [$pctOptions, $currentPctIndex] = $this->precinctOptions($hdUsers);
 
     // The user selected a phrase to search, display all possible candidates.
     $needle = $form_state->get('search-needle');
@@ -121,12 +127,17 @@ class LoginCredentialsReminderForm extends FormBase
     }
 
     $this->hdsWithUsers($users,$currentHd);  // Populate the HD field.
+    if (!empty($currentPctIndex)) {
+      $currentPct = (string) $pctOptions[$currentPctIndex];
+      $users = array_filter($users, fn($user) => (string) $user['precinct'] === $currentPct);
+    }
     $form_state->set('$users', $users);
 
     switch ($page) {
       case 'displayUsers':
 
-        $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex);
+        $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex,
+          $pctOptions, $currentPctIndex);
 
         if(empty($users)) {
           $messenger->addError(t('No users selected'));
@@ -260,6 +271,48 @@ class LoginCredentialsReminderForm extends FormBase
     $hdOptions = array_values($hdOptions);
     asort($hdOptions);
     return $hdOptions;
+  }
+
+  /**
+   * addPrecincts
+   *
+   * Drupal accounts don't hold a precinct, so take it from each user's NL record.
+   * A user with no NL record gets an empty precinct.
+   *
+   * @param array $users - Array of Drupal users keyed by uid.
+   * @param string $county
+   * @return array - The users with a 'precinct' field added.
+   */
+  private function addPrecincts(array $users, string $county): array
+  {
+    $precincts = $this->nlsObj->getPrecinctsByMcid($county);
+    foreach ($users as $uid => $user) {
+      $users[$uid]['precinct'] = $precincts[$user['mcid'] ?? ''] ?? '';
+    }
+    return $users;
+  }
+
+  /**
+   * precinctOptions
+   *
+   * Builds the precinct select options ('All' first, then each precinct with
+   * users, in natural order) and the selected index.  A stale index (e.g. the
+   * precinct is not in the newly selected HD) falls back to 'All'.
+   *
+   * @param array $users - The users in the selected HD.
+   * @return array - [$pctOptions, $currentPctIndex]
+   */
+  private function precinctOptions(array $users): array
+  {
+    $precincts = array_unique(array_filter(array_column($users, 'precinct'), 'strlen'));
+    natcasesort($precincts);
+    $pctOptions = array_merge(['All'], array_values($precincts));
+    $currentPctIndex = $this->nlpSessionDataObj->getSavedPrecinctIndex();
+    if (!isset($pctOptions[$currentPctIndex])) {
+      $this->nlpSessionDataObj->savePrecinctIndex(0);
+      $currentPctIndex = 0;
+    }
+    return [$pctOptions, $currentPctIndex];
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

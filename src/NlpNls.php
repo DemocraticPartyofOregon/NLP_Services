@@ -293,6 +293,34 @@ class NlpNls {
   }
   
   /**
+   * getPrecinctsByMcid
+   *
+   * Get the precinct of every NL in a county in one query, keyed by mcid.
+   * Used to narrow lists of Drupal users (whose accounts have no precinct) by precinct.
+   *
+   * @param string $county
+   * @return array - mcid => precinct.
+   */
+  public function getPrecinctsByMcid(string $county): array
+  {
+    try {
+      $query = $this->connection->select(self::NLS_TBL, 'n');
+      $query->fields('n', ['mcid', 'precinct']);
+      $query->condition('n.county',$county);
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('getPrecinctsByMcid', $e->getMessage() );
+      return [];
+    }
+    $precincts = [];
+    while ($nlRecord = $result->fetchAssoc()) {
+      $precincts[$nlRecord['mcid']] = $nlRecord['precinct'];
+    }
+    return $precincts;
+  }
+
+  /**
    * getPctList
    *
    * Get a list of distinct precinct numbers for a given county and HD.
