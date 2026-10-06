@@ -346,6 +346,31 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayNotHasKey('nl_selection', $result['nl_select_district']);
     }
 
+    public function testBuildNlSearchByDistrictShowsGoBackWhenNoHdOrPrecinctChosen(): void {
+      $this->sessionDataMock->method('getHdOptions')->willReturn([]);
+      $this->sessionDataMock->method('get')->willReturn(NULL);
+      $this->sessionDataMock->method('getPrecinctList')->willReturn([]);
+
+      $result = $this->buildService()->buildNlSearchByDistrict([]);
+
+      $this->assertSame('search_goback', $result['nl_select_district']['search_goback']['#name']);
+    }
+
+    public function testBuildNlSearchByDistrictHasSingleGoBackWhenHdSelected(): void {
+      $this->nlsListDisplayMock->method('buildNlsTable')->willReturn([]);
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['HD1']);
+      $this->sessionDataMock->method('get')
+        ->willReturnCallback(fn($key) => $key === 'hdSelected' ? TRUE : NULL);
+      $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
+      $this->sessionDataMock->method('getPrecinctList')->willReturn([]);
+
+      $result = $this->buildService()->buildNlSearchByDistrict([]);
+
+      // The NL list's own Go back button is used; no second one is added.
+      $this->assertArrayNotHasKey('search_goback', $result['nl_select_district']);
+      $this->assertArrayHasKey('search_goback', $result['nl_select_district']['nl_selection']);
+    }
+
     public function testBuildNlSearchByDistrictIncludesNlSelectionWhenHdSelected(): void {
       $this->nlsListDisplayMock->method('buildNlsTable')->willReturn([]);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['HD1']);

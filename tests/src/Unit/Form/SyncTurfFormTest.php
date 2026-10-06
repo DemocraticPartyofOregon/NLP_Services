@@ -197,6 +197,73 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — POST from a page revisited with the browser's back arrow
+    // -------------------------------------------------------------------------
+
+    /** Swaps in a POST request carrying the given form values. */
+    private function usePostRequest(array $postValues): void {
+      $this->requestStackMock = $this->createMock(RequestStack::class);
+      $this->requestStackMock->method('getCurrentRequest')
+        ->willReturn(Request::create('/test', 'POST', $postValues));
+    }
+
+    public function testBuildFormPostPrefersPostedPageOverSessionPage(): void {
+      // The session has moved on to the name search, but the user went back to the
+      // NL select page and submitted from it.
+      $this->usePostRequest(['sync_turf_page' => 'nl_select']);
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('get')->willReturnMap([['syncTurfPage', 'nl_search_by_name']]);
+      $this->sessionDataMock->expects($this->once())->method('set')->with('syncTurfPage', 'nl_select');
+      $this->turfsMock->method('getTurfAssignment')->willReturn([]);
+
+      $captured = [];
+      $formState = $this->capturingFormState($captured, [
+        ['reenter', NULL],
+        ['county',  'Denver'],
+        ['page',    'nl_select'],
+        ['turfId',  5],
+      ]);
+
+      $this->buildForm()->buildForm([], $formState);
+      $this->assertContains(['page', 'nl_select'], $captured);
+    }
+
+    public function testBuildFormPostIgnoresUnknownPostedPage(): void {
+      $this->usePostRequest(['sync_turf_page' => 'bogus']);
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('get')->willReturnMap([['syncTurfPage', 'nl_select']]);
+      $this->sessionDataMock->expects($this->never())->method('set');
+      $this->turfsMock->method('getTurfAssignment')->willReturn([]);
+
+      $captured = [];
+      $formState = $this->capturingFormState($captured, [
+        ['reenter', NULL],
+        ['county',  'Denver'],
+        ['page',    'nl_select'],
+        ['turfId',  5],
+      ]);
+
+      $this->buildForm()->buildForm([], $formState);
+      $this->assertContains(['page', 'nl_select'], $captured);
+    }
+
+    public function testBuildFormRecordsPageInHiddenField(): void {
+      $this->turfsMock->method('getTurfAssignment')->willReturn([]);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter', TRUE],
+        ['county',  'Denver'],
+        ['page',    'nl_select'],
+        ['turfId',  5],
+      ]);
+
+      $result = $this->buildForm()->buildForm([], $formState);
+      $this->assertSame('hidden', $result['sync_turf_page']['#type']);
+      $this->assertSame('nl_select', $result['sync_turf_page']['#value']);
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — page = nl_search_by_name
     // -------------------------------------------------------------------------
 
@@ -244,8 +311,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $result = $this->buildForm()->buildForm([], $formState);
       $this->assertArrayHasKey('turf_submit', $result);
-      // When showLists=false the "show lists" toggle button should be present.
-      $this->assertArrayHasKey('saved_lists_reveal', $result);
+      // When showLists=false the "show lists" toggle button sits in its own titled
+      // box beside the folder/map region selects.
+      $box = $result['turf_select_page']['show_lists_box'];
+      $this->assertSame('change_to_lists', $box['saved_lists_reveal']['#name']);
+      $this->assertStringContainsString('show turfs saved as lists (rare)', $box['show_lists_title']['#markup']);
+      $this->assertStringContainsString('Cut Turf function is insufficient', $box['show_lists_title']['#markup']);
+      $this->assertArrayNotHasKey('saved_lists_reveal', $result);
     }
 
     // -------------------------------------------------------------------------

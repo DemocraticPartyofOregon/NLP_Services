@@ -213,8 +213,13 @@ class NlpNlsListDisplay
         if(is_array($columnValue)) {
           switch ($columnValue['type']) {
             case 'cb':
+              // Only one NL can be selected, so every row's radio shares the same
+              // #parents (and so the same name attribute) to form a single radio
+              // group. The value lands at $type[selected][cb], which keeps the
+              // row shape validateNlSelection() expects.
               $form_element[$type][$rowMcid][$columnName] = [
-                '#type' => 'checkbox',
+                '#type' => 'radio',
+                '#parents' => [$type, 'selected', 'cb'],
                 '#return_value' => 'CB_'.$rowMcid.'_'.$columnValue['mcid'],
               ];
               break;
@@ -285,7 +290,7 @@ class NlpNlsListDisplay
   {
     $this->header = [];
     if($brief) {
-      $this->header[] = ['data' => t('cb'), 'field' => 'cb', 'class' => ['nlp-th-color']];
+      $this->header[] = ['data' => '', 'field' => 'cb', 'class' => ['nlp-th-color']];
     }
     $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ];
     $this->header[] = ['data' => t('Pct'), 'field' => 'precinct', 'class' => ['nlp-th-color'] ];

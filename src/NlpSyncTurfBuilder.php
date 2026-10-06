@@ -114,6 +114,15 @@ house district or a precinct.  Specifying the precinct will likely yield the bes
 
     if(!empty($selectedPrecinctIndex) || !empty($selectedHdIndex)) {
       $form['nl_select_district']['nl_selection'] = $this->buildNlSelect($nlsTable);
+    } else {
+      // No NL list yet, so buildNlSelect()'s Go back button isn't shown; offer it here.
+      $form['nl_select_district']['search_goback'] = [
+        '#type' => 'submit',
+        '#name' => 'search_goback',
+        '#value' => 'Go back.',
+        '#prefix' => '<div>',
+        '#suffix' => '</div>',
+      ];
     }
 
     return $form;
@@ -196,7 +205,7 @@ case-insensitive.
 
     if(!empty($needle)) {
       $form['nl_name_search']['nl_select_header'] = [
-        '#markup' => '<hr class="dashed-line"><b>Check the box for the NL to be assigned to the turf.</b>',
+        '#markup' => '<hr class="dashed-line"><b>Select the NL to be assigned to the turf.</b>',
       ];
 
       $form['nl_name_search']['select_nl_from_list'] =
@@ -223,7 +232,7 @@ case-insensitive.
   public function buildNlSelect(array $nlList): array
   {
     $form['nl_select_header'] = [
-      '#markup' => '<b>Check the box for the NL to be assigned to the turf.</b>',
+      '#markup' => '<b>Select the NL to be assigned to the turf.</b>',
     ];
     $form['select_nl_from_list'] = $this->nlsListDisplayObj->buildNlsTable($nlList,TRUE,'nlsForm');
 
@@ -290,7 +299,7 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
 
       $form['walk-sheet-help'] = [
         '#markup' => '<div class="hint_note walksheet-help-title" id="hint_note">'
-          . '<p class="hint-no-white"><br>Help' . $walksheetHelp . '</p></div>',
+          . '<p class="hint-no-white">Help' . $walksheetHelp . '</p></div>',
         '#prefix' => '<div class="walksheet-note-box-left" id="file-note-box-left">',
         '#suffix' => '</div>',
       ];

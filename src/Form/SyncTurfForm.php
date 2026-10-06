@@ -22,6 +22,8 @@ use Drupal\nlpservices\Batch\SyncTurfBatch;
 use Drupal\nlpservices\NlpTurfStatus;
 
 class SyncTurfForm extends FormBase {
+  private const PAGES = ['turf_select', 'nl_select', 'nl_search_by_name', 'nl_search_by_district'];
+
   protected ApiSavedLists $savedListsObj;
   protected ApiFolders $foldersObj;
   protected NlpNls $nlsObj;
@@ -101,6 +103,15 @@ class SyncTurfForm extends FormBase {
       $request = $this->requestStack->getCurrentRequest();
       if (!empty($request->query->get('sort', '')) || $request->isMethod('POST')) {
         $page = $this->nlpSessionDataObj->get('syncTurfPage') ?? 'turf_select';
+        // A POST carries the page it was submitted from. Prefer that over the session so
+        // a page revisited with the browser's back arrow rebuilds as itself; otherwise the
+        // clicked button wouldn't exist on the session's (later) page and Drupal would
+        // fall back to that page's first button.
+        $postedPage = $request->request->get('sync_turf_page', '');
+        if (in_array($postedPage, self::PAGES, TRUE)) {
+          $page = $postedPage;
+          $this->nlpSessionDataObj->set('syncTurfPage', $page);
+        }
         $form_state->set('page', $page);
         $form_state->set('showLists', $this->nlpSessionDataObj->get('showLists') ?? FALSE);
         $form_state->set('turfId', $this->nlpSessionDataObj->get('turfId'));
@@ -134,6 +145,15 @@ class SyncTurfForm extends FormBase {
         ];
 
         $form['turf_select_page']['turf_filter'] = $this->buildTurfFilter($showLists);
+        if(!$showLists) {
+          // Folder and map region selects on the left, the rarely used "Show lists" box on the right.
+          $form['turf_select_page']['turf_filter']['#prefix'] = '<div class="turf-filter-left">';
+          $form['turf_select_page']['turf_filter']['#suffix'] = '</div>';
+          $form['turf_select_page']['show_lists_box'] = $this->buildShowListsBox();
+          $form['turf_select_page']['turf_filter_end'] = [
+            '#markup' => '<div class="end-big-box"></div>',
+          ];
+        }
 
         $request = $this->requestStack->getCurrentRequest();
         $sort = $request->query->get('sort', '');
@@ -154,15 +174,7 @@ class SyncTurfForm extends FormBase {
           '#suffix' => '</div>',
         ];
 
-        if(!$showLists) {
-          $form['saved_lists_reveal'] = [
-            '#name' => 'change_to_lists',
-            '#type' => 'submit',
-            '#value' => 'Show lists.',
-            '#prefix' => '<div>',
-            '#suffix' => '</div>',
-          ];
-        } else {
+        if($showLists) {
           $form['map_region_return'] = [
             '#name' => 'change_to_turfs',
             '#type' => 'submit',
@@ -235,6 +247,11 @@ class SyncTurfForm extends FormBase {
         $form_state->set('nlList',$nlList);
         break;
     }
+    // Records which page this is so a resubmission from browser history rebuilds it.
+    $form['sync_turf_page'] = [
+      '#type' => 'hidden',
+      '#value' => $page,
+    ];
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
     $form['#attached']['library'][] = 'nlpservices/turf-sync';
     $form['#attached']['library'][] = 'nlpservices/walksheet-form';
@@ -677,6 +694,32 @@ class SyncTurfForm extends FormBase {
 
     return $form;
 
+  }
+
+  /**
+   * Builds the box holding the "Show lists" button, with a titled hover hint
+   * discouraging the use of saved lists as turfs.
+   *
+   * @return array - The form array for the box.
+   */
+  private function buildShowListsBox(): array
+  {
+    $hint = 'All turfs should be created and managed as turfs from the polygons in map regions.
+In rare cases, the Cut Turf function is insufficient and a list is needed.  But, you will give up
+important features.';
+    return [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['turf-show-lists-box']],
+      'show_lists_title' => [
+        '#markup' => '<div class="hint_note walksheet-help-title"><p>show turfs saved as lists (rare)'
+          . '<span class="hint-list">' . $hint . '</span></p></div>',
+      ],
+      'saved_lists_reveal' => [
+        '#name' => 'change_to_lists',
+        '#type' => 'submit',
+        '#value' => 'Show lists.',
+      ],
+    ];
   }
 
   /**

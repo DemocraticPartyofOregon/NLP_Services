@@ -42,3 +42,8 @@ div.form-no-label { margin-top:0; margin-bottom:0; }
   color: #c62828;
   font-weight: 600;
 }
+
+div.turf-filter-left { float: left; margin:0; padding:0; }
+div.turf-show-lists-box { float: right; font-size:small; width: 220px; margin:0; padding:6px;
+  border: 1px solid #888; border-radius:5px; }
+div.turf-show-lists-box .hint-list { width: 260px; left: -50px; }

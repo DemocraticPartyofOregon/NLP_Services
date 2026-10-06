@@ -8,6 +8,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpNlsListDisplay;
   use Drupal\Tests\UnitTestCase;
+  use Drupal\Core\Routing\UrlGeneratorInterface;
+  use Symfony\Component\HttpFoundation\Request;
   use Symfony\Component\HttpFoundation\RequestStack;
 
   class NlpNlsListDisplayTest extends UnitTestCase {
@@ -141,6 +143,40 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayHasKey('3', $result);
       $this->assertSame('42', $result['1']['mcid']);
       $this->assertSame('77', $result['3']['mcid']);
+    }
+
+    /** Builds a brief (selection) table with sort links stubbed out. */
+    private function buildBriefNlsTable(string $type): array {
+      $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+      $urlGenerator->method('generateFromRoute')->willReturn('/sync-turf');
+      \Drupal::getContainer()->set('url_generator', $urlGenerator);
+      $requestStack = new RequestStack();
+      $requestStack->push(Request::create('/sync-turf'));
+      $service = new NlpNlsListDisplay(
+        $this->drupalUserMock, $this->coordinatorsMock, $this->nlsMock, $requestStack,
+      );
+      $rows = $service->createTableArray([42 => $this->baseNlRecord(), 77 => $this->baseNlRecord(['mcid' => 77])], true);
+      return $service->buildNlsTable($rows, true, $type);
+    }
+
+    public function testBuildNlsTableBriefSelectionColumnIsRadio(): void {
+      $result = $this->buildBriefNlsTable('search');
+
+      $this->assertSame('radio', $result['search'][42]['cb-42']['#type']);
+      $this->assertSame('CB_42_42', $result['search'][42]['cb-42']['#return_value']);
+    }
+
+    public function testBuildNlsTableBriefRadiosShareOneGroup(): void {
+      $result = $this->buildBriefNlsTable('nlsForm');
+
+      $this->assertSame(['nlsForm', 'selected', 'cb'], $result['nlsForm'][42]['cb-42']['#parents']);
+      $this->assertSame($result['nlsForm'][42]['cb-42']['#parents'], $result['nlsForm'][77]['cb-77']['#parents']);
+    }
+
+    public function testValidateNlSelectionReadsRadioGroupValue(): void {
+      $result = $this->service->validateNlSelection(['selected' => ['cb' => 'CB_42_42']]);
+
+      $this->assertSame(['42' => ['rowCount' => '42', 'mcid' => '42']], $result);
     }
 
     public function testGetSortFieldReturnsExpectedField(): void {
