@@ -27,7 +27,7 @@ class SyncTurfBatch {
     $messenger = Drupal::messenger();
 
     if ($success) {
-      if ($results['result'] == 'error') {
+      if (($results['result'] ?? '') == 'error') {
         $messages = $results['message'];
         foreach ($messages as $message) {
           $messenger->addError($message);
@@ -35,18 +35,27 @@ class SyncTurfBatch {
         // Nothing from a failed sync is left in the database, so there is nothing to delete.
         return;
       }
+      // The batch reported success but the sync never recorded its results, so
+      // there is no NL or turf to report on.
+      if (empty($results['mcid']) || empty($results['county'])) {
+        Drupal::logger('nlpservices')->error('Sync turf batch finished without results. Result keys: @keys',
+          ['@keys' => implode(', ', array_keys($results)) ?: 'none']);
+        $messenger->addWarning(t('The turf sync finished but did not report its results. Check the NL\'s turfs to see whether the turf was checked in, and sync it again if it was not.'));
+        return;
+      }
+
       $messages  = [];
       $turfName  = $results['turfName'];
       $messages[] = t('@turfName has been successfully checked in.', ['@turfName' => $turfName]);
 
-      $mcid      = $results['mcid'];
+      $mcid      = (int) $results['mcid'];
       $county    = $results['county'];
       $turfs     = $turfsObj->turfExists($mcid, $county);
-      $turfCount = $turfs['turfCnt'];
+      $turfCount = $turfs['turfCnt'] ?? 0;
       $nickname  = $results['nickname'];
       $messages[] = t('@nickname has @count turf(s) assigned.', ['@nickname' => $nickname, '@count' => $turfCount]);
 
-      foreach ($turfs['turfs'] as $turf) {
+      foreach ($turfs['turfs'] ?? [] as $turf) {
         $turfIndex = $turf['turfIndex'];
         $turfName  = $turf['turfName'];
         $syncDate  = $turf['syncDate'];

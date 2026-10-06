@@ -3,6 +3,8 @@
 namespace Drupal\Tests\nlpservices\Unit\Batch {
 
   use Drupal;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Logger\LoggerChannelInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\Batch\SyncTurfBatch;
   use Drupal\nlpservices\DrupalUser;
@@ -52,6 +54,9 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
       $container->set('nlpservices.magic_word',   $this->magicWordMock);
       $container->set('nlpservices.nls',          $this->nlsMock);
       $container->set('nlpservices.send_email',   $this->sendEmailMock);
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->willReturn($this->createMock(LoggerChannelInterface::class));
+      $container->set('logger.factory',           $loggerFactory);
       Drupal::setContainer($container);
     }
 
@@ -127,6 +132,33 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
         'result'  => 'error',
         'message' => ['Error one.', 'Error two.', 'Error three.'],
       ], []);
+    }
+
+    // -------------------------------------------------------------------------
+    // finished — success with no results recorded
+    // -------------------------------------------------------------------------
+
+    public function testFinishedSuccessWithEmptyResultsWarnsWithoutLookingUpTurfs(): void {
+      $this->messengerMock->expects($this->never())->method('addError');
+      $this->messengerMock->expects($this->once())->method('addWarning');
+      $this->turfsMock->expects($this->never())->method('turfExists');
+
+      SyncTurfBatch::finished(TRUE, [], []);
+    }
+
+    public function testFinishedSuccessWithNullMcidWarnsWithoutLookingUpTurfs(): void {
+      $this->messengerMock->expects($this->once())->method('addWarning');
+      $this->turfsMock->expects($this->never())->method('turfExists');
+
+      SyncTurfBatch::finished(TRUE, $this->baseSuccessResults(['mcid' => NULL]), []);
+    }
+
+    public function testFinishedSuccessWhenTurfNoLongerExistsReportsZeroTurfs(): void {
+      $this->turfsMock->method('turfExists')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->messengerMock->expects($this->never())->method('addWarning');
+
+      SyncTurfBatch::finished(TRUE, $this->baseSuccessResults(), []);
     }
 
     // -------------------------------------------------------------------------

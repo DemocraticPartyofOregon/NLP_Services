@@ -130,13 +130,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     /**
+     * One Batch API call.  Drupal resets 'finished' to 1 before every call to an
+     * operation, so a step that does not set it is taken as the end of the batch.
+     */
+    private function step(NlpSyncTurfProcessor $processor, array $arg, array &$context): void {
+      $context['finished'] = 1;
+      $processor->processBatch($arg, $context);
+    }
+
+    /**
      * Run processBatch until the batch reports it is finished, as the Batch API would.
      */
     private function runBatch(array $arg): array {
       $context   = [];
       $processor = $this->buildProcessor();
       for ($i = 0; $i < 50; $i++) {
-        $processor->processBatch($arg, $context);
+        $this->step($processor, $arg, $context);
         if (($context['finished'] ?? 0) >= 1) { break; }
       }
       return $context;
@@ -264,7 +273,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['result' => 'error', 'message' => 'List not found.']);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(), $context);
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
     }
@@ -275,7 +284,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['result' => 'ok', 'turfId' => 99]);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(), $context);
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
     }
@@ -285,7 +294,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['downloadUrl' => '/nonexistent/missing.csv']);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(), $context);
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
       $this->assertSame(1, $context['finished']);
@@ -295,7 +304,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->useCsv([]);
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(), $context);
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
 
       $this->assertSame('error', $context['results']['result']);
       $this->assertSame(1, $context['finished']);
@@ -310,7 +319,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $arg['walksheetInfo'] = ['tempName' => $walksheet];
 
       $context = [];
-      $this->buildProcessor()->processBatch($arg, $context);
+      $this->step($this->buildProcessor(), $arg, $context);
 
       $this->assertFileDoesNotExist($walksheet);
     }
@@ -329,7 +338,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->activistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
 
       $context = [];
-      $this->buildProcessor()->processBatch($this->baseArg(), $context);
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
 
       $this->assertGreaterThan(0, $context['finished']);
       $this->assertLessThan(1, $context['finished']);
@@ -455,8 +464,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $context   = [];
       $processor = $this->buildProcessor();
       // Fetch, then commit.
-      $processor->processBatch($this->baseArg(), $context);
-      $processor->processBatch($this->baseArg(), $context);
+      $this->step($processor, $this->baseArg(), $context);
+      $this->step($processor, $this->baseArg(), $context);
 
       $this->assertTrue($context['results']['committed']);
       $this->assertArrayNotHasKey('result', $context['results']);

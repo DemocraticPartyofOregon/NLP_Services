@@ -129,6 +129,9 @@ class NlpSyncTurfProcessor {
    *   This method does not return a value. Results are stored in the context array.
    */
   public function processBatch(array $arg, array &$context): void {
+    // The Batch API sets 'finished' to 1 before every call.  Clear it so only an
+    // abort or the last activist code step ends the batch.
+    $context['finished'] = 0;
     if (empty($context['sandbox']['phase'])) {
       if (!$this->startSync($arg, $context)) { return; }
     }
