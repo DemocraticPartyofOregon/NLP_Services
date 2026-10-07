@@ -1,0 +1,50 @@
+{#
+Links for functions to set up and manage the county.
+#}
+
+{% set uploadInstructions = path('nlpservices.upload_instructions_form') %}
+{% set coordinators = path('nlpservices.coordinators_form') %}
+{% set removeCoordinator = path('nlpservices.remove_coordinator_role_form') %}
+{% set turfDeliveryMessage = path('nlpservices.turf_delivery_message_form') %}
+{% set documents = path('nlpservices.documents_menu') %}
+{% set importCountyEarlyVoting = path('nlpservices.import_county_early_voting_form') %}
+{% set cancelMoved = path('nlpservices.cancel_moved_report') %}
+{% set changeCounty = path('nlpservices.change_county_form') %}
+
+<div class="nlp-menu-page">
+
+{% if county is not empty %}
+    <h1>{% trans %}{{ county }} County{% endtrans %}</h1>
+{% endif %}
+
+{% if isAdmin %}
+    <p>{% trans %}As a site administrator, you can <a href={{ changeCounty }}>change the county to be managed</a>.{% endtrans %}</p>
+{% endif %}
+
+    <h1>{% trans %}Set up the site for your county{% endtrans %}</h1>
+
+    <ul>
+        <li><a href={{ uploadInstructions }}>{% trans %}Upload the PDF of the instructions for NLs.{% endtrans %}</a></li>
+        <li><a href={{ coordinators }}>{% trans %}Identify the coordinators who provide help to NLs.{% endtrans %}</a></li>
+        <li><a href={{ removeCoordinator }}>{% trans %}Remove a coordinator role.{% endtrans %}</a></li>
+        <li><a href={{ turfDeliveryMessage }}>{% trans %}Edit the body of the email to deliver a turf to an NL.{% endtrans %}</a></li>
+        <li><a href={{ documents }}>{% trans %}Download the manuals for managing NLP.{% endtrans %}</a></li>
+{% if stateName == 'Mississippi' %}
+        <li><a href={{ importCountyEarlyVoting }}>{% trans %}Upload early voting PDF.{% endtrans %}</a></li>
+{% endif %}
+    </ul>
+
+{% trans %}
+
+    <h1>Correct move status</h1>
+
+    <p>An NL can mark a voter as moved, and this status is reported to VoteBuilder.  Unfortunately, there is
+    no API function to correct an erroneous report of moved.   The NL has to ask for help.  First, use the function
+    here to remove the status from NLP Services.   Then use VoteBuilder to restore the address in the VoterFile.</p>
+
+    <ul>
+        <li><a href={{ cancelMoved }}>Cancel an incorrect report that a voter moved.</a></li>
+    </ul>
+
+{% endtrans %}
+</div>

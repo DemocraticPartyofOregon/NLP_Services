@@ -592,11 +592,18 @@ nlpservices.configuration_menu:
 nlpservices.manage_county_menu:
   path: '/nlpservices-manage-county'
   defaults:
-#    _controller: Drupal\nlpservices\Controller\CountyManagementController::manage_county
-    _form: Drupal\nlpservices\Form\ManageCountyForm
+    _controller: Drupal\nlpservices\Controller\CountyManagementController::manage_county
     _title: 'Manage county'
   requirements:
     _permission: 'nlp tools access'
+
+nlpservices.change_county_form:
+  path: '/nlpservices-change-county'
+  defaults:
+    _form: Drupal\nlpservices\Form\ChangeCountyForm
+    _title: 'Change county'
+  requirements:
+    _permission: 'nlp administer'
 
 nlpservices.manage_nls_menu:
   path: '/nlpservices-manage-nls'
