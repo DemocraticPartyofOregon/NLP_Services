@@ -24,3 +24,49 @@ tr.add-user-tr { width: 1400px; }
 
 td.name { width: 300px; }
 td.mcid { width: 200px; }
+
+/* ManageDrupalAccountsForm::displayUser() - side-by-side account fields. */
+div.nlp-edit-user-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  column-gap: 24px;
+  row-gap: 8px;
+  align-items: start;
+  max-width: 1100px;
+  border: 1px solid blue;
+  background-color: #e6f0ff;
+  padding: 12px 16px;
+  margin-bottom: 12px;
+  box-sizing: border-box;
+}
+div.nlp-edit-user-grid div.form-item,
+div.nlp-edit-user-grid fieldset { margin-top: 0; margin-bottom: 0; min-width: 0; }
+/* Keep each #description flush left under its field.  Classy/Bartik render
+   it as .description, Olivero/Claro as .form-item__description. */
+div.nlp-edit-user-grid .form-item,
+div.nlp-edit-user-grid fieldset { text-align: left; }
+div.nlp-edit-user-grid .description,
+div.nlp-edit-user-grid .form-item__description,
+div.nlp-edit-user-grid .fieldset__description {
+  display: block;
+  float: none;
+  margin: 2px 0 0 0;
+  padding: 0;
+  max-width: none;
+  text-align: left;
+}
+div.nlp-edit-user-grid input.form-text,
+div.nlp-edit-user-grid select { width: 100%; max-width: 100%; box-sizing: border-box; }
+div.nlp-edit-user-grid .hint_note p:hover span.nlp-username-hint { width: 360px; z-index: 10; }
+div.nlp-edit-user-grid .nlp-edit-user-email { grid-column: 1 / span 2; }
+div.nlp-edit-user-grid .nlp-edit-user-roles { grid-column: 3; grid-row: span 2; }
+div.nlp-edit-user-grid .nlp-edit-user-roles fieldset { background-color: #ffffff; }
+
+@media (max-width: 800px) {
+  div.nlp-edit-user-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  div.nlp-edit-user-grid .nlp-edit-user-email { grid-column: 1 / -1; }
+  div.nlp-edit-user-grid .nlp-edit-user-roles { grid-column: auto; grid-row: auto; }
+}
+@media (max-width: 500px) {
+  div.nlp-edit-user-grid { grid-template-columns: minmax(0, 1fr); }
+}

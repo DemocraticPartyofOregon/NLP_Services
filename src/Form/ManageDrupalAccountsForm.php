@@ -174,7 +174,7 @@ class ManageDrupalAccountsForm extends FormBase
         }
         
         $form['user_edit_title'] = [
-          '#markup' => "<h2>User account to edit</h2>",
+          '#markup' => "<h2>Edit user</h2>",
         ];
         $currentEditIndex = $form_state->get('currentEditIndex');
         $uid = $uids[$currentEditIndex-1];
@@ -203,16 +203,16 @@ class ManageDrupalAccountsForm extends FormBase
         $form_state->set('currentValue', $currentValue);
         
         if(!$userIsNlpAdmin OR $adminRole) {
-          $form['edit_done'] = [
-            '#type' => 'submit',
-            '#name' => 'edit_done',
-            '#value' => t('Done editing user accounts'),
-          ];
           $form['edit_submit'] = [
             '#type' => 'submit',
             '#name' => 'edit_submit',
             '#value' => t('Save changes'),
             '#description' => t('And advance to next account'),
+          ];
+          $form['edit_done'] = [
+            '#type' => 'submit',
+            '#name' => 'edit_done',
+            '#value' => t('Done editing user accounts'),
           ];
           
         } else {
@@ -233,6 +233,7 @@ class ManageDrupalAccountsForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
     $form['#attached']['library'][] = 'nlpservices/table-helper';
     $form['#attached']['library'][] = 'nlpservices/edit-user';
+    $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
   
@@ -444,6 +445,14 @@ class ManageDrupalAccountsForm extends FormBase
     $allowedRoles = $this->drupalUserObj->getNlpRoles();
     unset($allowedRoles['nlp_admin']);
     
+    // Lay the fields out on a grid (see css/edit-user.css) so the whole
+    // account fits on screen without scrolling.  Children render in array
+    // order, filling the grid row by row.
+    $form_element['edit'] = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['nlp-edit-user-grid']],
+    ];
+
     $firstName = str_replace("&#039;","'",$user['firstName']);
     $currentValue['firstName'] = $firstName;
     $form_element['edit']['firstName'] = [
@@ -455,7 +464,7 @@ class ManageDrupalAccountsForm extends FormBase
       '#maxlength' => 32,
       '#description' => "Edit the spelling of the user's chosen first name.",
     ];
-    
+
     $lastName = str_replace("&#039;","'",$user['lastName']);
     $currentValue['lastName'] = $lastName;
     $form_element['edit']['lastName'] = [
@@ -466,48 +475,8 @@ class ManageDrupalAccountsForm extends FormBase
       '#size' => 28,
       '#maxlength' => 32,
       '#description' => "Edit the spelling of the user's last name.",
-      '#prefix' => "<br>",
     ];
-    
-    $mcid = $user['mcid'];
-    $currentValue['mcid'] = $mcid;
-    $form_element['edit']['mcid'] = [
-      '#type' => 'textfield',
-      '#id' => 'mcid',
-      '#title' => 'MCID',
-      '#default_value' => $mcid,
-      '#size' => 28,
-      '#maxlength' => 32,
-      '#description' => "Edit (or add) the MyCampaign ID number.",
-      '#prefix' => "<br>",
-    ];
-    
-    $county = $user['county'];
-    $countyIndex = array_flip($countyNames)[$county];
-    $currentValue['county'] = $countyIndex;
-    
-    $form_element['edit']['county'] = [
-      '#type' => 'select',
-      '#title' => t('County'),
-      '#options' => $countyNames,
-      '#default_value' => $countyIndex,
-      '#description' => 'Select a county.',
-      '#prefix' => "<br>",
-    ];
-    
-    $hd = $user['hd'];
-    $currentValue['hd'] = $hd;
-    
-    $form_element['edit']['hd'] = [
-      '#type' => 'textfield',
-      '#title' => t('House District'),
-      '#default_value' => $hd,
-      '#size' => 4,
-      '#maxlength' => 4,
-      '#description' => 'Select a State House District.',
-      '#prefix' => "<br>",
-    ];
-    
+
     $phoneNumber = $user['phone'];
     $currentValue['phone'] = $phoneNumber;
     $form_element['edit']['phone'] = [
@@ -518,16 +487,44 @@ class ManageDrupalAccountsForm extends FormBase
       '#size' => 28,
       '#maxlength' => 32,
       '#description' => "Edit (or add) a phone number.",
-      '#prefix' => "<br>",
     ];
-    
-    $form_element['edit']['name_hint'] = [
-      '#markup' => "<p><br>
-The username is typically assigned by NLP Services when the first turf is synced.  The username is constructed </br>
-of the first and last name of the NL with a dot between the two names.  Since NL's recognize this pattern, you </br>
-should use it here.  Of course, the NL can ask for anything they want as long as it is unique.</p>",
+
+    $mcid = $user['mcid'];
+    $currentValue['mcid'] = $mcid;
+    $form_element['edit']['mcid'] = [
+      '#type' => 'textfield',
+      '#id' => 'mcid',
+      '#title' => 'MCID',
+      '#default_value' => $mcid,
+      '#size' => 28,
+      '#maxlength' => 32,
+      '#description' => "Edit (or add) the MyCampaign ID number.",
     ];
-    
+
+    $county = $user['county'];
+    $countyIndex = array_flip($countyNames)[$county];
+    $currentValue['county'] = $countyIndex;
+
+    $form_element['edit']['county'] = [
+      '#type' => 'select',
+      '#title' => t('County'),
+      '#options' => $countyNames,
+      '#default_value' => $countyIndex,
+      '#description' => 'Select a county.',
+    ];
+
+    $hd = $user['hd'];
+    $currentValue['hd'] = $hd;
+
+    $form_element['edit']['hd'] = [
+      '#type' => 'textfield',
+      '#title' => t('House District'),
+      '#default_value' => $hd,
+      '#size' => 4,
+      '#maxlength' => 4,
+      '#description' => 'Select a State House District.',
+    ];
+
     $username = $user['userName'];
     $currentValue['uname'] = $username;
     $form_element['edit']['uname'] = [
@@ -537,9 +534,15 @@ should use it here.  Of course, the NL can ask for anything they want as long as
       '#default_value' => $username,
       '#size' => 28,
       '#maxlength' => 32,
-      '#description' => "Change the Username for this user.",
+      '#description' => "Change the Username for this user."
+        . '<div class="hint_note hint-link-text"><p>Username convention'
+        . '<span class="hint-list nlp-username-hint">The username is typically assigned by NLP Services'
+        . ' when the first turf is synced.  It is constructed of the first and last name of the NL'
+        . ' with a dot between the two names.  Since NLs recognize this pattern, you should use it'
+        . ' here.  Of course, the NL can ask for anything they want as long as it is unique.'
+        . '</span></p></div>',
     ];
-    
+
     $password = $user['password'];
     $currentValue['magic-word'] = $password;
     $form_element['edit']['magic-word'] = [
@@ -550,22 +553,8 @@ should use it here.  Of course, the NL can ask for anything they want as long as
       '#size' => 28,
       '#maxlength' => 32,
       '#description' => "Change the password.",
-      '#prefix' => "<br>",
     ];
-    
-    $email = $user['email'];
-    $currentValue['mail'] = $email;
-    $form_element['edit']['mail'] = [
-      '#type' => 'textfield',
-      '#id' => 'email',
-      '#title' => 'Email',
-      '#default_value' => $email,
-      '#size' => 60,
-      '#maxlength' => 160,
-      '#description' => "Edit the user's email.",
-    ];
-   
-    
+
     $userRoles = $user['roles'];
     unset($userRoles[0]);
     $userRoleIds = array_flip($userRoles);
@@ -577,19 +566,35 @@ should use it here.  Of course, the NL can ask for anything they want as long as
         $roleDefaults[$roleId] = '';
       }
     }
-    
+
     $currentValue['roles']['roleDefaults'] = $roleDefaults;
     $currentValue['roles']['allowedRoles'] = $allowedRoles;
-    
+
+    // Roles sit in the third column, spanning the Username/Password and Email rows.
     $form_element['edit']['selected_roles'] = [
       '#type' => 'checkboxes',
       '#title' => 'Roles',
       '#options' => $allowedRoles,
       '#default_value' => $roleDefaults,
       '#description' => 'Select roles for this user.',
-      '#prefix' => "<br>",
+      '#prefix' => '<div class="nlp-edit-user-roles">',
+      '#suffix' => '</div>',
     ];
-    
+
+    $email = $user['email'];
+    $currentValue['mail'] = $email;
+    $form_element['edit']['mail'] = [
+      '#type' => 'textfield',
+      '#id' => 'email',
+      '#title' => 'Email',
+      '#default_value' => $email,
+      '#size' => 60,
+      '#maxlength' => 160,
+      '#description' => "Edit the user's email.",
+      '#prefix' => '<div class="nlp-edit-user-email">',
+      '#suffix' => '</div>',
+    ];
+
     return $form_element;
   }
   
