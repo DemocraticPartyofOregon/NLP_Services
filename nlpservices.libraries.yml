@@ -113,3 +113,8 @@ menu-page:
   css:
     component:
       css/menu-page.css: {}
+form-helper:
+  version: "1.0.0"
+  css:
+    component:
+      css/form-helper.css: {}
