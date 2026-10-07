@@ -235,11 +235,16 @@ class ApiNls {
         }
       }
     }
+    // VoteBuilder offers no "preferred" choice when a person has only one
+    // email, so that email arrives with isPreferred false. Use the preferred
+    // email when there is one, otherwise the first.
     $nl['email'] = NULL;
     if (!empty($result['emails'])) {
+      $nl['email'] = $result['emails'][0]['email'] ?? NULL;
       foreach ($result['emails'] as $email) {
-        if ($email['isPreferred']) {
+        if (!empty($email['isPreferred'])) {
           $nl['email'] = $email['email'];
+          break;
         }
       }
     }

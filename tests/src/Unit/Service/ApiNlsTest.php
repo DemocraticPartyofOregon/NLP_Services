@@ -252,6 +252,34 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('primary@example.com', $result['email']);
     }
 
+    public function testGetApiNlsSingleUnpreferredEmailIsUsed(): void {
+      // VoteBuilder can't mark a lone email as preferred.
+      $this->stubKeyValues();
+      $data = $this->baseApiResult();
+      $data['emails'] = [
+        ['email' => 'only@example.com', 'isPreferred' => FALSE],
+      ];
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
+
+      $result = $this->buildApiNls()->getApiNls('', 200456);
+
+      $this->assertSame('only@example.com', $result['email']);
+    }
+
+    public function testGetApiNlsNoPreferredEmailUsesFirst(): void {
+      $this->stubKeyValues();
+      $data = $this->baseApiResult();
+      $data['emails'] = [
+        ['email' => 'first@example.com', 'isPreferred' => FALSE],
+        ['email' => 'second@example.com', 'isPreferred' => FALSE],
+      ];
+      $this->clientMock->method('request')->willReturn($this->makeResponse($data));
+
+      $result = $this->buildApiNls()->getApiNls('', 200456);
+
+      $this->assertSame('first@example.com', $result['email']);
+    }
+
     public function testGetApiNlsNoEmailsLeavesNull(): void {
       $this->stubKeyValues();
       $this->clientMock->method('request')->willReturn($this->makeResponse($this->baseApiResult()));
