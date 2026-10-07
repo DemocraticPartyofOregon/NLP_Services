@@ -1,0 +1,5 @@
+/*
+ * @file
+ * CSS for the link-menu pages rendered from src/Templates.
+ */
+.nlp-menu-page li { font-size: 1.1rem; margin-bottom: 0.4em; }

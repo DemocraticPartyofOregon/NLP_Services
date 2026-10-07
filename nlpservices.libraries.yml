@@ -108,3 +108,8 @@ select-all-postcards:
     js/select-all-postcards.js: {}
   dependencies:
     - core/drupal
+menu-page:
+  version: "1.0.0"
+  css:
+    component:
+      css/menu-page.css: {}

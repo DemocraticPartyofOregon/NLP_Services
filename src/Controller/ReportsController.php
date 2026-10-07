@@ -61,6 +61,7 @@ class ReportsController extends ControllerBase
           '#type' => 'inline_template',
           '#template' => $template,
           '#context' => $variables,
+          '#attached' => ['library' => ['nlpservices/menu-page']],
         ],
       ];
   }
