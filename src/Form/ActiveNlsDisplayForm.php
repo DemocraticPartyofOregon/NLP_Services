@@ -132,7 +132,11 @@ class ActiveNlsDisplayForm extends FormBase
         '#type'       => 'submit',
         '#value'      => t('Save Changes'),
         '#name'       => 'save_changes',
-        '#attributes' => ['style' => 'position:absolute; right:0; top:50%; transform:translateY(-50%);'],
+        // unsaved-changes.js adds is-changed after an edit, which turns it light blue.
+        '#attributes' => [
+          'class' => ['nlp-save-top'],
+          'style' => 'position:absolute; right:0; top:50%; transform:translateY(-50%);',
+        ],
       ];
 
       // Fetch the list of NL names and contact information.
@@ -225,12 +229,6 @@ class ActiveNlsDisplayForm extends FormBase
 
       // Build the table of NLs names and status.
       $form['nlsForm']['nls_table'] = $this->nlsListDisplayObj->buildNlsTable($nlsTable);
-
-      $form['nlsForm']['save'] = [
-        '#type'  => 'submit',
-        '#value' => t('Save Changes'),
-        '#name'  => 'save_changes',
-      ];
 
       // A right-aligned Save Changes bar at the end of the form that sticks to the
       // bottom of the window while the list scrolls, but stays within the form (it

@@ -28,6 +28,10 @@
         form.querySelectorAll('.nlp-floating-save').forEach(function (button) {
           button.classList.add('is-visible');
         });
+        // Color the top Save Changes button so it's clear there is something to save.
+        form.querySelectorAll('.nlp-save-top').forEach(function (button) {
+          button.classList.add('is-changed');
+        });
       }
       form.addEventListener('change', markChanged);
       form.addEventListener('input', markChanged);

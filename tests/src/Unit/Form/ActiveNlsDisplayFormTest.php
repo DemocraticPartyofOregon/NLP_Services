@@ -129,6 +129,27 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertContains('nlpservices/unsaved-changes', $form['#attached']['library']);
     }
 
+    public function testBuildFormHasOnlyTopAndFloatingSaveButtons(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
+      $this->nlsMock->method('getNls')->willReturn([]);
+      $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);
+      $this->requestStackMock->method('getCurrentRequest')->willReturn(Request::create('/active-nls'));
+
+      $formState = new FormState();
+      $formState->set('reenter', TRUE);
+      $formState->set('county', 'Denver');
+      $formState->set('page', 'data_entry');
+
+      $form = $this->buildForm()->buildForm([], $formState);
+
+      // No Save Changes button after the table; the floating bar covers that spot.
+      $this->assertArrayNotHasKey('save', $form['nlsForm']);
+      // unsaved-changes.js finds the top button by this class to color it after an edit.
+      $this->assertContains('nlp-save-top', $form['options_row']['save-top']['#attributes']['class']);
+      $this->assertSame('save_changes', $form['options_row']['save-top']['#name']);
+    }
+
     public function testGetFormIdReturnsExpectedId(): void {
       $this->assertSame('nlpservices_active_nls_display_form', $this->buildForm()->getFormId());
     }
