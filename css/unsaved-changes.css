@@ -26,9 +26,20 @@ form div.nlp-floating-save.is-visible {
   padding: 8px 0;
 }
 
+/* Light blue to match the menu tabs.  background-image is cleared because the
+ * theme draws button backgrounds with a gradient that would cover the color. */
 form div.nlp-floating-save input.form-submit {
   display: inline-block !important;
   float: none !important;
   margin: 0 !important;
+  background-color: #bbdaed !important;
+  background-image: none !important;
+  color: black !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* Keep the same hover as the module's other submit buttons (button.css). */
+form div.nlp-floating-save input.form-submit:hover {
+  background-color: #0000cc !important;
+  color: white !important;
 }
