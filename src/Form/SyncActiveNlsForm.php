@@ -180,7 +180,23 @@ the NLP Services Admin.</p>',
       nlp_debug_msg('error', $e->getMessage());
       return;
     }
-    copy($remoteUrl, $localFileUrl);
+    $copied = copy($remoteUrl, $localFileUrl);
+
+    // Record which list was asked for, which list VoteBuilder says it
+    // exported, and how many NLs came back, so a sync that processes the
+    // wrong list can be traced from the log.
+    $lines = $copied ? file($localFileUrl, FILE_SKIP_EMPTY_LINES) : FALSE;
+    $rowCount = ($lines === FALSE) ? 'unreadable' : max(count($lines) - 1, 0);
+    Drupal::logger('nlpservices')->notice(
+      'Sync active NLs: county @county, selected listId @listId, VoteBuilder exported savedListId @exported, file @file has @rows NL rows.',
+      [
+        '@county' => $county,
+        '@listId' => $listId,
+        '@exported' => $exportJob['savedListId'] ?? 'none',
+        '@file' => $localFileUrl,
+        '@rows' => $rowCount,
+      ]
+    );
 
     // Send the local file to the batch process to chunk the list into smaller
     // parts and provide a progress throbber for creating the new list of
