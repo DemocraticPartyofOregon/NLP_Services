@@ -1,0 +1,34 @@
+/*
+ * @file
+ * Floating Save Changes bar, revealed by unsaved-changes.js after an edit.
+ *
+ * The bar is the last element of the form.  position: sticky keeps it at the
+ * bottom of the window while the list scrolls, but never outside the form, so
+ * it can't cover the page footer.  On a short list it simply sits after the
+ * table, right-aligned with it.
+ *
+ * Drupal's button and container classes carry display rules from this module's
+ * button.css and from the theme, so these rules are written with extra
+ * specificity and !important to win regardless of stylesheet order.
+ */
+
+/* Hidden until unsaved-changes.js sees an edit. */
+form div.nlp-floating-save {
+  display: none !important;
+}
+
+form div.nlp-floating-save.is-visible {
+  display: block !important;
+  position: sticky !important;
+  bottom: 0;
+  z-index: 500;
+  text-align: right;
+  padding: 8px 0;
+}
+
+form div.nlp-floating-save input.form-submit {
+  display: inline-block !important;
+  float: none !important;
+  margin: 0 !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}

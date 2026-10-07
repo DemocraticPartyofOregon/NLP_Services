@@ -1,5 +1,8 @@
 unsaved-changes:
   version: "1.0.0"
+  css:
+    component:
+      css/unsaved-changes.css: {}
   js:
     js/unsaved-changes.js: {}
   dependencies:

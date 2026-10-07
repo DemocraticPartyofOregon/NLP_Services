@@ -2,7 +2,9 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Form {
 
+  use Drupal\Core\Form\FormState;
   use Drupal\Core\Form\FormStateInterface;
+  use Symfony\Component\HttpFoundation\Request;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiFolders;
   use Drupal\nlpservices\ApiMapRegions;
@@ -100,6 +102,32 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
     // getFormId
     // -------------------------------------------------------------------------
+
+    public function testBuildFormAddsHiddenFloatingSaveButton(): void {
+      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
+      $this->nlsMock->method('getNls')->willReturn([]);
+      $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);
+      $this->requestStackMock->method('getCurrentRequest')->willReturn(Request::create('/active-nls'));
+
+      $formState = new FormState();
+      $formState->set('reenter', TRUE);
+      $formState->set('county', 'Denver');
+      $formState->set('page', 'data_entry');
+
+      $form = $this->buildForm()->buildForm([], $formState);
+
+      // Same name as the other Save Changes buttons, so submitForm treats it identically.
+      $this->assertSame('save_changes', $form['save-floating']['save']['#name']);
+      $this->assertSame('submit', $form['save-floating']['save']['#type']);
+      // The bar is hidden by CSS until unsaved-changes.js sees an edit.
+      $this->assertSame('container', $form['save-floating']['#type']);
+      $this->assertContains('nlp-floating-save', $form['save-floating']['#attributes']['class']);
+      // Last element of the form, so the sticky bar sits after the table.
+      $children = array_filter(array_keys($form), fn($key) => $key[0] !== '#');
+      $this->assertSame('save-floating', end($children));
+      $this->assertContains('nlpservices/unsaved-changes', $form['#attached']['library']);
+    }
 
     public function testGetFormIdReturnsExpectedId(): void {
       $this->assertSame('nlpservices_active_nls_display_form', $this->buildForm()->getFormId());

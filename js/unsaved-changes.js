@@ -1,6 +1,15 @@
 /* global Drupal */
 (function (Drupal) {
   'use strict';
+
+  // The HD/precinct selects and the name search only filter the list; they are
+  // not edits to save.
+  function isFilterControl(el) {
+    return el.classList.contains('nlp-hd-select')
+      || el.classList.contains('nlp-pct-select')
+      || el.name === 'search-needle';
+  }
+
   // noinspection JSUnusedGlobalSymbols,JSUnusedLocalSymbols
   Drupal.behaviors.nlpUnsavedChanges = {
     attach: function (context, settings) {
@@ -12,14 +21,16 @@
 
       let formChanged = false;
 
-      form.addEventListener('change', function (e) {
-        if (e.target.classList.contains('nlp-hd-select') || e.target.classList.contains('nlp-pct-select')) { return; }
+      function markChanged(e) {
+        if (isFilterControl(e.target)) { return; }
         formChanged = true;
-      });
-      form.addEventListener('input', function (e) {
-        if (e.target.classList.contains('nlp-hd-select') || e.target.classList.contains('nlp-pct-select')) { return; }
-        formChanged = true;
-      });
+        // Reveal the floating Save Changes button now that there is something to save.
+        form.querySelectorAll('.nlp-floating-save').forEach(function (button) {
+          button.classList.add('is-visible');
+        });
+      }
+      form.addEventListener('change', markChanged);
+      form.addEventListener('input', markChanged);
 
       // Any form submission (Save, Next, Previous, etc.) means the data was processed.
       form.addEventListener('submit', function () { formChanged = false; });

@@ -232,6 +232,20 @@ class ActiveNlsDisplayForm extends FormBase
         '#name'  => 'save_changes',
       ];
 
+      // A right-aligned Save Changes bar at the end of the form that sticks to the
+      // bottom of the window while the list scrolls, but stays within the form (it
+      // never covers the footer). It stays hidden until unsaved-changes.js sees an
+      // edit, so it doesn't clutter a page that has nothing to save.
+      $form['save-floating'] = [
+        '#type'       => 'container',
+        '#attributes' => ['class' => ['nlp-floating-save']],
+        'save' => [
+          '#type'  => 'submit',
+          '#value' => t('Save Changes'),
+          '#name'  => 'save_changes',
+        ],
+      ];
+
     }
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
     $form['#attached']['library'][] = 'nlpservices/search-boxes';
