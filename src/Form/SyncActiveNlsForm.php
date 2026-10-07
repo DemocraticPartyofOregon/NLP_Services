@@ -8,6 +8,7 @@ use Drupal\Core\File\FileExists;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\ApiExportJobs;
@@ -122,7 +123,9 @@ the NLP Services Admin.</p>',
         ' <b>Description:</b> ' . $list['description'] .
         ' <b>NL Count:</b> ' . $list['listCount'];
     }
-    
+    // Keep each list's NL count so submit can tell when the export comes back short.
+    $form_state->set('listCounts', array_column($lists, 'listCount', 'savedListId'));
+
     // No #default_value: the options are keyed by saved list ID, so a default
     // of 0 matched no list and, if the user clicked Synchronize without
     // choosing one, Drupal rejected it as "The submitted value 0 ... is not
@@ -197,6 +200,11 @@ the NLP Services Admin.</p>',
         '@rows' => $rowCount,
       ]
     );
+    $listCounts = $form_state->get('listCounts');
+    $warning = $this->shortExportWarning($listCounts[$listId] ?? NULL, $rowCount);
+    if ($warning !== NULL) {
+      $messenger->addWarning($warning);
+    }
 
     // Send the local file to the batch process to chunk the list into smaller
     // parts and provide a progress throbber for creating the new list of
@@ -217,5 +225,25 @@ the NLP Services Admin.</p>',
     ];
     batch_set($batch);
   }
-  
+
+  /**
+   * shortExportWarning
+   *
+   * VoteBuilder gives no error when an export leaves people out, e.g. when a
+   * child API key can't see records built under the parent key. Compare the
+   * rows in the exported file to the list's NL count and say so when it's short.
+   *
+   * @param int|null $expected - the list's NL count, NULL if unknown.
+   * @param int|string $rowCount - NL rows in the file, or 'unreadable'.
+   * @return TranslatableMarkup|null - the warning, or NULL when nothing is missing.
+   */
+  private function shortExportWarning(?int $expected, int|string $rowCount): ?TranslatableMarkup
+  {
+    if ($expected === NULL || !is_int($rowCount) || $rowCount >= $expected) {
+      return NULL;
+    }
+    return t('VoteBuilder exported @rows of the @expected NLs in this list. Some NLs may not be visible to this county\'s API key.',
+      ['@rows' => $rowCount, '@expected' => $expected]);
+  }
+
 }

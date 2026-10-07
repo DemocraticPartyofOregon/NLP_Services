@@ -13,6 +13,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\Form\SyncActiveNlsForm;
   use Drupal\Tests\UnitTestCase;
+  use ReflectionMethod;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class SyncActiveNlsFormTest extends UnitTestCase {
@@ -206,6 +207,59 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
       $this->assertContains('nlpservices/info-boxes', $result['#attached']['library']);
       $this->assertContains('nlpservices/button', $result['#attached']['library']);
+    }
+
+    public function testBuildFormStoresListCountsForSubmit(): void {
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
+      $this->savedListsMock->method('getSavedLists')->willReturn([
+        100 => ['savedListId' => 100, 'name' => 'A', 'description' => '', 'listCount' => 9],
+        512428 => ['savedListId' => 512428, 'name' => 'B', 'description' => '', 'listCount' => 14],
+      ]);
+      $formStateMock = $this->createMock(FormStateInterface::class);
+      $stored = [];
+      $formStateMock->method('set')->willReturnCallback(
+        function ($key, $value) use (&$stored, $formStateMock) {
+          $stored[$key] = $value;
+          return $formStateMock;
+        });
+      $this->buildForm()->buildForm([], $formStateMock);
+      $this->assertSame([100 => 9, 512428 => 14], $stored['listCounts']);
+    }
+
+    // -------------------------------------------------------------------------
+    // shortExportWarning
+    // -------------------------------------------------------------------------
+
+    private function shortExportWarning(?int $expected, int|string $rowCount): ?string {
+      $container = new ContainerBuilder();
+      $container->set('string_translation', $this->getStringTranslationStub());
+      Drupal::setContainer($container);
+      $method = new ReflectionMethod(SyncActiveNlsForm::class, 'shortExportWarning');
+      $warning = $method->invoke($this->buildForm(), $expected, $rowCount);
+      return $warning === NULL ? NULL : (string) $warning;
+    }
+
+    public function testShortExportWarningWhenFewerRowsThanListCount(): void {
+      $warning = $this->shortExportWarning(14, 7);
+      $this->assertNotNull($warning);
+      $this->assertStringContainsString('7 of the 14', $warning);
+    }
+
+    public function testShortExportWarningNullWhenCountsMatch(): void {
+      $this->assertNull($this->shortExportWarning(14, 14));
+    }
+
+    public function testShortExportWarningNullWhenMoreRowsThanListCount(): void {
+      $this->assertNull($this->shortExportWarning(14, 15));
+    }
+
+    public function testShortExportWarningNullWhenListCountUnknown(): void {
+      $this->assertNull($this->shortExportWarning(NULL, 7));
+    }
+
+    public function testShortExportWarningNullWhenFileUnreadable(): void {
+      $this->assertNull($this->shortExportWarning(14, 'unreadable'));
     }
 
     // -------------------------------------------------------------------------
