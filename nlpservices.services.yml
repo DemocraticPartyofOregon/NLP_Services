@@ -16,6 +16,10 @@ services:
     # noinspection ComposeUnknownKeys
     arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management' ]
 
+  nlpservices.api_district_fields:
+    class: Drupal\nlpservices\ApiDistrictFields
+    arguments: [ '@http_client' , '@nlpservices.api_key_management' ]
+
   nlpservices.api_folders:
     class: Drupal\nlpservices\ApiFolders
     arguments: [ '@http_client' , '@nlpservices.configuration', '@nlpservices.api_key_management', '@current_route_match' ]
