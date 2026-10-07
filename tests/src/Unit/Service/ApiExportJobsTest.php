@@ -6,8 +6,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Database\Connection;
   use Drupal\Core\Database\Query\Delete;
   use Drupal\Core\Database\Query\Insert;
-  use Drupal\Core\Database\Query\Merge;
   use Drupal\Core\Database\Query\Select;
+  use Drupal\Core\Database\Query\Update;
   use Drupal\Core\Database\StatementInterface;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -85,11 +85,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return $mock;
     }
 
-    private function buildMergeMock(): Merge {
-      $mock = $this->createMock(Merge::class);
-      $mock->method('keys')->willReturnSelf();
+    private function buildUpdateMock(int $affectedRows = 1): Update {
+      $mock = $this->createMock(Update::class);
       $mock->method('fields')->willReturnSelf();
-      $mock->method('execute')->willReturn(1);
+      $mock->method('condition')->willReturnSelf();
+      $mock->method('execute')->willReturn($affectedRows);
       return $mock;
     }
 
@@ -166,17 +166,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testEndExportJobReturnsTrueOnSuccess(): void {
-      $this->connectionMock->method('merge')->willReturn($this->buildMergeMock());
+      $this->connectionMock->method('update')->willReturn($this->buildUpdateMock());
+
+      $this->assertTrue($this->buildService()->endExportJob(42));
+    }
+
+    public function testEndExportJobNeverMerges(): void {
+      // A late webhook after the entry was deleted must not recreate it.
+      $this->connectionMock->expects($this->never())->method('merge');
+      $this->connectionMock->expects($this->once())->method('update')
+        ->with('nlp_export_jobs')
+        ->willReturn($this->buildUpdateMock(0));
 
       $this->assertTrue($this->buildService()->endExportJob(42));
     }
 
     public function testEndExportJobReturnsFalseOnException(): void {
-      $mock = $this->createMock(Merge::class);
-      $mock->method('keys')->willReturnSelf();
+      $mock = $this->createMock(Update::class);
       $mock->method('fields')->willReturnSelf();
+      $mock->method('condition')->willReturnSelf();
       $mock->method('execute')->willThrowException(new Exception('DB error'));
-      $this->connectionMock->method('merge')->willReturn($mock);
+      $this->connectionMock->method('update')->willReturn($mock);
 
       $this->assertFalse($this->buildService()->endExportJob(42));
     }

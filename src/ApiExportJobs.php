@@ -166,6 +166,10 @@ class ApiExportJobs {
    * The entry is used to track the status of the export job.
    * The entry is deleted when the export job is finished.
    *
+   * Uses update, not merge: VoteBuilder can call the webhook again after
+   * getExportJobStatus() has deleted the entry, and a merge would then
+   * insert an orphan row holding only eventId and endTime.
+   *
    * @param int $eventId
    * @return bool
    */
@@ -173,9 +177,9 @@ class ApiExportJobs {
   {
     $fields = ['endTime' => time(),];
     try {
-      $this->connection->merge(self::EXPORT_JOBS_TBL)
-        ->keys(['eventId' => $eventId])
+      $this->connection->update(self::EXPORT_JOBS_TBL)
         ->fields($fields)
+        ->condition('eventId', $eventId)
         ->execute();
     }
     catch (Exception $e) {
