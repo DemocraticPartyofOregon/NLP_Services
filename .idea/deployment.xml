@@ -19,7 +19,7 @@
       <paths name="NLP Debug">
         <serverdata>
           <mappings>
-            <mapping deploy="/web/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+            <mapping local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

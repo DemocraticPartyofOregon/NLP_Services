@@ -56,14 +56,22 @@ class AwakeForm extends FormBase {
     $apiKeyManagementObj = Drupal::service('nlpservices.api_key_management');
     $client = Drupal::service('http_client');
 
-    //$mcid = 102549413;
-    $mcid = 102735234;
-    $committee = 'Wakulla';
 
-    $nl = $apiNlsObj->getApiNls( $committee, $mcid);
-    nlp_debug_msg('nl',$nl);
+    $apiDistrictFieldsObj = Drupal::service('nlpservices.api_district_fields');
 
+    $districtFields = $apiDistrictFieldsObj->getDistrictFields('Wakulla');
+    nlp_debug_msg('districtFields',$districtFields);
+    $districtFieldId = 1;
+    $districtFieldValues = $apiDistrictFieldsObj->getDistrictFields('Wakulla',$districtFieldId);
+    nlp_debug_msg('districtFieldValues',$districtFieldValues);
 
+    $districtFieldId = 4;
+    $districtFieldValues = $apiDistrictFieldsObj->getDistrictFields('Wakulla',$districtFieldId);
+    nlp_debug_msg('districtFieldValues',$districtFieldValues);
+
+    $districtFieldId = 2;
+    $districtFieldValues = $apiDistrictFieldsObj->getDistrictFields('Wakulla',$districtFieldId);
+    nlp_debug_msg('districtFieldValues',$districtFieldValues);
 
     $form['submit'] = [
       '#type' => 'submit',
