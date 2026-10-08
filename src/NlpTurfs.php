@@ -468,6 +468,29 @@ class NlpTurfs
   }
 
   /**
+   * reassignNlTurfs
+   *
+   * Moves every turf owned by an NL to a new MCID. Unlike getTurfsById, this
+   * does not need the NL's nlp_nls record, which an NLs sync removes once
+   * VoteBuilder has merged the old MCID away.
+   *
+   * @param int $previousMcid
+   * @param int $newMcid
+   * @return void
+   */
+  public function reassignNlTurfs(int $previousMcid, int $newMcid): void
+  {
+    try {
+      $this->connection->update(self::TURF_TBL)
+        ->fields(['mcid' => $newMcid])
+        ->condition('mcid', $previousMcid)
+        ->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('reassignNlTurfs', $e->getMessage());
+    }
+  }
+
+  /**
    * createTurf
    *
    * Creates a new turf record in the database.

@@ -493,27 +493,16 @@ class VanidFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   /**
-   * @covers ::submitForm
-   */
-  public function testSubmitFormNoTurfsSkipsUpdate(): void {
-    $this->turfsMock->method('getTurfsById')->willReturn([]);
-    $this->turfsMock->expects($this->never())->method('updateTurf');
-
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $this->submitState());
-  }
-
-  /**
+   * The turfs move by MCID alone, so they still move after an NLs sync has
+   * removed the old MCID's nlp_nls record.
+   *
    * @covers ::submitForm
    */
   public function testSubmitFormTurfsReassignedToNewId(): void {
-    $this->turfsMock->method('getTurfsById')
-      ->with(self::PREV_ID)
-      ->willReturn([['turfIndex' => 3], ['turfIndex' => 4]]);
-    $this->turfAssignmentsMock->method('getTurfAssignmentsById')->willReturn([]);
-    $this->turfsMock->expects($this->exactly(2))
-      ->method('updateTurf')
-      ->with($this->anything(), 'mcid', self::NEW_ID);
+    $this->turfsMock->expects($this->never())->method('getTurfsById');
+    $this->turfsMock->expects($this->once())
+      ->method('reassignNlTurfs')
+      ->with(self::PREV_ID, self::NEW_ID);
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $this->submitState());
@@ -528,8 +517,7 @@ class VanidFormTest extends UnitTestCase {
    */
   public function testSubmitFormNoTurfAssignmentsSkipsUpdate(): void {
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')->willReturn([]);
-    $this->turfsMock->method('getTurfsById')->willReturn([]);
-    $this->turfsMock->expects($this->never())->method('updateTurf');
+    $this->turfAssignmentsMock->expects($this->never())->method('setTurfAssignment');
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $this->submitState());
@@ -539,11 +527,9 @@ class VanidFormTest extends UnitTestCase {
    * @covers ::submitForm
    */
   public function testSubmitFormTurfAssignmentsReassignedToNewId(): void {
-    $this->turfsMock->method('getTurfsById')->willReturn([]);
     $this->turfAssignmentsMock->method('getTurfAssignmentsById')
       ->with(self::PREV_ID)
       ->willReturn([['turfId' => 9], ['turfId' => 10]]);
-    $this->turfsMock->expects($this->never())->method('updateTurf');
     $updated = [];
     $this->turfAssignmentsMock->expects($this->exactly(2))
       ->method('setTurfAssignment')

@@ -221,12 +221,7 @@ class VanidForm extends FormBase
     }
     
     // Reassign existing turfs associated with an old ID with the new ID.
-    $turfs = $this->turfsObj->getTurfsById($previousId);
-    if(!empty($turfs)) {
-      foreach ($turfs as $turf) {
-        $this->turfsObj->updateTurf($turf['turfIndex'],'mcid',$newId);
-      }
-    }
+    $this->turfsObj->reassignNlTurfs($previousId, $newId);
     
     // Fix the turf assignments.
     $turfAssignments = $this->turfAssignmentsObj->getTurfAssignmentsById($previousId);
