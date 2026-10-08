@@ -35,7 +35,7 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     parent::setUp();
 
     $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['State', 'TestCounty']);
+    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['TestCounty']);
     $this->nlpConfigurationMock->method('getStateName')->willReturn('Oregon');
 
     $this->sessionDataMock = $this->createMock(NlpSessionData::class);
@@ -192,6 +192,28 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->assertSame('submit', $form['county_select_submit']['#type']);
   }
 
+  public function testBuildFormCountySelectOffersStateOptionFirst(): void {
+    $formState = $this->reenterState('county_select');
+
+    $form = $this->buildFormInstance()->buildForm([], $formState);
+
+    $options = $form['county_select']['#options'];
+    $this->assertSame(TurfDeliveryMessageForm::STATE_OPTION, array_key_first($options));
+    $this->assertStringContainsString('Oregon', $options[TurfDeliveryMessageForm::STATE_OPTION]);
+    $this->assertSame('TestCounty', $options['TestCounty']);
+  }
+
+  public function testBuildFormEditCountyHeadingUsesSelectedCounty(): void {
+    $formState = $this->reenterState('edit_county', [
+      'county_selected' => 'OtherCounty',
+      'countyMsg'       => '',
+    ]);
+
+    $form = $this->buildFormInstance()->buildForm([], $formState);
+
+    $this->assertStringContainsString('OtherCounty', $form['edit-box']['county-name']['#markup']);
+  }
+
   public function testBuildFormEditStatePageContainsBodyAndSubmit(): void {
     $formState = $this->reenterState('edit_state', ['stateMsg' => '<p>Hello</p>']);
 
@@ -237,7 +259,7 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
       ->getMock();
     $formState->expects($this->once())->method('setRebuild');
     $formState->set('page', 'county_select');
-    $formState->setValue('county_select', 1);
+    $formState->setValue('county_select', 'TestCounty');
 
     $this->turfMsgMock->method('getTurfMsg')->willReturn('');
 
@@ -255,7 +277,7 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'county_select');
-    $formState->setValue('county_select', 0);
+    $formState->setValue('county_select', TurfDeliveryMessageForm::STATE_OPTION);
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
@@ -272,7 +294,7 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
 
     $formState = new FormState();
     $formState->set('page', 'county_select');
-    $formState->setValue('county_select', 1);
+    $formState->setValue('county_select', 'TestCounty');
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
@@ -320,6 +342,19 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
 
     $this->assertSame('county_select', $formState->get('page'));
+  }
+
+  public function testSubmitFormEditStateTagAtStartIsAccepted(): void {
+    $msg = '@coordinatorContactInfo is first';
+    $this->messengerMock->expects($this->never())->method('addError');
+    $this->turfMsgMock->expects($this->once())->method('putTurfMsg')->with('', $msg);
+
+    $formState = new FormState();
+    $formState->set('page', 'edit_state');
+    $formState->setValue('body', ['value' => $msg]);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
   }
 
   public function testSubmitFormEditCountyMissingTagAddsErrorAndDoesNotCallPutTurfMsg(): void {

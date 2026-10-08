@@ -7,3 +7,18 @@ div.edit-text { width: 700px; }
 div.turf-delivery-message-help { width: 650px; }
 div.turf-delivery-message-tokens { padding-left: 20px; }
 div.turf-delivery-message-token-example { padding-left: 20px; }
+
+/* Keep each #description flush left under its field.  Classy/Bartik render
+   it as .description, Olivero/Claro as .form-item__description. */
+form.nlp-turf-delivery-message .form-item,
+form.nlp-turf-delivery-message fieldset { text-align: left; }
+form.nlp-turf-delivery-message .description,
+form.nlp-turf-delivery-message .form-item__description,
+form.nlp-turf-delivery-message .fieldset__description {
+  display: block;
+  float: none;
+  margin: 2px 0 0 0;
+  padding: 0;
+  max-width: none;
+  text-align: left;
+}

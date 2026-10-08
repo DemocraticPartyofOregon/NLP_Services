@@ -16,6 +16,10 @@ use Drupal\nlpservices\DrupalUser;
  */
 class TurfDeliveryMessageForm extends FormBase
 {
+  // Select key for the statewide default message. It is not a county name,
+  // so it can't collide with one of the county options.
+  const STATE_OPTION = '__state__';
+
   protected NlpConfiguration $nlpConfiguration;
   protected NlpSessionData $sessionData;
   protected NlpTurfDeliveryMessage $turfMsg;
@@ -75,7 +79,7 @@ class TurfDeliveryMessageForm extends FormBase
         $form['county_select'] = array(
           '#type' => 'select',
           '#title' => t('State/County'),
-          '#options' => $this->nlpConfiguration->getCountyNames(),
+          '#options' => $this->countyOptions(),
           '#description' => t('Select either the state or a specify county.'),
         );
         $form['county_select_submit'] = array(
@@ -112,7 +116,7 @@ class TurfDeliveryMessageForm extends FormBase
         break;
 
       case 'edit_county':
-        $county = $this->sessionData->getCounty();
+        $county = $form_state->get('county_selected');
         $form['edit-box'] = [
           '#type' => 'fieldset',
           '#prefix' => " \n" . '<div class="edit-text">' . " \n",
@@ -138,6 +142,7 @@ class TurfDeliveryMessageForm extends FormBase
         ];
         break;
     }
+    $form['#attributes']['class'][] = 'nlp-turf-delivery-message';
     $form['#attached']['library'][] = 'nlpservices/turf-delivery-message';
     return $form;
   }
@@ -155,10 +160,9 @@ class TurfDeliveryMessageForm extends FormBase
     switch ($page) {
 
       case 'county_select':
-        $countySelect = $form_state->getValue('county_select');
-        $countySelected = $this->nlpConfiguration->getCountyNames()[$countySelect];
+        $countySelected = $form_state->getValue('county_select');
 
-        if($countySelected == 'State') {
+        if($countySelected == self::STATE_OPTION) {
           $stateMsg = $this->turfMsg->getTurfMsg();
 
           $form_state->set('stateMsg', $stateMsg);
@@ -173,8 +177,7 @@ class TurfDeliveryMessageForm extends FormBase
 
       case 'edit_state':
         $stateMsg = $form_state->getValue('body')['value'];
-        $tagExists = strpos($stateMsg,'@coordinatorContactInfo');
-        if(!$tagExists) {
+        if(!str_contains($stateMsg,'@coordinatorContactInfo')) {
           $messenger->addError('The @coordinatorContactInfo tag is missing.  This tag must be somewhere
           in the body of the email message. ');
           return;
@@ -186,8 +189,7 @@ class TurfDeliveryMessageForm extends FormBase
       case 'edit_county':
         $countySelected = $form_state->get('county_selected');
         $countyMsg = $form_state->getValue('body')['value'];
-        $tagExists = strpos($countyMsg,'@coordinatorContactInfo');
-        if(!$tagExists) {
+        if(!str_contains($countyMsg,'@coordinatorContactInfo')) {
           $messenger->addError('The @coordinatorContactInfo tag is missing.  This tag must be somewhere
           in the body of the email message. ');
           return;
@@ -200,6 +202,25 @@ class TurfDeliveryMessageForm extends FormBase
         }
         break;
     }
+  }
+
+  /**
+   * countyOptions
+   *
+   * The statewide default message followed by each county, keyed by name.
+   * The configured county names no longer include a 'State' entry (the State
+   * Committee key is stored separately), so the state option is added here.
+   *
+   * @return array
+   */
+  protected function countyOptions(): array
+  {
+    $stateName = $this->nlpConfiguration->getStateName() ?: 'State';
+    $options = [self::STATE_OPTION => $stateName . ' (default for all counties)'];
+    foreach ($this->nlpConfiguration->getCountyNames() as $countyName) {
+      $options[$countyName] = $countyName;
+    }
+    return $options;
   }
 
   /**
