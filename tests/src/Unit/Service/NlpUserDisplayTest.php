@@ -152,6 +152,35 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('jane@example.com', $result['contacts'][1]['email']['#markup']);
     }
 
+    public function testDisplayUsersLoginReminderModeHasPrecinctAfterHd(): void {
+      $user = $this->baseUser();
+      $user['precinct'] = '1234';
+      $result = $this->service->displayUsers([$user], TRUE);
+      $this->assertSame('1234', $result['contacts'][1]['precinct']['#markup']);
+
+      $keys = array_values(array_filter(array_keys($result['contacts'][1]), 'is_string'));
+      $this->assertSame(['cb', 'hd', 'precinct', 'mcid'], array_slice($keys, 0, 4));
+      $labels = array_map(fn($cell) => (string) $cell['data'], $result['contacts']['#header']);
+      $this->assertSame('Precinct', $labels[2]);
+    }
+
+    public function testDisplayUsersLoginReminderModeMissingPrecinctIsBlank(): void {
+      $result = $this->service->displayUsers([$this->baseUser()], TRUE);
+      $this->assertSame('', $result['contacts'][1]['precinct']['#markup']);
+    }
+
+    public function testDisplayUsersStandardModeOmitsPrecinct(): void {
+      $result = $this->service->displayUsers([$this->baseUser()]);
+      $this->assertArrayNotHasKey('precinct', $result['contacts'][1]);
+      $labels = array_map(fn($cell) => (string) $cell['data'], $result['contacts']['#header']);
+      $this->assertNotContains('Precinct', $labels);
+    }
+
+    public function testGetSortFieldLoginReminderPrecinct(): void {
+      $this->assertSame('precinct', $this->service->getSortField('Precinct', TRUE));
+      $this->assertSame('', $this->service->getSortField('Precinct'));
+    }
+
     public function testDisplayUsersLoginReminderModeOmitsUidAndCounty(): void {
       $result = $this->service->displayUsers([$this->baseUser()], TRUE);
       $this->assertArrayNotHasKey('uid', $result['contacts'][1]);

@@ -36,6 +36,9 @@ class NlpUserDisplay
         $column['uid'] = $user['uid'];
       }
       $column['hd'] = $user['hd'];
+      if($loginReminder) {
+        $column['precinct'] = $user['precinct'] ?? '';
+      }
       $column['mcid'] = $user['mcid'];
       $column['lastName'] = $user['lastName'];
       $column['firstName'] = $user['firstName'];
@@ -108,8 +111,11 @@ class NlpUserDisplay
     } else {
       $this->header[] = ['data' => '', 'class' => ['nlp-th-color'] ];
     }
+    $this->header[] = ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ];
+    if($loginReminder) {
+      $this->header[] = ['data' => t('Precinct'), 'field' => 'precinct', 'class' => ['nlp-th-color'] ];
+    }
     $this->header = array_merge($this->header, [
-      ['data' => t('HD'), 'field' => 'hd', 'class' => ['nlp-th-color'] ],
       ['data' => t('MCID'), 'field' => 'mcid', 'class' => ['nlp-th-color'] ],
       ['data' => t('Last&nbsp;Name'), 'field' => 'lastName', 'class' => ['nlp-th-color'] ],
       ['data' => t('First&nbsp;Name'), 'field' => 'firstName', 'class' => ['nlp-th-color'] ],
