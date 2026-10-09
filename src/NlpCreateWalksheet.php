@@ -79,7 +79,11 @@ class NlpCreateWalksheet
   public function createWalksheetArray(int $turfIndex): array
   {
     $turf = $this->turfObj->getTurf($turfIndex);
-    
+    // The turf may have been deleted since the page linking to it was built.
+    if (empty($turf)) {
+      return [];
+    }
+
     $this->turfInfo = [
       'county' => $this->nlpSessionDataObj->getCounty(),
       'turfName' => $turf['turfName'],
