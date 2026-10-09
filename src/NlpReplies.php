@@ -206,19 +206,21 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
   {
     $body = '';
     foreach ($message as $parts) {
-      if(empty($parts['data'])) { continue;}
+      if(empty($parts['data']) || !is_string($parts['data'])) { continue;}
       $description = (!empty($parts['description']))?$parts['description']:'';
-      $subType = strtolower($parts['subtype']);
+      // The body of a single-part email may come without a type or subtype.
+      $type = $parts['type'] ?? '';
+      $subType = strtolower($parts['subtype'] ?? '');
       if (empty($description)) {
-        if($parts['type'] == 'Text' && $subType == 'plain') {
+        if($type == 'Text' && $subType == 'plain') {
           $description = 'Notification';
-        } elseif ($parts['type'] == 'Plain' && $subType == 'delivery-status') {
+        } elseif ($type == 'Plain' && $subType == 'delivery-status') {
           $description = 'Delivery report';
-        } elseif ($parts['type'] == 'Text' && $subType == 'html') {
+        } elseif ($type == 'Text' && $subType == 'html') {
           if(in_array($subType,$partDescriptions)) {
             $description = 'html';
           }
-        } elseif( $parts['type'] == 'Multipart' && $subType == 'alternative') {
+        } elseif( $type == 'Multipart' && $subType == 'alternative') {
           $description = 'Original email text';
         }
       }
