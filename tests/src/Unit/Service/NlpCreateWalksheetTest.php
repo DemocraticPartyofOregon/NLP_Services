@@ -132,6 +132,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $result);
     }
 
+    public function testCreateWalksheetArrayMissingTurfReturnsEmptyArray(): void {
+      // A deleted turf: getTurf() returns [] and no voters are fetched.
+      $this->turfsMock->method('getTurf')->willReturn([]);
+      $this->votersMock->expects($this->never())->method('fetchVotersByTurf');
+      $result = $this->buildService()->createWalksheetArray(1398);
+      $this->assertSame([], $result);
+    }
+
     // -------------------------------------------------------------------------
     // createWalksheetArray — row style
     // -------------------------------------------------------------------------
