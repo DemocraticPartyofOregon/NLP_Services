@@ -422,7 +422,10 @@ class NlpImap
         nlp_debug_msg('imap_body',t('Failed to retrieve message body for message number = %id',
           ['%id' => $messageNumber]));
       }
+      // The body has the same type as the message itself.
       $mail[] = [
+        'type' => $mail[0]['type'],
+        'subtype' => $mail[0]['subtype'] ?? '',
         'data' => $body,
         'charset' => $mail[0]['charset'],
       ];

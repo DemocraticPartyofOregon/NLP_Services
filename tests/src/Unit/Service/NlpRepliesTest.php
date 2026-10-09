@@ -320,6 +320,29 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString($notificationText, $capturedBody);
     }
 
+    public function testEmailForwardToleratesPartWithoutTypeOrSubtype(): void {
+      // A single-part bounce: the header part's data is an array and the body
+      // part may arrive with no type or subtype.  Neither may raise a warning.
+      $message = $this->buildMessage('Mail delivery failed', [
+        $this->senderPart(),
+        ['type' => 'Text', 'subtype' => 'plain', 'data' => ['subject' => 'x']],
+        ['data' => 'Body with no type.', 'charset' => 'utf-8'],
+      ]);
+      $this->setupImapWithMessage($message);
+
+      $capturedBody = NULL;
+      $this->sendEmailMock->method('sendEmail')
+        ->willReturnCallback(function (string $key, string $to, string $subject, string $body) use (&$capturedBody): bool {
+          $capturedBody = $body;
+          return true;
+        });
+
+      $this->buildService()->emailForward();
+
+      $this->assertNotNull($capturedBody);
+      $this->assertStringNotContainsString('Array', $capturedBody);
+    }
+
     public function testEmailForwardIncludesDeliveryReportPartInBody(): void {
       // Plain/delivery-status → assigned 'Delivery report', which is in bodyParts for 'failed'.
       $deliveryText = "Original-Recipient: rfc822;nl@example.com\rDelivery status details.";
