@@ -92,6 +92,8 @@ class NlpExportNlsStatus
       $counties = [$county];
     }
     //nlp_debug_msg_safe('$counties',$counties);
+    // Loading each NL's user entity is too slow and memory hungry for an all-county export.
+    $lastAccess = $this->drupalUserObj->getLastAccessByMcid();
     foreach ($counties as $countyName) {
       $nlList = $this->nls->getCountyNls($countyName,$hd);
       if (!$nlList) {
@@ -135,8 +137,7 @@ class NlpExportNlsStatus
         }
 
         $stamps = ($contactMethod === 'mail') ? $doors : 0;
-        $user = $this->drupalUserObj->getUserByMcid($mcid);
-        $accessDate = (!empty($user['access'])) ? date('Y/n/j',$user['access']) : 'Never';
+        $accessDate = (!empty($lastAccess[$mcid])) ? date('Y/n/j',$lastAccess[$mcid]) : 'Never';
 
         $nlRecord = [
           $nl['mcid'],

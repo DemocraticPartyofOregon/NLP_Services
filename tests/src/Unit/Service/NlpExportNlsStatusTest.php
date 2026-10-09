@@ -115,7 +115,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->reportsMock->method('getCommitteeReportCounts')
         ->willReturn(empty($countOverrides) ? [] : [$mcid => $countOverrides]);
       $this->turfsMock->method('getTurfsById')->willReturn($turfs);
-      $this->drupalUserMock->method('getUserByMcid')->willReturn($user);
+      $this->drupalUserMock->method('getLastAccessByMcid')
+        ->willReturn(isset($user['access']) ? [$mcid => $user['access']] : []);
     }
 
     private function readCsv(string $path): array {
@@ -199,12 +200,29 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('getVoterCountByNl')->willReturn(5);
       $this->reportsMock->method('getCommitteeReportCounts')->willReturn([]);
       $this->turfsMock->method('getTurfsById')->willReturn([]);
-      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->drupalUserMock->method('getLastAccessByMcid')->willReturn([]);
 
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
       $csv = $this->readCsv($path);
       $this->assertCount(3, $csv);  // header + 2 data rows
+    }
+
+    public function testCreateNlsStatusFileLooksUpAccessTimesOnceWithoutLoadingUsers(): void {
+      $nl1 = $this->baseNl(['mcid' => 1]);
+      $nl2 = $this->baseNl(['mcid' => 2]);
+      $this->nlsMock->method('getCountyNls')->willReturn([1 => $nl1, 2 => $nl2]);
+      $this->nlsMock->method('getNlsStatus')->willReturn($this->baseStatus());
+      $this->turfsMock->method('getTurfsById')->willReturn([]);
+      $this->drupalUserMock->expects($this->once())->method('getLastAccessByMcid')
+        ->willReturn([2 => mktime(0, 0, 0, 3, 4, 2026)]);
+      $this->drupalUserMock->expects($this->never())->method('getUserByMcid');
+
+      $path = $this->makeTempFile();
+      $this->buildService()->createNlsStatusFile($path, 'Multnomah');
+      $csv = $this->readCsv($path);
+      $this->assertStringContainsString('Never', $csv[1][9]);
+      $this->assertStringContainsString('2026/3/4', $csv[2][9]);
     }
 
     public function testCreateNlsStatusFileAttemptsEmptyWhenNoReportCounts(): void {
