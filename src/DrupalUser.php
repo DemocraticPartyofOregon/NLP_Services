@@ -139,6 +139,29 @@ class DrupalUser {
   }
 
   /**
+   * getLastAccessByMcid
+   *
+   * Returns the last access time of every user with an mcid, keyed by mcid.
+   * One query, so an export of many NLs doesn't load each user entity.
+   *
+   * @return array
+   */
+  public function getLastAccessByMcid(): array
+  {
+    try {
+      $query = Drupal::database()->select('user__field_mcid', 'm');
+      $query->join('users_field_data', 'u', 'u.uid = m.entity_id');
+      $query->addField('m', 'field_mcid_value', 'mcid');
+      $query->addField('u', 'access');
+      $query->condition('m.deleted', 0);
+      return $query->execute()->fetchAllKeyed();
+    } catch (Exception $e) {
+      nlp_debug_msg('getLastAccessByMcid', $e->getMessage());
+      return [];
+    }
+  }
+
+  /**
    * getUserByName
    *
    * Returns the NLP user array given the userName.
