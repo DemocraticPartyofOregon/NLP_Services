@@ -378,6 +378,36 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringNotContainsString('#question', $capturedHtml);
     }
 
+    public function testCreateWalksheetPdfKeepsEachHouseholdInItsOwnUnbreakableTable(): void {
+      $this->setupStandardConfigMocks();
+      // Two voters at 123 Main St (one household), then one at 456 Oak Ave.
+      $voter1 = $this->baseVoter();
+      $voter2 = $this->baseVoter(['vanid' => '22222']);
+      $voter3 = $this->baseVoter(['vanid' => '33333', 'address' => ['addressLine1' => '456 Oak Ave', 'addressLine2' => '', 'city' => 'Portland']]);
+      $this->votersMock->method('fetchVotersByTurf')->willReturn([$voter1, $voter2, $voter3]);
+
+      $capturedHtml = '';
+      $this->pdfMock->method('generatePdf')
+        ->willReturnCallback(function (string $html) use (&$capturedHtml): string {
+          $capturedHtml = $html;
+          return '';
+        });
+
+      $service = $this->buildService();
+      $service->createWalksheetPdf($service->createWalksheetArray(7));
+
+      // One page break after the instructions; mPDF breaks pages between households.
+      $this->assertSame(1, substr_count($capturedHtml, '<pagebreak />'));
+      $this->assertSame(2, substr_count($capturedHtml, 'page-break-inside:avoid'));
+      $this->assertSame(2, substr_count($capturedHtml, 'autosize="1"'));
+      // The voter list ends with one solid row: the last household's bottom border.  The
+      // first household's last row has none, so its separator isn't drawn twice.
+      $voterList = substr($capturedHtml, strpos($capturedHtml, '<pagebreak />'));
+      $this->assertSame(1, substr_count($voterList, '<tr style="border-bottom: 1px solid #000;">'));
+      $this->assertSame(1, substr_count($voterList, '<tr style="border-bottom: 1px dashed LightGray;">'));
+      $this->assertSame(1, substr_count($voterList, '<tr style="">'));
+    }
+
   }
 
 }

@@ -334,35 +334,34 @@ class NlpCreateWalksheet
     
     $html .= $this->createWalksheetInstructions($this->turfInfo);
     
-    $newPage = true;
-    $pageLineCount = 0;
-    $pageLineLimit = 48; // Set a limit for the number of lines per page.
-    foreach ($walksheetData as $household) {
-      $householdLineCount = $household['householdLineCount'];
-      if($householdLineCount + $pageLineCount > $pageLineLimit) {
-        // If adding this household exceeds the page line limit, start a new page.
-        $newPage = true;
-        $html .= '</table>';
+    // The voter list starts on a new page after the instructions.
+    if (!empty($walksheetData)) {
+      $html .= '<pagebreak />';
+    }
+    // Each household is its own table so mPDF moves the whole household to the next page
+    // when it won't fit.  Row heights vary with the content (e.g. a long list of survey
+    // responses wraps), so counting lines here can't predict where the page ends.
+    // autosize="1" stops mPDF from shrinking a household to squeeze it onto the page instead.
+    $lastHousehold = array_key_last($walksheetData);
+    foreach ($walksheetData as $householdIndex => $household) {
+      $html .= '<table autosize="1" style="width:100%; border-collapse:collapse; page-break-inside:avoid; ">';
+      $firstInHousehold = true;  // Draws the top border on the household's first row.
+
+      // Households are separated by the top border of the next household's first row, so only
+      // the last household closes with a bottom border.  Drawing both would double the line.
+      $votersInHousehold = $household['votersInHousehold'];
+      if ($householdIndex !== $lastHousehold) {
+        $votersInHousehold[array_key_last($votersInHousehold)]['control']['row'] = 'none';
       }
-      if($newPage) {
-        $html .= '<pagebreak />';
-        $pageLineCount = 0;
-        $html .= '<table style="width:100%; border-collapse:collapse; ">';
-      }
-      $pageLineCount = $pageLineCount + $household['householdLineCount'];
-      
-      foreach ($household['votersInHousehold'] as $voter) {
-        if ($voter['control']['row'] == 'dashed') {
-          $html .= '<tr style="border-bottom: 1px dashed LightGray;">';
-        } else {
-          $html .= '<tr style="border-bottom: 1px solid Black;">';
-        }
-        
+
+      foreach ($votersInHousehold as $voter) {
+        $html .= '<tr style="' . $this->rowBorderStyle($voter['control']['row']) . '">';
+
         switch ($voter['control']['type']) {
           case 'voter':
-            $html .= $this->buildRowForVoter($voter,$newPage);
-            $newPage = false; // Reset newPage flag after first row of household.
-            
+            $html .= $this->buildRowForVoter($voter,$firstInHousehold);
+            $firstInHousehold = false;
+
             break;
           case 'household':
             $html .= $this->buildOthersInHousehold($voter);
@@ -370,8 +369,6 @@ class NlpCreateWalksheet
         }
         $html .= '</tr>';
       }
-    }
-    if(!$newPage) {
       $html .= '</table>';
     }
    
@@ -505,7 +502,7 @@ NLP Hostile in the canvass dispositions.</p>
    */
   private function buildOthersInHousehold(array $row): string
   {
-    $borderStyle = ($row['control']['row'] == 'dashed') ? 'border-bottom: 1px dashed LightGray;' : 'border-bottom: 1px solid #000;';
+    $borderStyle = $this->rowBorderStyle($row['control']['row']);
     $cellData = $row['address'];
     $width = self::WALKSHEET_COLUMNS_WIDTHS['address'];
     $html = '<td style="vertical-align: top; width:' . $width .
@@ -539,11 +536,11 @@ NLP Hostile in the canvass dispositions.</p>
    * Builds the HTML for a single voter's row in the walk sheet.
    *
    * @param array $voter - An associative array containing voter data.
-   * @param bool $newPage - Indicates if this is a new page.
+   * @param bool $firstInHousehold - Indicates if this is the household's first row.
    *
    * @return string - The HTML content as a string.
    */
-  private function buildRowForVoter(array $voter,bool $newPage): string
+  private function buildRowForVoter(array $voter,bool $firstInHousehold): string
   {
     $html = '';
     foreach ($voter as $column => $cellData) {
@@ -563,9 +560,9 @@ NLP Hostile in the canvass dispositions.</p>
       }
       
       if ($column != 'control') {
-        $borderStyle = ($voter['control']['row'] == 'dashed') ? 'border-bottom: 1px dashed LightGray;' : 'border-bottom: 1px solid #000;';
-        // Add the top border if this is the first row after a new page
-        if ($newPage) {
+        $borderStyle = $this->rowBorderStyle($voter['control']['row']);
+        // The top border of a household's first row separates it from the household above.
+        if ($firstInHousehold) {
           $borderStyle = 'border-top: 1px solid #000;' . $borderStyle;
         }
         $width = self::WALKSHEET_COLUMNS_WIDTHS[$column];
@@ -575,5 +572,23 @@ NLP Hostile in the canvass dispositions.</p>
       }
     }
     return $html;
+  }
+
+  /**
+   * rowBorderStyle
+   *
+   * Returns the bottom border style for a walk sheet row.
+   *
+   * @param string $row - The row's border type: dashed, solid, or none.
+   *
+   * @return string - The CSS for the bottom border.
+   */
+  private function rowBorderStyle(string $row): string
+  {
+    return match ($row) {
+      'dashed' => 'border-bottom: 1px dashed LightGray;',
+      'none' => '',
+      default => 'border-bottom: 1px solid #000;',
+    };
   }
 }
