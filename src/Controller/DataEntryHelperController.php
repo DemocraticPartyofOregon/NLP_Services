@@ -81,8 +81,8 @@ class DataEntryHelperController extends ControllerBase
   /**
    * Printable_calling_page
    *
-   * Generates a printable calling page for the given turf index.  The output is a render array, and
-   * the user can print it directly from the browser.
+   * Generates a PDF GOTV call list for the given turf index.  The output is a render array with a
+   * link to download the PDF.
    *
    * @param $turfIndex
    * @noinspection PhpUnused
@@ -95,15 +95,14 @@ class DataEntryHelperController extends ControllerBase
     $output = $this->dataEntryPrintObj->buildCallList($voters);
     Drupal::service("page_cache_kill_switch")->trigger();
     $output['#attached']['library'][] = 'nlpservices/data-entry-help';
-    $output['#attached']['library'][] = 'nlpservices/call-print';
     return $output;
   }
   
   /**
    * Printable_mailing_page
    *
-   * Generates a printable mailing page for the given turf index.  The output is a render array, and
-   * the user can print it directly from the browser.
+   * Generates a PDF mailing list for the given turf index.  The output is a render array with a
+   * link to download the PDF.
    *
    * @param $turfIndex
    * @noinspection PhpUnused
@@ -116,7 +115,6 @@ class DataEntryHelperController extends ControllerBase
     $output = $this->dataEntryPrintObj->buildMailingList($voters);
     Drupal::service("page_cache_kill_switch")->trigger();
     $output['#attached']['library'][] = 'nlpservices/data-entry-help';
-    $output['#attached']['library'][] = 'nlpservices/call-print';
     return $output;
   }
   

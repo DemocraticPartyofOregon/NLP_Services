@@ -33,15 +33,17 @@ class PdfGenerator {
    *   The HTML content to convert to PDF.
    * @param string $tempFile
    *   The path to the temporary file where the PDF will be saved.
+   * @param string $orientation
+   *   The page orientation: 'L' for landscape or 'P' for portrait.
    *
    * @return string
    *   The URL of the generated PDF file.
    */
-  public function generatePdf(string $html, string $tempFile): string
+  public function generatePdf(string $html, string $tempFile, string $orientation = 'L'): string
   {
     $mpdf = new Mpdf(
       [
-        'orientation' => 'L',
+        'orientation' => $orientation,
         'margin_left'   => 6.5,
         'margin_right'  => 6.5,
         'margin_top'    => 12,

@@ -11,9 +11,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\nlpservices\PdfGenerator;
+  use Drupal\Tests\nlpservices\Traits\PdfPaginationTrait;
   use Drupal\Tests\UnitTestCase;
 
   class NlpCreateWalksheetTest extends UnitTestCase {
+
+    use PdfPaginationTrait;
 
     private NlpVoters $votersMock;
     private NlpPaths $pathsMock;
@@ -79,7 +82,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ], $overrides);
     }
 
-    private function setupStandardConfigMocks(): void {
+    private function setupStandardConfigMocks(array $surveyResponses = [['name' => 'Yes'], ['name' => 'No']]): void {
       $this->sessionMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurf')->willReturn($this->baseTurf());
       $this->configMock->method('getElectionName')->willReturn('General 2024');
@@ -91,7 +94,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['Contacted' => ['name' => 'Contacted'], 'Not Home' => ['name' => 'Not Home']]);
       $this->configMock->method('getPledgeSurveyQuestion')->willReturn([
         'scriptQuestion' => '<b>Will you vote?</b>',
-        'responses'      => [['name' => 'Yes'], ['name' => 'No']],
+        'responses'      => $surveyResponses,
       ]);
     }
 
@@ -406,6 +409,53 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(1, substr_count($voterList, '<tr style="border-bottom: 1px solid #000;">'));
       $this->assertSame(1, substr_count($voterList, '<tr style="border-bottom: 1px dashed LightGray;">'));
       $this->assertSame(1, substr_count($voterList, '<tr style="">'));
+    }
+
+    // -------------------------------------------------------------------------
+    // createWalksheetPdf — pagination of the rendered PDF
+    // -------------------------------------------------------------------------
+
+    public function testCreateWalksheetPdfRenderedPagesKeepEachHouseholdTogether(): void {
+      // Five survey responses wrap the question cell, making each row taller than a short
+      // response list does.  Counting a fixed number of lines per voter split households here.
+      $this->setupStandardConfigMocks([
+        ['name' => 'Yes'], ['name' => 'No'], ['name' => 'Undecided'], ['name' => 'Already Voted'], ['name' => 'Needs Info'],
+      ]);
+      // Mixed household sizes, so a page often can't fit the next household, and HH10, too
+      // large for any one page.
+      $pattern = [1, 2, 3, 1, 4, 2, 1, 1, 3, 2, 30, 1, 2, 2, 1, 3, 1, 2, 4, 1, 1, 2, 5, 2, 1,
+        1, 2, 1, 3, 2, 1, 4, 2, 1, 1, 2, 3, 1, 2, 2];
+      $sizes = [];
+      foreach ($pattern as $h => $size) {
+        $sizes[sprintf('HH%02d', $h)] = $size;
+      }
+      $voters = [];
+      $vanid = 1000;
+      foreach (array_keys($sizes) as $h => $hh) {
+        for ($i = 0; $i < $sizes[$hh]; $i++) {
+          $voters[] = $this->baseVoter([
+            'vanid' => (string) $vanid++,
+            'lastName' => $hh . 'Johnson',
+            'firstName' => 'Person' . $i,
+            'address' => ['addressLine1' => (100 + $h) . ' NE Longername Street', 'addressLine2' => 'Apt ' . $h],
+          ]);
+        }
+      }
+      $this->votersMock->method('fetchVotersByTurf')->willReturn($voters);
+
+      $capturedHtml = '';
+      $this->pdfMock->method('generatePdf')
+        ->willReturnCallback(function (string $html) use (&$capturedHtml): string {
+          $capturedHtml = $html;
+          return '';
+        });
+      $service = $this->buildService();
+      $service->createWalksheetPdf($service->createWalksheetArray(7));
+
+      // The walk sheet uses PdfGenerator's default (landscape) orientation.
+      $pageTexts = $this->pageTexts($this->renderPdf($capturedHtml));
+      $households = $this->householdPages($pageTexts, '/(?<hh>HH\d\d)Johnson,\s*Person\d+/');
+      $this->assertHouseholdsKeptTogether($households, $sizes, 'HH10');
     }
 
   }

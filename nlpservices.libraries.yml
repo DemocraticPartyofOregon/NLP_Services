@@ -82,11 +82,6 @@ navigate-button:
   css:
     layout:
       css/button.css: {}
-call-print:
-  version: "1.0.0"
-  css:
-    layout:
-      css/call-print.css: {}
 nl-display:
   version: "1.0.0"
   css:

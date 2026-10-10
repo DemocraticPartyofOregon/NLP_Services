@@ -3,12 +3,7 @@
 namespace Drupal\nlpservices;
 
 use Drupal;
-use Drupal\Core\Extension\ModuleExtensionList;
-use Drupal\Core\File\FileExists;
-use Drupal\file\FileRepositoryInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
-use Drupal\Core\Render\Markup;
-use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryPrint
@@ -30,8 +25,7 @@ class NlpDataEntryPrint
                               $turfsObj, $pathsObj, $instructionsObj, $drupalUserObj,
                               $createWalksheetObj,
                               private readonly FileUrlGeneratorInterface $fileUrlGenerator,
-                              private readonly FileRepositoryInterface $fileRepository,
-                              private readonly ModuleExtensionList $moduleExtensionList ) {
+                              private readonly PdfGenerator $pdfGenerator ) {
     $this->nlsObj = $nlsObj;
     $this->sessionData = $sessionData;
     $this->coordinators = $coordinators;
@@ -56,8 +50,7 @@ class NlpDataEntryPrint
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.create_walksheet'),
       $container->get('file_url_generator'),
-      $container->get('file.repository'),
-      $container->get('extension.list.module'),
+      $container->get('nlpservices.pdf_generator'),
     );
   }
 
@@ -86,9 +79,7 @@ class NlpDataEntryPrint
    * for the walksheet PDF, the canvass instructions PDF, the postcard instructions PDF,
    * the postcard mailing list, and the GOTV calling list.
    *
-   * The postcard and call lists are in HTML format and are displayed in the browser as
-   * very simple tables.  The user can print these pages using the browser print function. Some
-   * day it may be preferable to create a PDF of these lists, but for now, the HTML is enough.
+   * The postcard mailing list and the GOTV call list are PDFs the user can download and print.
    *
    * The walksheet PDF is created by the coordinator using the print function of VoteBuilder.  The
    * print function creates a map of the contact addresses, and this map is very challenging to
@@ -200,113 +191,84 @@ a good idea to be cautious about calling voters that always vote late. </p>";
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCallList
    *
+   * Create a PDF GOTV call list for each household and return a render array with a link to
+   * download it.
+   *
    * @param array $voters
    * @return array
    */
   public function buildCallList( array $voters ): array
   {
-    $note = '<div class="call-list-display">';
-
-    $note .= "<p>The following table contains the list of households from your
-turf.  The names in red are those that have not yet voted (also marked with
-an asterisk). The column on the right indicates that at least one voter in the
-household has not yet voted, and a reminder call might be helpful.</p>";
-
-    $note .= '</div>';
-
-    $contacts[] = [
-      '#markup' => $note,
-    ];
     $voterArrays = $this->buildCallTableArray($voters);
-
-    $page = $this->buildCallListDisplay($voterArrays);
-
-    $listUri = $this->buildListPrint('call',$page,"GOTV Call list");
-
-    $header = [
-      'names' => 'Named(s)',
-      'phoneNumbers' => 'Phone Number(s)',
-      'address' => 'Address',
-      'someOneToCall' => 'Call',
-    ];
-
-    $rows = [];
-    foreach ($voterArrays as $voterArray) {
-      $row = [];
-      $row['names'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['names'].'</span>');
-      $row['phoneNumbers'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['phoneNumbers'].'</span>');
-      $row['address'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$voterArray['address'].'</span>');
-      $call = ($voterArray['someOneToCall'])?'<span class="help-call">call</span>':'';
-      $row['someOneToCall'] = Markup::create('<span style="font-family:Calibri,sans-serif;">'.$call.'</span>');
-      $rows[] = $row;
+    if (empty($voterArrays)) {
+      return [
+        '#markup' => '<p>No voters are available for a call list.</p>',
+      ];
     }
-
-    // Create the table as a render array.
-    $contacts[] = [
-      '#theme' => 'table',
-      '#tableselect' => FALSE,
-      '#header' => $header,
-      '#rows' => $rows,
-      '#empty' => t('No files found'),
-      '#attributes' => [
-        'class' => ['table table-striped', 'call-table'],
-      ],
-      '#prefix' => '<div class="call-list-display">',
-      '#suffix' => '</div>',
-    ];
-
-    $url = $this->fileUrlGenerator->generateAbsoluteString($listUri);
-    $text =  "<p> * Hasn't voted yet. &nbsp; ** SMS texting optin unknown.</p></div>";
-    $text .= "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
-    $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
-If you right-click on the print, you can save the table on your system.  This saved file can be read by
-Microsoft Word and edited or printed.</p></div>";
-
-    $contacts[] = [
-      '#markup' => $text,
-    ];
-
-    return $contacts;
+    $html = $this->buildCallListPdfHtml($voterArrays);
+    return $this->createListPdf($html, self::DD_CALL_FILE, 'GOTV call list');
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * buildCallListDisplay
+   * buildCallListPdfHtml
+   *
+   * Create the HTML for the call list PDF.  Each household is its own table with a row per
+   * voter, so mPDF moves the whole household to the next page when it won't fit.  Only a
+   * household too large for a page is split, and autosize="1" keeps mPDF from shrinking it
+   * to fit instead.  The column headings are a page header so they repeat on each page.
    *
    * @param array $voterArrays
-   * @return array
+   * @return string
    */
-  public function buildCallListDisplay( array $voterArrays ): array
+  public function buildCallListPdfHtml( array $voterArrays ): string
   {
+    $font = 'font-size: 10pt; font-family: Calibri, Arial, sans-serif;';
+    $cellStyle = 'vertical-align: top; padding: 2pt 4pt; border-left: 1px solid green; border-right: 1px solid green; ' . $font;
+    $tableStyle = 'width: 100%; border-collapse: collapse; border: 1px solid green; margin-bottom: 2mm;';
+    $widths = ['names' => '45%', 'phoneNumbers' => '22%', 'address' => '26%', 'call' => '7%'];
 
-    $page = [];
-    $page[] = '<div class="call-list-display">';
+    $html = '<style>.help-not-voted, .help-call { color: red; } .voter-sms-status { font-size: 7pt; font-style: italic; color: blue; }</style>';
+    $html .= '<htmlpageheader name="callListHeader">';
+    $html .= '<table style="' . $tableStyle . '"><tr>';
+    $html .= '<td style="width: ' . $widths['names'] . '; ' . $cellStyle . '"><b>Name(s)</b></td>';
+    $html .= '<td style="width: ' . $widths['phoneNumbers'] . '; ' . $cellStyle . '"><b>Phone Number(s)</b></td>';
+    $html .= '<td style="width: ' . $widths['address'] . '; ' . $cellStyle . '"><b>Address</b></td>';
+    $html .= '<td style="width: ' . $widths['call'] . '; ' . $cellStyle . '"><b>Call</b></td>';
+    $html .= '</tr></table>';
+    $html .= '</htmlpageheader>';
+    $html .= '<style>@page { header: html_callListHeader; margin-top: 20mm; }</style>';
 
-    $page[] = "<p>The following table contains the list of households from your
-turf.  The names in red are those that have not yet voted (also marked with
-an asterisk). The column on the right indicates that at least one voter in the
-household has not yet voted, and a reminder call might be helpful.</p>";
-    // Get the list of voters for this turf, ordered by voting address.
-    $page[] = '<table class="call-table">';
+    $html .= '<h1 style="font-size: 16pt; font-family: Calibri, Arial, sans-serif;">GOTV Call List</h1>';
+    $html .= '<p style="' . $font . '">The following table contains the list of households from your
+turf.  The names in red are those that have not yet voted (also marked with an asterisk).  The column
+on the right indicates that at least one voter in the household has not yet voted, and a reminder call
+might be helpful.<br>* Has not voted yet. &nbsp; ** SMS texting optin unknown.</p>';
 
-    // Create the display of voter's, grouped BY ADDRESS if more than one at the same address.
+    // One row per voter, with the address and call flag on the household's first row.
     foreach ($voterArrays as $voterArray) {
-      $page[] = "<tr>";
-      $page[] = '<td class="name">'."<span style='font-family:Calibri,sans-serif; font-size: medium;'>".$voterArray['names'].'</span></td>';
-      $page[] = '<td class="phoneNumbers">'."<span style='font-family:Calibri,sans-serif; font-size: medium;'>".$voterArray['phoneNumbers'].'</span></td>';
-      $page[] = '<td class="address">'."<span style='font-family:Calibri,sans-serif; font-size: medium;'>".$voterArray['address'].'</span></td>';
-      $call = ($voterArray['someOneToCall'])?'<span class="help-call">call</span>':'';
-      $page[] = '<td class="call-status">'."<span style='font-family:Calibri,sans-serif; font-size: medium;'>".$call.'</span></td>';
-      $page[] = "</tr>";
+      $html .= '<table autosize="1" style="' . $tableStyle . ' page-break-inside: avoid;">';
+      $address = $voterArray['address'];
+      $call = ($voterArray['someOneToCall']) ? '<span class="help-call">call</span>' : '';
+      foreach ($voterArray['voters'] as $voter) {
+        $html .= '<tr>';
+        $html .= '<td style="width: ' . $widths['names'] . '; ' . $cellStyle . '">' . $voter['name'] . '</td>';
+        $html .= '<td style="width: ' . $widths['phoneNumbers'] . '; ' . $cellStyle . '">' . $voter['phoneNumbers'] . '</td>';
+        $html .= '<td style="width: ' . $widths['address'] . '; ' . $cellStyle . '">' . $address . '</td>';
+        $html .= '<td style="width: ' . $widths['call'] . '; ' . $cellStyle . '">' . $call . '</td>';
+        $html .= '</tr>';
+        $address = $call = '';
+      }
+      $html .= '</table>';
     }
-    $page[] =  "</table>";
-    $page[] =  "<p> * Hasn't voted yet. &nbsp; ** SMS texting optin unknown.</p></div>";
-    return $page;
+    return $html;
   }
 
   /**
    * buildCallTableArray
    *
-   * Returns an array of arrays with information to build the call list table.
+   * Returns an array of arrays with information to build the call list table.  Each entry is
+   * a household with its 'address', 'someOneToCall' flag, its 'voters' (one 'name' and
+   * 'phoneNumbers' pair per voter), and 'names'/'phoneNumbers' (those joined by <br>).
    *
    * @param array $voters
    * @return array
@@ -369,17 +331,20 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $householdAddress .= '<br>'.$voterAddress['city'];
       // If the first voter in the household, remember name and address in case
       // there are others.
+      $householdVoter = ['name' => $householdNames, 'phoneNumbers' => $phoneNumbers];
       if (empty($savedHousehold['address'])) {
         $savedHousehold['address'] = $householdAddress;
         $savedHousehold['names'] = $householdNames;
         $savedHousehold['phoneNumbers'] = $phoneNumbers;
         $savedHousehold['someOneToCall'] = $someOneToCall;
+        $savedHousehold['voters'] = [$householdVoter];
       } else {
         // If not the first voter in the household, then if another voter at the
         // same address, then add the name to the list.
         if($householdAddress == $savedHousehold['address']) {
           $savedHousehold['names'] .= "<br>".$householdNames;
           $savedHousehold['phoneNumbers'] .= "<br>".$phoneNumbers;
+          $savedHousehold['voters'][] = $householdVoter;
           if(!$savedHousehold['someOneToCall']) {
             $savedHousehold['someOneToCall'] = $someOneToCall;
           }
@@ -389,11 +354,13 @@ household has not yet voted, and a reminder call might be helpful.</p>";
           $voterArray['phoneNumbers'] = $savedHousehold['phoneNumbers'];
           $voterArray['address'] = $savedHousehold['address'];
           $voterArray['someOneToCall'] = $savedHousehold['someOneToCall'];
+          $voterArray['voters'] = $savedHousehold['voters'];
 
           $savedHousehold['address'] = $householdAddress;
           $savedHousehold['names'] = $householdNames;
           $savedHousehold['phoneNumbers'] = $phoneNumbers;
           $savedHousehold['someOneToCall'] = $someOneToCall;
+          $savedHousehold['voters'] = [$householdVoter];
           $voterArrays[] = $voterArray;
         }
       }
@@ -404,6 +371,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $voterArray['phoneNumbers'] = $savedHousehold['phoneNumbers'];
       $voterArray['address'] = $savedHousehold['address'];
       $voterArray['someOneToCall'] = $savedHousehold['someOneToCall'];
+      $voterArray['voters'] = $savedHousehold['voters'];
       $voterArrays[] = $voterArray;
     }
 
@@ -411,81 +379,32 @@ household has not yet voted, and a reminder call might be helpful.</p>";
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * buildCallListPrint
+   * createListPdf
    *
-   * @param string $type
-   * @param array $page
-   * @param string $title
-   * @return string
+   * Create a portrait PDF of a call or mailing list and return a render array with a link
+   * to download it.
+   *
+   * @param string $html - The HTML for the list.
+   * @param string $fileType - DD_CALL_FILE or DD_POSTCARD_FILE, used in the file name.
+   * @param string $label - The list's name in the link text, e.g. 'GOTV call list'.
+   * @return array
    */
-  public function buildListPrint( string $type, array $page, string $title ): string
+  private function createListPdf( string $html, string $fileType, string $label ): array
   {
-    $messenger = Drupal::messenger();
-
     $currentUser = $this->drupalUserObj->getCurrentUser();
-    $mcid = $currentUser['mcid'];
-
+    $mcid = $currentUser['mcid'] ?? 0;
     $createDate = date('Y-m-d-H-i-s', time());
-    $fileType = ($type == 'call')?self::DD_CALL_FILE:self::DD_POSTCARD_FILE;
-    $listUri = "public://temp/$fileType-$mcid-$createDate.html";
-    $file = $this->fileRepository->writeData('', $listUri, FileExists::Replace);
-    $file->setTemporary();
-    try {
-      $file->save();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('e',$e->getMessage());
-      return '';
-    }
-    $fh = fopen($listUri, "w");
-    if (!$fh) {
-      $messenger->addError(t('Failed to open list file'));
-      return '';
+    $listUri = "public://temp/$fileType-$mcid-$createDate.pdf";
+    $pdfUrl = $this->pdfGenerator->generatePdf($html, $listUri, 'P');
+    if (empty($pdfUrl)) {
+      return [
+        '#markup' => "<p>The $label could not be created.  Please contact your coordinator.</p>",
+      ];
     }
 
-    fputs($fh, '<html lang="EN-uS"><head><title></title>');
-
-    // Get the CSS file.
-    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
-    $cssFile = $modulePath.'/css/call-print.css';
-    $cssFh = fopen($cssFile, "r");
-    if (!$cssFh) {
-      $messenger->addError(t('Failed to open CSS file'));
-      fclose($fh);
-      return '';
-    }
-    fputs($fh,"<style>");
-    $skip = false;
-    do {
-      $css = fgets($cssFh);
-      if (empty($css)) {break;}
-      if (empty(trim($css))) {continue;}  // Blank line.
-      if ($skip) {
-        if (str_contains($css, '*/')) {$skip = false;}
-        continue;
-      }
-      if (str_contains($css, '/*')) {
-        if (!str_contains($css, '*/')) {$skip = true;}
-        continue;
-      }
-      fputs($fh,$css);
-    } while (TRUE);
-    fclose($cssFh);
-    fputs($fh,"</style>");
-
-    fputs($fh, "</head><body>");
-
-    fputs($fh,"<h1>$title</h1>");
-
-    fputs($fh,"<span style='font-family:Calibri,sans-serif'>");
-
-    foreach ($page as $line) {
-      fputs($fh,$line."\n");
-    }
-
-    fputs($fh,"</span></body></html>");
-    fclose($fh);
-    return $listUri;
+    return [
+      '#markup' => '<p><a href="' . $pdfUrl . '" target="_blank">Click here to view or download your ' . $label . '</a></p>',
+    ];
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -508,8 +427,9 @@ household has not yet voted, and a reminder call might be helpful.</p>";
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildMailingList
    *
-   * Create a mailing address list for each household.   The names and ages of
-   * every voter in the household will be listed to help address the postcard.
+   * Create a PDF mailing address list for each household and return a render array with a
+   * link to download it.  The names and ages of every voter in the household will be listed
+   * to help address the postcard.
    *
    * @param array $voters
    * @return array
@@ -517,84 +437,65 @@ household has not yet voted, and a reminder call might be helpful.</p>";
   public function buildMailingList( array $voters ): array
   {
     $tableArrays = $this->buildMailListArray($voters);
-    $page = $this->buildMailListDisplay($tableArrays);
-    $listUri = $this->buildListPrint('postcard',$page,"Postcard Mailing List");
-
-    $url = $this->fileUrlGenerator->generateAbsoluteString($listUri);
-    $text = "<div class='call-list-display'>".'<p><a href="'.$url.'"><b>PRINT</b></a>';
-    $text .= "<br>If you left-click the print, you will get a new page that you can print with your browser.
-If you right-click on the print, you can save the table on your system.  This saved file can be read by
-Microsoft Word and edited or printed.</p></div>";
-
-    $header = [
-      'names' => 'Named(s)',
-      'address' => 'Address',
-    ];
-
-    $rows = [];
-    foreach($tableArrays as $tableArray) {
-      $rows[] = [
-        'names' => Markup::create((string)$tableArray['names']),
-        'address' => Markup::create((string)$tableArray['address']),
+    if (empty($tableArrays)) {
+      return [
+        '#markup' => '<p>No voters are available for a mailing list.</p>',
       ];
     }
-
-    // Create the table as a render array.
-    $content[] = [
-      '#theme' => 'table',
-      '#tableselect' => FALSE,
-      '#header' => $header,
-      '#rows' => $rows,
-      '#empty' => t('No files found'),
-      '#attributes' => [
-        'class' => ['table table-striped', 'mail-table'],
-      ],
-      '#prefix' => '<div class="mail-list-display">',
-      '#suffix' => '</div>',
-    ];
-
-    $content[] = [
-      '#markup' => $text,
-    ];
-    return $content;
+    $html = $this->buildMailListPdfHtml($tableArrays);
+    return $this->createListPdf($html, self::DD_POSTCARD_FILE, 'postcard mailing list');
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * buildMailListDisplay
+   * buildMailListPdfHtml
    *
-   * Create an HTML table for the mailing list.
+   * Create the HTML for the mailing list PDF.  Each household is its own table with a row
+   * per voter, so mPDF moves the whole household to the next page when it won't fit.  Only a
+   * household too large for a page is split, and autosize="1" keeps mPDF from shrinking it
+   * to fit instead.  The column headings are a page header so they repeat on each page.
    *
    * @param array $tableArrays
-   * @return array
+   * @return string
    */
-  public function buildMailListDisplay( array $tableArrays ): array
+  public function buildMailListPdfHtml( array $tableArrays ): string
   {
-    $page = [];
-    $page[] = '<div class="call-list-display">';
-    $page[] =  '<table class="mail-table">';
+    $font = 'font-size: 10pt; font-family: Calibri, Arial, sans-serif;';
+    $cellStyle = 'vertical-align: top; padding: 2pt 4pt; border-left: 1px solid green; border-right: 1px solid green; ' . $font;
+    $tableStyle = 'width: 100%; border-collapse: collapse; border: 1px solid green; margin-bottom: 2mm;';
 
-    $page[] = '<thead><tr>';
+    $html = '<htmlpageheader name="mailListHeader">';
+    $html .= '<table style="' . $tableStyle . '"><tr>';
+    $html .= '<td style="width: 60%; ' . $cellStyle . '"><b>Name(s)</b></td>';
+    $html .= '<td style="width: 40%; ' . $cellStyle . '"><b>Mailing Address</b></td>';
+    $html .= '</tr></table>';
+    $html .= '</htmlpageheader>';
+    $html .= '<style>@page { header: html_mailListHeader; margin-top: 20mm; }</style>';
 
-    $page[] = '<th class="name">Name(s)</th><th class="address">Mailing Address</th>';
-    $page[] =  '</tr></thead>';
-    $page[] =  '<tbody>';
+    $html .= '<h1 style="font-size: 16pt; font-family: Calibri, Arial, sans-serif;">Postcard Mailing List</h1>';
+    $html .= '<p style="' . $font . '">The list is ordered by household.  Send one card to each
+household with the names of all the voters.</p>';
 
-    // Create the display of the voter's mailing address, grouped if more than one at the same address.
+    // One row per voter, with the mailing address on the household's first row.
     foreach ($tableArrays as $tableArray) {
-
-      $page[] = "<tr>";
-      $page[] = '<td class="name">' . $tableArray['names'] . "</td>";
-      $page[] = '<td class="address">' . $tableArray['address'] . "</td>";
-      $page[] = "</tr>";
+      $html .= '<table autosize="1" style="' . $tableStyle . ' page-break-inside: avoid;">';
+      $address = $tableArray['address'];
+      foreach ($tableArray['voters'] as $voterName) {
+        $html .= '<tr>';
+        $html .= '<td style="width: 60%; ' . $cellStyle . '">' . $voterName . '</td>';
+        $html .= '<td style="width: 40%; ' . $cellStyle . '">' . $address . '</td>';
+        $html .= '</tr>';
+        $address = '';
+      }
+      $html .= '</table>';
     }
-    $page[] =  "</tbody></table></div>";
-    return $page;
+    return $html;
   }
 
   /**
    * buildMailListArray
    *
-   * Build an array of mailing addresses for each household.
+   * Build an array of mailing addresses for each household.  Each entry has the household's
+   * 'address', its 'voters' (one formatted name per voter), and 'names' (those joined by <br>).
    *
    * @param array $voters
    * @return array
@@ -637,19 +538,23 @@ Microsoft Word and edited or printed.</p></div>";
       if (empty($current['address'])) {
         $current['address'] = $mailingAddress;
         $current['name'] = $voterName;
+        $current['voters'] = [$voterName];
       } else {
         // If not the first voter in the household, then if another voter at the
         // same address, then add the name to the list.
         if($mailingAddress == $current['address']) {
           $current['name'] .= "<br>".$voterName;
+          $current['voters'][] = $voterName;
         } else {
           // If this voter is registered at a different address, write the
           // mailing address record and start over with this voter.
 
           $voterArray['names'] = $current['name'];
+          $voterArray['voters'] = $current['voters'];
           $voterArray['address'] = $current['address'];
           $current['address'] = $mailingAddress;
           $current['name'] = $voterName;
+          $current['voters'] = [$voterName];
           $voterArrays[] = $voterArray;
 
         }
@@ -657,6 +562,7 @@ Microsoft Word and edited or printed.</p></div>";
     }
     if(!empty($current['name'])) {
       $voterArray['names'] = $current['name'];
+      $voterArray['voters'] = $current['voters'];
       $voterArray['address'] = $current['address'];
       $voterArrays[] = $voterArray;
     }

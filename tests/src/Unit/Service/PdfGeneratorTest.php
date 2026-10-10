@@ -8,10 +8,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\file\FileInterface;
   use Drupal\file\FileRepositoryInterface;
   use Drupal\nlpservices\PdfGenerator;
+  use Drupal\Tests\nlpservices\Traits\PdfPaginationTrait;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class PdfGeneratorTest extends UnitTestCase {
+
+    use PdfPaginationTrait;
 
     private array $tempFiles = [];
     private FileRepositoryInterface $repoMock;
@@ -142,6 +145,41 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->setupContainer($repoMock, $urlGeneratorMock);
 
       $this->buildGenerator()->generatePdf('<p>Hello</p>', 'public://temp/walksheet.pdf');
+    }
+
+    // -------------------------------------------------------------------------
+    // generatePdf — orientation
+    // -------------------------------------------------------------------------
+
+    /**
+     * Returns the [width, height] of the PDF's first page in points.
+     */
+    private function firstPageSize(?string $orientation): array {
+      $mediaBox = $this->renderPdf('<p>Hello</p>', $orientation)->getPages()[0]->getDetails()['MediaBox'];
+      return [(float) $mediaBox[2] - (float) $mediaBox[0], (float) $mediaBox[3] - (float) $mediaBox[1]];
+    }
+
+    public function testGeneratePdfDefaultsToLandscape(): void {
+      // The walk sheet relies on the default being landscape.
+      [$width, $height] = $this->firstPageSize(NULL);
+      $this->assertGreaterThan($height, $width);
+    }
+
+    public function testGeneratePdfLandscapeOrientation(): void {
+      [$width, $height] = $this->firstPageSize('L');
+      $this->assertGreaterThan($height, $width);
+    }
+
+    public function testGeneratePdfPortraitOrientation(): void {
+      [$width, $height] = $this->firstPageSize('P');
+      $this->assertGreaterThan($width, $height);
+    }
+
+    public function testGeneratePdfPortraitIsLandscapeTurnedSideways(): void {
+      [$portraitWidth, $portraitHeight] = $this->firstPageSize('P');
+      [$landscapeWidth, $landscapeHeight] = $this->firstPageSize('L');
+      $this->assertEqualsWithDelta($landscapeHeight, $portraitWidth, 0.01);
+      $this->assertEqualsWithDelta($landscapeWidth, $portraitHeight, 0.01);
     }
 
   }

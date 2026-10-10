@@ -2,9 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
-  use Drupal\Core\Extension\ModuleExtensionList;
   use Drupal\Core\File\FileUrlGeneratorInterface;
-  use Drupal\file\FileRepositoryInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpCreateWalksheet;
@@ -15,9 +13,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
+  use Drupal\nlpservices\PdfGenerator;
+  use Drupal\Tests\nlpservices\Traits\PdfPaginationTrait;
   use Drupal\Tests\UnitTestCase;
 
   class NlpDataEntryPrintTest extends UnitTestCase {
+
+    use PdfPaginationTrait;
 
     private NlpNls $nlsMock;
     private NlpSessionData $sessionDataMock;
@@ -29,8 +31,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private DrupalUser $drupalUserMock;
     private NlpCreateWalksheet $createWalksheetMock;
     private FileUrlGeneratorInterface $fileUrlGeneratorMock;
-    private FileRepositoryInterface $fileRepositoryMock;
-    private ModuleExtensionList $moduleListMock;
+    private PdfGenerator $pdfGeneratorMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -44,8 +45,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->drupalUserMock      = $this->createMock(DrupalUser::class);
       $this->createWalksheetMock = $this->createMock(NlpCreateWalksheet::class);
       $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
-      $this->fileRepositoryMock  = $this->createMock(FileRepositoryInterface::class);
-      $this->moduleListMock      = $this->createMock(ModuleExtensionList::class);
+      $this->pdfGeneratorMock    = $this->createMock(PdfGenerator::class);
     }
 
     // -------------------------------------------------------------------------
@@ -64,8 +64,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->drupalUserMock,
         $this->createWalksheetMock,
         $this->fileUrlGeneratorMock,
-        $this->fileRepositoryMock,
-        $this->moduleListMock,
+        $this->pdfGeneratorMock,
       );
     }
 
@@ -95,6 +94,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           'city'         => 'Portland',
         ],
       ], $overrides);
+    }
+
+    /**
+     * Household sizes for the rendered pagination tests, keyed by the household tag used in
+     * the voters' last names.  Mostly small households, several large enough that a page
+     * often can't fit them after other households, and HH10, too large for any one page.
+     */
+    private function paginationHouseholdSizes(): array {
+      $pattern = [1, 2, 3, 1, 4, 2, 1, 1, 3, 2, 5, 1, 2, 2, 1, 3, 1, 2, 4, 1, 1, 2, 8, 2, 1,
+        1, 2, 1, 3, 2, 1, 4, 2, 1, 1, 2, 3, 1, 2, 2, 6, 1, 2, 3, 1, 1, 2, 7, 1, 2];
+      $pattern[10] = 60;
+      $sizes = [];
+      foreach ($pattern as $h => $size) {
+        $sizes[sprintf('HH%02d', $h)] = $size;
+      }
+      return $sizes;
     }
 
     private function baseMailVoter(array $overrides = []): array {
@@ -225,37 +240,102 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $this->buildService()->buildCallTableArray([]));
     }
 
+    public function testBuildCallTableArrayListsEachVoterInHousehold(): void {
+      $voter1 = $this->baseCallVoter(['firstName' => 'Bob', 'homePhone' => '2065551234']);
+      $voter2 = $this->baseCallVoter(['firstName' => 'Jane', 'cellPhone' => '2065559876']);
+      $voter3 = $this->baseCallVoter(['firstName' => 'Ann', 'address' => ['streetName' => 'Oak']]);
+      $result = $this->buildService()->buildCallTableArray([$voter1, $voter2, $voter3]);
+      $this->assertCount(2, $result[0]['voters']);
+      $this->assertStringContainsString('Bob', $result[0]['voters'][0]['name']);
+      $this->assertStringContainsString('(206) 555-1234', $result[0]['voters'][0]['phoneNumbers']);
+      $this->assertStringContainsString('Jane', $result[0]['voters'][1]['name']);
+      $this->assertStringContainsString('(206) 555-9876', $result[0]['voters'][1]['phoneNumbers']);
+      $this->assertCount(1, $result[1]['voters']);
+      $this->assertStringContainsString('Ann', $result[1]['voters'][0]['name']);
+    }
+
     // -------------------------------------------------------------------------
-    // buildCallListDisplay
+    // buildCallListPdfHtml
     // -------------------------------------------------------------------------
 
-    public function testBuildCallListDisplayEmptyInputReturnsTableShell(): void {
-      $result = $this->buildService()->buildCallListDisplay([]);
-      $joined = implode('', $result);
-      $this->assertStringContainsString('<table', $joined);
-      $this->assertStringContainsString('</table>', $joined);
+    public function testBuildCallListPdfHtmlHasRepeatingColumnHeader(): void {
+      $html = $this->buildService()->buildCallListPdfHtml([]);
+      $this->assertStringContainsString('<htmlpageheader name="callListHeader">', $html);
+      $this->assertStringContainsString('header: html_callListHeader', $html);
+      foreach (['Name(s)', 'Phone Number(s)', 'Address', 'Call'] as $heading) {
+        $this->assertStringContainsString("<b>$heading</b>", $html);
+      }
     }
 
-    public function testBuildCallListDisplaySingleEntryContainsNameAndAddress(): void {
-      $voterArrays = [['names' => 'Bob Smith', 'phoneNumbers' => '(206) 555-1234', 'address' => '123 Main', 'someOneToCall' => FALSE]];
-      $result = $this->buildService()->buildCallListDisplay($voterArrays);
-      $joined = implode('', $result);
-      $this->assertStringContainsString('Bob Smith', $joined);
-      $this->assertStringContainsString('123 Main', $joined);
+    public function testBuildCallListPdfHtmlKeepsEachHouseholdInItsOwnUnbreakableTable(): void {
+      $voterArrays = [
+        ['voters' => [['name' => 'Bob Smith', 'phoneNumbers' => 'H:(206) 555-1234'], ['name' => 'Jane Smith', 'phoneNumbers' => 'H:']],
+         'address' => '123 Main', 'someOneToCall' => TRUE],
+        ['voters' => [['name' => 'Ann Jones', 'phoneNumbers' => 'H:']], 'address' => '456 Oak', 'someOneToCall' => FALSE],
+      ];
+      $html = $this->buildService()->buildCallListPdfHtml($voterArrays);
+      $this->assertSame(2, substr_count($html, 'page-break-inside: avoid'));
+      $this->assertSame(2, substr_count($html, 'autosize="1"'));
+      // One row per voter, with the address and call flag only on the household's first row.
+      $this->assertSame(1, substr_count($html, '123 Main'));
+      $this->assertSame(1, substr_count($html, '<span class="help-call">call</span>'));
+      $this->assertMatchesRegularExpression('/Bob Smith.*555-1234.*123 Main.*help-call.*Jane Smith.*Ann Jones.*456 Oak/s', $html);
     }
 
-    public function testBuildCallListDisplayCallFlagTrueShowsCallSpan(): void {
-      $voterArrays = [['names' => 'Bob Smith', 'phoneNumbers' => '', 'address' => '123 Main', 'someOneToCall' => TRUE]];
-      $result = $this->buildService()->buildCallListDisplay($voterArrays);
-      $joined = implode('', $result);
-      $this->assertStringContainsString('help-call', $joined);
+    // -------------------------------------------------------------------------
+    // buildCallList
+    // -------------------------------------------------------------------------
+
+    public function testBuildCallListPdfRenderedPagesKeepEachHouseholdTogether(): void {
+      $sizes = $this->paginationHouseholdSizes();
+      $voters = [];
+      foreach (array_keys($sizes) as $h => $hh) {
+        for ($i = 0; $i < $sizes[$hh]; $i++) {
+          $voters[] = $this->baseCallVoter([
+            'firstName' => 'Person' . $i,
+            'lastName' => $hh . 'Johnson',
+            'cellPhone' => '5035559876',
+            'status' => ['voted' => ($i % 2) ? 'X' : ''],
+            // Every third household has an apartment, making its address three lines.
+            'address' => ['streetNo' => (string) (100 + $h), 'aptType' => ($h % 3) ? '' : 'Apt', 'aptNo' => ($h % 3) ? '' : (string) $h],
+          ]);
+        }
+      }
+      $service = $this->buildService();
+      $html = $service->buildCallListPdfHtml($service->buildCallTableArray($voters));
+
+      $pageTexts = $this->pageTexts($this->renderPdf($html, 'P'));
+      $households = $this->householdPages($pageTexts, '/Person\d+\s+(?<hh>HH\d\d)Johnson/');
+      $this->assertHouseholdsKeptTogether($households, $sizes, 'HH10');
+      foreach ($pageTexts as $pageNumber => $text) {
+        $this->assertStringContainsString('Phone Number(s)', $text, "Page $pageNumber is missing the column headings.");
+      }
     }
 
-    public function testBuildCallListDisplayCallFlagFalseNoCallSpan(): void {
-      $voterArrays = [['names' => 'Bob Smith', 'phoneNumbers' => '', 'address' => '123 Main', 'someOneToCall' => FALSE]];
-      $result = $this->buildService()->buildCallListDisplay($voterArrays);
-      $joined = implode('', $result);
-      $this->assertStringNotContainsString('help-call', $joined);
+    public function testBuildCallListEmptyVotersReturnsNoVotersMarkup(): void {
+      $this->pdfGeneratorMock->expects($this->never())->method('generatePdf');
+      $result = $this->buildService()->buildCallList([]);
+      $this->assertStringContainsString('No voters are available', $result['#markup']);
+    }
+
+    public function testBuildCallListGeneratesPortraitPdfAndReturnsLink(): void {
+      $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 12345]);
+      $this->pdfGeneratorMock->expects($this->once())->method('generatePdf')
+        ->with(
+          $this->stringContains('Bob'),
+          $this->matchesRegularExpression('#^public://temp/' . NlpDataEntryPrint::DD_CALL_FILE . '-12345-.*\.pdf$#'),
+          'P'
+        )
+        ->willReturn('https://example.org/files/temp/calls.pdf');
+      $result = $this->buildService()->buildCallList([$this->baseCallVoter()]);
+      $this->assertStringContainsString('<a href="https://example.org/files/temp/calls.pdf"', $result['#markup']);
+      $this->assertStringContainsString('GOTV call list', $result['#markup']);
+    }
+
+    public function testBuildCallListPdfFailureReturnsErrorMarkup(): void {
+      $this->pdfGeneratorMock->method('generatePdf')->willReturn('');
+      $result = $this->buildService()->buildCallList([$this->baseCallVoter()]);
+      $this->assertStringContainsString('could not be created', $result['#markup']);
     }
 
     // -------------------------------------------------------------------------
@@ -311,30 +391,93 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString('No', $result[0]['names']);
     }
 
-    // -------------------------------------------------------------------------
-    // buildMailListDisplay
-    // -------------------------------------------------------------------------
-
-    public function testBuildMailListDisplayEmptyInputReturnsTableWithHeader(): void {
-      $result = $this->buildService()->buildMailListDisplay([]);
-      $joined = implode('', $result);
-      $this->assertStringContainsString('<table', $joined);
-      $this->assertStringContainsString('Name(s)', $joined);
-      $this->assertStringContainsString('Mailing Address', $joined);
+    public function testBuildMailListArrayListsEachVoterInHousehold(): void {
+      $voter1 = $this->baseMailVoter(['firstName' => 'Bob']);
+      $voter2 = $this->baseMailVoter(['firstName' => 'Jane']);
+      $voter3 = $this->baseMailVoter(['firstName' => 'Ann', 'address' => ['mAddress' => '456 Oak Ave']]);
+      $result = $this->buildService()->buildMailListArray([$voter1, $voter2, $voter3]);
+      $this->assertCount(2, $result[0]['voters']);
+      $this->assertStringContainsString('Bob', $result[0]['voters'][0]);
+      $this->assertStringContainsString('Jane', $result[0]['voters'][1]);
+      $this->assertCount(1, $result[1]['voters']);
+      $this->assertStringContainsString('Ann', $result[1]['voters'][0]);
     }
 
-    public function testBuildMailListDisplaySingleEntryContainsNameAndAddress(): void {
-      $tableArrays = [['names' => 'Bob Smith', 'address' => '123 Main St<br>Portland, OR 97201']];
-      $result = $this->buildService()->buildMailListDisplay($tableArrays);
-      $joined = implode('', $result);
-      $this->assertStringContainsString('Bob Smith', $joined);
-      $this->assertStringContainsString('123 Main St', $joined);
+    // -------------------------------------------------------------------------
+    // buildMailListPdfHtml
+    // -------------------------------------------------------------------------
+
+    public function testBuildMailListPdfHtmlHasRepeatingColumnHeader(): void {
+      $html = $this->buildService()->buildMailListPdfHtml([]);
+      $this->assertStringContainsString('<htmlpageheader name="mailListHeader">', $html);
+      $this->assertStringContainsString('header: html_mailListHeader', $html);
+      $this->assertStringContainsString('Name(s)', $html);
+      $this->assertStringContainsString('Mailing Address', $html);
     }
 
-    public function testBuildMailListDisplayReturnsArray(): void {
-      $result = $this->buildService()->buildMailListDisplay([]);
-      $this->assertIsArray($result);
-      $this->assertNotEmpty($result);
+    public function testBuildMailListPdfHtmlKeepsEachHouseholdInItsOwnUnbreakableTable(): void {
+      $tableArrays = [
+        ['voters' => ['Bob Smith', 'Jane Smith'], 'address' => '123 Main St<br>Portland, OR 97201'],
+        ['voters' => ['Ann Jones'], 'address' => '456 Oak Ave<br>Portland, OR 97201'],
+      ];
+      $html = $this->buildService()->buildMailListPdfHtml($tableArrays);
+      $this->assertSame(2, substr_count($html, 'page-break-inside: avoid'));
+      $this->assertSame(2, substr_count($html, 'autosize="1"'));
+      // One row per voter, with the address only on the household's first row.
+      $this->assertSame(1, substr_count($html, '123 Main St'));
+      $this->assertMatchesRegularExpression('/Bob Smith.*123 Main St.*Jane Smith.*Ann Jones.*456 Oak Ave/s', $html);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildMailingList
+    // -------------------------------------------------------------------------
+
+    public function testBuildMailListPdfRenderedPagesKeepEachHouseholdTogether(): void {
+      $sizes = $this->paginationHouseholdSizes();
+      $voters = [];
+      foreach (array_keys($sizes) as $h => $hh) {
+        for ($i = 0; $i < $sizes[$hh]; $i++) {
+          $voters[] = $this->baseMailVoter([
+            'firstName' => 'Person' . $i,
+            'lastName' => $hh . 'Johnson',
+            'address' => ['mAddress' => (100 + $h) . ' NE Longername Street Apt ' . $h],
+          ]);
+        }
+      }
+      $service = $this->buildService();
+      $html = $service->buildMailListPdfHtml($service->buildMailListArray($voters));
+
+      $pageTexts = $this->pageTexts($this->renderPdf($html, 'P'));
+      $households = $this->householdPages($pageTexts, '/Person\d+\s+(?<hh>HH\d\d)Johnson/');
+      $this->assertHouseholdsKeptTogether($households, $sizes, 'HH10');
+      foreach ($pageTexts as $pageNumber => $text) {
+        $this->assertStringContainsString('Mailing Address', $text, "Page $pageNumber is missing the column headings.");
+      }
+    }
+
+    public function testBuildMailingListEmptyVotersReturnsNoVotersMarkup(): void {
+      $this->pdfGeneratorMock->expects($this->never())->method('generatePdf');
+      $result = $this->buildService()->buildMailingList([]);
+      $this->assertStringContainsString('No voters are available', $result['#markup']);
+    }
+
+    public function testBuildMailingListGeneratesPortraitPdfAndReturnsLink(): void {
+      $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 12345]);
+      $this->pdfGeneratorMock->expects($this->once())->method('generatePdf')
+        ->with(
+          $this->stringContains('Bob'),
+          $this->matchesRegularExpression('#^public://temp/' . NlpDataEntryPrint::DD_POSTCARD_FILE . '-12345-.*\.pdf$#'),
+          'P'
+        )
+        ->willReturn('https://example.org/files/temp/list.pdf');
+      $result = $this->buildService()->buildMailingList([$this->baseMailVoter()]);
+      $this->assertStringContainsString('<a href="https://example.org/files/temp/list.pdf"', $result['#markup']);
+    }
+
+    public function testBuildMailingListPdfFailureReturnsErrorMarkup(): void {
+      $this->pdfGeneratorMock->method('generatePdf')->willReturn('');
+      $result = $this->buildService()->buildMailingList([$this->baseMailVoter()]);
+      $this->assertStringContainsString('could not be created', $result['#markup']);
     }
 
     // -------------------------------------------------------------------------
