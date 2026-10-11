@@ -818,6 +818,36 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // validateWalksheet — file over the upload limit → error, not silently dropped
+    // -------------------------------------------------------------------------
+
+    public function testValidateWalksheetOversizeUploadReturnsError(): void {
+      $_FILES['files'] = [
+        'name'     => ['my_sheet' => 'canvass.pdf'],
+        'tmp_name' => ['my_sheet' => ''],
+        'error'    => ['my_sheet' => UPLOAD_ERR_INI_SIZE],
+      ];
+      $result = $this->buildForm()->validateWalksheet('my_sheet');
+      $this->assertSame('error', $result['result']);
+      $this->assertStringContainsString('too large', (string) $result['message']);
+      $this->assertSame('', $result['walksheetInfo']['tempName']);
+    }
+
+    // -------------------------------------------------------------------------
+    // validateWalksheet — upload with no temp file → error
+    // -------------------------------------------------------------------------
+
+    public function testValidateWalksheetMissingTempFileReturnsError(): void {
+      $_FILES['files'] = [
+        'name'     => ['my_sheet' => 'canvass.pdf'],
+        'tmp_name' => ['my_sheet' => ''],
+      ];
+      $result = $this->buildForm()->validateWalksheet('my_sheet');
+      $this->assertSame('error', $result['result']);
+      $this->assertStringContainsString('failed to upload', (string) $result['message']);
+    }
+
+    // -------------------------------------------------------------------------
     // validateWalksheet — xlsx is allowed
     // -------------------------------------------------------------------------
 
