@@ -212,6 +212,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $this->service->validateUserSelection([]));
     }
 
+    public function testValidateUserSelectionMissingTableReturnsEmptyArray(): void {
+      $this->assertSame([], $this->service->validateUserSelection(NULL));
+      $this->assertSame([], $this->service->validateUserSelection(''));
+    }
+
     public function testValidateUserSelectionCheckedContactReturnsSelection(): void {
       $contacts = [['cb' => 'CB_1_7']];
       $result = $this->service->validateUserSelection($contacts);
