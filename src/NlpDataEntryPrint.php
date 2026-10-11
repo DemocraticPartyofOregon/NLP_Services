@@ -236,6 +236,8 @@ a good idea to be cautious about calling voters that always vote late. </p>";
     $html .= '<td style="width: ' . $widths['call'] . '; ' . $cellStyle . '"><b>Call</b></td>';
     $html .= '</tr></table>';
     $html .= '</htmlpageheader>';
+    // 'header' is an mPDF extension to @page, which repeats the named header on every page.
+    /** @noinspection CssUnknownProperty */
     $html .= '<style>@page { header: html_callListHeader; margin-top: 20mm; }</style>';
 
     $html .= '<h1 style="font-size: 16pt; font-family: Calibri, Arial, sans-serif;">GOTV Call List</h1>';
@@ -469,6 +471,8 @@ might be helpful.<br>* Has not voted yet. &nbsp; ** SMS texting optin unknown.</
     $html .= '<td style="width: 40%; ' . $cellStyle . '"><b>Mailing Address</b></td>';
     $html .= '</tr></table>';
     $html .= '</htmlpageheader>';
+    // 'header' is an mPDF extension to @page, which repeats the named header on every page.
+    /** @noinspection CssUnknownProperty */
     $html .= '<style>@page { header: html_mailListHeader; margin-top: 20mm; }</style>';
 
     $html .= '<h1 style="font-size: 16pt; font-family: Calibri, Arial, sans-serif;">Postcard Mailing List</h1>';
@@ -588,7 +592,7 @@ household with the names of all the voters.</p>';
     $walksheetData = $this->createWalksheetObj->createWalksheetArray($turfIndex);
     if(empty($walksheetData)) {
       return [
-        '#markup' => '<p>No walksheet data available.</p>',
+        '#markup' => '<p>No walksheet data is available.</p>',
       ];
     }
     $pdfUrl = $this->createWalksheetObj->createWalksheetPdf($walksheetData);
