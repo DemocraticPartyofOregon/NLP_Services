@@ -513,7 +513,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testBuildWalksheetPageEmptyDataReturnsNoDataMarkup(): void {
       $this->createWalksheetMock->method('createWalksheetArray')->willReturn([]);
       $result = $this->buildService()->buildWalksheetPage(7);
-      $this->assertStringContainsString('No walksheet data available', $result['#markup']);
+      $this->assertStringContainsString('No walksheet data is available', $result['#markup']);
     }
 
     public function testBuildWalksheetPageWithDataReturnsPdfLink(): void {
