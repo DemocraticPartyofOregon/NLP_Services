@@ -486,15 +486,19 @@ class SyncTurfForm extends FormBase {
 
       // PHP deletes uploaded temp files at end of request. Move the walksheet
       // to persistent storage now so the batch (a later request) can access it.
+      // Stage it outside the web root, since a walksheet lists voters.
       $walksheetInfo = $form_state->get('walksheetInfo');
       if (!empty($walksheetInfo['tempName'])) {
         /** @var FileSystemInterface $fileSystem */
         $fileSystem = Drupal::service('file_system');
-        $stagingDir = 'public://temp';
-        $fileSystem->prepareDirectory($stagingDir, FileSystemInterface::CREATE_DIRECTORY);
-        $stagingUri = $stagingDir . '/nlp_ws_' . uniqid() . '.' . $walksheetInfo['fileType'];
-        $fileSystem->moveUploadedFile($walksheetInfo['tempName'], $stagingUri);
-        $walksheetInfo['tempName'] = $fileSystem->realpath($stagingUri);
+        $stagingUri = 'temporary://nlp_ws_' . uniqid() . '.' . $walksheetInfo['fileType'];
+        if ($fileSystem->moveUploadedFile($walksheetInfo['tempName'], $stagingUri)) {
+          $walksheetInfo['tempName'] = $fileSystem->realpath($stagingUri);
+        } else {
+          Drupal::messenger()->addWarning(t('The walksheet could not be saved. The turf will be assigned without it.'));
+          Drupal::logger('nlpservices')->error('Failed to stage walksheet @name', ['@name' => $walksheetInfo['fileName']]);
+          $walksheetInfo['tempName'] = '';
+        }
         $form_state->set('walksheetInfo', $walksheetInfo);
       }
 
@@ -567,13 +571,22 @@ class SyncTurfForm extends FormBase {
       return $emptyResult;
     }
 
+    // A file over the PHP upload limit arrives with a name but no temp file.
+    $uploadError  = $files['error'][$name] ?? UPLOAD_ERR_OK;
     $tempName     = $files['tmp_name'][$name] ?? '';
+    if ($uploadError != UPLOAD_ERR_OK || empty($tempName)) {
+      $message = in_array($uploadError, [UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE])
+        ? t('The walksheet is too large to upload.')
+        : t('The walksheet failed to upload. Please try again.');
+      return ['result' => 'error', 'message' => $message, 'walksheetInfo' => $emptyResult['walksheetInfo']];
+    }
     $lcFileName   = strtolower($fileName);
     $parts        = explode('.', $lcFileName);
     $fileType     = end($parts);
     $allowed      = ['pdf', 'xls', 'xlsx'];
     if (!in_array($fileType, $allowed)) {
-      return ['result' => 'error', 'message' => t('The walksheet must be a PDF, XLS, or XLSX type.')];
+      return ['result' => 'error', 'message' => t('The walksheet must be a PDF, XLS, or XLSX type.'),
+        'walksheetInfo' => $emptyResult['walksheetInfo']];
     }
     $fileNameBase = $parts[0];
 
