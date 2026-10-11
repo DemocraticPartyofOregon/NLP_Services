@@ -56,7 +56,7 @@ class NlpCreateWalksheet
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.session_data'),
       $container->get('nlpservices.pdf_generator'),
-      $container->get('nlpservices.api_response_codes'),
+      $container->get('nlpservices.response_codes'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.api_voter')
     );
