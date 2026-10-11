@@ -106,7 +106,7 @@ class SyncTurfForm extends FormBase {
       if (!empty($request->query->get('sort', '')) || $request->isMethod('POST')) {
         $page = $this->nlpSessionDataObj->get('syncTurfPage') ?? 'turf_select';
         // The NL pages need the turf chosen on the turf page, which a fresh form state doesn't have.
-        $turfId = $this->nlpSessionDataObj->get('syncTurfId');
+        $turfId = $this->nlpSessionDataObj->get('turfId');
         if ($page != 'turf_select' && empty($turfId)) {
           $page = 'turf_select';
           $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
@@ -117,7 +117,7 @@ class SyncTurfForm extends FormBase {
       } else {
         $form_state->set('page','turf_select');
         $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
-        $this->nlpSessionDataObj->set('syncTurfId', NULL);
+        $this->nlpSessionDataObj->set('turfId', NULL);
         $form_state->set('showLists', FALSE);
         $this->nlpSessionDataObj->set('showLists', FALSE);
       }
@@ -442,7 +442,7 @@ class SyncTurfForm extends FormBase {
         $this->nlpSessionDataObj->set('syncTurfPage', 'nl_select');
         $turfSelection = $form_state->get('turfSelection');
         $form_state->set('turfId',$turfSelection['turfId']);
-        $this->nlpSessionDataObj->set('syncTurfId', $turfSelection['turfId']);
+        $this->nlpSessionDataObj->set('turfId', $turfSelection['turfId']);
         break;
 
       case 'previously_assigned_nl':
