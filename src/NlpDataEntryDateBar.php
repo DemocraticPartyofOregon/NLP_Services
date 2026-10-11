@@ -44,10 +44,11 @@ class NlpDataEntryDateBar
    * @param int $mcid
    * @param int $currentPage
    * @param int $pageCount
+   * @param array $voters - the turf's voters, if the caller already fetched them.
    * @return array
    */
   public function createDateBar(string $canvassDate, int $turfIndex, int $mcid,
-    int $currentPage, int $pageCount): array
+    int $currentPage, int $pageCount, array $voters = []): array
   {
     // The first bar starts with the award icon to show the number of successfully completed elections.
     $form_element['award_bar'] = [
@@ -66,7 +67,7 @@ class NlpDataEntryDateBar
     $form_element['voter2_counts_box'] = [
       '#markup' => '<div class="counts-box-left">',
     ];
-    $form_element['voter2_counts'] = $this->voterCounts($turfIndex);
+    $form_element['voter2_counts'] = $this->voterCounts($turfIndex, $voters);
     $form_element['voter2_counts_end'] = [
       '#markup' => '</div>',
     ];
@@ -190,11 +191,12 @@ class NlpDataEntryDateBar
    * Creates a box with the voter count, the voted count, the attempted count, and the contacted count.
    *
    * @param int $turfIndex
+   * @param array $voters - the turf's voters; fetched here if empty.
    * @return array
    */
-  private function voterCounts(int $turfIndex): array
+  private function voterCounts(int $turfIndex, array $voters = []): array
   {
-    $turfCounts = $this->dataEntryVotersObj->turfCounts($turfIndex);
+    $turfCounts = $this->dataEntryVotersObj->turfCounts($turfIndex, $voters);
     $voterCount = $turfCounts['voterCount'];
     $votedCount = $turfCounts['votedCount'];
     $attemptedCount = $turfCounts['attemptedCount'];

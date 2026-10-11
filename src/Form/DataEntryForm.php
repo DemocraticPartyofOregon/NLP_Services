@@ -154,7 +154,7 @@ class DataEntryForm extends FormBase
     $this->sessionDataObj->set('preferredContactMethod',$preferredContactMethod);
 
     $form['dateBar'] = $this->dataEntryDateBarObj->createDateBar(
-             $canvassDate, $turfIndex, $mcid, $currentPage, $pageCount);
+             $canvassDate, $turfIndex, $mcid, $currentPage, $pageCount, $voters);
 
     $vanidKeys = array_keys($voters);
     $start = $currentPage * $this::DE_PAGE_SIZE;
