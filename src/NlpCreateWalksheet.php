@@ -298,6 +298,11 @@ class NlpCreateWalksheet
    *
    * @return array - An associative array with keys 'exist', 'address', 'name',
    * 'votingHistory', 'results', and 'voterCount'.
+   *
+   * The household lookup isn't implemented yet, so this always reports no other voters.
+   * The parameters are kept for the lookup the commented-out code below will make.
+   *
+   * @noinspection PhpUnusedParameterInspection
    */
   private function otherVotersInHousehold(array $address, array $householdVanids): array
   {
@@ -344,6 +349,7 @@ class NlpCreateWalksheet
     // autosize="1" stops mPDF from shrinking a household to squeeze it onto the page instead.
     $lastHousehold = array_key_last($walksheetData);
     foreach ($walksheetData as $householdIndex => $household) {
+      /** @noinspection HtmlUnknownAttribute */
       $html .= '<table autosize="1" style="width:100%; border-collapse:collapse; page-break-inside:avoid; ">';
       $firstInHousehold = true;  // Draws the top border on the household's first row.
 

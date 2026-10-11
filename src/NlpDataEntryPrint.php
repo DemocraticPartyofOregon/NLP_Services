@@ -248,6 +248,7 @@ might be helpful.<br>* Has not voted yet. &nbsp; ** SMS texting optin unknown.</
 
     // One row per voter, with the address and call flag on the household's first row.
     foreach ($voterArrays as $voterArray) {
+      /** @noinspection HtmlUnknownAttribute */
       $html .= '<table autosize="1" style="' . $tableStyle . ' page-break-inside: avoid;">';
       $address = $voterArray['address'];
       $call = ($voterArray['someOneToCall']) ? '<span class="help-call">call</span>' : '';
@@ -481,6 +482,7 @@ household with the names of all the voters.</p>';
 
     // One row per voter, with the mailing address on the household's first row.
     foreach ($tableArrays as $tableArray) {
+      /** @noinspection HtmlUnknownAttribute */
       $html .= '<table autosize="1" style="' . $tableStyle . ' page-break-inside: avoid;">';
       $address = $tableArray['address'];
       foreach ($tableArray['voters'] as $voterName) {
