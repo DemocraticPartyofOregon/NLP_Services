@@ -294,7 +294,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $formState->method('getTriggeringElement')->willReturn(['#name' => 'user_select']);
     $formState->method('getValue')->with('contacts')->willReturn([]);
     $formState->expects($this->once())->method('setErrorByName')
-      ->with('reminder_select', $this->anything());
+      ->with('contacts', $this->anything());
 
     $form = [];
     $this->buildFormInstance()->validateForm($form, $formState);

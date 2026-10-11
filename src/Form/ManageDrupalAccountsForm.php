@@ -336,7 +336,7 @@ class ManageDrupalAccountsForm extends FormBase
         $userSelections = $this->userDisplayObj->validateUserSelection($form_state->getValue('contacts'));
         $form_state->set('userSelections', $userSelections);
         if(empty($userSelections)) {
-          $form_state->setErrorByName('reminder_select','You must select at least one NL to send an email.');
+          $form_state->setErrorByName('contacts', t('Select at least one user account to edit.'));
         }
         break;
     }

@@ -124,12 +124,15 @@ class NlpUserDisplay
    *   The rowCount is the row number of the selected checkbox.
    *   The uid is the uid of the user.
    *
-   * @param array $contacts
+   * @param mixed $contacts - the contacts table value; NULL or '' when the table had no rows.
    * @return array
    */
-  public function validateUserSelection(array $contacts): array
+  public function validateUserSelection(mixed $contacts): array
   {
     $selections = [];
+    if (!is_array($contacts)) {
+      return $selections;
+    }
     foreach($contacts as $contact) {
       if(!empty($contact['cb'])) {
         $contactParts = explode('_',$contact['cb']);
