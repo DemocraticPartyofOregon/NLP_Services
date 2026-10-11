@@ -317,6 +317,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('', $result[5]['mapRegionName']);
     }
 
+    public function testSavedListOptionsSetsMapRegionIdAndMinivanKeys(): void {
+      $lists = [5 => ['savedListId' => 5, 'name' => 'T', 'description' => '', 'listCount' => 1, 'doorCount' => 1]];
+
+      $result = $this->buildService()->savedListOptions($lists);
+
+      $this->assertArrayHasKey('mapRegionId', $result[5]);
+      $this->assertNull($result[5]['mapRegionId']);
+      $this->assertSame('', $result[5]['minivanNumber']);
+      $this->assertSame('', $result[5]['minivanCreateDate']);
+    }
+
     // -------------------------------------------------------------------------
     // recoverTurfId
     // -------------------------------------------------------------------------

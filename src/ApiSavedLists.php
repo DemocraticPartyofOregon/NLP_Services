@@ -214,7 +214,12 @@ class ApiSavedLists {
       $listId = $list['savedListId'];
       $listInfo = [];
       $listInfo['turfName'] = $list['name'];
+      // A saved list isn't in a map region and has no MiniVAN printed list,
+      // but the sync reads these keys for every turf.
+      $listInfo['mapRegionId'] = NULL;
       $listInfo['mapRegionName'] = '';
+      $listInfo['minivanNumber'] = '';
+      $listInfo['minivanCreateDate'] = '';
       $listInfo['turfId'] = $listId;
       $listInfo['description'] = $list['description'] ?? '';
       $listInfo['voterCount'] = $list['listCount'];
