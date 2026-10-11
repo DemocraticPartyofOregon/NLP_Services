@@ -332,25 +332,23 @@ function nlpservices_cron (): void
   if($enableMinivan) {
     $minivanObj = Drupal::service('nlpservices.minivan');
     $startTime = time();
-    //$counts = $minivanObj->processMinivanEmails();
     try {
       $counts = $minivanObj->processMinivanEmails();
-    } catch (\Exception $e) {
+      if ($counts['recordCount'] > 0) {
+        $elapsed = time() - $startTime;
+        $h = floor($elapsed / 3600);
+        $m = floor(($elapsed % 3600) / 60);
+        $s = $elapsed % 60;
+        $msg = "MiniVAN import elapsed: $h:$m:$s" .
+          ' Records=' . $counts['recordCount'] .
+          ' New=' . $counts['newRecordCount'] .
+          ' Skipped=' . $counts['skippedRecordCount'] .
+          ' Rejected=' . $counts['rejectedRecordCount'] .
+          ' Not NLP=' . $counts['notNlpCount'];
+        Drupal::logger('nlpservices')->notice($msg);
+      }
+    } catch (Exception $e) {
       Drupal::logger('nlpservices')->error('Minivan cron error: @msg', ['@msg' => $e->getMessage()]);
-    }
-
-    if ($counts['recordCount'] > 0) {
-      $elapsed = time() - $startTime;
-      $h = floor($elapsed / 3600);
-      $m = floor(($elapsed % 3600) / 60);
-      $s = $elapsed % 60;
-      $msg = "MiniVAN import elapsed: $h:$m:$s" .
-        ' Records=' . $counts['recordCount'] .
-        ' New=' . $counts['newRecordCount'] .
-        ' Skipped=' . $counts['skippedRecordCount'] .
-        ' Rejected=' . $counts['rejectedRecordCount'] .
-        ' Not NLP=' . $counts['notNlpCount'];
-      Drupal::logger('nlpservices')->notice($msg);
     }
   }
 
@@ -382,8 +380,6 @@ function nlpservices_cron (): void
   $hour = (int) date('G');
   $resyncCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
   if($enableTurfResync && $resyncCheckTime) {
-    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
-
     $resyncTurfObj = Drupal::service('nlpservices.resync_turf');
     $turfsObj = Drupal::service('nlpservices.turfs');
     $countiesWithTurfs = $turfsObj->getCountyNames();
@@ -433,27 +429,26 @@ function nlpservices_cron (): void
   $hour = (int) date('G');
   $acCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
   if ( $enableVoterAcCheck && $acCheckTime ) {
-    $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
     $turfsObj = Drupal::service('nlpservices.turfs');
 
     try {
       $syncedCounties = $turfsObj->getSyncedCountyNames();
-    } catch (\Exception $e) {
-      Drupal::logger('nlpservices')->error('getSyncedCountyNames cron error: @msg', ['@msg' => $e->getMessage()]);
-    }
 
-    $queue = Drupal::queue('nlpservices_voter_ac_queue');
-    $queue->deleteQueue();
-    $queue->createQueue();
-    $turfCount = 0;
-    foreach ($syncedCounties as $county) {
-      $turfIndexes = $turfsObj->getTurfIndexes($county);
-      foreach ($turfIndexes as $turfIndex) {
-        $queue->createItem(['turfIndex' => $turfIndex]);
-        $turfCount++;
+      $queue = Drupal::queue('nlpservices_voter_ac_queue');
+      $queue->deleteQueue();
+      $queue->createQueue();
+      $turfCount = 0;
+      foreach ($syncedCounties as $county) {
+        $turfIndexes = $turfsObj->getTurfIndexes($county);
+        foreach ($turfIndexes as $turfIndex) {
+          $queue->createItem(['turfIndex' => $turfIndex]);
+          $turfCount++;
+        }
       }
+      Drupal::logger('nlpservices')->notice("Voter AC check queued $turfCount turfs.");
+    } catch (Exception $e) {
+      Drupal::logger('nlpservices')->error('Voter AC check cron error: @msg', ['@msg' => $e->getMessage()]);
     }
-    Drupal::logger('nlpservices')->notice("Voter AC check queued $turfCount turfs.");
   }
 
   // Queue expired turf status records for activist code verification.
@@ -462,7 +457,7 @@ function nlpservices_cron (): void
     $turfStatusObj = Drupal::service('nlpservices.turf_status');
     try {
       $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
-    } catch (\Exception $e) {
+    } catch (Exception $e) {
       Drupal::logger('nlpservices')->error('enableTurfAcCheck cron error: @msg', ['@msg' => $e->getMessage()]);
     }
     if (!empty($expiredRecords)) {
