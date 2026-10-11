@@ -112,9 +112,15 @@ class SyncTurfForm extends FormBase {
           $page = $postedPage;
           $this->nlpSessionDataObj->set('syncTurfPage', $page);
         }
+        // The NL pages need the turf chosen on the turf page; without one, start over there.
+        $turfId = $this->nlpSessionDataObj->get('turfId');
+        if ($page != 'turf_select' && empty($turfId)) {
+          $page = 'turf_select';
+          $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
+        }
         $form_state->set('page', $page);
         $form_state->set('showLists', $this->nlpSessionDataObj->get('showLists') ?? FALSE);
-        $form_state->set('turfId', $this->nlpSessionDataObj->get('turfId'));
+        $form_state->set('turfId', $turfId);
       } else {
         $form_state->set('page','turf_select');
         $this->nlpSessionDataObj->set('syncTurfPage', 'turf_select');
