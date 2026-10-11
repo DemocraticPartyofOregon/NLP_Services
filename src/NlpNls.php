@@ -77,7 +77,7 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('deleteNls', $e->getMessage() );
+      nlp_debug_msg('deleteNls', $e);
       return;
     }
   }
@@ -97,7 +97,7 @@ class NlpNls {
         ->condition('mcid', $mcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteNl', $e->getMessage() );
+      nlp_debug_msg('deleteNl', $e);
     }
   }
   
@@ -119,7 +119,7 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createNl', $e->getMessage() );
+      nlp_debug_msg('createNl', $e);
       return FALSE;
     }
     return TRUE;
@@ -147,7 +147,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlsStatus', $e->getMessage() );
+      nlp_debug_msg('getNlsStatus', $e);
       return [];
     }
     $nlStatus = $result->fetchAssoc();
@@ -185,7 +185,7 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('setNlsStatus', $e->getMessage() );
+      nlp_debug_msg('setNlsStatus', $e);
       return FALSE;
     }
     return TRUE;
@@ -206,7 +206,7 @@ class NlpNls {
         ->condition('mcid', $mcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteNlsStatus', $e->getMessage() );
+      nlp_debug_msg('deleteNlsStatus', $e);
     }
   }
   
@@ -246,7 +246,7 @@ class NlpNls {
       $result =  $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNls', $e->getMessage() );
+      nlp_debug_msg('getNls', $e);
       return [];
     }
     // Fetch each NL record and build the array of information about each NL
@@ -281,7 +281,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getHdList', $e->getMessage() );
+      nlp_debug_msg('getHdList', $e);
       return [];
     }
     
@@ -310,7 +310,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getPrecinctsByMcid', $e->getMessage() );
+      nlp_debug_msg('getPrecinctsByMcid', $e);
       return [];
     }
     $precincts = [];
@@ -347,7 +347,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getPctList', $e->getMessage()  );
+      nlp_debug_msg('getPctList', $e);
       return [];
     }
     $pctOptions = [];
@@ -375,7 +375,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlById', $e->getMessage() );
+      nlp_debug_msg('getNlById', $e);
       return [];
     }
     $nlRecord = $result->fetchAssoc();
@@ -408,7 +408,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getCountyNls', $e->getMessage() );
+      nlp_debug_msg('getCountyNls', $e);
       return [];
     }
     $nlRecords = [];
@@ -437,7 +437,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('resultsReported', $e->getMessage() );
+      nlp_debug_msg('resultsReported', $e);
       return FALSE;
     }
     $resultsReported = $result->fetchAssoc();
@@ -452,7 +452,7 @@ class NlpNls {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('resultsReported', $e->getMessage() );
+      nlp_debug_msg('resultsReported', $e);
       return FALSE;
     }
     return TRUE;
@@ -476,7 +476,7 @@ class NlpNls {
         ->condition('mcid', $mcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateNlStatus', $e->getMessage() );
+      nlp_debug_msg('updateNlStatus', $e);
     }
   }
   
@@ -514,7 +514,7 @@ class NlpNls {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('searchNls', $e->getMessage());
+      nlp_debug_msg('searchNls', $e);
       return [];
     }
     $nlRecords = [];
@@ -557,7 +557,7 @@ class NlpNls {
       $query->orderBy('firstName');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getNlsByIds', $e->getMessage());
+      nlp_debug_msg('getNlsByIds', $e);
       return [];
     }
     $nlRecords = [];
@@ -589,7 +589,7 @@ class NlpNls {
       $query->orderBy('hd');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getDistinctHdByMcids', $e->getMessage());
+      nlp_debug_msg('getDistinctHdByMcids', $e);
       return [];
     }
     $hdList = [];
@@ -621,7 +621,7 @@ class NlpNls {
       $query->orderBy('precinct');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getDistinctPrecinctByMcids', $e->getMessage());
+      nlp_debug_msg('getDistinctPrecinctByMcids', $e);
       return [];
     }
     $precinctList = [];
@@ -652,7 +652,7 @@ class NlpNls {
       $query->orderBy('precinct');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getDistinctHdPrecinctArrayByMcids', $e->getMessage());
+      nlp_debug_msg('getDistinctHdPrecinctArrayByMcids', $e);
       return [];
     }
     $precinctArray = [];
@@ -680,7 +680,7 @@ class NlpNls {
       $query->condition('s.county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyNlsParticipation', $e->getMessage());
+      nlp_debug_msg('getCountyNlsParticipation', $e);
       return [];
     }
     return $result->fetchAssoc();

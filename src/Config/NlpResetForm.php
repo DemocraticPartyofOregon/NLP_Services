@@ -113,7 +113,7 @@ class NlpResetForm extends FormBase {
         $this->messenger()->addStatus($this->t('The @table database was emptied.', ['@table' => $table]));
       }
       catch (Exception $e) {
-        nlp_debug_msg('e', $e->getMessage());
+        nlp_debug_msg('e', $e);
       }
     }
 

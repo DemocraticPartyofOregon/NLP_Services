@@ -52,7 +52,7 @@ class NlpInstructions {
         ])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createInstructions', $e->getMessage() );
+      nlp_debug_msg('createInstructions', $e);
       return;
     }
   }
@@ -81,7 +81,7 @@ class NlpInstructions {
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getInstructions', $e->getMessage());
+      nlp_debug_msg('getInstructions', $e);
       return [];
     }
     while ($instruct = $result->fetchAssoc()) {

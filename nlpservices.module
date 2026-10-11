@@ -118,6 +118,9 @@ function nlpservices_user_login(Drupal\user\Entity\User $account): void
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * implements nlp_debug_msg
  *
+ * An exception passed as $values is also written to the log, with its
+ * backtrace, so errors caught in try/catch blocks aren't only shown on screen.
+ *
  * @param $msg
  * @param mixed $values
  */
@@ -132,6 +135,15 @@ function nlp_debug_msg($msg, mixed $values='EMPTY'): void
   $fnp = str_replace('.php','', $file_name);
   $caller =  str_replace('nlp_','', $fnp);
   $line = (int) ($frame['line'] ?? 0);
+
+  if ($values instanceof \Throwable) {
+    $level = ($values instanceof \Drupal\Core\Database\DatabaseException)
+      ? \Psr\Log\LogLevel::ERROR : \Psr\Log\LogLevel::WARNING;
+    \Drupal\Core\Utility\Error::logException(Drupal::logger('nlpservices'), $values,
+      '@caller (@mod @callerLine): %type: @message in %function (line %line of %file).',
+      ['@caller' => $msg, '@mod' => $caller, '@callerLine' => $line], $level);
+    $values = $values->getMessage();
+  }
   $location = '@mod @line ';
 
   $location .= $msg.' = ';

@@ -38,14 +38,14 @@ class NlpFileFunctions
     try {
       $file = $this->fileRepository->writeData('', $uri, FileExists::Replace);
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('File create failed.', $e->getMessage());
+      nlp_debug_msg('File create failed.', $e);
       return false;
     }
     $file->setTemporary();
     try {
       $file->save();
     } catch (Exception $e) {
-      nlp_debug_msg('error', $e->getMessage());
+      nlp_debug_msg('error', $e);
       return false;
     }
     $fh = fopen($uri, 'w');

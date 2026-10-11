@@ -21,7 +21,7 @@ class ImportUserAccountsBatch {
     try {
       $drupalRoles = Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
-      nlp_debug_msg('importUserAccountsBatch', $e->getMessage() );
+      nlp_debug_msg('importUserAccountsBatch', $e);
     }
     foreach ($drupalRoles as $drupalRole) {
       $nlpRoles[$drupalRole->id()] = $drupalRole->label();

@@ -264,7 +264,7 @@ class NlpSessionData
     try {
       $this->sessionDataObj->set($key, $value);
     } catch (Drupal\Core\TempStore\TempStoreException $e) {
-      nlp_debug_msg('set', $e->getMessage());
+      nlp_debug_msg('set', $e);
     }
   }
 

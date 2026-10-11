@@ -55,7 +55,7 @@ class NlpVoterCrosstabSummary
       $query->orderBy('county');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountySummary', $e->getMessage());
+      nlp_debug_msg('getCountySummary', $e);
       return ['counties' => [], 'state' => ['totalPeople' => 0, 'accepted' => 0]];
     }
 

@@ -97,7 +97,7 @@ class NlpCrosstabCounts
           'registeredVoted' => $counts['regVoted']])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateCrosstabCounts',$e->getMessage());
+      nlp_debug_msg('updateCrosstabCounts', $e);
       return FALSE;
     }
     return TRUE;
@@ -119,7 +119,7 @@ class NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('fetchCrosstabCounts',$e->getMessage());
+      nlp_debug_msg('fetchCrosstabCounts', $e);
       return [];
     }
     
@@ -149,7 +149,7 @@ class NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCdCounts',$e->getMessage());
+      nlp_debug_msg('getCdCounts', $e);
       return [];
     }
     return $this->aggregateCountsByParty($result);
@@ -171,7 +171,7 @@ class NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCdCountsByCounty',$e->getMessage());
+      nlp_debug_msg('getCdCountsByCounty', $e);
       return [];
     }
     return $this->aggregateCountsByParty($result);
@@ -219,7 +219,7 @@ class NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCds',$e->getMessage());
+      nlp_debug_msg('getCds', $e);
       return [];
     }
 

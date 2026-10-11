@@ -88,7 +88,7 @@ class ImportMatchbacksForm extends FormBase
       try {
         $matchbacksLoad->save();
       } catch (Drupal\Core\Entity\EntityStorageException $e) {
-        nlp_debug_msg('File save error',$e->getMessage());
+        nlp_debug_msg('File save error', $e);
         return;
       }
       $fileName = $matchbacksLoad->getFilename() ;

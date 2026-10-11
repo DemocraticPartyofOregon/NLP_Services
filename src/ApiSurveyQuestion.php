@@ -75,10 +75,10 @@ class ApiSurveyQuestion
         return [];
       }
     } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiSurveyQuestions', $e->getMessage());
+      nlp_debug_msg('getApiSurveyQuestions', $e);
       return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getApiSurveyQuestions', $e->getMessage());
+      nlp_debug_msg('getApiSurveyQuestions', $e);
       return [];
     }
     $questionsArray = [];
@@ -224,12 +224,12 @@ class ApiSurveyQuestion
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (GuzzleException $e) {
-      nlp_debug_msg('reportSurveyResponse', $e->getMessage());
+      nlp_debug_msg('reportSurveyResponse', $e);
       nlp_debug_msg('reportSurveyResponse', "postUrl: $postUrl");
       nlp_debug_msg('reportSurveyResponse', "dataJson: $dataJson");
       nlp_debug_msg('$surveyResponse', $surveyResponse);
     } catch (Exception $e) {
-      nlp_debug_msg('reportSurveyResponse', $e->getMessage());
+      nlp_debug_msg('reportSurveyResponse', $e);
     }
 
   }

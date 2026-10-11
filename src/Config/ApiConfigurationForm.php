@@ -291,7 +291,7 @@ class ApiConfigurationForm extends FormBase {
       try {
         $iv .= $chars[random_int(0, strlen($chars) - 1)];
       } catch (RandomException $e) {
-        nlp_debug_msg('ApiConfigurationForm::generateRandomIV', 'Error generating random IV: ' . $e->getMessage());
+        nlp_debug_msg('ApiConfigurationForm::generateRandomIV', $e);
         break;
       }
     }

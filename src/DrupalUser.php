@@ -142,7 +142,7 @@ class DrupalUser {
         ->getStorage('user')
         ->loadByProperties(['field_mcid.value' => $mcid,]);
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
-      nlp_debug_msg('getUserByMcid', $e->getMessage());
+      nlp_debug_msg('getUserByMcid', $e);
       return [];
     }
     if(empty($userMcid)) {return [];}
@@ -168,7 +168,7 @@ class DrupalUser {
       $query->condition('m.deleted', 0);
       return $query->execute()->fetchAllKeyed();
     } catch (Exception $e) {
-      nlp_debug_msg('getLastAccessByMcid', $e->getMessage());
+      nlp_debug_msg('getLastAccessByMcid', $e);
       return [];
     }
   }
@@ -318,12 +318,12 @@ class DrupalUser {
         ->getStorage('user')
         ->create($values);
     } catch (InvalidPluginDefinitionException $e) {
-      nlp_debug_msg('addUser',$e->getMessage());
+      nlp_debug_msg('addUser', $e);
       $addUserError['status'] = 'add user error';
       return $addUserError;
     } catch (PluginNotFoundException $e) {
       $addUserError['status'] = 'add user error';
-      nlp_debug_msg('addUser',$e->getMessage());
+      nlp_debug_msg('addUser', $e);
       return $addUserError;
     }
 
@@ -331,7 +331,7 @@ class DrupalUser {
       $newUser->save();
     } catch (EntityStorageException $e) {
       $addUserError['status'] = 'add user error';
-      nlp_debug_msg('addUser',$e->getMessage());
+      nlp_debug_msg('addUser', $e);
       return $addUserError;
     }
 
@@ -357,7 +357,7 @@ class DrupalUser {
     try {
       $newUser->save();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('User account create error.',$e->getMessage());
+      nlp_debug_msg('User account create error.', $e);
       $user['status'] = 'error';
       return $user;
     }
@@ -369,7 +369,7 @@ class DrupalUser {
     try {
       $newUser->save();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('User account create error.',$e->getMessage());
+      nlp_debug_msg('User account create error.', $e);
       $user['status'] = 'error';
       return $user;
     }
@@ -438,7 +438,7 @@ class DrupalUser {
           try {
             $user->save();
           } catch (EntityStorageException $e) {
-            nlp_debug_msg('User account update error.',$e->getMessage());
+            nlp_debug_msg('User account update error.', $e);
           }
           break;
       }
@@ -448,7 +448,7 @@ class DrupalUser {
       $user->save();
     }
     catch (EntityStorageException $e) {
-      nlp_debug_msg('User account update error.',$e->getMessage());
+      nlp_debug_msg('User account update error.', $e);
       $updatedUser['status'] = 'error';
       return $updatedUser;
     }
@@ -579,7 +579,7 @@ class DrupalUser {
     try {
       $user->save();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('removeNlpRoles.',$e->getMessage());
+      nlp_debug_msg('removeNlpRoles.', $e);
       return FALSE;
     }
     return TRUE;
@@ -598,7 +598,7 @@ class DrupalUser {
     try {
       $userStorage = $this->entityTypeManager->getStorage('user');
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
-      nlp_debug_msg('deleteUser', $e->getMessage());
+      nlp_debug_msg('deleteUser', $e);
       return;
     }
     if(empty($userStorage)) {return;}
@@ -606,7 +606,7 @@ class DrupalUser {
     try {
       $user->delete();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('Delete user error',$e->getMessage());
+      nlp_debug_msg('Delete user error', $e);
     }
   }
 
@@ -639,7 +639,7 @@ class DrupalUser {
     try {
       $drupalRoles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
-        nlp_debug_msg('getNlpRoles', $e->getMessage());
+        nlp_debug_msg('getNlpRoles', $e);
         return [];
     }
     foreach ($drupalRoles as $drupalRole) {

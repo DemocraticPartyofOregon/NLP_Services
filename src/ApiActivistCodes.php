@@ -72,10 +72,10 @@ class ApiActivistCodes
       }
       return $results['items'] ?? [];
     } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiActivistCodes', $e);
       return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getApiActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiActivistCodes', $e);
       return [];
     }
   }
@@ -113,11 +113,11 @@ class ApiActivistCodes
       }
       return $codes;
     } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiVoterActivistCodes', $e);
       nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getApiVoterActivistCodes', $e->getMessage());
+      nlp_debug_msg('getApiVoterActivistCodes', $e);
       nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
     }
@@ -203,10 +203,10 @@ class ApiActivistCodes
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode', $e->getMessage());
+      nlp_debug_msg('setApiActivistCode', $e);
       return FALSE;
     } catch (GuzzleException $e) {
-      nlp_debug_msg('setApiActivistCode', $e->getMessage());
+      nlp_debug_msg('setApiActivistCode', $e);
       return FALSE;
     }
 
@@ -223,10 +223,10 @@ class ApiActivistCodes
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode retry', $e->getMessage());
+      nlp_debug_msg('setApiActivistCode retry', $e);
       return FALSE;
     } catch (GuzzleException $e) {
-      nlp_debug_msg('setApiActivistCode retry', $e->getMessage());
+      nlp_debug_msg('setApiActivistCode retry', $e);
       return FALSE;
     }
 

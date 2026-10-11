@@ -46,7 +46,7 @@ class NlpTurfMapRegions
         ])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateTurfMapRegion', $e->getMessage());
+      nlp_debug_msg('updateTurfMapRegion', $e);
     }
   }
 

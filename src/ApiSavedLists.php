@@ -75,10 +75,10 @@ class ApiSavedLists {
           return [];
         }
       } catch (GuzzleException $e) {
-        nlp_debug_msg('getTurfLists', $e->getMessage());
+        nlp_debug_msg('getTurfLists', $e);
         return [];
       } catch (Exception $e) {
-        nlp_debug_msg('getTurfLists', $e->getMessage());
+        nlp_debug_msg('getTurfLists', $e);
         return [];
       }
       if(empty($results['items'])) {return [];}
@@ -151,10 +151,10 @@ class ApiSavedLists {
         if ($e->getCode() == 404) {
           return [];
         }
-        nlp_debug_msg('getSavedLists', $e->getMessage());
+        nlp_debug_msg('getSavedLists', $e);
         return [];
       } catch (Exception $e) {
-        nlp_debug_msg('getSavedLists', $e->getMessage());
+        nlp_debug_msg('getSavedLists', $e);
         return [];
       }
       if (empty($results['savedListId'])) {return [];}
@@ -176,10 +176,10 @@ class ApiSavedLists {
             return [];
           }
         } catch (GuzzleException $e) {
-          nlp_debug_msg('getSavedLists', $e->getMessage());
+          nlp_debug_msg('getSavedLists', $e);
           return [];
         } catch (Exception $e) {
-          nlp_debug_msg('getSavedLists', $e->getMessage());
+          nlp_debug_msg('getSavedLists', $e);
           return [];
         }
         if(empty($results['items'])) {return [];}

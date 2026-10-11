@@ -111,7 +111,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
         ])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateCrosstabCounts', $e->getMessage());
+      nlp_debug_msg('updateCrosstabCounts', $e);
       return FALSE;
     }
     return TRUE;
@@ -134,7 +134,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('fetchCrosstabCounts', $e->getMessage());
+      nlp_debug_msg('fetchCrosstabCounts', $e);
       return [];
     }
 
@@ -174,7 +174,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountsByCd', $e->getMessage());
+      nlp_debug_msg('getCountsByCd', $e);
       return [];
     }
 
@@ -200,7 +200,7 @@ class NlpTargetVoterCrosstabCounts extends NlpCrosstabCounts
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountsByCounty', $e->getMessage());
+      nlp_debug_msg('getCountsByCounty', $e);
       return [];
     }
     return $this->aggregateTargetCountsByParty($result);

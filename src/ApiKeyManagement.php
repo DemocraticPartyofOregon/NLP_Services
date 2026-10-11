@@ -56,7 +56,7 @@ class ApiKeyManagement
       file_put_contents($filePath, $apiKey);
       return TRUE;
     } catch (Exception $e) {
-      nlp_debug_msg('saveApiKey', $e->getMessage());
+      nlp_debug_msg('saveApiKey', $e);
       return FALSE;
     }
   }
@@ -102,7 +102,7 @@ class ApiKeyManagement
       $key->save();
       return TRUE;
     } catch (Exception $e) {
-      nlp_debug_msg('createKey', $e->getMessage());
+      nlp_debug_msg('createKey', $e);
       return FALSE;
     }
 
@@ -126,7 +126,7 @@ class ApiKeyManagement
       }
       return $key->getKeyValue();
     } catch (Exception $e) {
-      nlp_debug_msg('getKey', $e->getMessage());
+      nlp_debug_msg('getKey', $e);
       return '';
     }
   }
@@ -149,7 +149,7 @@ class ApiKeyManagement
       $key->delete();
       return TRUE;
     } catch (Exception $e) {
-      nlp_debug_msg('deleteKey', $e->getMessage());
+      nlp_debug_msg('deleteKey', $e);
       return FALSE;
     }
   }
@@ -189,7 +189,7 @@ class ApiKeyManagement
       return $apiCredentials;
     } catch (Exception $e) {
       Drupal::logger('nlpservices')->error('getKeyValues: exception retrieving id @id: @message', ['@id' => $id, '@message' => $e->getMessage()]);
-      nlp_debug_msg('getKeyValues', $e->getMessage());
+      nlp_debug_msg('getKeyValues', $e);
       return [];
     }
   }
@@ -243,7 +243,7 @@ class ApiKeyManagement
       $key->save();
       return TRUE;
     } catch (Exception $e) {
-      nlp_debug_msg('createKeyWithValues', $e->getMessage());
+      nlp_debug_msg('createKeyWithValues', $e);
       return FALSE;
     }
   }

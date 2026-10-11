@@ -41,7 +41,7 @@ class NlpTurfAssignments
         ->fields($dataFields)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setTurfAssignment', $e->getMessage());
+      nlp_debug_msg('setTurfAssignment', $e);
     }
   }
 
@@ -59,7 +59,7 @@ class NlpTurfAssignments
       $query->condition('t.turfId', $turfId);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignment', $e->getMessage());
+      nlp_debug_msg('getTurfAssignment', $e);
       return [];
     }
     $assignment = $result->fetchAssoc();
@@ -81,7 +81,7 @@ class NlpTurfAssignments
       $query->condition('t.mcid', $mcid);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignmentsById', $e->getMessage());
+      nlp_debug_msg('getTurfAssignmentsById', $e);
       return [];
     }
 
@@ -110,7 +110,7 @@ class NlpTurfAssignments
       $query->condition('t.turfName', $turfName);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfAssignmentByTurfName', $e->getMessage());
+      nlp_debug_msg('getTurfAssignmentByTurfName', $e);
       return [];
     }
     $assignment = $result->fetchAssoc();
@@ -131,7 +131,7 @@ class NlpTurfAssignments
         ->condition('turfId', $turfId)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteTurfAssignment', $e->getMessage());
+      nlp_debug_msg('deleteTurfAssignment', $e);
     }
   }
 
@@ -175,7 +175,7 @@ class NlpTurfAssignments
       $select = "SHOW COLUMNS FROM  {" . self::TURF_ASSIGNMENT_TBL . '}';
       $result = $this->connection->query($select);
     } catch (Exception $e) {
-      nlp_debug_msg('getAssignmentColumnNames', $e->getMessage());
+      nlp_debug_msg('getAssignmentColumnNames', $e);
       return [];
     }
     $colNames = [];

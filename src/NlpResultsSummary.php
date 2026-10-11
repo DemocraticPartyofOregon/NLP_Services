@@ -218,7 +218,7 @@ class NlpResultsSummary
       $file->save();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createTempFile',$e->getMessage());
+      nlp_debug_msg('createTempFile', $e);
       return '';
     }
     return $tempUri;

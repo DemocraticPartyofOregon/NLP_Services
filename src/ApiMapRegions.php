@@ -146,14 +146,14 @@ class ApiMapRegions
         // Not found error
         return [];
       }
-      nlp_debug_msg('getMapRegionInfo', $e->getMessage());
+      nlp_debug_msg('getMapRegionInfo', $e);
       return [];
     } catch (Exception $e) {
       // Handle other errors
-      nlp_debug_msg('getMapRegionInfo', $e->getMessage());
+      nlp_debug_msg('getMapRegionInfo', $e);
       return [];
     } catch (GuzzleException $e) {
-      nlp_debug_msg('getMapRegionInfo', $e->getMessage());
+      nlp_debug_msg('getMapRegionInfo', $e);
       return [];
     }
 

@@ -154,7 +154,7 @@ class NlpConfiguration
         $timestamp = $date->getTimestamp();
         $electionDate = date('l jS \of F Y',$timestamp);
       } catch (Exception $e) {
-        nlp_debug_msg('getElectionDate',$e->getMessage());
+        nlp_debug_msg('getElectionDate', $e);
         $electionDate = '';
       }
     }
@@ -184,7 +184,7 @@ class NlpConfiguration
         $timestamp = $date->getTimestamp();
         $ballotDropDate = date('l jS \of F Y',$timestamp);
       } catch (Exception $e) {
-        nlp_debug_msg('getBallotDropDate',$e->getMessage());
+        nlp_debug_msg('getBallotDropDate', $e);
         $ballotDropDate = '';
       }
     }

@@ -72,10 +72,10 @@ class ApiNls {
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
         }
-        nlp_debug_msg('nlApiCall', $e->getMessage());
+        nlp_debug_msg('nlApiCall', $e);
         return [];
       } catch (Exception $e) {
-        nlp_debug_msg('nlApiCall', $e->getMessage());
+        nlp_debug_msg('nlApiCall', $e);
         return [];
       }
     }
@@ -104,10 +104,10 @@ class ApiNls {
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return FALSE;}
-      nlp_debug_msg('nlExists', $e->getMessage());
+      nlp_debug_msg('nlExists', $e);
       return FALSE;
     } catch (Exception $e) {
-      nlp_debug_msg('nlExists', $e->getMessage());
+      nlp_debug_msg('nlExists', $e);
       return FALSE;
     }
     return TRUE;
@@ -330,10 +330,10 @@ class ApiNls {
       $code = $e->getCode();
       if ($code == 404) {return 'Invalid mcid';}
       if ($code == 401) {return 'Invalid key';}
-      nlp_debug_msg('apiKeyVerify', $e->getMessage());
+      nlp_debug_msg('apiKeyVerify', $e);
       return 'Invalid key';
     } catch (Exception $e) {
-      nlp_debug_msg('apiKeyVerify', $e->getMessage());
+      nlp_debug_msg('apiKeyVerify', $e);
       return 'Invalid key';
     }
     return 'ok';

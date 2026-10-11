@@ -192,7 +192,7 @@ class NlpImap
         try {
           $dateObj = new DateTime($overview[0]->date);
         } catch (Exception $e) {
-          nlp_debug_msg('getNewEmailsToProcess', $e->getMessage());
+          nlp_debug_msg('getNewEmailsToProcess', $e);
           Drupal::logger('nlpservices')->notice(
             'getNewEmailsToProcess: Failed to parse date for email number = %id, error = %error',
             ['%id' => $emailNumber, '%error' => $e->getMessage()]
@@ -251,7 +251,7 @@ class NlpImap
         try {
           $dateObj = new DateTime($overview[0]->date);
         } catch (Exception $e) {
-          nlp_debug_msg('getNewNotificationReplies', $e->getMessage());
+          nlp_debug_msg('getNewNotificationReplies', $e);
           Drupal::logger('nlpservices')->notice('getNewNotificationReplies: Failed to parse date for email number = %id, error = %error',
             ['%id' => $emailNumber, '%error' => $e->getMessage()]);
           continue;

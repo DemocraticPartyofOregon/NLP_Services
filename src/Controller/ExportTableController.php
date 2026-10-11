@@ -70,7 +70,7 @@ class ExportTableController extends ControllerBase
       $file->save();
     }
     catch (Exception $e) {
-      nlp_debug_msg('setTemporary',$e->getMessage());
+      nlp_debug_msg('setTemporary', $e);
       return ['#markup' => "Can't set file as temporary.",];
     }
     $columnNames = $this->databaseFunctionsObj->getColumnNames($tableName);

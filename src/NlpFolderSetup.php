@@ -75,7 +75,7 @@ class NlpFolderSetup
       $destination = 'public://' . $nlpFavicon;
       $this->fileSystem->copy($source, $destination, FileExists::Replace);
     } catch (FileException $e) {
-      nlp_debug_msg('prepareLogo', $e->getMessage());
+      nlp_debug_msg('prepareLogo', $e);
       $this->messenger->addWarning($this->t('The default logo and favicon could not be copied to the public files directory; it may not be configured. Folder setup will continue.'));
     }
   }

@@ -59,7 +59,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('e', $e->getMessage() );
+      nlp_debug_msg('e', $e);
       return [];
     }
     $voters = [];
@@ -89,7 +89,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('reassignNlVoters', $e->getMessage() );
+      nlp_debug_msg('reassignNlVoters', $e);
     }
   }
 
@@ -110,7 +110,7 @@ class NlpVoters {
       $voterCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVoterCountByNl', $e->getMessage() );
+      nlp_debug_msg('getVoterCountByNl', $e);
       return 0;
     }
     return (int) $voterCount;
@@ -139,7 +139,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('duplicateVoters', $e->getMessage() );
+      nlp_debug_msg('duplicateVoters', $e);
       return [];
     }
     do {
@@ -167,7 +167,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVotersInList', $e->getMessage() );
+      nlp_debug_msg('getVotersInList', $e);
       return [];
     }
     $voters = [];
@@ -218,7 +218,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVoterStatus', $e->getMessage() );
+      nlp_debug_msg('getVoterStatus', $e);
       return $this->nullVoterStatus();
     }
     $status = $result->fetchAssoc();
@@ -258,7 +258,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('setVoterStatus', $e->getMessage() );
+      nlp_debug_msg('setVoterStatus', $e);
       return FALSE;
     }
     return TRUE;
@@ -286,7 +286,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createVoter', $e->getMessage() );
+      nlp_debug_msg('createVoter', $e);
       return FALSE;
     }
     try {
@@ -295,7 +295,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createVoter', $e->getMessage() );
+      nlp_debug_msg('createVoter', $e);
       return FALSE;
     }
     return TRUE;
@@ -319,7 +319,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createTurfVoter', $e->getMessage() );
+      nlp_debug_msg('createTurfVoter', $e);
       return FALSE;
     }
     return TRUE;
@@ -346,7 +346,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateTurfVoter', $e->getMessage() );
+      nlp_debug_msg('updateTurfVoter', $e);
       return FALSE;
     }
     return TRUE;
@@ -370,7 +370,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVotersInTurf', $e->getMessage() );
+      nlp_debug_msg('getVotersInTurf', $e);
       return [];
     }
     $voters = [];
@@ -411,7 +411,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('fetchVotersByTurf', $e->getMessage() );
+      nlp_debug_msg('fetchVotersByTurf', $e);
       return [];
     }
     $voters = [];
@@ -446,7 +446,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getTurfVoter', $e->getMessage() );
+      nlp_debug_msg('getTurfVoter', $e);
       return [];
     }
 
@@ -468,7 +468,7 @@ class NlpVoters {
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteVotersInTurf', $e->getMessage() );
+      nlp_debug_msg('deleteVotersInTurf', $e);
     }
   }
 
@@ -488,7 +488,7 @@ class NlpVoters {
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteAddressesInTurf', $e->getMessage() );
+      nlp_debug_msg('deleteAddressesInTurf', $e);
     }
   }
 
@@ -508,7 +508,7 @@ class NlpVoters {
         ->condition('vanid', $vanid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteVoterInTurf', $e->getMessage() );
+      nlp_debug_msg('deleteVoterInTurf', $e);
     }
   }
 
@@ -535,7 +535,7 @@ class NlpVoters {
           ->condition('turfIndex', $turfIndexes, 'NOT IN')
           ->execute();
       } catch (Exception $e) {
-        nlp_debug_msg('deleteOrphanTurfVoters', $e->getMessage() );
+        nlp_debug_msg('deleteOrphanTurfVoters', $e);
       }
     }
   }
@@ -556,7 +556,7 @@ class NlpVoters {
         ->condition('vanid', $vanid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteAddressInTurf', $e->getMessage() );
+      nlp_debug_msg('deleteAddressInTurf', $e);
     }
   }
 
@@ -587,7 +587,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateTurfNote', $e->getMessage() );
+      nlp_debug_msg('updateTurfNote', $e);
       return FALSE;
     }
     return TRUE;
@@ -610,7 +610,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('fetchVoterAddress', $e->getMessage() );
+      nlp_debug_msg('fetchVoterAddress', $e);
       return [];
     }
     if(empty($address = $result->fetchAssoc())) {return [];}
@@ -677,7 +677,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('setMovedStatus', $e->getMessage() );
+      nlp_debug_msg('setMovedStatus', $e);
       return;
     }
   }
@@ -707,7 +707,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateVoterPhone', $e->getMessage() );
+      nlp_debug_msg('updateVoterPhone', $e);
       return;
     }
   }
@@ -729,7 +729,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVoterById', $e->getMessage() );
+      nlp_debug_msg('getVoterById', $e);
       return [];
     }
     $voter = $result->fetchAssoc();
@@ -770,7 +770,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getParticipatingCounties', $e->getMessage() );
+      nlp_debug_msg('getParticipatingCounties', $e);
       return [];
     }
 
@@ -802,7 +802,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVoterAddresses', $e->getMessage() );
+      nlp_debug_msg('getVoterAddresses', $e);
       return [];
     }
     $addresses = [];
@@ -832,7 +832,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getTurfIndexByVanid', $e->getMessage() );
+      nlp_debug_msg('getTurfIndexByVanid', $e);
       return 0;
     }
     $nl = $result->fetchAssoc();
@@ -857,7 +857,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getMcidByVanid', $e->getMessage() );
+      nlp_debug_msg('getMcidByVanid', $e);
       return 0;
     }
     $nl = $result->fetchAssoc();
@@ -902,7 +902,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('searchVoters', $e->getMessage() );
+      nlp_debug_msg('searchVoters', $e);
       return [];
     }
     // Fetch each NL record and build the array of information about each NL
@@ -992,7 +992,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getVanidByStateId', $e->getMessage() );
+      nlp_debug_msg('getVanidByStateId', $e);
       return 0;
     }
     $voter = $result->fetchAssoc();
@@ -1019,7 +1019,7 @@ class NlpVoters {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateVoter', $e->getMessage() );
+      nlp_debug_msg('updateVoter', $e);
       return;
     }
   }

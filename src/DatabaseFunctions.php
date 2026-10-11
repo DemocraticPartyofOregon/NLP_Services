@@ -35,7 +35,7 @@ class DatabaseFunctions
       $result = $this->connection->query($select);
     }
     catch (Exception $e) {
-      nlp_debug_msg('getColumnNames', $e->getMessage() );
+      nlp_debug_msg('getColumnNames', $e);
       return [];
     }
     $colNames = [];
@@ -78,7 +78,7 @@ class DatabaseFunctions
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('exportTable', $e->getMessage() );
+      nlp_debug_msg('exportTable', $e);
       return FALSE;
     }
 
@@ -109,7 +109,7 @@ class DatabaseFunctions
         ->fields($fields)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('mergeRecord', $e->getMessage() );
+      nlp_debug_msg('mergeRecord', $e);
       return FALSE;
     }
     return TRUE;
@@ -231,7 +231,7 @@ class DatabaseFunctions
         ->execute()
         ->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('verifyFieldParameters', $e->getMessage());
+      nlp_debug_msg('verifyFieldParameters', $e);
       return ["Error checking $tableName.$fieldName: " . $e->getMessage()];
     }
 
@@ -326,7 +326,7 @@ class DatabaseFunctions
         ->orderBy('s.SEQ_IN_INDEX')
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getIndexColumns', $e->getMessage());
+      nlp_debug_msg('getIndexColumns', $e);
       return [];
     }
 
@@ -409,7 +409,7 @@ class DatabaseFunctions
           $dbSchema->createTable($tableName, $tableSpec);
           $log[] = "Created table: $tableName";
         } catch (Exception $e) {
-          nlp_debug_msg('repairSchema', $e->getMessage());
+          nlp_debug_msg('repairSchema', $e);
           $log[] = "Error creating table $tableName: " . $e->getMessage();
         }
         continue;
@@ -420,7 +420,7 @@ class DatabaseFunctions
             $dbSchema->addField($tableName, $fieldName, $fieldSpec);
             $log[] = "Added field: $tableName.$fieldName";
           } catch (Exception $e) {
-            nlp_debug_msg('repairSchema', $e->getMessage());
+            nlp_debug_msg('repairSchema', $e);
             $log[] = "Error adding field $tableName.$fieldName: " . $e->getMessage();
           }
         }
@@ -513,7 +513,7 @@ class DatabaseFunctions
         $dbSchema->addIndex($tableName, $indexName, $fields, $tableSpec);
       }
     } catch (Exception $e) {
-      nlp_debug_msg('repairIndexes', $e->getMessage());
+      nlp_debug_msg('repairIndexes', $e);
       return ["Error repairing $label $prefix: " . $e->getMessage()];
     }
 
@@ -539,7 +539,7 @@ class DatabaseFunctions
         ->condition('c.column_name', $columnName)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getColumnSize', $e->getMessage() );
+      nlp_debug_msg('getColumnSize', $e);
       return 0;
     }
     $result = $query->fetchAssoc();

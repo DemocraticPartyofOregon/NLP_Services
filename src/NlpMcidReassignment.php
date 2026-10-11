@@ -111,7 +111,7 @@ class NlpMcidReassignment {
     }
     catch (Exception $e) {
       $transaction->rollBack();
-      nlp_debug_msg('reassign', $e->getMessage());
+      nlp_debug_msg('reassign', $e);
       return ['ok' => FALSE, 'message' => 'The database update failed and was rolled back.'];
     }
     return ['ok' => TRUE];

@@ -116,7 +116,7 @@ class NlpMatchbacks
       try {
         $query->execute();
       } catch (Exception $e) {
-        nlp_debug_msg('Insert Matchback fail.',$e->getMessage());
+        nlp_debug_msg('Insert Matchback fail.', $e);
         return FALSE;
       }
       $this->records = [];
@@ -148,7 +148,7 @@ class NlpMatchbacks
     try {
       $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('Flush Matchback fail.',$e->getMessage());
+      nlp_debug_msg('Flush Matchback fail.', $e);
       return FALSE;
     }
     $this->records = [];
@@ -172,7 +172,7 @@ class NlpMatchbacks
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('matchbackExists', $e->getMessage() );
+      nlp_debug_msg('matchbackExists', $e);
       return FALSE;
     }
     $exists = $result->fetchAssoc();
@@ -195,7 +195,7 @@ class NlpMatchbacks
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getMatchbackDate', $e->getMessage() );
+      nlp_debug_msg('getMatchbackDate', $e);
       return '';
     }
     $matchback = $result->fetchAssoc();
@@ -221,7 +221,7 @@ class NlpMatchbacks
         ->fields(['date' => $date,])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setLatestMatchbackDate',$e->getMessage());
+      nlp_debug_msg('setLatestMatchbackDate', $e);
     }
   }
 
@@ -242,7 +242,7 @@ class NlpMatchbacks
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getLatestMatchbackDate', $e->getMessage() );
+      nlp_debug_msg('getLatestMatchbackDate', $e);
       return '';
     }
     $lastDate = $result->fetchAssoc();
