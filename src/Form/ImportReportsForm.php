@@ -88,7 +88,7 @@ class ImportReportsForm extends FormBase {
       $reportsUpload->save();
     }
     catch (EntityStorageException $e) {
-      nlp_debug_msg('File error.', $e->getMessage());
+      nlp_debug_msg('File error.', $e);
       return;
     }
     $fileName = $reportsUpload->getFilename();

@@ -84,7 +84,7 @@ class ImportUserAccountsForm extends FormBase {
     try {
       $bg_file->save();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('File save error', $e->getMessage());
+      nlp_debug_msg('File save error', $e);
       return;
     }
     $fileName = $bg_file->getFilename();

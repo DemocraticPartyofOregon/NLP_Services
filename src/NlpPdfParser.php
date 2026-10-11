@@ -33,7 +33,7 @@ class NlpPdfParser
       $parser = new Parser();
       $pdf = $parser->parseFile($pdfPath);
     } catch (Exception $e) {
-      nlp_debug_msg('NlpPdfParser', 'PDF parse error: ' . $e->getMessage());
+      nlp_debug_msg('NlpPdfParser', $e);
       return false;
     }
 

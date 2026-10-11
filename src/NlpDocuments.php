@@ -84,7 +84,7 @@ class NlpDocuments
           'createDate' => $req['createDate']])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createDocument',$e->getMessage());
+      nlp_debug_msg('createDocument', $e);
       return;
     }
   }
@@ -111,7 +111,7 @@ class NlpDocuments
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getDocuments',$e->getMessage());
+      nlp_debug_msg('getDocuments', $e);
       return [];
     }
 

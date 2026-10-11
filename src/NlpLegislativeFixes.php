@@ -51,7 +51,7 @@ class NlpLegislativeFixes
         ->fields($fields)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createLegFix', $e->getMessage());
+      nlp_debug_msg('createLegFix', $e);
       return FALSE;
     }
     return TRUE;
@@ -77,7 +77,7 @@ class NlpLegislativeFixes
       $query->orderBy('firstName');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getLegFixes', $e->getMessage());
+      nlp_debug_msg('getLegFixes', $e);
       return [];
     }
     $fixes = [];
@@ -102,7 +102,7 @@ class NlpLegislativeFixes
         ->condition('mcid', $mcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteLegFix', $e->getMessage());
+      nlp_debug_msg('deleteLegFix', $e);
       return FALSE;
     }
     return TRUE;
@@ -124,7 +124,7 @@ class NlpLegislativeFixes
       $query->condition('mcid', $mcid);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getLegFix', $e->getMessage());
+      nlp_debug_msg('getLegFix', $e);
       return [];
     }
     $fix = $result->fetchAssoc();

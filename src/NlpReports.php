@@ -67,7 +67,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlpTypeReports', $e->getMessage() );
+      nlp_debug_msg('getNlpTypeReports', $e);
       return [];
     }
     $voterReports = [];
@@ -96,7 +96,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlpReports', $e->getMessage() );
+      nlp_debug_msg('getNlpReports', $e);
       return [];
     }
     $voterReports = [];
@@ -145,7 +145,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getCanvassResults', $e->getMessage() );
+      nlp_debug_msg('getCanvassResults', $e);
       return [];
     }
     $latestReports = [];
@@ -246,7 +246,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlReportsForVoters', $e->getMessage() );
+      nlp_debug_msg('getNlReportsForVoters', $e);
       return [];
     }
     $voterReports = [];
@@ -276,7 +276,7 @@ class NlpReports {
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('reportExists', $e->getMessage() );
+      nlp_debug_msg('reportExists', $e);
       return FALSE;
     }
     $report = $result->fetchAssoc();
@@ -351,7 +351,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlpReport', $e->getMessage() );
+      nlp_debug_msg('getNlpReport', $e);
       return [];
     }
     $report = $result->fetchAssoc();
@@ -390,7 +390,7 @@ class NlpReports {
         ->fields($fields)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setNlReport', $e->getMessage() );
+      nlp_debug_msg('setNlReport', $e);
       return 0;
     }
     return $reportIndex;
@@ -415,7 +415,7 @@ class NlpReports {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateComment', $e->getMessage() );
+      nlp_debug_msg('updateComment', $e);
       return;
     }
   }
@@ -443,7 +443,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getComment', $e->getMessage() );
+      nlp_debug_msg('getComment', $e);
       return [];
     }
     $newestComment = ['reportIndex'=>NULL,'text'=>'', ];
@@ -475,7 +475,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlpAcReport', $e->getMessage() );
+      nlp_debug_msg('getNlpAcReport', $e);
       return [];
     }
     $report = $result->fetchAssoc();
@@ -508,7 +508,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getAcReportIndex', $e->getMessage() );
+      nlp_debug_msg('getAcReportIndex', $e);
       return 0;
     }
     $report = $result->fetchAssoc();
@@ -549,7 +549,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getReport', $e->getMessage() );
+      nlp_debug_msg('getReport', $e);
       return [];
     }
     // Now find the newest report (or all reports if asked).
@@ -593,7 +593,7 @@ class NlpReports {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('mergeReport', $e->getMessage());
+      nlp_debug_msg('mergeReport', $e);
       return;
     }
   }
@@ -626,7 +626,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('contactAttempt', $e->getMessage() );
+      nlp_debug_msg('contactAttempt', $e);
       return $canvassResult;
     }
     while ($report = $result->fetchAssoc()) {
@@ -661,7 +661,7 @@ class NlpReports {
       $contactCount = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
-      nlp_debug_msg('voterSentPostcard', $e->getMessage() );
+      nlp_debug_msg('voterSentPostcard', $e);
       return FALSE;
     }
     return $contactCount>0;
@@ -689,7 +689,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getCommitteeReportCounts', $e->getMessage() );
+      nlp_debug_msg('getCommitteeReportCounts', $e);
       return [];
     }
     $voterStatus = [];
@@ -735,7 +735,7 @@ class NlpReports {
       $numRows = $query->countQuery()->execute()->fetchField();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getReportCount', $e->getMessage() );
+      nlp_debug_msg('getReportCount', $e);
       return 0;
     }
     return $numRows;
@@ -764,7 +764,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('selectAllReports', $e->getMessage() );
+      nlp_debug_msg('selectAllReports', $e);
       return NULL;
     }
     return $result;
@@ -814,7 +814,7 @@ class NlpReports {
       $this->connection->truncate(self::NLP_RESULTS_TBL)->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('emptyNlTable', $e->getMessage() );
+      nlp_debug_msg('emptyNlTable', $e);
     }
   }
   
@@ -835,7 +835,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getKnownCycles', $e->getMessage() );
+      nlp_debug_msg('getKnownCycles', $e);
       return [];
     }
     $cycles = [];
@@ -866,7 +866,7 @@ class NlpReports {
       $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('insertNlBatch', $e->getMessage() );
+      nlp_debug_msg('insertNlBatch', $e);
     }
     unset($transaction);
   }
@@ -945,7 +945,7 @@ class NlpReports {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getReportsById', $e->getMessage() );
+      nlp_debug_msg('getReportsById', $e);
       return [];
     }
     $reports = [];
@@ -973,7 +973,7 @@ class NlpReports {
         ->condition('reportIndex', $reportIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteReport', $e->getMessage() );
+      nlp_debug_msg('deleteReport', $e);
     }
   }
   

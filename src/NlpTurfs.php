@@ -83,7 +83,7 @@ class NlpTurfs
       $query->condition('mcid', $mcid);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setAllTurfsDelivered', $e->getMessage());
+      nlp_debug_msg('setAllTurfsDelivered', $e);
       return;
     }
     do {
@@ -114,7 +114,7 @@ class NlpTurfs
         ->fields(['delivered' => $isoDate[0]])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setTurfDelivered', $e->getMessage());
+      nlp_debug_msg('setTurfDelivered', $e);
     }
   }
 
@@ -139,7 +139,7 @@ class NlpTurfs
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyTurfs', $e->getMessage());
+      nlp_debug_msg('getCountyTurfs', $e);
       return [];
     }
     $turfArray = [];
@@ -174,7 +174,7 @@ class NlpTurfs
       $query->condition('county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyTurfIndexes', $e->getMessage());
+      nlp_debug_msg('getCountyTurfIndexes', $e);
       return [];
     }
 
@@ -248,7 +248,7 @@ class NlpTurfs
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getNlsWithTurfs', $e->getMessage());
+      nlp_debug_msg('getNlsWithTurfs', $e);
       return [];
     }
 
@@ -285,7 +285,7 @@ class NlpTurfs
       $query->addField('i', 'turfIndex');
       $turfCount = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyTurfCount', $e->getMessage());
+      nlp_debug_msg('getCountyTurfCount', $e);
       return 0;
     }
     return (int) $turfCount;
@@ -307,7 +307,7 @@ class NlpTurfs
       $query->addField('i', 'turfIndex');
       $turfCount = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('getCdTurfCount', $e->getMessage());
+      nlp_debug_msg('getCdTurfCount', $e);
       return 0;
     }
     return (int) $turfCount;
@@ -330,7 +330,7 @@ class NlpTurfs
       $result = $query->execute();
       $dbTurf = $result->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurf', $e->getMessage());
+      nlp_debug_msg('getTurf', $e);
       return [];
     }
     return (empty($dbTurf)) ? [] : $dbTurf;
@@ -356,7 +356,7 @@ class NlpTurfs
       $result = $query->execute();
       $dbTurf = $result->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('getListId', $e->getMessage());
+      nlp_debug_msg('getListId', $e);
       return 0;
     }
     return (empty($dbTurf)) ? 0 : $dbTurf['listId'];
@@ -379,7 +379,7 @@ class NlpTurfs
       $result = $query->execute();
       $dbTurf = $result->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfByListId', $e->getMessage());
+      nlp_debug_msg('getTurfByListId', $e);
       return [];
     }
     if (empty($dbTurf)) { return []; }
@@ -405,7 +405,7 @@ class NlpTurfs
       $query->condition('i.mcid', $mcid);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfById', $e->getMessage());
+      nlp_debug_msg('getTurfById', $e);
       return [];
     }
     if (empty($result)) { return []; }
@@ -442,7 +442,7 @@ class NlpTurfs
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateTurf', $e->getMessage());
+      nlp_debug_msg('updateTurf', $e);
     }
   }
 
@@ -463,7 +463,7 @@ class NlpTurfs
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('updateTurfFields', $e->getMessage());
+      nlp_debug_msg('updateTurfFields', $e);
     }
   }
 
@@ -486,7 +486,7 @@ class NlpTurfs
         ->condition('mcid', $previousMcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('reassignNlTurfs', $e->getMessage());
+      nlp_debug_msg('reassignNlTurfs', $e);
     }
   }
 
@@ -508,7 +508,7 @@ class NlpTurfs
         ->fields($turf)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createTurf', $e->getMessage());
+      nlp_debug_msg('createTurf', $e);
       return 0;
     }
     return $turfIndex;
@@ -546,7 +546,7 @@ class NlpTurfs
       $query->condition('t.county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfHdNames', $e->getMessage());
+      nlp_debug_msg('getTurfHdNames', $e);
       return [];
     }
     $hdNameList = [];
@@ -585,7 +585,7 @@ class NlpTurfs
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfPrecinctNames', $e->getMessage());
+      nlp_debug_msg('getTurfPrecinctNames', $e);
       return [];
     }
     $precinctList = [];
@@ -623,7 +623,7 @@ class NlpTurfs
       }
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfs', $e->getMessage());
+      nlp_debug_msg('getTurfs', $e);
       return [];
     }
 
@@ -655,7 +655,7 @@ class NlpTurfs
       $query->condition('t.county', $county);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfIndexes', $e->getMessage());
+      nlp_debug_msg('getTurfIndexes', $e);
       return [];
     }
     $turfIndexes = [];
@@ -682,7 +682,7 @@ class NlpTurfs
       $query->distinct();
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyNames', $e->getMessage());
+      nlp_debug_msg('getCountyNames', $e);
       return [];
     }
 
@@ -712,7 +712,7 @@ class NlpTurfs
       $query->isNotNull('t.syncDate');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getSyncedCountyNames', $e->getMessage());
+      nlp_debug_msg('getSyncedCountyNames', $e);
       return [];
     }
 
@@ -763,7 +763,7 @@ class NlpTurfs
       $query->condition('turfIndex', $turfIndex);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('removeTurf', $e->getMessage());
+      nlp_debug_msg('removeTurf', $e);
       return FALSE;
     }
     $turfRecord = $result->fetchAssoc();
@@ -780,7 +780,7 @@ class NlpTurfs
         ->condition('turfIndex', $turfIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('removeTurf', $e->getMessage());
+      nlp_debug_msg('removeTurf', $e);
       return FALSE;
     }
     return TRUE;
@@ -841,7 +841,7 @@ class NlpTurfs
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('turfExists', $e->getMessage());
+      nlp_debug_msg('turfExists', $e);
       return [];
     }
     $turfs = [];
@@ -876,7 +876,7 @@ class NlpTurfs
       $query->condition('t.turfName', $turfName);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfByTurfName', $e->getMessage());
+      nlp_debug_msg('getTurfByTurfName', $e);
       return [];
     }
     $assignment = $result->fetchAssoc();
@@ -923,7 +923,7 @@ class NlpTurfs
       $query->isNotNull('t.listId');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getStaleTurfs', $e->getMessage());
+      nlp_debug_msg('getStaleTurfs', $e);
       return [];
     }
     $turfIndexes = [];
@@ -1047,7 +1047,7 @@ class NlpTurfs
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('unreportedChanges', $e->getMessage());
+      nlp_debug_msg('unreportedChanges', $e);
       return FALSE;
     }
 
@@ -1075,7 +1075,7 @@ class NlpTurfs
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getChangeHistory', $e->getMessage());
+      nlp_debug_msg('getChangeHistory', $e);
       return [];
     }
     $dbTurf = $result->fetchAssoc();
@@ -1102,7 +1102,7 @@ class NlpTurfs
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getMinivanInfo', $e->getMessage());
+      nlp_debug_msg('getMinivanInfo', $e);
       return [];
     }
     $dbTurf = $result->fetchAssoc();
@@ -1179,7 +1179,7 @@ class NlpTurfs
       }
       $voterCount = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('getVotersInCounty', $e->getMessage());
+      nlp_debug_msg('getVotersInCounty', $e);
       return 0;
     }
     return (int) $voterCount;
@@ -1280,7 +1280,7 @@ class NlpTurfs
       $query->distinct();
       $stats['surveyedVoted'] = (int) $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyTurfVoterStats', $e->getMessage());
+      nlp_debug_msg('getCountyTurfVoterStats', $e);
     }
     return $stats;
   }
@@ -1303,7 +1303,7 @@ class NlpTurfs
       $query->distinct();
       $count = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('countOfNlsWithTurfsInCd', $e->getMessage());
+      nlp_debug_msg('countOfNlsWithTurfsInCd', $e);
       return 0;
     }
     return (int) $count;
@@ -1328,7 +1328,7 @@ class NlpTurfs
       $query->distinct();
       $count = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
-      nlp_debug_msg('countOfNlsInCdThatReportedResults', $e->getMessage());
+      nlp_debug_msg('countOfNlsInCdThatReportedResults', $e);
       return 0;
     }
     return (int) $count;

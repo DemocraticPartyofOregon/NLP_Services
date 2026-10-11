@@ -165,7 +165,7 @@ class NlpDataEntryVoterListDisplay
     try {
       $timeZoneObj = new DateTimeZone($timeZone);
     } catch (Exception $e) {
-      nlp_debug_msg('Time zone error',$e->getMessage());
+      nlp_debug_msg('Time zone error', $e);
       return $voterArray;
     }
     

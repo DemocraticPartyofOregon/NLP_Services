@@ -65,15 +65,15 @@ class ApiFolders {
         Drupal::logger('nlpservices')->notice($msg);
         return [];
       }
-      nlp_debug_msg('getApiFolders', $e->getMessage());
+      nlp_debug_msg('getApiFolders', $e);
       // Request error
       return [];
     } catch (Exception $e) {
       // Other errors
-      nlp_debug_msg('getApiFolders', $e->getMessage());
+      nlp_debug_msg('getApiFolders', $e);
       return [];
     } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiFolders', $e->getMessage());
+      nlp_debug_msg('getApiFolders', $e);
       return [];
     }
 

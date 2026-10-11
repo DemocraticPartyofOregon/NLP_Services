@@ -106,7 +106,7 @@ class ApiExportJobs {
           'msg' => "The original file with your turf has been deleted and your turf cannot be updated."
           ];
       }
-      nlp_debug_msg('getExportJobs', $e->getMessage());
+      nlp_debug_msg('getExportJobs', $e);
       nlp_debug_msg('$dataJson', $dataJson);
       nlp_debug_msg('$post_url', $post_url);
       return [];
@@ -153,7 +153,7 @@ class ApiExportJobs {
         ->fields($req)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('insertExportJob',$e->getMessage());
+      nlp_debug_msg('insertExportJob', $e);
       return 0;
     }
     return $eventId;
@@ -212,7 +212,7 @@ class ApiExportJobs {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getExportJobStatus', $e->getMessage() );
+      nlp_debug_msg('getExportJobStatus', $e);
       return 0;
     }
     $exportJob = $result->fetchAssoc();
@@ -231,7 +231,7 @@ class ApiExportJobs {
           ->execute();
       }
       catch (Exception $e) {
-        nlp_debug_msg('getExportJobStatus', $e->getMessage() );
+        nlp_debug_msg('getExportJobStatus', $e);
         return 0;
       }
     }

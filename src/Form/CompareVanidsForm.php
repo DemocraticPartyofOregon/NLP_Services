@@ -190,7 +190,7 @@ class CompareVanidsForm extends FormBase
       $file->setTemporary();
       $file->save();
     } catch (Exception $e) {
-      nlp_debug_msg('CompareVanidsForm', $e->getMessage());
+      nlp_debug_msg('CompareVanidsForm', $e);
       Drupal::messenger()->addError(t('Failed to create the output file.'));
       return;
     }

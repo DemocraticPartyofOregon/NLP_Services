@@ -40,7 +40,7 @@ class NlpCoordinators {
       ->fields($req)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createCoordinator',$e->getMessage());
+      nlp_debug_msg('createCoordinator', $e);
       return;
     }
   }
@@ -61,7 +61,7 @@ class NlpCoordinators {
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCoordinators',$e->getMessage());
+      nlp_debug_msg('getCoordinators', $e);
       return [];
     }
     
@@ -90,7 +90,7 @@ class NlpCoordinators {
         ->condition('cIndex', $cIndex)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteCoordinator',$e->getMessage());
+      nlp_debug_msg('deleteCoordinator', $e);
       return;
     }
   }
@@ -194,7 +194,7 @@ class NlpCoordinators {
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getAllCoordinators',$e->getMessage());
+      nlp_debug_msg('getAllCoordinators', $e);
       return [];
     }
     
@@ -249,7 +249,7 @@ class NlpCoordinators {
     try {
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCoordinatorById',$e->getMessage());
+      nlp_debug_msg('getCoordinatorById', $e);
       return [];
     }
     

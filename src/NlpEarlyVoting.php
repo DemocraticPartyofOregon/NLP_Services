@@ -158,7 +158,7 @@ class NlpEarlyVoting
       $query->condition('a.precinct', $precinct);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('NlpEarlyVoting fetchByPrecinctAndLastName', $e->getMessage());
+      nlp_debug_msg('NlpEarlyVoting fetchByPrecinctAndLastName', $e);
       return [];
     }
 

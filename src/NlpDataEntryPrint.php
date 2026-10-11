@@ -425,7 +425,7 @@ household has not yet voted, and a reminder call might be helpful.</p>";
       $file->save();
     }
     catch (Exception $e) {
-      nlp_debug_msg('e',$e->getMessage());
+      nlp_debug_msg('e', $e);
       return '';
     }
     $fh = fopen($listUri, "w");

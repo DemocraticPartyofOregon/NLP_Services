@@ -385,7 +385,7 @@ class MagicWord {
         ->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('createCredentials', $e->getMessage() );
+      nlp_debug_msg('createCredentials', $e);
       return FALSE;
     }
     return TRUE;
@@ -410,7 +410,7 @@ class MagicWord {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('updateCredentials', $e->getMessage() );
+      nlp_debug_msg('updateCredentials', $e);
       return FALSE;
     }
     $inUse = $result->fetchAssoc();
@@ -490,7 +490,7 @@ class MagicWord {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('emailInUser', $e->getMessage() );
+      nlp_debug_msg('emailInUser', $e);
       return FALSE;
     }
     $inUse = $result->fetchAssoc();
@@ -505,7 +505,7 @@ class MagicWord {
       $result = $this->connection->query($select);
     }
     catch (Exception $e) {
-      nlp_debug_msg('getColumnNames', $e->getMessage() );
+      nlp_debug_msg('getColumnNames', $e);
       return [];
     }
     $colNames = [];
@@ -526,7 +526,7 @@ class MagicWord {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('reEncryptAll', $e->getMessage());
+      nlp_debug_msg('reEncryptAll', $e);
       return FALSE;
     }
     $method = 'AES-256-CBC';
@@ -551,7 +551,7 @@ class MagicWord {
           ->execute();
       }
       catch (Exception $e) {
-        nlp_debug_msg('reEncryptAll', $e->getMessage());
+        nlp_debug_msg('reEncryptAll', $e);
         return FALSE;
       }
     }

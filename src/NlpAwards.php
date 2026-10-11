@@ -52,7 +52,7 @@ class NlpAwards
         ->fields($award)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('mergeAward', $e->getMessage() );
+      nlp_debug_msg('mergeAward', $e);
       return FALSE;
     }
     return TRUE;
@@ -72,7 +72,7 @@ class NlpAwards
       $query->fields('n');
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('e', $e->getMessage() );
+      nlp_debug_msg('e', $e);
       return $this->newAwardRecord($mcid);
     }
     if(!$award = $result->fetchAssoc()) {
@@ -212,7 +212,7 @@ class NlpAwards
         ->condition('mcid', $mcid)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteAwards', $e->getMessage() );
+      nlp_debug_msg('deleteAwards', $e);
       return FALSE;
     }
     return TRUE;

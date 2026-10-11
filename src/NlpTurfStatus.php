@@ -84,7 +84,7 @@ class NlpTurfStatus
         ->updateFields($updateFields)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('createTurfStatus', $e->getMessage());
+      nlp_debug_msg('createTurfStatus', $e);
     }
   }
 
@@ -205,7 +205,7 @@ class NlpTurfStatus
         ->condition('turfName', $turfName)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('setTurfStatusValidated', $e->getMessage());
+      nlp_debug_msg('setTurfStatusValidated', $e);
     }
   }
 
@@ -229,7 +229,7 @@ class NlpTurfStatus
         ->condition('turfName', $turfName)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('extendTurfStatusExpiration', $e->getMessage());
+      nlp_debug_msg('extendTurfStatusExpiration', $e);
     }
   }
 
@@ -252,7 +252,7 @@ class NlpTurfStatus
       $query->condition($orGroup);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getExpiredPendingTurfStatuses', $e->getMessage());
+      nlp_debug_msg('getExpiredPendingTurfStatuses', $e);
       return [];
     }
     $now = time();
@@ -286,7 +286,7 @@ class NlpTurfStatus
       $result = $query->execute();
       $record = $result->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfStatus', $e->getMessage());
+      nlp_debug_msg('getTurfStatus', $e);
       return [];
     }
     return $record ?: [];

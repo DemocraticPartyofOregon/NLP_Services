@@ -172,10 +172,10 @@ class ApiVoter
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
         }
-        nlp_debug_msg('getApiVoter', $e->getMessage());
+        nlp_debug_msg('getApiVoter', $e);
         return [];
       } catch (Exception $e) {
-        nlp_debug_msg('getApiVoter', $e->getMessage());
+        nlp_debug_msg('getApiVoter', $e);
         return [];
       }
     }
@@ -483,10 +483,10 @@ class ApiVoter
     } catch (GuzzleException $e) {
       $code = $e->getCode();
       if ($code == 404) {return FALSE;}
-      nlp_debug_msg('voterExists', $e->getMessage());
+      nlp_debug_msg('voterExists', $e);
       return FALSE;
     } catch (Exception $e) {
-      nlp_debug_msg('voterExists', $e->getMessage());
+      nlp_debug_msg('voterExists', $e);
       return FALSE;
     }
     return TRUE;
@@ -513,10 +513,10 @@ class ApiVoter
       $code = $e->getCode();
       if ($code == 404) {return [];}
       if ($code == 401) {return ['Invalid key'];}
-      nlp_debug_msg('getVotersByAddress', $e->getMessage());
+      nlp_debug_msg('getVotersByAddress', $e);
       return [];
     } catch (Exception $e) {
-      nlp_debug_msg('getVotersByAddress', $e->getMessage());
+      nlp_debug_msg('getVotersByAddress', $e);
       return [];
     }
     if(empty($results)) {return [];}

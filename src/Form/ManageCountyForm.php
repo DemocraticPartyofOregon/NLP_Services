@@ -151,7 +151,7 @@ class ManageCountyForm extends FormBase {
       $store->set('currentHd', 0);
       $store->set('currentPct', '');
     } catch (TempStoreException $e) {
-      nlp_debug_msg('Temp store save error', $e->getMessage());
+      nlp_debug_msg('Temp store save error', $e);
       $form_state->setErrorByName('county_select', $this->t('Temp store save error'));
     }
 

@@ -55,7 +55,7 @@ class NlpDataEntryHelper
         $timestamp = $date->getTimestamp();
         $ballotDate = Html::escape(date('l jS \of F Y', $timestamp));
       } catch (Exception $e) {
-        nlp_debug_msg('dataEntryHelp', $e->getMessage());
+        nlp_debug_msg('dataEntryHelp', $e);
         $ballotDate = 'None received yet';
       }
       $output .= "<p>The latest date reported for a ballot received: $ballotDate.</p>";

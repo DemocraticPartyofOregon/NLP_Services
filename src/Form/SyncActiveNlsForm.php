@@ -170,14 +170,14 @@ the NLP Services Admin.</p>',
       $file = Drupal::service('file.repository')->writeData('', $localFileUrl,
         FileExists::Replace);
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('File create failed.', $e->getMessage());
+      nlp_debug_msg('File create failed.', $e);
       return;
     }
     $file->setTemporary();
     try {
       $file->save();
     } catch (Exception $e) {
-      nlp_debug_msg('error', $e->getMessage());
+      nlp_debug_msg('error', $e);
       return;
     }
     copy($remoteUrl, $localFileUrl);

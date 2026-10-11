@@ -46,7 +46,7 @@ class WelcomeController extends ControllerBase {
       $nodeStorage = $this->entityTypeManager->getStorage('node');
       $nodeTypeStorage = $this->entityTypeManager->getStorage('node_type');
     } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
-      nlp_debug_msg('WelcomeController', $e->getMessage());
+      nlp_debug_msg('WelcomeController', $e);
       return ['#markup' => $this->t('Failed to access node storage.')];
     }
 
@@ -101,7 +101,7 @@ class WelcomeController extends ControllerBase {
     try {
       $node->save();
     } catch (EntityStorageException $e) {
-      nlp_debug_msg('WelcomeController', $e->getMessage());
+      nlp_debug_msg('WelcomeController', $e);
       return ['#markup' => $this->t('Failed to save the Home page node.')];
     }
 

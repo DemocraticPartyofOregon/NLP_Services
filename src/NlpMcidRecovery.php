@@ -39,7 +39,7 @@ class NlpMcidRecovery {
     try {
       $key = bin2hex(random_bytes(32));
     } catch (RandomException $e) {
-      nlp_debug_msg('saveRecoveryKey', $e->getMessage());
+      nlp_debug_msg('saveRecoveryKey', $e);
       // Fall back to something non-random but still unique.  The key will be
       // valid but less resistant to guessing, so this should only be used in
       // extreme circumstances.
@@ -55,7 +55,7 @@ class NlpMcidRecovery {
         ])
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('saveRecoveryKey', $e->getMessage());
+      nlp_debug_msg('saveRecoveryKey', $e);
       return '';
     }
     return $key;
@@ -79,7 +79,7 @@ class NlpMcidRecovery {
       $query->condition('recovery_key', $key);
       $record = $query->execute()->fetchAssoc();
     } catch (Exception $e) {
-      nlp_debug_msg('getMcid', $e->getMessage());
+      nlp_debug_msg('getMcid', $e);
       return 0;
     }
 
@@ -110,7 +110,7 @@ class NlpMcidRecovery {
         ->condition('recovery_key', $key)
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('deleteKey', $e->getMessage());
+      nlp_debug_msg('deleteKey', $e);
     }
   }
 
@@ -125,7 +125,7 @@ class NlpMcidRecovery {
         ->condition('created', $cutoff, '<')
         ->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('purgeExpired', $e->getMessage());
+      nlp_debug_msg('purgeExpired', $e);
     }
   }
 

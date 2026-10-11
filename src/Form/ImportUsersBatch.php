@@ -20,7 +20,7 @@ function importUsersBatch($arg,&$context): void
   try {
     $drupalRoles = Drupal::entityTypeManager()->getStorage('user_role')->loadMultiple();
   } catch (Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException|Drupal\Component\Plugin\Exception\PluginNotFoundException $e) {
-    nlp_debug_msg('importUsersBatch', $e->getMessage() );
+    nlp_debug_msg('importUsersBatch', $e);
   }
   foreach ($drupalRoles as $drupalRole) {
     $nlpRoles[$drupalRole->id()] = $drupalRole->label();

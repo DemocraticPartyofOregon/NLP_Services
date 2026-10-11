@@ -152,7 +152,7 @@ class ExportNlsStatusForm extends FormBase
     try {
       $file->save();
     } catch (Exception $e) {
-      nlp_debug_msg('ExportNlsStatusForm', $e->getMessage());
+      nlp_debug_msg('ExportNlsStatusForm', $e);
       $this->messenger()->addError($this->t("Can't set file as temporary."));
       return;
     }

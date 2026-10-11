@@ -84,7 +84,7 @@ class ImportStateEarlyVotingForm extends FormBase
     try {
       $fileEntity->save();
     } catch (Drupal\Core\Entity\EntityStorageException $e) {
-      nlp_debug_msg('File save error', $e->getMessage());
+      nlp_debug_msg('File save error', $e);
       return;
     }
     $fileUri = 'public://temp/' . $fileEntity->getFilename();
