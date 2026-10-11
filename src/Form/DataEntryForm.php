@@ -286,7 +286,11 @@ class DataEntryForm extends FormBase
     }
 
     $voterArrays = $form_state->get('voterArrays' );
-    $dataEntry = $form_state->getValue('dataEntry') ?? [];
+    // A data entry table with no voter rows submits as '' rather than an array.
+    $dataEntry = $form_state->getValue('dataEntry');
+    if (!is_array($dataEntry)) {
+      $dataEntry = [];
+    }
     $selections = $this->dataEntryVoterListDisplayObj->validateDataEntrySelection($dataEntry);
     $actions = $this->dataEntryVoterListDisplayObj->whatChanged($selections,$voterArrays);
 
