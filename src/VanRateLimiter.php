@@ -10,7 +10,7 @@ namespace Drupal\nlpservices;
  * group of requests is sent, waits until sending it would keep that count
  * at or under the limit. The state is static so that back-to-back calls
  * from different Api* classes within one PHP request share the same
- * budget. Separate PHP processes (e.g. a cron queue worker running while a
+ * budget. Separate PHP processes (e.g., a cron queue worker running while a
  * user submits a form) are not coordinated; the 429 retry in ApiRetryTrait
  * covers that case.
  */

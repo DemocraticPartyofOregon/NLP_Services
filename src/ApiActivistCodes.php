@@ -129,7 +129,7 @@ class ApiActivistCodes
    * Returns TRUE if the given voter already has the named activist code applied.
    *
    * @param int $vanid
-   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $codeName - e.g., 'NLPVoterAC'
    * @param string $committee - The committee whose key should be used; empty
    *   string uses the State Committee key. Must match the committee the code
    *   was applied under for MyCampaign codes.
@@ -249,7 +249,7 @@ class ApiActivistCodes
    * have the named activist code applied.
    *
    * @param array  $vanids   - flat array of int vanids to check
-   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $codeName - e.g., 'NLPVoterAC'
    * @return array            - vanids (int) that are missing the code
    */
   public function hasApiActivistCodeBatch(array $vanids, string $codeName): array
@@ -305,7 +305,7 @@ class ApiActivistCodes
    * Applies (or removes) an activist code to multiple voters concurrently.
    *
    * @param array  $vanids   - flat array of int vanids to update
-   * @param string $codeName - e.g. 'NLPVoterAC'
+   * @param string $codeName - e.g., 'NLPVoterAC'
    * @param string $action   - 'Apply' or 'Remove'
    */
   public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action = 'Apply'): void

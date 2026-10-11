@@ -163,7 +163,7 @@ class ApiKeyManagement
    *
    * @param string $id - the ID of the key to be retrieved.
    * @param bool $logIfMissing - whether to log an error if no key entity exists for the given ID.
-   *   Callers that are merely probing for a not-yet-configured key (e.g. the API Configuration
+   *   Callers that are merely probing for a not-yet-configured key (e.g., the API Configuration
    *   form checking for pre-existing credentials before a first-time save) should pass FALSE,
    *   since a missing key in that case is expected, not an error.
    * @return array - the key values as an associative array, or an empty array if the key is not found.

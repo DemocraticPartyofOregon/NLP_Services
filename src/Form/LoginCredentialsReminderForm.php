@@ -296,7 +296,7 @@ class LoginCredentialsReminderForm extends FormBase
    * precinctOptions
    *
    * Builds the precinct select options ('All' first, then each precinct with
-   * users, in natural order) and the selected index.  A stale index (e.g. the
+   * users, in natural order) and the selected index.  A stale index (e.g., the
    * precinct is not in the newly selected HD) falls back to 'All'.
    *
    * @param array $users - The users in the selected HD.

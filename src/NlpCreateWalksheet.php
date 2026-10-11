@@ -343,8 +343,8 @@ class NlpCreateWalksheet
     if (!empty($walksheetData)) {
       $html .= '<pagebreak />';
     }
-    // Each household is its own table so mPDF moves the whole household to the next page
-    // when it won't fit.  Row heights vary with the content (e.g. a long list of survey
+    // Each household is its own table so that mPDF moves the whole household to the next page
+    // when it won't fit.  Row heights vary with the content (e.g., a long list of survey
     // responses wraps), so counting lines here can't predict where the page ends.
     // autosize="1" stops mPDF from shrinking a household to squeeze it onto the page instead.
     $lastHousehold = array_key_last($walksheetData);

@@ -57,7 +57,7 @@ trait ApiRetryTrait {
    * smaller groups after a delay; any other failure, or a retryable failure
    * on the final attempt, is passed to $onFailed.
    *
-   * @param array $keys - identifiers (e.g. vanids), one request each.
+   * @param array $keys - identifiers (e.g., vanids), one request each.
    * @param callable $buildRequest - fn($key): RequestInterface
    * @param callable $onFulfilled - fn(ResponseInterface $response, $key)
    * @param callable $onFailed - fn(Throwable $reason, $key)
@@ -106,11 +106,11 @@ trait ApiRetryTrait {
   /**
    * Sends a single request with the VAN timeouts, retrying it on the same
    * failures sendInRateLimitedGroups() retries.  Callers keep their own
-   * handling of the final failure (e.g. a 404 meaning "no such person").
+   * handling of the final failure (e.g., a 404 meaning "no such person").
    *
    * @param string $method
    * @param string $url
-   * @param int|string $logKey - identifier logged with each retry (e.g. a vanid), never the URL.
+   * @param int|string $logKey - identifier logged with each retry (e.g., a vanid), never the URL.
    * @return ResponseInterface
    * @throws GuzzleException - the last failure, when it can't be retried or the retries ran out.
    */

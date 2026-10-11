@@ -42,7 +42,7 @@ On this Windows/git-bash setup (ddev/docker installed without admin rights into 
 
 **Workaround: bypass the `ddev` wrapper and talk to the container directly.** This worked instantly every time it was tried:
 ```bash
-# Any docker command with a path argument (e.g. -w /var/www/html) needs this env var
+# Any docker command with a path argument (e.g., -w /var/www/html) needs this env var
 # on git-bash/MSYS, or the path gets mangled into a Windows path before docker sees it:
 MSYS_NO_PATHCONV=1 docker exec -w /var/www/html ddev-dog-check-dev-web composer require <pkg>
 MSYS_NO_PATHCONV=1 docker exec -w /var/www/html ddev-dog-check-dev-web vendor/bin/drush <cmd>

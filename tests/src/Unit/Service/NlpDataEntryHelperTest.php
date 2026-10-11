@@ -111,7 +111,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testDataEntryHelpFormatsLatestBallotDateAsReadableString(): void {
       $this->setupStandardMocks('2024-10-20');
       $output = $this->buildService()->dataEntryHelp();
-      // date('l jS \of F Y', ...) produces e.g. "Sunday 20th of October 2024"
+      // date('l jS \of F Y', ...) produces e.g., "Sunday 20th of October 2024"
       $this->assertStringContainsString('October 2024', $output);
     }
 

@@ -297,7 +297,7 @@ class ApiNls {
           return;
         }
         // Key by the requested MCID, not the vanId in the response: VAN can
-        // answer with a different vanId (e.g. a merged record), and the
+        // answer with a different vanId (e.g., a merged record), and the
         // caller needs to see that rather than lose the record.
         $nls[$mcid] = $this->processNlResult($result);
       },

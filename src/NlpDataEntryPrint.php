@@ -389,7 +389,7 @@ might be helpful.<br>* Has not voted yet. &nbsp; ** SMS texting optin unknown.</
    *
    * @param string $html - The HTML for the list.
    * @param string $fileType - DD_CALL_FILE or DD_POSTCARD_FILE, used in the file name.
-   * @param string $label - The list's name in the link text, e.g. 'GOTV call list'.
+   * @param string $label - The list's name in the link text, e.g., 'GOTV call list'.
    * @return array
    */
   private function createListPdf( string $html, string $fileType, string $label ): array

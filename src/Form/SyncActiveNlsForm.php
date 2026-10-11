@@ -229,7 +229,7 @@ the NLP Services Admin.</p>',
   /**
    * shortExportWarning
    *
-   * VoteBuilder gives no error when an export leaves people out, e.g. when a
+   * VoteBuilder gives no error when an export leaves people out, e.g., when a
    * child API key can't see records built under the parent key. Compare the
    * rows in the exported file to the list's NL count and say so when it's short.
    *

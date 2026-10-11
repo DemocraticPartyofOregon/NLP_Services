@@ -34,7 +34,7 @@ trait TurfPrecinctFilterTrait
     $pctOptions = array_merge(['All'], array_values($pctNames));
     $sessionDataObj->setNewDistricts($sessionDataObj->getHdOptions(), $pctOptions);
     $currentPctIndex = $sessionDataObj->getSavedPrecinctIndex();
-    // A stale index (e.g. the precinct no longer has turfs) falls back to 'All'.
+    // A stale index (e.g., the precinct no longer has turfs) falls back to 'All'.
     if (!isset($pctOptions[$currentPctIndex])) {
       $sessionDataObj->savePrecinctIndex(0);
       $currentPctIndex = 0;

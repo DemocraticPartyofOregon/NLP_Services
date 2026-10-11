@@ -242,7 +242,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /**
      * Regression test: when the uploaded file has no ActivistCode_<code>
-     * column for the configured Dropout activist code (e.g. the code isn't
+     * column for the configured Dropout activist code (e.g., the code isn't
      * included in the VAN export, or isn't configured at all), the missing
      * column used to be silently treated as column 0 (VanID), which is
      * always non-empty — falsely marking every NL as a dropout.

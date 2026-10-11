@@ -181,7 +181,7 @@ class ApiSurveyQuestion
         break;
       
       // The contact attempt records a canvass survey response that is not
-      // an answer to a survey question, e.g. "not home".
+      // an answer to a survey question, e.g., "not home".
       case 'contactAttempt':
         $cid = $surveyResponse['ContactTypeCode'];
         $rid = $surveyResponse['rid'];

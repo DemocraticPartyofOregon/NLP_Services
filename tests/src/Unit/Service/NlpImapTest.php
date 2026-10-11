@@ -50,7 +50,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     /**
      * Builds a minimal stdClass part object for mailDecodePart tests.
-     * Extra keys in $props are set directly on the object (e.g. 'bytes', 'subtype').
+     * Extra keys in $props are set directly on the object (e.g., 'bytes', 'subtype').
      * $part->parts is intentionally NOT set unless included in $props, so the
      * large-size early-return branch is triggered when bytes > MAX_MAIL_PART_SIZE_BYTES.
      */
