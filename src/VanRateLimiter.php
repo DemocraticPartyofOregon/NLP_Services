@@ -11,7 +11,7 @@ namespace Drupal\nlpservices;
  * at or under the limit. The state is static so that back-to-back calls
  * from different Api* classes within one PHP request share the same
  * budget. Separate PHP processes (e.g., a cron queue worker running while a
- * user submits a form) are not coordinated; the 429 retry in ApiRetryTrait
+ * user submits a form) are not coordinated; the 429th retry in ApiRetryTrait
  * covers that case.
  */
 final class VanRateLimiter {
@@ -31,24 +31,23 @@ final class VanRateLimiter {
   public static function acquire(int $count): void {
     $count = min(max($count, 0), self::MAX_REQUESTS);
     $window = self::WINDOW_MS / 1000;
-    while (TRUE) {
+    do {
       $now = microtime(TRUE);
       self::$sentAt = array_values(array_filter(self::$sentAt, fn($t) => $now - $t < $window));
       $excess = count(self::$sentAt) + $count - self::MAX_REQUESTS;
-      if ($excess <= 0) {
-        break;
+      if ($excess > 0) {
+        // The oldest $excess entries must age out of the window first.
+        $waitUntil = self::$sentAt[$excess - 1] + $window;
+        usleep((int) ceil(($waitUntil - $now) * 1000000));
       }
-      // The oldest $excess entries must age out of the window first.
-      $waitUntil = self::$sentAt[$excess - 1] + $window;
-      usleep((int) ceil(($waitUntil - $now) * 1000000));
-    }
+    } while ($excess > 0);
     for ($i = 0; $i < $count; $i++) {
       self::$sentAt[] = $now;
     }
   }
 
   /**
-   * Clears the recorded send times. Intended for tests.
+   * Clears the recorded sent time. Intended for tests.
    */
   public static function reset(): void {
     self::$sentAt = [];
