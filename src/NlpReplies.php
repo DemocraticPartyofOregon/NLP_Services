@@ -208,7 +208,7 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
     foreach ($message as $parts) {
       if(empty($parts['data']) || !is_string($parts['data'])) { continue;}
       $description = (!empty($parts['description']))?$parts['description']:'';
-      // The body of a single-part email may come without a type or subtype.
+      // When an email has only one part, its body may come without a type or subtype.
       $type = $parts['type'] ?? '';
       $subType = strtolower($parts['subtype'] ?? '');
       if (empty($description)) {
