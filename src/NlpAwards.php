@@ -96,6 +96,53 @@ class NlpAwards
     if(empty($award)) {
       return $this->newAwardRecord($mcid);
     }
+    return $this->decodeAward($award);
+  }
+
+  /**
+   * getAwards
+   *
+   * Returns the award records for a list of NLs with one query, keyed by
+   * mcid.  Each record is decoded the same way as getAward, and an NL with no
+   * record gets a new one.
+   *
+   * @param array $mcids
+   * @return array
+   */
+  public function getAwards(array $mcids): array
+  {
+    if(empty($mcids)) {return [];}
+    $dbAwards = [];
+    try {
+      $query = $this->connection->select(self::AWARDS_TBL, 'n');
+      $query->condition('mcid',$mcids,'IN');
+      $query->fields('n');
+      $result = $query->execute();
+      while ($dbAward = $result->fetchAssoc()) {
+        $dbAwards[$dbAward['mcid']] = $dbAward;
+      }
+    } catch (Exception $e) {
+      nlp_debug_msg('getAwards', $e);
+    }
+    $awards = [];
+    foreach ($mcids as $mcid) {
+      $awards[$mcid] = (isset($dbAwards[$mcid]))?
+        $this->decodeAward($dbAwards[$mcid]):$this->newAwardRecord($mcid);
+    }
+    return $awards;
+  }
+
+  /**
+   * decodeAward
+   *
+   * Converts the participation of a raw award record from JSON to an array
+   * and corrects historical records where the completed status was boolean.
+   *
+   * @param array $award
+   * @return array
+   */
+  private function decodeAward(array $award): array
+  {
     $participation = (!empty($award['participation']))?
       (array) json_decode($award['participation']):[];
     $award['participation'] = $participation;
@@ -140,20 +187,18 @@ class NlpAwards
   }
   
   /**
-   * nlParticipationDisplay
+   * participationDisplay
    *
-   * Returns a string with the participation information for an NL.
+   * Returns a string with the participation information from an award
+   * record returned by getAward or getAwards.
    *
-   * @param int $mcid
+   * @param array $award
    * @return string
    */
-  public function nlParticipationDisplay(int $mcid): string
+  public function participationDisplay(array $award): string
   {
-    $award = $this->fetchAwardRecord($mcid);
-    if (empty($award)) {return '';}
     $nlParticipation = '';
-    $awards = (!empty($award['participation']))?$award['participation']:'';
-    $participation = (array) json_decode($awards);
+    $participation = (!empty($award['participation']))?$award['participation']:[];
     foreach ($participation as $cycle => $value) {
       if($value === TRUE) {$value = 'Completed';}
       if(!empty($nlParticipation)) {

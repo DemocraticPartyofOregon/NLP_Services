@@ -62,6 +62,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $selectMock = $this->createMock(Select::class);
       $selectMock->method('fields')->willReturnSelf();
       $selectMock->method('addField')->willReturnSelf();
+      $selectMock->method('addExpression')->willReturn('alias');
+      $selectMock->method('leftJoin')->willReturn('alias');
+      $selectMock->method('groupBy')->willReturnSelf();
       $selectMock->method('condition')->willReturnSelf();
       $selectMock->method('orderBy')->willReturnSelf();
       $selectMock->method('range')->willReturnSelf();
@@ -491,26 +494,32 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getNlReportsForVoters()
+    // getNlsProgress()
     // -------------------------------------------------------------------------
 
-    public function testGetNlReportsForVotersReturnsReportsKeyedByMcid(): void {
+    public function testGetNlsProgressReturnsCountsKeyedByMcid(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls(
-        ['reportIndex' => 1, 'mcid' => 42, 'vanid' => 999, 'type' => 'Survey'],
+        ['mcid' => 42, 'voterCount' => '10', 'attempts' => '4', 'contacts' => '2'],
+        ['mcid' => 43, 'voterCount' => '3', 'attempts' => '0', 'contacts' => '0'],
         false,
       );
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
 
-      $result = $this->buildService()->getNlReportsForVoters([999]);
+      $result = $this->buildService()->getNlsProgress([42, 43]);
 
-      $this->assertArrayHasKey(42, $result);
-      $this->assertSame('Survey', $result[42][0]['type']);
+      $this->assertSame(['voterCount' => 10, 'attempts' => 4, 'contacts' => 2], $result[42]);
+      $this->assertSame(['voterCount' => 3, 'attempts' => 0, 'contacts' => 0], $result[43]);
     }
 
-    public function testGetNlReportsForVotersReturnsEmptyArrayOnException(): void {
+    public function testGetNlsProgressReturnsEmptyArrayForNoMcids(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildService()->getNlsProgress([]));
+    }
+
+    public function testGetNlsProgressReturnsEmptyArrayOnException(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildService()->getNlReportsForVoters([999]));
+      $this->assertSame([], $this->buildService()->getNlsProgress([42]));
     }
 
     // -------------------------------------------------------------------------

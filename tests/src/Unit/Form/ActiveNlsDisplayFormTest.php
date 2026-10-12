@@ -27,7 +27,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
   class ActiveNlsDisplayFormTest extends UnitTestCase {
 
-    private NlpVoters $votersMock;
     private NlpReports $reportsMock;
     private NlpNls $nlsMock;
     private NlpTurfs $turfsMock;
@@ -42,7 +41,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     protected function setUp(): void {
       parent::setUp();
-      $this->votersMock            = $this->createMock(NlpVoters::class);
       $this->reportsMock           = $this->createMock(NlpReports::class);
       $this->nlsMock               = $this->createMock(NlpNls::class);
       $this->turfsMock             = $this->buildTurfsMock();
@@ -62,7 +60,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     private function buildForm(): ActiveNlsDisplayForm {
       return new ActiveNlsDisplayForm(
-        $this->votersMock,
         $this->reportsMock,
         $this->nlsMock,
         $this->turfsMock,
@@ -96,7 +93,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
           $votersMock, $activistCodesMock, $configurationMock, $reportsMock,
           $matchbacksMock, $foldersMock, $mapRegionsMock, $turfAssignmentsMock,
         ])
-        ->onlyMethods(['getTurfsById', 'setAllTurfsDelivered'])
+        ->onlyMethods(['getDoorCounts', 'setAllTurfsDelivered'])
         ->getMock();
     }
 
@@ -112,40 +109,24 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // getProgress
     // -------------------------------------------------------------------------
 
-    public function testGetProgressEmptyVanidsReturnsZeroProgress(): void {
-      $this->votersMock->method('fetchVanIdsByNl')->willReturn([]);
-      $result = $this->buildForm()->getProgress(42);
-      $this->assertSame(0, $result['attempts']);
-      $this->assertSame(0, $result['contacts']);
-      $this->assertSame(0, $result['voterCount']);
+    public function testGetProgressNoVotersReturnsZeroProgress(): void {
+      $result = $this->buildForm()->getProgress(42, [], [42 => 7]);
+      $this->assertSame(['attempts' => 0, 'contacts' => 0, 'voterCount' => 0], $result);
     }
 
-    public function testGetProgressNoReportsReturnsZeroAttemptsAndContacts(): void {
-      $this->votersMock->method('fetchVanIdsByNl')->willReturn([101 => 101, 102 => 102]);
-      $this->turfsMock->method('getTurfsById')->willReturn([['doorCount' => 5]]);
-      $this->reportsMock->method('getNlReportsForVoters')->willReturn([]);
-      $result = $this->buildForm()->getProgress(42);
+    public function testGetProgressAddsDoorCountToVoterCounts(): void {
+      $progress = [42 => ['voterCount' => 2, 'attempts' => 2, 'contacts' => 1]];
+      $result = $this->buildForm()->getProgress(42, $progress, [42 => 5]);
       $this->assertSame(2, $result['voterCount']);
-      $this->assertSame(5, $result['doorCount']);
-      $this->assertSame(0, $result['attempts']);
-      $this->assertSame(0, $result['contacts']);
-    }
-
-    public function testGetProgressCountsAttemptsAndSurveyContacts(): void {
-      $this->votersMock->method('fetchVanIdsByNl')->willReturn([101 => 101, 102 => 102]);
-      $this->turfsMock->method('getTurfsById')->willReturn([['doorCount' => 3]]);
-      // Voter 101 has a Survey report (counts as attempt + contact).
-      // Voter 102 has a non-Survey report (counts as attempt only).
-      $reports = [
-        1 => [
-          ['vanid' => 101, 'type' => NlpReports::SURVEY],
-          ['vanid' => 102, 'type' => 'Contact'],
-        ],
-      ];
-      $this->reportsMock->method('getNlReportsForVoters')->willReturn($reports);
-      $result = $this->buildForm()->getProgress(42);
       $this->assertSame(2, $result['attempts']);
       $this->assertSame(1, $result['contacts']);
+      $this->assertSame(5, $result['doorCount']);
+    }
+
+    public function testGetProgressNoTurfsGivesZeroDoorCount(): void {
+      $progress = [42 => ['voterCount' => 2, 'attempts' => 0, 'contacts' => 0]];
+      $result = $this->buildForm()->getProgress(42, $progress, []);
+      $this->assertSame(0, $result['doorCount']);
     }
 
     // -------------------------------------------------------------------------

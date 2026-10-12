@@ -226,34 +226,46 @@ class NlpReports {
   }
   
   /**
-   * getNlReportsForVoters
+   * getNlsProgress
    *
-   * Get the current election reports for each voter in the given array of voters.
+   * Count the voters on each NL's turfs, the voters with a contact attempt
+   * this cycle, and the voters who answered a survey question this cycle,
+   * with one query.  A report from anyone counts, not just from the NL.
    *
-   * @param array $voterArray
-   * @return array - Array of reports for each voter.  The array is indexed by mcid.
+   * @param array $mcids
+   * @return array - keyed by mcid; each value has voterCount, attempts and
+   *   contacts.  An NL with no voters is not in the array.
    */
-  public function getNlReportsForVoters(array $voterArray): array
+  public function getNlsProgress(array $mcids): array
   {
-    $cycle = $this->cycle;
+    if(empty($mcids)) {return [];}
     try {
-      $query = $this->connection->select(self::NLP_RESULTS_TBL, 'v');
-      $query->fields('v');
-      $query->condition('vanid', $voterArray, 'IN');
-      $query->condition('cycle',$cycle);
-      $query->condition('type','Activist','<>');
-      $query->orderBy('contactDate', 'DESC');
+      $query = $this->connection->select(NlpVoters::VOTER_TURF_TBL, 'g');
+      $query->leftJoin(self::NLP_RESULTS_TBL, 'r',
+        'r.vanid = g.vanid AND r.cycle = :cycle AND r.type <> :activist',
+        [':cycle' => $this->cycle, ':activist' => 'Activist']);
+      $query->addField('g', 'mcid');
+      $query->addExpression('COUNT(DISTINCT g.vanid)', 'voterCount');
+      $query->addExpression('COUNT(DISTINCT r.vanid)', 'attempts');
+      $query->addExpression('COUNT(DISTINCT CASE WHEN r.type = :survey THEN r.vanid END)',
+        'contacts', [':survey' => self::SURVEY]);
+      $query->condition('g.mcid', $mcids, 'IN');
+      $query->groupBy('g.mcid');
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getNlReportsForVoters', $e);
+      nlp_debug_msg('getNlsProgress', $e);
       return [];
     }
-    $voterReports = [];
-    while ($report = $result->fetchAssoc()) {
-      $voterReports[$report['mcid']][] = $report;
+    $progress = [];
+    while ($row = $result->fetchAssoc()) {
+      $progress[$row['mcid']] = [
+        'voterCount' => (int) $row['voterCount'],
+        'attempts' => (int) $row['attempts'],
+        'contacts' => (int) $row['contacts'],
+      ];
     }
-    return $voterReports;
+    return $progress;
   }
   
   /**

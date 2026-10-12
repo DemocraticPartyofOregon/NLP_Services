@@ -388,6 +388,49 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // getNlsStatuses()
+    // -------------------------------------------------------------------------
+
+    public function testGetNlsStatusesReturnsEmptyArrayForNoMcids(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildService()->getNlsStatuses([], 'Denver'));
+    }
+
+    public function testGetNlsStatusesKeysRecordsByMcidAndFillsMissing(): void {
+      $statusStmt = $this->createMock(StatementInterface::class);
+      $statusStmt->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['mcid' => 42, 'county' => 'Denver', 'contact' => NlpNls::PHONE, 'asked' => NlpNls::YES],
+        false,
+      );
+      $this->connectionMock->expects($this->once())->method('select')
+        ->willReturn($this->buildSelectMock($statusStmt));
+
+      $columnStmt = $this->createMock(StatementInterface::class);
+      $columnStmt->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['Field' => 'mcid'],
+        ['Field' => 'county'],
+        ['Field' => 'contact'],
+        ['Field' => 'asked'],
+        false,
+      );
+      // The column names are read once and reused for every missing record.
+      $this->connectionMock->expects($this->once())->method('query')->willReturn($columnStmt);
+
+      $result = $this->buildService()->getNlsStatuses([42, 43, 44], 'Denver');
+
+      $this->assertSame([42, 43, 44], array_keys($result));
+      $this->assertSame(NlpNls::PHONE, $result[42]['contact']);
+      $this->assertSame(43, $result[43]['mcid']);
+      $this->assertSame(NlpNls::CANVASS, $result[43]['contact']);
+      $this->assertSame(NlpNls::DASH, $result[44]['asked']);
+    }
+
+    public function testGetNlsStatusesReturnsEmptyArrayOnException(): void {
+      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
+      $this->assertSame([], $this->buildService()->getNlsStatuses([42], 'Denver'));
+    }
+
+    // -------------------------------------------------------------------------
     // getNls()
     // -------------------------------------------------------------------------
 
@@ -412,7 +455,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         false,
       );
       $statusStmt = $this->createMock(StatementInterface::class);
-      $statusStmt->method('fetchAssoc')->willReturn(['mcid' => 42, 'county' => 'Denver', 'asked' => NlpNls::DASH]);
+      $statusStmt->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['mcid' => 42, 'county' => 'Denver', 'asked' => NlpNls::DASH],
+        false,
+      );
 
       $this->connectionMock->method('select')->willReturnOnConsecutiveCalls(
         $this->buildSelectMock($nlStmt),
@@ -606,7 +652,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         false,
       );
       $statusStmt = $this->createMock(StatementInterface::class);
-      $statusStmt->method('fetchAssoc')->willReturn(['mcid' => 42, 'county' => 'Denver', 'asked' => NlpNls::DASH]);
+      $statusStmt->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['mcid' => 42, 'county' => 'Denver', 'asked' => NlpNls::DASH],
+        false,
+      );
 
       $this->connectionMock->method('select')->willReturnOnConsecutiveCalls(
         $this->buildSearchSelectMock($nlStmt),

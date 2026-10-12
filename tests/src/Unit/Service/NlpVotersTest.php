@@ -146,31 +146,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // fetchVanIdsByNl
-    // -------------------------------------------------------------------------
-
-    public function testFetchVanIdsByNlReturnsKeyedVanids(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')
-        ->willReturnOnConsecutiveCalls(['vanid' => 101], ['vanid' => 202], false);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildVoters()->fetchVanIdsByNl(5);
-      $this->assertSame([101 => 101, 202 => 202], $result);
-    }
-
-    public function testFetchVanIdsByNlEmptyResultReturnsEmptyArray(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn(false);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $this->assertSame([], $this->buildVoters()->fetchVanIdsByNl(5));
-    }
-
-    public function testFetchVanIdsByNlExceptionReturnsEmptyArray(): void {
-      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildVoters()->fetchVanIdsByNl(5));
-    }
-
-    // -------------------------------------------------------------------------
     // getVoterStatus
     // -------------------------------------------------------------------------
 

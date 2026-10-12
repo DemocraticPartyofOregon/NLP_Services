@@ -6,7 +6,6 @@ use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\nlpservices\NlpVoters;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpTurfs;
@@ -23,7 +22,6 @@ use Drupal\nlpservices\ApiActivistCodes;
  */
 class ActiveNlsDisplayForm extends FormBase
 {
-  protected NlpVoters $votersObj;
   protected NlpReports $reportsObj;
   protected NlpNls $nlsObj;
   protected NlpTurfs $turfsObj;
@@ -34,11 +32,10 @@ class ActiveNlsDisplayForm extends FormBase
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected ApiActivistCodes $apiActivistCodesObj;
-  public function __construct( $votersObj, $reportsObj, $nlsObj, $turfsObj,
+  public function __construct( $reportsObj, $nlsObj, $turfsObj,
                                $searchBarObj, $nlsListDisplayObj, $awardsObj, $sessionDataObj,
                                $nlpConfigurationObj, $apiSurveyQuestionObj, $apiActivistCodesObj,
                                $requestStack) {
-    $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->nlsObj = $nlsObj;
     $this->turfsObj = $turfsObj;
@@ -58,7 +55,6 @@ class ActiveNlsDisplayForm extends FormBase
   public static function create(ContainerInterface $container): ActiveNlsDisplayForm
   {
     return new static(
-      $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.turfs'),
@@ -149,12 +145,17 @@ class ActiveNlsDisplayForm extends FormBase
         $nlRecords = $this->nlsObj->getNls($county, $currentHd, $currentPct);
       }
       if(!empty($nlRecords)) {
+        // Load the progress and award records for all the NLs up front; one
+        // query per NL made a large county's page slow enough to be cut off.
         $nlKeys = array_keys($nlRecords);
+        $progress = $this->reportsObj->getNlsProgress($nlKeys);
+        $doorCounts = $this->turfsObj->getDoorCounts($nlKeys);
+        $awardRecords = $this->awardsObj->getAwards($nlKeys);
         foreach ($nlKeys as $mcid) {
-          $nlRecords[$mcid]['progress'] = $this->getProgress($mcid);
+          $nlRecords[$mcid]['progress'] = $this->getProgress($mcid, $progress, $doorCounts);
           $nlStatus = $nlRecords[$mcid]['status'];
           $statusNote = $nlStatus['notes'];
-          $awardRecord = $this->awardsObj->getAward($mcid);
+          $awardRecord = $awardRecords[$mcid];
           $participationNote = $awardRecord['notes'];
           if($statusNote != $participationNote) {
             if(empty($participationNote)) {
@@ -181,9 +182,7 @@ class ActiveNlsDisplayForm extends FormBase
             }
           }
 
-          $nlRecords[$mcid]['nlParticipationDisplay'] = $this->awardsObj->nlParticipationDisplay($mcid);
-          $awardRecord['preferredContactMethod'] = $contactMethod;
-
+          $nlRecords[$mcid]['nlParticipationDisplay'] = $this->awardsObj->participationDisplay($awardRecord);
         }
       }
       $nlsTable = $this->nlsListDisplayObj->createTableArray($nlRecords);
@@ -386,61 +385,21 @@ class ActiveNlsDisplayForm extends FormBase
    *
    * Create an associate array with the progress of the NL to make contact with
    * the voters on the turf, the progress on making face-to-face contact, and
-   * a judgment that they are done.
+   * the number of doors.
    *
    * @param $mcid
+   * @param array $progress - voter counts keyed by mcid, from getNlsProgress.
+   * @param array $doorCounts - door counts keyed by mcid, from getDoorCounts.
    * @return array
    */
-  function getProgress($mcid): array
+  function getProgress($mcid, array $progress, array $doorCounts): array
   {
-    $progress['attempts'] = $progress['contacts'] = $progress['voterCount'] = 0;
-    // Get the voters assigned to this NL for all the turfs.
-    $vanids= $this->votersObj->fetchVanIdsByNl($mcid);
-    if(empty($vanids)) {return $progress;}
-
-    $turfs = $this->turfsObj->getTurfsById($mcid);
-    $doorCount = 0;
-    foreach ($turfs as $turf) {
-      $doorCount += $turf['doorCount'];
+    if(empty($progress[$mcid]['voterCount'])) {
+      return ['attempts' => 0, 'contacts' => 0, 'voterCount' => 0];
     }
-
-    $voterCount = count($vanids);
-    if ($voterCount == 0) {return $progress;}
-    // Now get all the reports from this NL for this cycle.
-    $reports = $this->reportsObj->getNlReportsForVoters($vanids);
-
-    // Flag the voters with whom the NL asked the survey question.  (There
-    // could have been more than one.)
-    $voters = [];
-    foreach ($reports as $voterReports) {
-      foreach ($voterReports as $report) {
-        $vanid = $report['vanid'];
-        if(!empty($vanids[$vanid])) {
-          $voters[$vanid]['attempt'] = TRUE;
-          if($report['type']==$this->reportsObj::SURVEY) {
-            $voters[$vanid]['contact'] = TRUE;
-          }
-        }
-      }
-    }
-    //  Now count the voters with contact attempts or survey responses.
-    $contactCount = $attemptCount = 0;
-    if(!empty($voters)) {
-      foreach ($voters as $voter) {
-        if(!empty($voter['attempt'])) {
-          $attemptCount++;
-          if(!empty($voter['contact'])) {
-            $contactCount++;
-          }
-        }
-      }
-    }
-    // Return the strings for display of voter contact attempts and contacts.
-    $progress['attempts'] = $attemptCount;  // Voter contact attempts.
-    $progress['contacts'] = $contactCount; // Voter contacts.
-    $progress['voterCount'] = $voterCount;
-    $progress['doorCount'] = $doorCount;
-    return $progress;
+    $nlProgress = $progress[$mcid];
+    $nlProgress['doorCount'] = $doorCounts[$mcid] ?? 0;
+    return $nlProgress;
   }
 
 }

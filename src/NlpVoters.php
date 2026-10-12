@@ -42,36 +42,6 @@ class NlpVoters {
   }
 
   /**
-   * fetchVanIdsByNl
-   *
-   * Get the voter records for all voters associated with a given NL.
-   *
-   * @param int $mcid
-   * @return array - Array of vanids for the voters in the NL.  The key and the
-   * value are both the vanId from the VoterFile.
-   */
-  public function fetchVanIdsByNl(int $mcid): array
-  {
-    try {
-      $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
-      $query->addField('g','vanid');
-      $query->condition('mcid',$mcid);
-      $result = $query->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('e', $e);
-      return [];
-    }
-    $voters = [];
-    do {
-      $dbVoter = $result->fetchAssoc();
-      if(empty($dbVoter)) {break;}
-      $voters[$dbVoter['vanid']] = $dbVoter['vanid'];
-    } while (TRUE);
-    return $voters;
-  }
-
-  /**
    * reassignNlVoters
    *
    * Move the voters in an NL's turfs from one MCID to another.

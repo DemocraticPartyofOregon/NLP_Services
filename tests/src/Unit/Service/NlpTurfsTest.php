@@ -78,6 +78,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private function buildSelectMock(StatementInterface $statementMock): Select {
       $selectMock = $this->createMock(Select::class);
       $selectMock->method('addField')->willReturnSelf();
+      $selectMock->method('addExpression')->willReturn('alias');
+      $selectMock->method('groupBy')->willReturnSelf();
       $selectMock->method('fields')->willReturnSelf();
       $selectMock->method('condition')->willReturnSelf();
       $selectMock->method('join')->willReturn('alias');
@@ -644,6 +646,31 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetCdTurfCountExceptionReturnsZero(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
       $this->assertSame(0, $this->buildTurfs()->getCdTurfCount(3));
+    }
+
+    // -------------------------------------------------------------------------
+    // getDoorCounts
+    // -------------------------------------------------------------------------
+
+    public function testGetDoorCountsReturnsCountsKeyedByMcid(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['mcid' => 42, 'doorCount' => '12'],
+        ['mcid' => 43, 'doorCount' => '5'],
+        false,
+      );
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->assertSame([42 => 12, 43 => 5], $this->buildTurfs()->getDoorCounts([42, 43]));
+    }
+
+    public function testGetDoorCountsReturnsEmptyArrayForNoMcids(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildTurfs()->getDoorCounts([]));
+    }
+
+    public function testGetDoorCountsReturnsEmptyArrayOnException(): void {
+      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
+      $this->assertSame([], $this->buildTurfs()->getDoorCounts([42]));
     }
 
     // -------------------------------------------------------------------------

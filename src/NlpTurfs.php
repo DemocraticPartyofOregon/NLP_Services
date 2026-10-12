@@ -419,6 +419,36 @@ class NlpTurfs
     return $dbTurfs;
   }
 
+  /**
+   * getDoorCounts
+   *
+   * Returns the total door count of each NL's turfs with one query.
+   *
+   * @param array $mcids
+   * @return array - door counts keyed by mcid.  An NL with no turfs is not
+   *   in the array.
+   */
+  public function getDoorCounts(array $mcids): array
+  {
+    if (empty($mcids)) { return []; }
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 'i');
+      $query->addField('i', 'mcid');
+      $query->addExpression('SUM(i.doorCount)', 'doorCount');
+      $query->condition('i.mcid', $mcids, 'IN');
+      $query->groupBy('i.mcid');
+      $result = $query->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getDoorCounts', $e);
+      return [];
+    }
+    $doorCounts = [];
+    while ($row = $result->fetchAssoc()) {
+      $doorCounts[$row['mcid']] = (int) $row['doorCount'];
+    }
+    return $doorCounts;
+  }
+
   public function getTurfAssignment(int $turfId): array
   {
     return $this->turfAssignmentsObj->getTurfAssignment($turfId);
