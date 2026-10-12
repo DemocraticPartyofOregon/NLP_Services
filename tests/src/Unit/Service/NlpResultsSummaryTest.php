@@ -93,7 +93,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.matchbacks', $this->matchbacksMock);
       $container->set('nlpservices.nls', $this->nlsMock);
       $container->set('nlpservices.drupal_user', $this->drupalUserMock);
-      $container->set('nlpservices.crosstabs', $this->crosstabsMock);
+      $container->set('nlpservices.crosstab_counts', $this->crosstabsMock);
       $container->set('nlpservices.reports', $this->reportsMock);
       $container->set('nlpservices.turfs', $this->turfsMock);
       $container->set('nlpservices.configuration', $this->configurationMock);

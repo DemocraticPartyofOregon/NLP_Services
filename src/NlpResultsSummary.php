@@ -49,7 +49,7 @@ class NlpResultsSummary
       $container->get('nlpservices.matchbacks'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.drupal_user'),
-      $container->get('nlpservices.crosstabs'),
+      $container->get('nlpservices.crosstab_counts'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.configuration'),
@@ -98,6 +98,9 @@ class NlpResultsSummary
     }
 
     $tempUri = $this->createTempFile('nlp_county_summary_report');
+    if (empty($tempUri)) {
+      return [];
+    }
     $fh = fopen($tempUri, "w");
     if (!$fh) {
       return [];
@@ -167,6 +170,9 @@ class NlpResultsSummary
     }
 
     $tempUri = $this->createTempFile('nlp_cd_summary_report');
+    if (empty($tempUri)) {
+      return [];
+    }
     $fh = fopen($tempUri, "w");
     if (!$fh) {
       return [];
@@ -212,9 +218,9 @@ class NlpResultsSummary
     $contactDate = date('Y-m-d-H-i-s');
     $tempUri = "$tempDir/$prefix-$contactDate.csv";
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
-    $file = $this->fileRepository->writeData('', $tempUri, FileExists::Replace);
-    $file->setTemporary();
     try{
+      $file = $this->fileRepository->writeData('', $tempUri, FileExists::Replace);
+      $file->setTemporary();
       $file->save();
     }
     catch (Exception $e) {
@@ -238,12 +244,12 @@ class NlpResultsSummary
     $row = reset($rows);
     if(is_array($row)) {
       foreach ($rows as $row) {
-        fputcsv($fh, $row, ',', '"', '\\');
+        fputcsv($fh, $row, escape: '');
       }
     } else {
       foreach ($rows as $row) {
         $rowAsArray = [$row];
-        fputcsv($fh, $rowAsArray, ',', '"', '\\');
+        fputcsv($fh, $rowAsArray, escape: '');
       }
     }
   }
