@@ -11,12 +11,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * Used when VoteBuilder merges a duplicate MyCampaign record into the one NLP
  * Services doesn't know about, destroying the MCID NLP Services does know.
- * The NL keeps their login, magic word, turfs, reports and history under the
+ * The NL keeps their login, magic word, turfs, reports, and history under the
  * surviving MCID.
  */
 class NlpMcidReassignment {
 
-  // Tables where many rows can carry the MCID; every one is re-pointed.
+  // Tables where many rows can carry the MCID; all of them are re-pointed.
   const array SHARED_TABLES = [
     'nlp_coordinator',
     'nlp_results',
@@ -57,7 +57,7 @@ class NlpMcidReassignment {
    * Replace every reference to the old MCID with the new one.
    *
    * Refuses when the new MCID already has a login or credentials: then both
-   * MCIDs have an account and deciding which to keep is for an admin (the
+   * MCIDs have an account, and deciding which to keep is for an admin (the
    * Reassign MCID page), not something to guess at during a sync.
    *
    * @param int $oldMcid - the MCID destroyed by the merge.
@@ -117,6 +117,18 @@ class NlpMcidReassignment {
     return ['ok' => TRUE];
   }
 
+  /**
+   * moveMcid
+   *
+   * Changes every row in a table from the old MCID to the new one.  Errors are
+   * left to reassign(), which rolls back the whole transaction.
+   *
+   * @param string $table
+   * @param int $oldMcid
+   * @param int $newMcid
+   * @return void
+   * @throws Exception
+   */
   private function moveMcid(string $table, int $oldMcid, int $newMcid): void {
     $this->connection->update($table)
       ->fields(['mcid' => $newMcid])
