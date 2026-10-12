@@ -22,6 +22,13 @@ class ApiActivistCodes
     'NLPNotRegisteredAC' => 1,
     'NLPDropoutAC' => 1,
   ];
+
+  /**
+   * Waits, in milliseconds, before each check that VAN shows the change made
+   * by setApiActivistCode(). The first check is immediate, so a normal save
+   * isn't delayed.
+   */
+  private array $verifyDelaysMs = [0, 1000, 2000, 3000];
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
@@ -116,28 +123,6 @@ class ApiActivistCodes
   }
 
   /**
-   * hasApiActivistCode
-   *
-   * Returns TRUE if the given voter already has the named activist code applied.
-   *
-   * @param int $vanid
-   * @param string $codeName - e.g., 'NLPVoterAC'
-   * @param string $committee - The committee whose key should be used; empty
-   *   string uses the State Committee key. Must match the committee the code
-   *   was applied under for MyCampaign codes.
-   * @return bool
-   */
-  public function hasApiActivistCode(int $vanid, string $codeName, string $committee = ''): bool
-  {
-    $rid = $this->nlpConfigurationObj->getActivistCode($codeName);
-    if (empty($rid)) {
-      return FALSE;
-    }
-    $database = $this->supportedActivistCodes[$codeName];
-    return in_array($rid, $this->getApiVoterActivistCodes($vanid, $database, $committee));
-  }
-
-  /**
    * setApiActivistCode
    *
    * Set the activist code for a person in either MyCampaign or VoterFile.
@@ -152,7 +137,9 @@ class ApiActivistCodes
    *     that county here.
    *
    * @param array $request
-   * @return bool - TRUE on success, FALSE if the activist code ID is unknown or the API call fails.
+   * @return bool - TRUE on success, FALSE if the activist code ID is unknown,
+   *   the API call fails, or VAN still doesn't show the change after the
+   *   waits in $verifyDelaysMs.
    */
   public function setApiActivistCode(array $request): bool
   {
@@ -193,39 +180,45 @@ class ApiActivistCodes
       'Expect'       => '',
     ];
     try {
-      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception|GuzzleException $e) {
+      $response = $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+    } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('setApiActivistCode', $e);
       return FALSE;
     }
 
-    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName, $committee);
-    $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
-    if ($verified) {
-      return TRUE;
+    // VAN accepted the POST, but it can take a few seconds before a read
+    // shows the change. Check again after short waits instead of POSTing a
+    // second time, since nothing says the first POST failed.
+    $voterCodes = [];
+    foreach ($this->verifyDelaysMs as $delayMs) {
+      if ($delayMs > 0) {
+        $this->sleepMs($delayMs);
+      }
+      $voterCodes = $this->getApiVoterActivistCodes($vanid, $database, $committee);
+      $codeIsSet = in_array($rid, $voterCodes);
+      if (($action === 'Apply') ? $codeIsSet : !$codeIsSet) {
+        return TRUE;
+      }
     }
 
-    Drupal::logger('nlpservices')->warning(
-      'Activist code @code @action not confirmed for vanid @vanid after POST; retrying.',
-      ['@code' => $activistCodeName, '@action' => $action, '@vanid' => $vanid]
+    Drupal::logger('nlpservices')->error(
+      'Activist code @code (@rid) @action not confirmed for vanid @vanid after @sec seconds. '
+      . 'POST response: @status @body. Database: @database, committee key: @committee. '
+      . 'Codes VAN returned for the voter: @codes.',
+      [
+        '@code' => $activistCodeName,
+        '@rid' => $rid,
+        '@action' => $action,
+        '@vanid' => $vanid,
+        '@sec' => array_sum($this->verifyDelaysMs) / 1000,
+        '@status' => $response->getStatusCode(),
+        '@body' => (string) $response->getBody() ?: '(empty)',
+        '@database' => $database,
+        '@committee' => $committee ?: 'State Committee',
+        '@codes' => $voterCodes ? implode(', ', $voterCodes) : '(none)',
+      ]
     );
-    try {
-      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception|GuzzleException $e) {
-      nlp_debug_msg('setApiActivistCode retry', $e);
-      return FALSE;
-    }
-
-    $codeIsSet = $this->hasApiActivistCode($vanid, $activistCodeName, $committee);
-    $verified  = ($action === 'Apply') ? $codeIsSet : !$codeIsSet;
-    if (!$verified) {
-      Drupal::logger('nlpservices')->error(
-        'Activist code @code @action still not confirmed for vanid @vanid after retry.',
-        ['@code' => $activistCodeName, '@action' => $action, '@vanid' => $vanid]
-      );
-      return FALSE;
-    }
-    return TRUE;
+    return FALSE;
   }
 
   /**
