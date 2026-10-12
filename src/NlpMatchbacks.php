@@ -270,6 +270,9 @@ class NlpMatchbacks
    * deferred to the queue worker, so hook_cron returns quickly.
    *
    * @return string  Path to temp file, or '' if no email was found.
+   * Used in:
+   *   nlpservices.module
+   * @noinspection PhpUnused
    */
   public function matchbackEmailFetch(): string
   {
@@ -401,7 +404,7 @@ class NlpMatchbacks
         'INSERT IGNORE INTO {nlp_matchback} (vanid, date) VALUES ' . implode(',', $placeholders),
         $args
       );
-      return (int) $result->rowCount();
+      return $result->rowCount();
     } catch (Exception $e) {
       Drupal::logger('nlpservices')->notice('insertIgnoreMatchbacks: ' . $e->getMessage());
       return 0;
