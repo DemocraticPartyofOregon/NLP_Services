@@ -6,6 +6,7 @@ use Drupal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Messenger\MessengerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -24,8 +25,8 @@ use Throwable;
  *     written or, on any failure, none of it.
  *  3. activistCodes: set the NLP voter activist code in VoteBuilder, one chunk per
  *     request.  The turf is already complete in the database, so a failure here only
- *     leaves some activist codes unset.  The nightly turf resync adds missing codes,
- *     and a delete of the turf removes them all.
+ *     leaves some activist codes unset.  The nightly turf resync method adds missing codes,
+ *     and delete of the turf removes them all.
  */
 class NlpSyncTurfProcessor {
 
@@ -350,7 +351,7 @@ class NlpSyncTurfProcessor {
       $this->votersObj->deleteVotersInTurf($existingIndex);
       $this->votersObj->deleteAddressesInTurf($existingIndex);
       if (!$this->turfsObj->removeTurf($existingTurf)) {
-        throw new \RuntimeException("Unable to remove incomplete turf $existingIndex.");
+        throw new RuntimeException("Unable to remove incomplete turf $existingIndex.");
       }
       Drupal::logger('nlpservices')->notice('Removed incomplete turf @turfIndex left by a failed sync of "@turfName".',
         ['@turfIndex' => $existingIndex, '@turfName' => $turfName]);
@@ -410,7 +411,7 @@ class NlpSyncTurfProcessor {
 
     $turfIndex = $this->turfsObj->createTurf($this->buildTurfRecord($arg, $sandbox, $nl));
     if (empty($turfIndex)) {
-      throw new \RuntimeException('createTurf failed.');
+      throw new RuntimeException('createTurf failed.');
     }
 
     $cycle = $this->configurationObj->getCycle();
@@ -418,7 +419,7 @@ class NlpSyncTurfProcessor {
       $voter['address']['turfIndex'] = $turfIndex;
       $voter['address']['moved']     = NULL;
       if (!$this->votersObj->createVoter($voter)) {
-        throw new \RuntimeException("createVoter failed for $vanid.");
+        throw new RuntimeException("createVoter failed for $vanid.");
       }
 
       $voterStatus            = $this->votersObj->getVoterStatus($vanid);
@@ -434,7 +435,7 @@ class NlpSyncTurfProcessor {
         'vanid'     => $vanid,
       ];
       if (!$this->votersObj->createTurfVoter($turfVoter)) {
-        throw new \RuntimeException("createTurfVoter failed for $vanid.");
+        throw new RuntimeException("createTurfVoter failed for $vanid.");
       }
       $this->reloadVoterStatus($voter, $turfIndex, $mcid);
     }
@@ -618,7 +619,7 @@ class NlpSyncTurfProcessor {
   /**
    * buildTurfRecord
    *
-   * The complete turf record.  It is written in one insert so a turf record never
+   * The complete turf record.  It is written in one insert, so a turf record never
    * exists without its NL and district fields.
    *
    * @param array $arg
@@ -656,7 +657,7 @@ class NlpSyncTurfProcessor {
   /**
    * finalizeTurf
    *
-   * Records the NL's status, the turf assignment and the turf status.  Runs inside
+   * Records the NL's status, the turf assignment, and the turf status.  Runs inside
    * the sync transaction.
    *
    * @param array $arg An associative array containing turf-related details, including:
