@@ -8,6 +8,8 @@ namespace {
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpConfiguration;
@@ -17,9 +19,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use GuzzleHttp\Exception\RequestException;
   use GuzzleHttp\Promise\FulfilledPromise;
   use GuzzleHttp\Promise\RejectedPromise;
+  use PHPUnit\Framework\MockObject\MockObject;
   use Psr\Http\Message\RequestInterface;
   use Psr\Http\Message\ResponseInterface;
   use Psr\Http\Message\StreamInterface;
+  use Psr\Log\LoggerInterface;
 
   class ApiActivistCodesTest extends UnitTestCase {
 
@@ -35,6 +39,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->apiKeyManagementMock = $this->createMock(ApiKeyManagement::class);
     }
 
+    protected function tearDown(): void {
+      parent::tearDown();
+      \Drupal::setContainer(new ContainerBuilder());
+    }
+
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
@@ -45,6 +54,26 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->configurationMock,
         $this->apiKeyManagementMock,
       );
+    }
+
+    /**
+     * Same service, with setApiActivistCode()'s checks run without waiting.
+     */
+    private function buildServiceWithoutWaits(): ApiActivistCodes {
+      $service = $this->buildService();
+      (new \ReflectionProperty(ApiActivistCodes::class, 'verifyDelaysMs'))
+        ->setValue($service, [0, 0, 0, 0]);
+      return $service;
+    }
+
+    private function setLoggerMock(): LoggerInterface&MockObject {
+      $loggerMock        = $this->createMock(LoggerInterface::class);
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactoryMock);
+      \Drupal::setContainer($container);
+      return $loggerMock;
     }
 
     private function stubKeyValues(): void {
@@ -165,43 +194,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // hasApiActivistCode
-    // -------------------------------------------------------------------------
-
-    public function testHasApiActivistCodeReturnsFalseWhenCodeIdNotConfigured(): void {
-      $this->configurationMock->method('getActivistCode')->willReturn(0);
-
-      $this->assertFalse($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
-    }
-
-    public function testHasApiActivistCodeReturnsTrueWhenVoterHasCode(): void {
-      $this->stubKeyValues();
-      $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('request')
-        ->willReturn($this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
-
-      $this->assertTrue($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
-    }
-
-    public function testHasApiActivistCodeReturnsFalseWhenVoterHasDifferentCode(): void {
-      $this->stubKeyValues();
-      $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('request')
-        ->willReturn($this->makeResponse(['items' => [['activistCodeId' => 9999]]]));
-
-      $this->assertFalse($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
-    }
-
-    public function testHasApiActivistCodeReturnsFalseWhenVoterHasNoCodes(): void {
-      $this->stubKeyValues();
-      $this->configurationMock->method('getActivistCode')->willReturn(1001);
-      $this->clientMock->method('request')
-        ->willReturn($this->makeResponse(['items' => []]));
-
-      $this->assertFalse($this->buildService()->hasApiActivistCode(99999, 'NLPVoterAC'));
-    }
-
-    // -------------------------------------------------------------------------
     // setApiActivistCode
     // -------------------------------------------------------------------------
 
@@ -230,6 +222,60 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $request = ['codeName' => 'NLPVoterAC', 'vanid' => 99999, 'action' => 'Remove'];
       $this->assertTrue($this->buildService()->setApiActivistCode($request));
+    }
+
+    public function testSetApiActivistCodeApplyConfirmedOnLaterCheckPostsOnce(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $posts = 0;
+      $reads = 0;
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method) use (&$posts, &$reads): ResponseInterface {
+          if ($method === 'POST') {
+            $posts++;
+            return $this->makeResponse(NULL);
+          }
+          $reads++;
+          $items = ($reads < 3) ? [] : [['activistCodeId' => 1001]];
+          return $this->makeResponse(['items' => $items]);
+        });
+
+      $request = ['codeName' => 'NLPHostileAC', 'vanid' => 99999, 'action' => 'Apply'];
+      $this->assertTrue($this->buildServiceWithoutWaits()->setApiActivistCode($request));
+      $this->assertSame(1, $posts, 'The POST must not be repeated');
+      $this->assertSame(3, $reads);
+    }
+
+    public function testSetApiActivistCodeApplyNeverConfirmedLogsDetailsAndPostsOnce(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $loggerMock = $this->setLoggerMock();
+      $loggerMock->expects($this->once())->method('error')
+        ->with($this->anything(), $this->callback(fn(array $context) =>
+          $context['@vanid'] === 99999
+          && $context['@rid'] === 1001
+          && $context['@status'] === 204
+          && $context['@body'] === '(empty)'
+          && $context['@committee'] === 'State Committee'
+          && $context['@codes'] === '2002, 3003'));
+      $posts = 0;
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method) use (&$posts): ResponseInterface {
+          if ($method === 'POST') {
+            $posts++;
+            $stream = $this->createMock(StreamInterface::class);
+            $stream->method('__toString')->willReturn('');
+            $response = $this->createMock(ResponseInterface::class);
+            $response->method('getStatusCode')->willReturn(204);
+            $response->method('getBody')->willReturn($stream);
+            return $response;
+          }
+          return $this->makeResponse(['items' => [['activistCodeId' => 2002], ['activistCodeId' => 3003]]]);
+        });
+
+      $request = ['codeName' => 'NLPHostileAC', 'vanid' => 99999, 'action' => 'Apply'];
+      $this->assertFalse($this->buildServiceWithoutWaits()->setApiActivistCode($request));
+      $this->assertSame(1, $posts, 'The POST must not be repeated');
     }
 
     public function testSetApiActivistCodeReturnsFalseOnGuzzleException(): void {
