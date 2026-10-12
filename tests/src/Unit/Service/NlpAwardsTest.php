@@ -255,48 +255,50 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // nlParticipationDisplay
+    // getAwards
     // -------------------------------------------------------------------------
 
-    public function testNlParticipationDisplayFormatsEntries(): void {
-      $row = $this->baseAwardRow(42, 2);
-      $row['participation'] = json_encode(['2022' => 'Completed', '2024' => 'Completed']);
+    public function testGetAwardsDecodesFoundRecordsAndCreatesMissingOnes(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($row);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildAwards()->nlParticipationDisplay(42);
-      $this->assertStringContainsString('2022 Completed', $result);
-      $this->assertStringContainsString('2024 Completed', $result);
-      $this->assertStringContainsString('<br>', $result);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        $this->baseAwardRow(42, 2),
+        false,
+      );
+      $this->connectionMock->expects($this->once())->method('select')
+        ->willReturn($this->buildSelectMock($stmtMock));
+      $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Bob', 'lastName' => 'Jones']);
+      $this->nlsMock->method('getNlsStatus')->willReturn(['preferredContactMethod' => 'phone']);
+
+      $result = $this->buildAwards()->getAwards([42, 99]);
+
+      $this->assertSame(['2022' => 'Completed', '2024' => 'Completed'], $result[42]['participation']);
+      $this->assertSame(2, $result[42]['electionCount']);
+      $this->assertSame(99, $result[99]['mcid']);
+      $this->assertSame('Bob', $result[99]['nickname']);
     }
 
-    public function testNlParticipationDisplayConvertsBooleanTrueToCompleted(): void {
-      $row = $this->baseAwardRow(42, 1);
-      $row['participation'] = json_encode(['2022' => true]);
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($row);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildAwards()->nlParticipationDisplay(42);
-      $this->assertStringContainsString('2022 Completed', $result);
+    public function testGetAwardsReturnsEmptyArrayForNoMcids(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildAwards()->getAwards([]));
     }
 
-    public function testNlParticipationDisplayReturnsEmptyStringWhenNoParticipation(): void {
-      $row = $this->baseAwardRow(42, 0);
-      $row['participation'] = NULL;
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($row);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $this->assertSame('', $this->buildAwards()->nlParticipationDisplay(42));
+    // -------------------------------------------------------------------------
+    // participationDisplay
+    // -------------------------------------------------------------------------
+
+    public function testParticipationDisplayFormatsEntries(): void {
+      $award = ['participation' => ['2022' => 'Completed', '2024' => 'In Progress']];
+      $result = $this->buildAwards()->participationDisplay($award);
+      $this->assertSame('2022 Completed<br>2024 In Progress', $result);
     }
 
-    public function testNlParticipationDisplaySingleEntryHasNoBreak(): void {
-      $row = $this->baseAwardRow(42, 1);
-      $row['participation'] = json_encode(['2024' => 'Completed']);
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')->willReturn($row);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildAwards()->nlParticipationDisplay(42);
-      $this->assertStringNotContainsString('<br>', $result);
+    public function testParticipationDisplayConvertsBooleanTrueToCompleted(): void {
+      $award = ['participation' => ['2022' => TRUE]];
+      $this->assertSame('2022 Completed', $this->buildAwards()->participationDisplay($award));
+    }
+
+    public function testParticipationDisplayReturnsEmptyStringWhenNoParticipation(): void {
+      $this->assertSame('', $this->buildAwards()->participationDisplay(['participation' => NULL]));
     }
 
     // -------------------------------------------------------------------------

@@ -38,6 +38,8 @@ class NlpNls {
     'dnr' => self::DNR,
   ];
   public array $askList = [];
+  // Column names of the status table, cached by newNlsStatus.
+  private array $statusColumnNames = [];
   
   protected Connection $connection;
   protected DatabaseFunctions $dbFunctionsObj;
@@ -229,16 +231,68 @@ class NlpNls {
     }
     $nlStatus = $result->fetchAssoc();
     if(empty($nlStatus)) {
-      $statusColumnNames = $this->dbFunctionsObj->getColumnNames(self::NLS_STATUS_TBL);
-      $nlStatus = [];
-      foreach ($statusColumnNames as $nlpKey) {
-        $nlStatus[$nlpKey] = NULL;
-      }
-      $nlStatus['mcid'] = $mcid;
-      $nlStatus['county'] = $county;
-      $nlStatus['contact'] = self::CANVASS;
-      $nlStatus['asked'] = self::DASH;
+      $nlStatus = $this->newNlsStatus($mcid, $county);
     }
+    return $nlStatus;
+  }
+
+  /**
+   * getNlsStatuses
+   *
+   * Get the status records of a list of NLs in a county with one query,
+   * keyed by mcid.  An NL with no status record gets a new one.
+   *
+   * @param array $mcids
+   * @param string $county
+   * @return array
+   */
+  public function getNlsStatuses(array $mcids, string $county): array
+  {
+    if(empty($mcids)) {return [];}
+    $dbStatuses = [];
+    try {
+      $query = $this->connection->select(self::NLS_STATUS_TBL, 's');
+      $query->fields('s');
+      $query->condition('county',$county);
+      $query->condition('mcid',$mcids,'IN');
+      $result = $query->execute();
+      while ($nlStatus = $result->fetchAssoc()) {
+        $dbStatuses[$nlStatus['mcid']] = $nlStatus;
+      }
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('getNlsStatuses', $e);
+      return [];
+    }
+    $nlStatuses = [];
+    foreach ($mcids as $mcid) {
+      $nlStatuses[$mcid] = $dbStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
+    }
+    return $nlStatuses;
+  }
+
+  /**
+   * newNlsStatus
+   *
+   * Build the default status record for an NL who has none yet.
+   *
+   * @param int $mcid
+   * @param string $county
+   * @return array
+   */
+  private function newNlsStatus(int $mcid, string $county): array
+  {
+    $nlStatus = [];
+    if(empty($this->statusColumnNames)) {
+      $this->statusColumnNames = $this->dbFunctionsObj->getColumnNames(self::NLS_STATUS_TBL);
+    }
+    foreach ($this->statusColumnNames as $nlpKey) {
+      $nlStatus[$nlpKey] = NULL;
+    }
+    $nlStatus['mcid'] = $mcid;
+    $nlStatus['county'] = $county;
+    $nlStatus['contact'] = self::CANVASS;
+    $nlStatus['asked'] = self::DASH;
     return $nlStatus;
   }
   
@@ -326,13 +380,14 @@ class NlpNls {
       nlp_debug_msg('getNls', $e);
       return [];
     }
-    // Fetch each NL record and build the array of information about each NL
-    // needed to build the display table.
+    // Fetch each NL record, then attach the status records with one query.
     $nlRecords = [];
     while ($nlRecord = $result->fetchAssoc()) {
-      $mcid = $nlRecord['mcid'];
-      $nlRecord['status'] = $this->getNlsStatus($mcid,$county);
-      $nlRecords[$mcid] = $nlRecord;
+      $nlRecords[$nlRecord['mcid']] = $nlRecord;
+    }
+    $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $county);
+    foreach ($nlRecords as $mcid => $nlRecord) {
+      $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
     }
     return $nlRecords;
   }
@@ -596,11 +651,13 @@ class NlpNls {
     }
     $nlRecords = [];
     while ($nlRecord = $result->fetchAssoc()) {
-      $mcid = $nlRecord['mcid'];
-      if(!empty($county)) {
-        $nlRecord['status'] = $this->getNlsStatus($mcid, $county);
+      $nlRecords[$nlRecord['mcid']] = $nlRecord;
+    }
+    if(!empty($county)) {
+      $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $county);
+      foreach ($nlRecords as $mcid => $nlRecord) {
+        $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
       }
-      $nlRecords[$mcid] = $nlRecord;
     }
     return $nlRecords;
   }
