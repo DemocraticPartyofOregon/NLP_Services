@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices;
 
-use Drupal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\File\FileSystemInterface;
 use Exception;
@@ -554,7 +553,7 @@ class NlpTurfs
       $hdRecord = $result->fetchAssoc();
       if (empty($hdRecord)) { break; }
       $hd = $hdRecord['turfHd'];
-      // Turfs synced without an HD (0 or NULL) can't be selected by HD; if kept,
+      // HD can't select turfs synced without an HD (0 or NULL); if kept,
       // they sort first and become the default selection, which shows no turfs.
       if (empty($hd)) { continue; }
       $hdNameList[$hd] = $hd;
@@ -606,7 +605,7 @@ class NlpTurfs
    * Returns an array of turfs for a specific county and house district.
    * If the house district is 0 or 'All', then all turfs for the county are returned.
    *
-   * By default only turfs assigned to an NL in the NLs table are returned.  With
+   * By default, only turfs assigned to an NL in the NLs table are returned.  With
    * $includeRemovedNls, turfs whose NL has been removed from the list of active
    * NLs are returned too (the NL columns are NULL), so they can still be deleted.
    *
@@ -806,8 +805,8 @@ class NlpTurfs
    * Deletes a turf and its associated voters and activist codes.
    *
    * The turf record is removed last.  If anything fails part way (the activist code
-   * API is slow), the turf record is still there, so the turf stays visible and the
-   * delete can simply be repeated.  Removing the turf record first would orphan the
+   * API is slow), the turf record is still there, so the turf stays visible, and the
+   * delete method can simply be repeated.  Removing the turf record first would orphan the
    * voter records, which then block any later sync of those voters.
    *
    * @param array $turf - An associative array containing turf information.
@@ -1066,7 +1065,7 @@ class NlpTurfs
       // Residue of a failed sync.  Leave the turf selectable; syncing it again
       // replaces the residue.
       $turfInUse = [
-        'nl' => '<span class="nlp-footnote-warning">Incomplete sync - sync again to repair</span>',
+        'nl' => '<span class="nlp-footnote-warning">Incomplete sync, repeat the sync to repair</span>',
         'mcid' => $turf['mcid'],
         'turfAssigned' => '',
       ];
