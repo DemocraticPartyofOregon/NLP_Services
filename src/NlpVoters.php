@@ -1000,28 +1000,4 @@ class NlpVoters {
     return $voter['vanid'] ?? 0;
   }
 
-  /**
-   * updateVoter
-   *
-   * Update a voter record in the voter table. This is used to modify a specific field with a new value for a given voter.
-   *
-   * @param int $vanid The unique identifier for the voter being updated.
-   * @param string $field The field in the voter table to update.
-   * @param mixed $value The new value to assign to the specified field.
-   * @return void
-   */
-  public function updateVoter( int $vanid, string $field, mixed $value ): void
-  {
-    try {
-      $this->connection->merge(self::VOTER_TBL)
-        ->keys(['vanid' => $vanid])
-        ->fields([$field => $value])
-        ->execute();
-    }
-    catch (Exception $e) {
-      nlp_debug_msg('updateVoter', $e);
-      return;
-    }
-  }
-
 }
