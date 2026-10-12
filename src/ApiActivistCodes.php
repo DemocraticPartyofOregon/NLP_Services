@@ -70,10 +70,7 @@ class ApiActivistCodes
         return [];
       }
       return $results['items'] ?? [];
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiActivistCodes', $e);
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('getApiActivistCodes', $e);
       return [];
     }
@@ -111,11 +108,7 @@ class ApiActivistCodes
         $codes[] = (int) $item['activistCodeId'];
       }
       return $codes;
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiVoterActivistCodes', $e);
-      nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e);
       nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
@@ -201,10 +194,7 @@ class ApiActivistCodes
     ];
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode', $e);
-      return FALSE;
-    } catch (GuzzleException $e) {
+    } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('setApiActivistCode', $e);
       return FALSE;
     }
@@ -221,10 +211,7 @@ class ApiActivistCodes
     );
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode retry', $e);
-      return FALSE;
-    } catch (GuzzleException $e) {
+    } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('setApiActivistCode retry', $e);
       return FALSE;
     }
@@ -356,73 +343,6 @@ class ApiActivistCodes
         nlp_debug_msg('setApiActivistCodeBatch', $reason->getMessage());
       },
     );
-  }
-
-  /**
-   * applyAndVerifyBatch
-   *
-   * Applies or removes an activist code for a batch of voters, then verifies
-   * the outcome concurrently. Retries once for any that did not confirm, logs
-   * the event at each step, and returns the vanids that still failed after retry.
-   *
-   * @param array  $vanids   - flat array of int vanids
-   * @param string $codeName - e.g. 'NLPVoterAC'
-   * @param string $action   - 'Apply' or 'Remove'
-   * @return array            - vanids that could not be confirmed after one retry
-   */
-  public function applyAndVerifyBatch(array $vanids, string $codeName, string $action = 'Apply'): array
-  {
-    if (empty($vanids)) {
-      return [];
-    }
-    $this->setApiActivistCodeBatch($vanids, $codeName, $action);
-    $total     = count($vanids);
-    $startTime = microtime(TRUE);
-    $pending   = $vanids;
-    for ($i = 0; $i < 30; $i++) {
-      sleep(5);
-      $pending  = $this->checkBatch($pending, $codeName, $action);
-      $elapsed  = round(microtime(TRUE) - $startTime, 1);
-      Drupal::logger('nlpservices')->notice(
-        '@code @action poll #@poll at @sec seconds: @fail of @total @state.',
-        [
-          '@code'  => $codeName,
-          '@action' => $action,
-          '@poll'  => $i + 1,
-          '@sec'   => $elapsed,
-          '@fail'  => count($pending),
-          '@total' => $total,
-          '@state' => ($action === 'Apply') ? 'still missing code' : 'still have code',
-        ]
-      );
-      if (empty($pending)) {
-        return [];
-      }
-      if ($i % 5 === 4) {
-        $this->setApiActivistCodeBatch($pending, $codeName, $action);
-      }
-    }
-    return $pending;
-  }
-
-  /**
-   * checkBatch: single non-blocking check. Returns vanids not yet confirmed.
-   * Callers retry on the next Drupal batch re-entry rather than looping here.
-   */
-  public function checkBatch(array $vanids, string $codeName, string $action = 'Apply'): array
-  {
-    if (empty($vanids)) { return []; }
-    return $this->verifyBatch($vanids, $codeName, $action);
-  }
-
-  private function verifyBatch(array $vanids, string $codeName, string $action): array
-  {
-    $missingCode = $this->hasApiActivistCodeBatch($vanids, $codeName);
-    if ($action === 'Apply') {
-      return $missingCode;
-    }
-    $missingSet = array_flip($missingCode);
-    return array_values(array_filter($vanids, fn($v) => !isset($missingSet[$v])));
   }
 
 }
