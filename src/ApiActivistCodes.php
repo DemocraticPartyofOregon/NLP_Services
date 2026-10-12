@@ -294,7 +294,7 @@ class ApiActivistCodes
    * @param string $codeName - e.g., 'NLPVoterAC'
    * @param string $action   - 'Apply' or 'Remove'
    */
-  public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action = 'Apply'): void
+  public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action): void
   {
     if (empty($vanids)) {
       return;

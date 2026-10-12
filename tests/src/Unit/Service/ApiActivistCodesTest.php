@@ -338,14 +338,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSetApiActivistCodeBatchEmptyVanidsDoesNothing(): void {
       $this->clientMock->expects($this->never())->method('sendAsync');
 
-      $this->buildService()->setApiActivistCodeBatch([], 'NLPVoterAC');
+      $this->buildService()->setApiActivistCodeBatch([], 'NLPVoterAC', 'Apply');
     }
 
     public function testSetApiActivistCodeBatchUnknownCodeNameDoesNothing(): void {
       $this->configurationMock->method('getActivistCode')->willReturn(0);
       $this->clientMock->expects($this->never())->method('sendAsync');
 
-      $this->buildService()->setApiActivistCodeBatch([111], 'NLPVoterAC');
+      $this->buildService()->setApiActivistCodeBatch([111], 'NLPVoterAC', 'Apply');
     }
 
     public function testSetApiActivistCodeBatchSendsRequestsForAllVanids(): void {
@@ -358,7 +358,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           new FulfilledPromise($this->createMock(ResponseInterface::class)),
         );
 
-      $this->buildService()->setApiActivistCodeBatch([111, 222], 'NLPVoterAC');
+      $this->buildService()->setApiActivistCodeBatch([111, 222], 'NLPVoterAC', 'Apply');
       $this->assertTrue(TRUE); // Reached without exception.
     }
 
@@ -380,7 +380,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->clientMock->method('sendAsync')
         ->willReturn(new RejectedPromise($this->makeGuzzleException()));
 
-      $this->buildService()->setApiActivistCodeBatch([111], 'NLPVoterAC');
+      $this->buildService()->setApiActivistCodeBatch([111], 'NLPVoterAC', 'Apply');
       $this->assertTrue(TRUE); // Reached without exception.
     }
 
@@ -395,7 +395,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           return new FulfilledPromise($this->createMock(ResponseInterface::class));
         });
 
-      $this->buildService()->setApiActivistCodeBatch(range(1, 16), 'NLPVoterAC');
+      $this->buildService()->setApiActivistCodeBatch(range(1, 16), 'NLPVoterAC', 'Apply');
 
       $this->assertCount(16, $sentAt);
       $this->assertLessThan(0.5, $sentAt[14] - $sentAt[0], 'The first 15 go out together.');
