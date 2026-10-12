@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use GuzzleHttp\Promise\RejectedPromise;
   use GuzzleHttp\Psr7\Request;
   use GuzzleHttp\Psr7\Response;
+  use PHPUnit\Framework\Attributes\DataProvider;
   use Psr\Http\Message\RequestInterface;
   use Psr\Log\LoggerInterface;
   use Throwable;
@@ -144,9 +145,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertCount(4, $options);
     }
 
-    /**
-     * @dataProvider gatewayStatusProvider
-     */
+    #[DataProvider('gatewayStatusProvider')]
     public function testGetGatewayErrorIsRetried(int $status): void {
       [, $fulfilled, $failed] = $this->sendThroughTrait([3034261], 'GET', [
         fn($request) => $this->statusException($request, $status),
