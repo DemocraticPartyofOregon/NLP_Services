@@ -99,6 +99,7 @@ class DeleteDrupalAccountsForm extends FormBase
         $form_state->set('search-needle', NULL);
         $users = $this->searchBarObj->searchInfoArray($needle,$users);
       } else {
+        $this->sessionDataObj->getSavedHdIndex();  // Apply an hd_index query parameter before reading the HD.
         $currentHd = $this->sessionDataObj->getSavedHd();
         $users = $this->drupalUser->getUsers($county);
         if($currentHd != 'All') {
@@ -199,11 +200,16 @@ class DeleteDrupalAccountsForm extends FormBase
      
       case 'delete-submit':
         $userSelections = $form_state->get('userSelections');
+        $users = $form_state->get('users') ?? [];
         foreach($userSelections as $userSelection) {
           $uid = $userSelection['uid'];
-          $users = $form_state->get('users');
-          $user = $users[$uid];
-          
+          // The user list in the form state can be missing or stale, so load the account if it isn't there.
+          $user = $users[$uid] ?? $this->drupalUser->getUserByUid($uid);
+          if (empty($user)) {
+            $messenger->addWarning(t('The account with uid @uid no longer exists.', ['@uid' => $uid]));
+            continue;
+          }
+
           $admin = (in_array('administrator',$user['roles']) OR in_array('nlp_admin',$user['roles']));
           if ($admin) {
             $messenger->addStatus(t("An admin can't be deleted this way."));
