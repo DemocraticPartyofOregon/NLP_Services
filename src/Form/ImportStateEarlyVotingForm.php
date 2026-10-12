@@ -93,7 +93,7 @@ class ImportStateEarlyVotingForm extends FormBase
     $fh = fopen($fileUri, 'r');
     if (!$fh) {
       $messenger->addError($this->t('Failed to open the state early voting file.'));
-      $fileEntity->delete();
+      $this->deleteUploadedFile($fileEntity);
       return;
     }
 
@@ -101,7 +101,7 @@ class ImportStateEarlyVotingForm extends FormBase
     if (empty($headerRow)) {
       $messenger->addError($this->t('Failed to read the state early voting file header.'));
       fclose($fh);
-      $fileEntity->delete();
+      $this->deleteUploadedFile($fileEntity);
       return;
     }
     fclose($fh);
@@ -112,7 +112,7 @@ class ImportStateEarlyVotingForm extends FormBase
         $messenger->addWarning($errMsg);
       }
       $messenger->addError($this->t('Fix the problem before resubmitting.'));
-      $fileEntity->delete();
+      $this->deleteUploadedFile($fileEntity);
       return;
     }
 
@@ -131,6 +131,21 @@ class ImportStateEarlyVotingForm extends FormBase
       'error_message' => $this->t('Import of state early voting has encountered an error.'),
     ];
     batch_set($batch);
+  }
+
+  /**
+   * Deletes the uploaded file after a failed import.
+   *
+   * @param File $fileEntity
+   *   The uploaded file entity.
+   */
+  private function deleteUploadedFile(File $fileEntity): void
+  {
+    try {
+      $fileEntity->delete();
+    } catch (EntityStorageException $e) {
+      nlp_debug_msg('File delete error', $e);
+    }
   }
 
 }
