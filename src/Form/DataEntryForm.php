@@ -467,7 +467,7 @@ class DataEntryForm extends FormBase
                 $this->reportsObj->setNlReport($report);
                 break;
 
-              case 'RTP': // Needs ride to polls.
+              case 'RTP': // Needs a ride to polls.
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'Needs ride to polls';
                 $report['text'] = '';

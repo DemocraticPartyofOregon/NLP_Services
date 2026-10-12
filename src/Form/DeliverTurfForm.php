@@ -31,7 +31,7 @@ class DeliverTurfForm extends FormBase
   use TurfPrecinctFilterTrait;
 
   // Upload field name of the shared walksheet box (see NlpSyncTurfBuilder::walksheet()).
-  private const WALKSHEET_FIELD = NlpSyncTurfBuilder::walksheetBaseName . NlpSyncTurfBuilder::selectType['dt'];
+  private const string WALKSHEET_FIELD = NlpSyncTurfBuilder::walksheetBaseName . NlpSyncTurfBuilder::selectType['dt'];
 
   protected NlpTurfs $turfsObj;
   protected NlpPaths $pathsObj;
@@ -369,7 +369,7 @@ class DeliverTurfForm extends FormBase
     }
 
     $mcid = $turfChoice['mcid'];
-    $result = $this->credentialsEmailObj->sendCredentialsEmail($mcid, $turfMsg, $note, $miniVanArray, $nlCoordinator, 'deliver_turf');
+    $result = $this->credentialsEmailObj->sendCredentialsEmail($mcid, $turfMsg, $note, $miniVanArray, $nlCoordinator);
     if (!$result) {
       $messenger->addMessage(t('There was a problem sending your message and it was not sent.'),
         $messenger::TYPE_ERROR,TRUE);

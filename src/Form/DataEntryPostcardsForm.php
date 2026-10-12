@@ -2,7 +2,6 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\DrupalUser;
@@ -20,7 +19,7 @@ class DataEntryPostcardsForm extends FormBase
   protected DrupalUser $drupalUserObj;
   protected NlpReports $reportsObj;
   protected NlpVoters $votersObj;
-  
+
   protected NlpNls $nlsObj;
   protected NlpSessionData $sessionDataObj;
   protected NlpDataEntryVoters $dataEntryVotersObj;
@@ -39,7 +38,7 @@ class DataEntryPostcardsForm extends FormBase
     $this->configurationObj = $configurationObj;
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
   }
-  
+
   public static function create(ContainerInterface $container): DataEntryPostcardsForm
   {
     return new static(
@@ -53,7 +52,7 @@ class DataEntryPostcardsForm extends FormBase
       $container->get('nlpservices.survey_question'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -61,7 +60,7 @@ class DataEntryPostcardsForm extends FormBase
   {
     return 'data_entry_postcard_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -71,7 +70,7 @@ class DataEntryPostcardsForm extends FormBase
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
     $voterList = $this->buildPostcardSelection($voters);
     $vanids = array_keys($voterList);
-    
+
     if(empty($form_state->get('reenter'))) {
       $form_state->set('allVoters',FALSE);
       $form_state->set('rep',1);  // used to avoid the Drupal decision to
@@ -79,26 +78,26 @@ class DataEntryPostcardsForm extends FormBase
       $canvassDate = date('Y-m-d',time());  // Today.
       $form_state->set('canvassDate',$canvassDate);
     }
-    
+
     $form['postcards'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="postcard-wrapper" class="postcard-mailed-box">',
     ];
-    
+
     $defaultDate = $form_state->get('canvassDate');
     $form['postcards']['canvassDate'] = [
       '#type' => 'date',
       '#title' => 'Date of the voter contact',
       '#default_value' => $defaultDate,
     ];
-    
+
     $form['postcards']['AllVotersDescription'] = [
       '#markup' => '<p>Check the <b>All Voters</b> box below to select all the
 voters in your turf that you have not already marked as having sent them a
 postcard for this election.  It should be rare that a voter gets two postcards.
 </p>',
     ];
-    
+
     $form['postcards']['allVoters'] = [
       '#type' => 'checkbox',
       '#title' => 'All Voters',
@@ -108,11 +107,11 @@ postcard for this election.  It should be rare that a voter gets two postcards.
       ],
       '#suffix' => '</div>',
     ];
-    
+
     $form['postcards']['space'] = [
       '#markup' => '<p> </p>',
     ];
-    
+
     // Identify the voters that have already been reported as having a postcard sent.
     foreach ($vanids as $vanid) {
       $postcardSend = $this->reportsObj->voterSentPostcard($vanid);
@@ -120,7 +119,7 @@ postcard for this election.  It should be rare that a voter gets two postcards.
         $voterList[$vanid] .= ' **';
       }
     }
-    
+
     $allVoters = !empty($form_state->get('allVoters'));
     $rep = $form_state->get('rep');
     foreach ($vanids as $vanid) {
@@ -133,12 +132,12 @@ postcard for this election.  It should be rare that a voter gets two postcards.
         '#default_value' => $default,
       ];
     }
-    
+
     $form['postcards']['AllVotersFootnote'] = [
       '#markup' => '<p>** Voter has already been reported as having a postcard
 sent.  There is no need to report this an additional time.</p>',
     ];
-    
+
     $form['reportMailed'] = [
       '#type' => 'submit',
       '#value' => 'Report postcards mailed',
@@ -151,7 +150,7 @@ sent.  There is no need to report this an additional time.</p>',
     $form['#attached']['library'][] = 'nlpservices/form-helper';
     return $form;
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -159,7 +158,7 @@ sent.  There is no need to report this an additional time.</p>',
   {
     $values = $form_state->getValues();
     $form_state->set('reenter',TRUE);
-    
+
     $rep = $form_state->get('rep')+1;
     $form_state->set('rep',$rep);
     if(!empty($values['allVoters'])) {
@@ -167,9 +166,9 @@ sent.  There is no need to report this an additional time.</p>',
     } else {
       $form_state->set('allVoters', FALSE);
     }
-    
+
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -177,11 +176,11 @@ sent.  There is no need to report this an additional time.</p>',
   {
     $values = $form_state->getValues();
     $form_state->set('reenter',TRUE);
-    
+
     $rep = $form_state->get('rep')+1;
     $form_state->set('rep',$rep);
     $form_state->setRebuild();  // form_state will persist.
-    
+
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];
     $canvassDate = $values['canvassDate'];
@@ -196,11 +195,11 @@ sent.  There is no need to report this an additional time.</p>',
         }
       }
     }
-    
+
     $form_state->set('allVoters', FALSE);
     $form_state->setUserInput(['allVoters'=>0,]);
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildPostcardSelection
    *
@@ -218,7 +217,7 @@ sent.  There is no need to report this an additional time.</p>',
     }
     return $voterDisplay;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * reportPostcardMailed
    *
@@ -233,7 +232,7 @@ sent.  There is no need to report this an additional time.</p>',
   public function reportPostcardMailed(int $vanid, string $canvassDate, int $mcid): void
   {
     $county = $this->sessionDataObj->getCounty();
-    
+
     // Get the canvass response codes for the Postcard contact method.
     $canvassResponseCodes = $this->configurationObj->getCanvassResponseCodes();
     $contactMethod = 'Postcard';
@@ -243,7 +242,7 @@ sent.  There is no need to report this an additional time.</p>',
     $cycle = $this->configurationObj->getCycle();
     $nlsInfo = $this->nlsObj->getNlById($mcid);
     $cd = $this->votersObj->getVoterCd($vanid);
-    
+
     // Record a voter contact in the NLP database.
     $report = [
       'vanid'=>$vanid,
@@ -260,7 +259,7 @@ sent.  There is no need to report this an additional time.</p>',
       'text'=>'',
     ];
     $rIndex = $this->reportsObj->setNlReport($report);
-    
+
     //  Report the canvass response code to VoteBuilder.
     $surveyResponse['vanid'] = $vanid;
     $surveyResponse['type'] = 'contactAttempt';
@@ -268,7 +267,7 @@ sent.  There is no need to report this an additional time.</p>',
     $surveyResponse['ContactTypeCode'] = $cid;
     $surveyResponse['dateCanvassed'] = $canvassDate;
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
-    
+
     // Mark Contact attempt for this voter.
     $turfIndex = $this->sessionDataObj->get('turfIndex');
     $turfVoter = [];
@@ -278,11 +277,11 @@ sent.  There is no need to report this an additional time.</p>',
     $turfVoter['turfIndex'] = $turfIndex;
     $turfVoter['attemptedContact'] = $rIndex;
     $this->votersObj->updateTurfVoter($turfVoter);
-    
+
     // This NL has reported results.
     $this->nlsObj->resultsReported($mcid,$county);
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * postcardCallback
    *
@@ -296,5 +295,5 @@ sent.  There is no need to report this an additional time.</p>',
   {
     return $form['postcards'];
   }
-  
+
 }

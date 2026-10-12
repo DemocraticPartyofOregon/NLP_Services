@@ -83,6 +83,7 @@ class DatabaseSchemaForm extends FormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void {}
 
+  /** @noinspection PhpUnusedParameterInspection */
   public function verifySubmit(array &$form, FormStateInterface $form_state): void
   {
     $form_state->set('results', $this->databaseFunctions->verifySchema());
@@ -90,6 +91,7 @@ class DatabaseSchemaForm extends FormBase
     $form_state->setRebuild();
   }
 
+  /** @noinspection PhpUnusedParameterInspection */
   public function repairSubmit(array &$form, FormStateInterface $form_state): void
   {
     $form_state->set('results', $this->databaseFunctions->repairSchema());

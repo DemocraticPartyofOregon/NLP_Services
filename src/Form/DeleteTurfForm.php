@@ -64,7 +64,7 @@ class DeleteTurfForm extends FormBase
       $container->get('request_stack'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -72,7 +72,7 @@ class DeleteTurfForm extends FormBase
   {
     return 'nlpservices_delete_turf_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -97,7 +97,7 @@ class DeleteTurfForm extends FormBase
       }
       $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
-    
+
     $county = $form_state->get('county');
 
     $this->nlpSessionDataObj->getSavedHdIndex();
@@ -105,7 +105,7 @@ class DeleteTurfForm extends FormBase
 
     [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfs, $this->nlpSessionDataObj, $county, $currentHd);
 
-    // Include turfs whose NL was removed from the active NLs, so they aren't
+    // Include turfs whose NL was removed from the active NLs, so they are
     // stranded with no way to delete them.
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
@@ -149,7 +149,7 @@ class DeleteTurfForm extends FormBase
       $this->turfDisplayObj->sortTurfTable($turfRows,$sort,$query->get('order', ''));
     }
     $form['hd-change']['turf-table'] = $this->turfDisplayObj->displayTurfs($turfRows);
-    
+
     // add a button to delete the selected turf or turfs.
     $form['submit'] = [
       '#type' => 'submit',
@@ -181,7 +181,7 @@ class DeleteTurfForm extends FormBase
     $values = $form_state->getValues();
     $selections = $this->turfDisplayObj->validateTurfSelection($values['contacts']);
     $form_state->set('selections', $selections);
-    
+
     if (count($selections) == 0) {
       $form_state->setErrorByName('submit', 'You must select at least one turf to delete.');
       return;
@@ -195,7 +195,7 @@ class DeleteTurfForm extends FormBase
     }
 
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -204,24 +204,24 @@ class DeleteTurfForm extends FormBase
     $messenger = Drupal::messenger();
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();  // form_state will persist
-    
+
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     switch ($elementClicked) {
-      
+
       case 'search_submit':
         $needle = $form_state->getValue('search-needle');
         $form_state->set('search-needle', $needle);
         return;
-      
+
       default:
         $county = $form_state->get('county');
         // From the list of turfs in the list, find the ones to be deleted.
         $turfArray = $form_state->get('turfArray');
         $selections = $form_state->get('selections');
-        
+
         foreach ($selections as $turfIndex => $selection) {
-          
+
             $turfChoice = $turfArray[$turfIndex] ?? NULL;
             if (empty($turfChoice)) {
               continue;
@@ -267,18 +267,18 @@ class DeleteTurfForm extends FormBase
             ]);
 
             $this->awardsObj->nlParticipation($mcid,'Yes');
-            
+
             // successful!
             $status_msg = $turfChoice['turfIndex']." ".$turfChoice['syncDate']." "."$nickname, $lastName, $turfName successfully deleted";
             $messenger->addStatus(t($status_msg));
-          
+
         }
-        
+
         break;
     }
-    
+
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * selectboxCallback
    *
@@ -292,5 +292,5 @@ class DeleteTurfForm extends FormBase
   {
     return $form['hd-change'];
   }
-  
+
 }

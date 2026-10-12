@@ -231,7 +231,7 @@ class ActiveNlsDisplayForm extends FormBase
       $form['nlsForm']['nls_table'] = $this->nlsListDisplayObj->buildNlsTable($nlsTable);
 
       // A right-aligned Save Changes bar at the end of the form that sticks to the
-      // bottom of the window while the list scrolls, but stays within the form (it
+      // bottom of the window while the list scrolls but stays within the form (it
       // never covers the footer). It stays hidden until unsaved-changes.js sees an
       // edit, so it doesn't clutter a page that has nothing to save.
       $form['save-floating'] = [
