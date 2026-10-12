@@ -109,6 +109,12 @@ class DeleteTurfForm extends FormBase
     }
 
     $form_state->set('turfArray',$turfArray);
+    // Record how the turf list was built so a stale selection can be diagnosed.
+    $form_state->set('turfListInfo', [
+      'builtAt' => time(),
+      'hd' => $currentHd,
+      'needle' => $needle ?? '',
+    ]);
 
     // Always show the HD selector when there are HDs with turfs, even if the
     // selected HD shows nothing, so the user can pick a different HD.
@@ -174,8 +180,9 @@ class DeleteTurfForm extends FormBase
     $turfArray = $form_state->get('turfArray') ?? [];
     $missing = array_diff(array_keys($selections), array_keys($turfArray));
     if (!empty($missing)) {
-      $form_state->setErrorByName('submit', t('The list of turfs has changed since this page was loaded. Please reload the page and select the turf(s) again.'));
-      Drupal::logger('nlpservices')->notice('Delete turf: turf index(es) @missing not found in the displayed turf list.', ['@missing' => implode(', ', $missing)]);
+      // Reloading the page would resubmit the same selection, so send the user back through the menu.
+      $form_state->setErrorByName('submit', t('The list of turfs has changed since this page was loaded. Open Delete Turf again from the menu and select the turf(s) again.'));
+      $this->logMissingTurfs($form, $form_state, $missing, $selections, $turfArray);
     }
 
   }
@@ -208,6 +215,16 @@ class DeleteTurfForm extends FormBase
           
             $turfChoice = $turfArray[$turfIndex] ?? NULL;
             if (empty($turfChoice)) {
+              continue;
+            }
+            // The turf list may be stale, so confirm the turf still exists and belongs to the same NL.
+            $currentTurf = $this->turfs->getTurf((int) $turfIndex);
+            if (empty($currentTurf) || (int) $currentTurf['mcid'] !== (int) $turfChoice['mcid']) {
+              $messenger->addWarning(t('Turf @turfName was not deleted because it has changed since this page was loaded.', ['@turfName' => $turfChoice['turfName']]));
+              Drupal::logger('nlpservices')->notice('Delete turf: turf index @turfIndex skipped, @reason.', [
+                '@turfIndex' => $turfIndex,
+                '@reason' => empty($currentTurf) ? 'it no longer exists' : 'its NL changed from ' . $turfChoice['mcid'] . ' to ' . $currentTurf['mcid'],
+              ]);
               continue;
             }
             $nickname = $turfChoice['nickname'];
@@ -262,6 +279,48 @@ class DeleteTurfForm extends FormBase
     
   }
   
+  /**
+   * logMissingTurfs
+   *
+   * Logs the details needed to diagnose a selected turf that isn't in the turf list saved with the form.
+   *
+   * @param array $form
+   * @param FormStateInterface $form_state
+   * @param array $missing - Turf indexes selected but not in the turf list.
+   * @param array $selections - All selected turfs, keyed by turf index.
+   * @param array $turfArray - The turf list saved with the form.
+   * @return void
+   */
+  private function logMissingTurfs(array $form, FormStateInterface $form_state, array $missing,
+                                   array $selections, array $turfArray): void
+  {
+    $turfListInfo = $form_state->get('turfListInfo') ?? [];
+    $builtAt = $turfListInfo['builtAt'] ?? NULL;
+    $inDatabase = [];
+    foreach ($missing as $turfIndex) {
+      $dbTurf = $this->turfs->getTurf((int) $turfIndex);
+      $inDatabase[] = empty($dbTurf) ? "$turfIndex: not in database"
+        : "$turfIndex: county=" . $dbTurf['county'] . ' hd=' . $dbTurf['turfHd'] . ' mcid=' . $dbTurf['mcid'];
+    }
+    Drupal::logger('nlpservices')->notice(
+      'Delete turf: turf index(es) @missing not found in the displayed turf list. Selected: @selected. '
+      . 'Turf list: @count turfs, county=@county, hd=@hd, search=@needle, built @age seconds earlier. '
+      . 'Form build @buildId, from form cache: @cached. Database: @inDatabase.',
+      [
+        '@missing' => implode(', ', $missing),
+        '@selected' => implode(', ', array_keys($selections)),
+        '@count' => count($turfArray),
+        '@county' => $form_state->get('county') ?? '',
+        '@hd' => $turfListInfo['hd'] ?? 'unknown',
+        '@needle' => ($turfListInfo['needle'] ?? '') === '' ? 'none' : $turfListInfo['needle'],
+        '@age' => isset($builtAt) ? time() - $builtAt : 'unknown',
+        '@buildId' => $form['#build_id'] ?? 'unknown',
+        '@cached' => $form_state->isCached() ? 'yes' : 'no',
+        '@inDatabase' => implode('; ', $inDatabase),
+      ]
+    );
+  }
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * selectboxCallback
    *

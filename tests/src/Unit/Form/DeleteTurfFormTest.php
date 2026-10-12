@@ -82,6 +82,29 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       ];
     }
 
+    /**
+     * Makes getTurf return the given turfs, as if they are unchanged in the database.
+     */
+    private function stubDatabaseTurfs(array $turfs): void {
+      $this->turfsMock->method('getTurf')
+        ->willReturnCallback(fn(int $turfIndex) => $turfs[$turfIndex] ?? []);
+    }
+
+    /**
+     * Expects one notice whose placeholder values, joined with ' | ', match the pattern.
+     */
+    private function expectNotice(string $pattern): void {
+      $loggerChannel = $this->createMock(LoggerChannelInterface::class);
+      $loggerChannel->expects($this->once())->method('notice')
+        ->with($this->anything(), $this->callback(function (array $context) use ($pattern) {
+          return (bool) preg_match($pattern, implode(' | ', array_map('strval', $context)));
+        }));
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->with('nlpservices')->willReturn($loggerChannel);
+      \Drupal::getContainer()->set('logger.factory', $loggerFactory);
+      \Drupal::getContainer()->set('string_translation', $this->getStringTranslationStub());
+    }
+
     // -------------------------------------------------------------------------
     // getFormId
     // -------------------------------------------------------------------------
@@ -299,22 +322,41 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testValidateFormSelectionNotInTurfArraySetsFormError(): void {
-      $loggerChannel = $this->createMock(LoggerChannelInterface::class);
-      $loggerChannel->expects($this->once())->method('notice');
-      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
-      $loggerFactory->method('get')->with('nlpservices')->willReturn($loggerChannel);
-      \Drupal::getContainer()->set('logger.factory', $loggerFactory);
-      \Drupal::getContainer()->set('string_translation', $this->getStringTranslationStub());
+      $this->expectNotice('/^73 \| 73 \| 1 \| Denver \| HD1 \| none \| \d+ \| form-abc \| yes \| 73: not in database$/');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
       $formState->method('getValues')->willReturn(['contacts' => [73 => 1]]);
-      $formState->method('get')->with('turfArray')->willReturn([7 => $this->baseTurfRecord()]);
+      $formState->method('get')->willReturnMap([
+        ['turfArray', [7 => $this->baseTurfRecord()]],
+        ['turfListInfo', ['builtAt' => time() - 30, 'hd' => 'HD1', 'needle' => '']],
+        ['county', 'Denver'],
+      ]);
+      $formState->method('isCached')->willReturn(TRUE);
       $formState->expects($this->once())
         ->method('setErrorByName')
         ->with('submit', $this->anything());
 
       $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73]);
+      $this->turfsMock->method('getTurf')->with(73)->willReturn([]);
+
+      $form = ['#build_id' => 'form-abc'];
+      $this->buildForm()->validateForm($form, $formState);
+    }
+
+    public function testValidateFormMissingTurfLogsItsDatabaseRecord(): void {
+      $this->expectNotice('/73: county=Denver hd=HD2 mcid=99$/');
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('getValues')->willReturn(['contacts' => [73 => 1]]);
+      $formState->method('get')->willReturnMap([
+        ['turfArray', [7 => $this->baseTurfRecord()]],
+      ]);
+
+      $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73]);
+      $this->turfsMock->method('getTurf')->with(73)
+        ->willReturn(['turfIndex' => 73, 'county' => 'Denver', 'turfHd' => 'HD2', 'mcid' => 99]);
 
       $form = [];
       $this->buildForm()->validateForm($form, $formState);
@@ -334,6 +376,44 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       ]);
 
       $this->turfsMock->expects($this->never())->method('deleteTurf');
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    public function testSubmitFormSkipsTurfNoLongerInDatabase(): void {
+      $this->expectNotice('/^7 \| it no longer exists$/');
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('get')->willReturnMap([
+        ['county',     'Denver'],
+        ['turfArray',  [7 => $this->baseTurfRecord()]],
+        ['selections', [7 => 7]],
+      ]);
+
+      $this->stubDatabaseTurfs([]);
+      $this->turfsMock->expects($this->never())->method('deleteTurf');
+      $this->messengerMock->expects($this->once())->method('addWarning');
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    public function testSubmitFormSkipsTurfWhoseNlChanged(): void {
+      $this->expectNotice('/^7 \| its NL changed from 42 to 99$/');
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('get')->willReturnMap([
+        ['county',     'Denver'],
+        ['turfArray',  [7 => $this->baseTurfRecord()]],
+        ['selections', [7 => 7]],
+      ]);
+
+      $this->stubDatabaseTurfs([7 => array_merge($this->baseTurfRecord(), ['mcid' => 99])]);
+      $this->turfsMock->expects($this->never())->method('deleteTurf');
+      $this->messengerMock->expects($this->once())->method('addWarning');
 
       $form = [];
       $this->buildForm()->submitForm($form, $formState);
@@ -373,6 +453,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ['selections', [7 => 7]],
       ]);
 
+      $this->stubDatabaseTurfs($turfArray);
       $this->turfsMock->expects($this->once())->method('deleteTurf')->willReturn(TRUE);
       $this->awardsMock->expects($this->once())->method('nlParticipation')->with(42, 'Yes');
       $this->messengerMock->expects($this->once())->method('addStatus');
@@ -396,6 +477,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ['selections', [7 => 7]],
       ]);
 
+      $this->stubDatabaseTurfs($turfArray);
       $this->turfsMock->expects($this->once())->method('deleteTurf')->willReturn(FALSE);
       $this->awardsMock->expects($this->never())->method('nlParticipation');
       $this->messengerMock->expects($this->once())->method('addError');
@@ -422,6 +504,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ['selections', [7 => 7, 8 => 8]],
       ]);
 
+      $this->stubDatabaseTurfs($turfArray);
       $this->turfsMock->method('deleteTurf')->willReturn(TRUE);
       $this->awardsMock->expects($this->exactly(2))->method('nlParticipation');
       $this->messengerMock->expects($this->exactly(2))->method('addStatus');
