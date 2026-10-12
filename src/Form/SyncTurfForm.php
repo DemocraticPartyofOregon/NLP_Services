@@ -22,7 +22,7 @@ use Drupal\nlpservices\Batch\SyncTurfBatch;
 use Drupal\nlpservices\NlpTurfStatus;
 
 class SyncTurfForm extends FormBase {
-  private const PAGES = ['turf_select', 'nl_select', 'nl_search_by_name', 'nl_search_by_district'];
+  private const array PAGES =['turf_select', 'nl_select', 'nl_search_by_name', 'nl_search_by_district'];
 
   protected ApiSavedLists $savedListsObj;
   protected ApiFolders $foldersObj;
