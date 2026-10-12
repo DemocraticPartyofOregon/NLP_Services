@@ -97,13 +97,13 @@ class NlpTurfStatus
    * appropriate validated status, so future calls return immediately.
    *
    * Decision tree:
-   *   - No record found → true (nothing to wait for)
-   *   - status = turfDeleteValidated/
+   *   No record found → true (nothing to wait for)
+   *   status = turfDeleteValidated/
    *              turfCreateValidated → true (already confirmed)
-   *   - status = turfDeleted, all codes removed → true (stamps turfDeleteValidated)
-   *   - status = turfCreated, all codes applied → true (stamps turfCreateValidated)
-   *   - expiration passed, codes incomplete → true (logs error with failed vanids)
-   *   - otherwise → false (codes still in flight)
+   *   status = turfDeleted, all codes removed → true (stamps turfDeleteValidated)
+   *   status = turfCreated, all codes applied → true (stamps turfCreateValidated)
+   *   expiration passed, codes are incomplete → true (logs error with failed vanids)
+   *   otherwise → false (codes still in flight)
    *
    * @param string $folderName
    * @param string $turfName
