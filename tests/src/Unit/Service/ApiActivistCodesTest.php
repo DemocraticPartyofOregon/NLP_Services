@@ -62,7 +62,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private function buildServiceWithoutWaits(): ApiActivistCodes {
       $service = $this->buildService();
       (new \ReflectionProperty(ApiActivistCodes::class, 'verifyDelaysMs'))
-        ->setValue($service, [0, 0, 0, 0]);
+        ->setValue($service, [0, 0, 0, 0, 0]);
       return $service;
     }
 
