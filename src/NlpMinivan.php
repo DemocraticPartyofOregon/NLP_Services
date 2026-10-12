@@ -76,7 +76,7 @@ class NlpMinivan {
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.imap'),
-      $container->get('nlpservices.api_survey_question'),
+      $container->get('nlpservices.survey_question'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.configuration'),
     );

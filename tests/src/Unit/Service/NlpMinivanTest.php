@@ -95,7 +95,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.voters', $this->votersMock);
       $container->set('nlpservices.nls', $this->nlsMock);
       $container->set('nlpservices.imap', $this->imapMock);
-      $container->set('nlpservices.api_survey_question', $this->apiSurveyQuestionMock);
+      $container->set('nlpservices.survey_question', $this->apiSurveyQuestionMock);
       $container->set('nlpservices.drupal_user', $this->drupalUserMock);
       $container->set('nlpservices.configuration', $this->nlpConfigurationMock);
 
