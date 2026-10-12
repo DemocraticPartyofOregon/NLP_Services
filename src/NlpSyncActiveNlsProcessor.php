@@ -339,7 +339,7 @@ class NlpSyncActiveNlsProcessor {
 
     if (empty($vfid)) {
       if (!$notRegistered) {
-        $this->messenger->addError(t('NL rejected. The vfid is missing and the volunteer does not have the NLP Not Registered activist code. Check if the MyCampaign record is a duplicate.<br>.. MCID:@mcid @firstName @lastName', $who));
+        $this->messenger->addError(t('NL rejected. The vfid is missing, and the volunteer does not have the NLP Not Registered activist code. Check if the MyCampaign record is a duplicate.<br>.. MCID:@mcid @firstName @lastName', $who));
         return FALSE;
       }
       $this->messenger->addWarning(t('NL accepted without a vfid because the volunteer has the NLP Not Registered activist code.<br>.. MCID:@mcid @firstName @lastName', $who));
@@ -380,7 +380,7 @@ class NlpSyncActiveNlsProcessor {
       } else {
         $this->messenger->addWarning(t('The volunteer has a vfid but the NLP Not Registered activist code could not be removed. Remove it in MyCampaign.<br>.. MCID:@mcid @firstName @lastName', $who));
       }
-      // The vfid shows the NL is registered, whether or not VAN caught up.
+      // The vfid shows the NL is registered, regardless of whether VAN has caught up.
       $notRegistered = FALSE;
     }
     return TRUE;
@@ -619,14 +619,15 @@ class NlpSyncActiveNlsProcessor {
    * @param string $magicWord
    *   A special string used in the process of creating or updating credentials.
    *
-   * @return array
-   *   Returns an array containing the updated or newly created credentials.
+   * @return void
    */
-  private function verifyCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord): array {
+  private function verifyCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord): void
+  {
     if (empty($credentials)) {
-      return $this->createNewCredentials($nlRecord, $drupalUser, $magicWord);
+      $this->createNewCredentials($nlRecord, $drupalUser, $magicWord);
+      return;
     }
-    return $this->updateCredentials($nlRecord, $drupalUser, $credentials, $magicWord);
+    $this->updateCredentials($nlRecord, $drupalUser, $credentials, $magicWord);
   }
 
   /**
@@ -651,19 +652,9 @@ class NlpSyncActiveNlsProcessor {
    * @param string $magicWord
    *   An optional string to be stored as a magic word associated with the credentials.
    *
-   * @return array
-   *   An array of newly generated credentials, including:
-   *   - 'mcid': User's unique identifier.
-   *   - 'email': User's email address.
-   *   - 'vfid': Voting file ID.
-   *   - 'county': User's county.
-   *   - 'hd': User's house district.
-   *   - 'roles': Converted user roles.
-   *   - 'created': Account creation timestamp.
-   *   - 'access': Account access timestamp.
-   *   - 'magicWord' (if applicable): Provided magic word.
+   * @return void
    */
-  private function createNewCredentials(array $nlRecord, array $drupalUser, string $magicWord): array {
+  private function createNewCredentials(array $nlRecord, array $drupalUser, string $magicWord): void {
     $credentials              = $this->magicWordObj->createNewCredentials($nlRecord['mcid'], $drupalUser['userName'], $nlRecord['email']);
     $credentials['vfid']      = $nlRecord['vfid'] ?? 0;
     $credentials['county']    = $drupalUser['county'];
@@ -678,7 +669,6 @@ class NlpSyncActiveNlsProcessor {
     if (!empty($magicWord)) {
       $this->magicWordObj->setMagicWord($nlRecord['mcid'], $magicWord);
     }
-    return $credentials;
   }
 
   /**
@@ -696,10 +686,9 @@ class NlpSyncActiveNlsProcessor {
    * @param string $magicWord
    *   (Optional) A secret string to be set as a magic word if not already defined for the user in $nlRecord['mcid'].
    *
-   * @return array
-   *   Returns the updated credentials array after applying changes from $nlRecord, $drupalUser, and potentially adding the magic word.
+   * @return void
    */
-  private function updateCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord = ''): array {
+  private function updateCredentials(array $nlRecord, array $drupalUser, array $credentials, string $magicWord = ''): void {
     $vfid = $nlRecord['vfid'] ?? 0;
     if ($vfid != $credentials['vfid']) {
       $credentials['vfid'] = $vfid;
@@ -713,9 +702,7 @@ class NlpSyncActiveNlsProcessor {
     $this->magicWordObj->updateCredentials($credentials);
     if (!empty($magicWord) && empty($this->magicWordObj->getMagicWord($nlRecord['mcid']))) {
       $this->magicWordObj->setMagicWord($nlRecord['mcid'], $magicWord);
-      $credentials['magicWord'] = $magicWord;
     }
-    return $credentials;
   }
 
   /**
