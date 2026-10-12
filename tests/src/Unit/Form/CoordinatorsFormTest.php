@@ -98,7 +98,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->nlsMock->method('getCountyNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -113,7 +113,7 @@ class CoordinatorsFormTest extends UnitTestCase {
   private function configureBuildFormReenterMocks(string $county = 'TestCounty'): void {
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->nlsMock->method('getCountyNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
     $this->sessionDataMock->method('getCounty')->willReturn($county);
@@ -249,7 +249,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->nlsMock->method('getNls')->willReturn([]);
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->nlsMock->method('getCountyNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -284,7 +284,7 @@ class CoordinatorsFormTest extends UnitTestCase {
 
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);

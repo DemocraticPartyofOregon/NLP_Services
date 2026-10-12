@@ -155,7 +155,7 @@ class DeliverTurfForm extends FormBase
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle, $turfArray);
     } else {
-      $turfArray = (!empty($currentHd)) ? $this->turfsObj->getTurfs($county, $currentHd) : [];
+      $turfArray = $this->getHdTurfs($this->turfsObj, $this->nlpSessionDataObj, $county, $currentHd);
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
     $form_state->set('turfArray', $turfArray);

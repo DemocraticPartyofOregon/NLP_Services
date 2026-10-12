@@ -113,7 +113,7 @@ class DeleteTurfForm extends FormBase
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
-      $turfArray = (!empty($currentHd))?$this->turfs->getTurfs($county,$currentHd, TRUE):[];
+      $turfArray = $this->getHdTurfs($this->turfs, $this->nlpSessionDataObj, $county, $currentHd, TRUE);
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
 

@@ -104,7 +104,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormAddsHiddenFloatingSaveButton(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
       $this->nlsMock->method('getNls')->willReturn([]);
       $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);
@@ -130,7 +130,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormHasOnlyTopAndFloatingSaveButtons(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
       $this->nlsMock->method('getNls')->willReturn([]);
       $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);

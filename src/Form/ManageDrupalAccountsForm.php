@@ -80,7 +80,7 @@ class ManageDrupalAccountsForm extends FormBase
       $users = $this->drupalUserObj->getUsers($county);
       $userCount = count($users);
       
-      $hdOptions = $this->hdsWithUsers($users,'All');
+      $hdOptions = $this->hdsWithUsers($users,0);
       if($userCount<$this->drupalUserObj::USER_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
@@ -604,16 +604,16 @@ class ManageDrupalAccountsForm extends FormBase
    * Get a list of HDs with users in the HD.
    *
    * @param $users
-   * @param string $selectedHd
+   * @param int $selectedHd - The HD to keep, or 0 for all HDs.
    * @return array
    */
-  function hdsWithUsers(&$users, string $selectedHd): array
+  function hdsWithUsers(&$users, int $selectedHd): array
   {
     $hdOptions = $hdUsers = [];
     foreach ($users as $uid => $user) {
-      $hd = $user['hd'];
-      if($hd=='Unknown' OR empty($hd)) {continue;}
-      if($selectedHd=='All' OR $selectedHd==$hd) {
+      $hd = (int)$user['hd']; // 'Unknown' casts to 0.
+      if($hd==0) {continue;}
+      if($selectedHd==0 OR $selectedHd===$hd) {
         $hdOptions[$hd] = $hd;
         $hdUsers[$uid] = $user;
       }

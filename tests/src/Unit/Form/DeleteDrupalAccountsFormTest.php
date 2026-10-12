@@ -75,7 +75,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     return $form;
   }
 
-  private function baseUser(int $uid, int|string $hd = 'HD1'): array {
+  private function baseUser(int $uid, int|string $hd = '1'): array {
     return [
       'uid'       => $uid,
       'firstName' => 'Test',
@@ -92,7 +92,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getCounty')->willReturn($county);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
     $this->drupalUserMock->method('getUsers')->willReturn([]);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -104,7 +104,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   private function configureBuildFormReenterMocks(string $county = 'TestCounty'): void {
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->sessionDataMock->method('getCounty')->willReturn($county);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -145,7 +145,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
     $this->drupalUserMock->method('getUsers')->willReturn([]);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -211,7 +211,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
 
     $this->drupalUserMock->method('getUsers')->willReturn($users);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -234,13 +234,13 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
 
   public function testBuildFormFiltersUsersByHdWhenHdIsNotAll(): void {
     $users = [
-      1 => $this->baseUser(1, 'HD1'),
-      2 => $this->baseUser(2, 'HD2'),
+      1 => $this->baseUser(1, '1'),
+      2 => $this->baseUser(2, '2'),
     ];
 
     $this->drupalUserMock->method('getUsers')->willReturn($users);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->sessionDataMock->method('getSavedHd')->willReturn('HD1');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(1);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(1);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -428,21 +428,21 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $users = [
       $this->baseUser(1, 'Unknown'),
       $this->baseUser(2, 0),
-      $this->baseUser(3, 'HD1'),
+      $this->baseUser(3, '1'),
     ];
 
     $result = $this->buildFormInstance()->hdsWithUsers($users);
 
     $this->assertNotContains('Unknown', $result);
     $this->assertNotContains(0, $result);
-    $this->assertContains('HD1', $result);
+    $this->assertSame([1], $result);
   }
 
   public function testHdsWithUsersDeduplicatesHds(): void {
     $users = [
-      $this->baseUser(1, 'HD1'),
-      $this->baseUser(2, 'HD1'),
-      $this->baseUser(3, 'HD2'),
+      $this->baseUser(1, '1'),
+      $this->baseUser(2, '1'),
+      $this->baseUser(3, '2'),
     ];
 
     $result = $this->buildFormInstance()->hdsWithUsers($users);
@@ -471,7 +471,7 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
   public function testJustUsersInHdTreatsUnknownAsZero(): void {
     $users = [
       1 => $this->baseUser(1, 'Unknown'),
-      2 => $this->baseUser(2, 'HD1'),
+      2 => $this->baseUser(2, '1'),
     ];
 
     $result = $this->buildFormInstance()->justUsersInHd($users, 0);

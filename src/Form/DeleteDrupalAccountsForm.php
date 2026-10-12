@@ -101,7 +101,7 @@ class DeleteDrupalAccountsForm extends FormBase
       } else {
         $currentHd = $this->sessionDataObj->getSavedHd();
         $users = $this->drupalUser->getUsers($county);
-        if($currentHd != 'All') {
+        if(!empty($currentHd)) {
           $users = $this->justUsersInHd($users, $currentHd);
         }
       }
@@ -231,8 +231,8 @@ class DeleteDrupalAccountsForm extends FormBase
   {
     $hdOptions = [];
     foreach ($users as $user) {
-      $hd = $user['hd'];
-      if($hd=='Unknown' OR $hd==0) {continue;}
+      $hd = (int)$user['hd']; // 'Unknown' casts to 0.
+      if($hd==0) {continue;}
       $hdOptions[$hd] = $hd;
     }
     $hdOptions = array_values($hdOptions);
@@ -246,16 +246,15 @@ class DeleteDrupalAccountsForm extends FormBase
    * Create an array of users in the specified HD.
    *
    * @param array $users - Array of user arrays.
-   * @param int $selectedHd - The HD to display.
+   * @param int $selectedHd - The HD to display, 0 for users with an unknown HD.
    * @return array
    */
   function justUsersInHd(array $users, int $selectedHd): array
   {
     $hdUsers = [];
     foreach ($users as $uid => $user) {
-      $hd = $user['hd'];
-      if($hd=='Unknown') {$hd = 0;}
-      if($selectedHd==$hd) {
+      $hd = (int)$user['hd']; // 'Unknown' casts to 0.
+      if($selectedHd===$hd) {
         $hdUsers[$uid] = $user;
       }
     }

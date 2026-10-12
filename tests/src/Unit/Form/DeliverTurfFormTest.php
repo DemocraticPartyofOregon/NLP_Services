@@ -151,7 +151,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->turfsMock->method('getTurfHD')->willReturn(['HD1', 'HD2']);
     $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
     $this->turfsMock->method('getTurfs')->willReturn([10 => $this->baseTurfChoice()]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -213,7 +213,7 @@ class DeliverTurfFormTest extends UnitTestCase {
 
   public function testBuildFormReturnsNoTurfMarkupWhenHdOptionsEmpty(): void {
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
 
     $formState = new FormState();
@@ -248,7 +248,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->turfsMock->method('getTurfHD')->willReturn([3, 5]);
     $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('3');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(3);
     $this->sessionDataMock->method('getHdOptions')->willReturn([3, 5]);
     $this->turfsMock->method('getTurfs')->willReturn([]);
     $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
@@ -267,7 +267,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->turfsMock->method('getTurfHD')->willReturn([3]);
     $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([3]);
     $this->turfsMock->expects($this->never())->method('getTurfs');
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -293,7 +293,7 @@ class DeliverTurfFormTest extends UnitTestCase {
 
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All']);
     $this->turfsMock->method('getTurfs')->willReturn($allTurfs);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -331,7 +331,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormSingleHdListsOnlyThatHdsPrecincts(): void {
-    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(12);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
     $this->turfsMock->expects($this->once())
       ->method('getTurfPrecinctNames')
@@ -346,7 +346,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormAllHdsListsAllPrecincts(): void {
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
     $this->turfsMock->expects($this->once())
       ->method('getTurfPrecinctNames')
@@ -361,7 +361,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormSelectedPrecinctShowsOnlyItsTurfs(): void {
-    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(12);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
     $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(2);
     $this->sessionDataMock->method('getSavedPct')->willReturn('P-102');
@@ -383,7 +383,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormAllPrecinctsShowsEveryTurfInHd(): void {
-    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(12);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
     $this->sessionDataMock->method('getSavedPct')->willReturn('');
     $this->turfsMock->method('getTurfPrecinctNames')
@@ -403,7 +403,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormStalePrecinctIndexFallsBackToAll(): void {
-    $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(12);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
     $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(5);
     $this->turfsMock->method('getTurfPrecinctNames')->willReturn(['P-101' => 'P-101']);

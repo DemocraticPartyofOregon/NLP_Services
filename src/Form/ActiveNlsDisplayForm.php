@@ -114,8 +114,7 @@ class ActiveNlsDisplayForm extends FormBase
       $currentHd = $this->sessionDataObj->getSavedHd();
 
       // Build the precinct list for the selected HD (0 means all precincts).
-      $hdValue = ($currentHd === 'All' || empty($currentHd)) ? 0 : (int)$currentHd;
-      $rawPctList = $this->nlsObj->getPctList($county, $hdValue);
+      $rawPctList = $this->nlsObj->getPctList($county, $currentHd);
       $pctOptions = array_merge(['All'], $rawPctList);
       $this->sessionDataObj->setNewDistricts($hdOptions, $pctOptions);
       $currentPctIndex = $this->sessionDataObj->getSavedPrecinctIndex();

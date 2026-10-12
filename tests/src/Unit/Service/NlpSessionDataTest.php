@@ -305,18 +305,26 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // getSavedHd()
     // -------------------------------------------------------------------------
 
-    public function testGetSavedHdReturnsCorrectDistrictName(): void {
+    public function testGetSavedHdReturnsSelectedDistrictAsInt(): void {
       $service = $this->buildService();
-      $service->setNewDistricts(['HD1', 'HD2', 'HD3']);
-      $service->saveHdIndex(1);
+      $service->setNewDistricts(['All', '12', '14']);
+      $service->saveHdIndex(2);
 
-      $this->assertSame('HD2', $service->getSavedHd());
+      $this->assertSame(14, $service->getSavedHd());
     }
 
-    public function testGetSavedHdReturnsEmptyStringWhenNoDistrictsSet(): void {
+    public function testGetSavedHdReturnsZeroWhenAllIsSelected(): void {
+      $service = $this->buildService();
+      $service->setNewDistricts(['All', '12', '14']);
+      $service->saveHdIndex(0);
+
+      $this->assertSame(0, $service->getSavedHd());
+    }
+
+    public function testGetSavedHdReturnsZeroWhenNoDistrictsSet(): void {
       $service = $this->buildService();
 
-      $this->assertSame('', $service->getSavedHd());
+      $this->assertSame(0, $service->getSavedHd());
     }
 
     // -------------------------------------------------------------------------

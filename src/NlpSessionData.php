@@ -233,16 +233,13 @@ class NlpSessionData
   /**
    * Returns the saved house district value for the current user.
    *
-   * @return string - The name of the saved house district.
+   * @return int - The saved house district, or 0 for 'All' or none saved.
    */
-  public function getSavedHd(): string
+  public function getSavedHd(): int
   {
     $savedDistricts = $this->get('selectedDistricts');
-    if(!empty($savedDistricts['districtList'])) {
-      return (!empty($savedDistricts['districtList'][$savedDistricts['selectedHdIndex']])) ?
-        $savedDistricts['districtList'][$savedDistricts['selectedHdIndex']] : '';
-    }
-    return '';
+    $hd = $savedDistricts['districtList'][$savedDistricts['selectedHdIndex'] ?? 0] ?? 0;
+    return is_numeric($hd) ? (int)$hd : 0;
   }
 
   /**

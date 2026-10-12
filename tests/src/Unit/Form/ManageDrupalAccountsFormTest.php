@@ -83,7 +83,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     return $form;
   }
 
-  private function baseUser(int $uid, string $hd = 'HD1'): array {
+  private function baseUser(int $uid, string $hd = '1'): array {
     return [
       'uid'       => $uid,
       'firstName' => 'Test',
@@ -102,7 +102,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getCounty')->willReturn($county);
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -115,7 +115,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
       'lastName'  => 'Smith',
       'mcid'      => 42,
       'county'    => 0,
-      'hd'        => 'HD1',
+      'hd'        => '1',
       'phone'     => '555-1234',
       'uname'     => 'alice.smith',
       'magic-word' => 'pass',
@@ -133,7 +133,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
       'lastName'       => 'Smith',
       'mcid'           => 42,
       'county'         => 0,
-      'hd'             => 'HD1',
+      'hd'             => '1',
       'phone'          => '555-1234',
       'uname'          => 'alice.smith',
       'magic-word'     => 'pass',
@@ -170,7 +170,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->userDisplayMock->method('displayUsers')->willReturn([]);
@@ -230,7 +230,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->drupalUserMock->method('getUsers')->willReturn($users);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -518,65 +518,62 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
 
   public function testHdsWithUsersReturnsEmptyForNoUsers(): void {
     $users = [];
-    $result = $this->buildFormInstance()->hdsWithUsers($users, 'All');
+    $result = $this->buildFormInstance()->hdsWithUsers($users, 0);
     $this->assertSame([], $result);
   }
 
   public function testHdsWithUsersSkipsUnknownHd(): void {
     $users = [
       1 => $this->baseUser(1, 'Unknown'),
-      2 => $this->baseUser(2, 'HD1'),
+      2 => $this->baseUser(2, '1'),
     ];
 
-    $result = $this->buildFormInstance()->hdsWithUsers($users, 'All');
+    $result = $this->buildFormInstance()->hdsWithUsers($users, 0);
 
-    $this->assertNotContains('Unknown', $result);
-    $this->assertContains('HD1', $result);
+    $this->assertSame([1], $result);
   }
 
   public function testHdsWithUsersSkipsEmptyHd(): void {
     $users = [
       1 => $this->baseUser(1, ''),
-      2 => $this->baseUser(2, 'HD2'),
+      2 => $this->baseUser(2, '2'),
     ];
 
-    $result = $this->buildFormInstance()->hdsWithUsers($users, 'All');
+    $result = $this->buildFormInstance()->hdsWithUsers($users, 0);
 
-    $this->assertNotContains('', $result);
-    $this->assertContains('HD2', $result);
+    $this->assertSame([2], $result);
   }
 
   public function testHdsWithUsersDeduplicatesHds(): void {
     $users = [
-      1 => $this->baseUser(1, 'HD1'),
-      2 => $this->baseUser(2, 'HD1'),
-      3 => $this->baseUser(3, 'HD2'),
+      1 => $this->baseUser(1, '1'),
+      2 => $this->baseUser(2, '1'),
+      3 => $this->baseUser(3, '2'),
     ];
 
-    $result = $this->buildFormInstance()->hdsWithUsers($users, 'All');
+    $result = $this->buildFormInstance()->hdsWithUsers($users, 0);
 
     $this->assertCount(2, $result);
   }
 
   public function testHdsWithUsersFiltersToSpecificHd(): void {
     $users = [
-      1 => $this->baseUser(1, 'HD1'),
-      2 => $this->baseUser(2, 'HD2'),
+      1 => $this->baseUser(1, '1'),
+      2 => $this->baseUser(2, '2'),
     ];
 
-    $result = $this->buildFormInstance()->hdsWithUsers($users, 'HD1');
+    $result = $this->buildFormInstance()->hdsWithUsers($users, 1);
 
-    $this->assertContains('HD1', $result);
-    $this->assertNotContains('HD2', $result);
+    $this->assertSame([1], $result);
   }
 
   public function testHdsWithUsersModifiesUsersArrayByReference(): void {
     $users = [
-      1 => $this->baseUser(1, 'HD1'),
-      2 => $this->baseUser(2, 'HD2'),
+      1 => $this->baseUser(1, '1'),
+      2 => $this->baseUser(2, '2'),
     ];
 
-    $this->buildFormInstance()->hdsWithUsers($users, 'HD1');
+    $this->buildFormInstance()->hdsWithUsers($users, 1);
 
     $this->assertArrayHasKey(1, $users);
     $this->assertArrayNotHasKey(2, $users);

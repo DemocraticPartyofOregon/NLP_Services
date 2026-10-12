@@ -119,7 +119,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01', 2 => '02']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(10); // < TURF_ALL_MAX → prepends 'All'
-      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([]);
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -141,7 +141,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn(['0', '01', '02']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(500); // >= TURF_ALL_MAX → no 'All'
-      $this->sessionDataMock->method('getSavedHd')->willReturn('');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['0', '01', '02']);
       $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
       $this->searchBarMock->method('searchBar')->willReturn(['#type' => 'select']);
@@ -167,7 +167,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
-      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
       $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
       $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -195,7 +195,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
-      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
       $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
       $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -220,7 +220,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
-      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
       $this->sessionDataMock->method('getHdOptions')->willReturn([1 => '01']);
       $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -245,7 +245,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormReenterSkipsCountySetup(): void {
       $this->sessionDataMock->expects($this->never())->method('getCounty');
-      $this->sessionDataMock->method('getSavedHd')->willReturn('');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       // No turfs → no-turf markup returned.
       $this->turfsMock->method('getTurfs')->willReturn([]);
 
@@ -268,7 +268,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
-      $this->sessionDataMock->method('getSavedHd')->willReturn('01');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([7 => $this->baseTurfRecord()]);
       $this->searchBarMock->expects($this->once())
         ->method('searchInfoArray')
@@ -290,7 +290,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormIncludesTurfsOfRemovedNls(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->turfsMock->expects($this->once())
         ->method('getTurfs')
         ->with('Denver', '12', TRUE)
@@ -300,7 +300,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormSearchIncludesTurfsOfRemovedNls(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->turfsMock->expects($this->once())
         ->method('getTurfs')
         ->with('Denver', 'All', TRUE)
@@ -336,7 +336,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormSingleHdListsOnlyThatHdsPrecincts(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
       $this->turfsMock->expects($this->once())
         ->method('getTurfPrecinctNames')
@@ -351,7 +351,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormAllHdsListsAllPrecincts(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12', '13']);
       $this->turfsMock->expects($this->once())
         ->method('getTurfPrecinctNames')
@@ -366,7 +366,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormSelectedPrecinctShowsOnlyItsTurfs(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
       $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(2);
       $this->sessionDataMock->method('getSavedPct')->willReturn('P-102');
@@ -388,7 +388,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormAllPrecinctsShowsEveryTurfInHd(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
       $this->sessionDataMock->method('getSavedPct')->willReturn('');
       $this->turfsMock->method('getTurfPrecinctNames')
@@ -408,7 +408,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormStalePrecinctIndexFallsBackToAll(): void {
-      $this->sessionDataMock->method('getSavedHd')->willReturn('12');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(12);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '12']);
       $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(5);
       $this->turfsMock->method('getTurfPrecinctNames')->willReturn(['P-101' => 'P-101']);

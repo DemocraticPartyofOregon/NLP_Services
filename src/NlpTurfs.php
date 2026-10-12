@@ -604,18 +604,18 @@ class NlpTurfs
    * getTurfs
    *
    * Returns an array of turfs for a specific county and house district.
-   * If the house district is 'All', then all turfs for the county are returned.
+   * If the house district is 0 or 'All', then all turfs for the county are returned.
    *
    * By default only turfs assigned to an NL in the NLs table are returned.  With
    * $includeRemovedNls, turfs whose NL has been removed from the list of active
    * NLs are returned too (the NL columns are NULL), so they can still be deleted.
    *
    * @param string $county - The name of the county.
-   * @param mixed $hd - The house district or 'All'.
+   * @param int|string $hd - The house district, or 0 or 'All' for all HDs.
    * @param bool $includeRemovedNls - Include turfs whose NL is not in the NLs table.
    * @return array - An associative array of turf records.
    */
-  public function getTurfs(string $county, mixed $hd, bool $includeRemovedNls = FALSE): array
+  public function getTurfs(string $county, int|string $hd, bool $includeRemovedNls = FALSE): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
@@ -632,7 +632,7 @@ class NlpTurfs
         $query->fields('n');
       }
       $query->condition('t.county', $county);
-      if ($hd != 'All') {
+      if (!empty($hd) && $hd != 'All') {
         $query->condition('t.turfHd', $hd);
       }
       $result = $query->execute();

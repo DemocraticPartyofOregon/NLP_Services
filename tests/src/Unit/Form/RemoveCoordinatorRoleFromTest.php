@@ -83,10 +83,10 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
 
   private function configureStandardBuildMocks(string $county = 'TestCounty'): void {
     $this->sessionDataMock->method('getCounty')->willReturn($county);
-    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
-    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', 'HD1', 'HD2']);
+    $this->nlsMock->method('getHdList')->willReturn(['1', '2']);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '1', '2']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->drupalUserMock->method('getCoordinators')->willReturn([]);
@@ -94,7 +94,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->coordinatorsListDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
   }
 
-  private function baseCoordinator(int $mcid, string $hd = 'HD1'): array {
+  private function baseCoordinator(int $mcid, string $hd = '1'): array {
     return [
       'mcid'      => $mcid,
       'firstName' => 'Test',
@@ -150,7 +150,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->sessionDataMock->expects($this->never())->method('getCounty');
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->drupalUserMock->method('getCoordinators')->willReturn([]);
@@ -187,16 +187,16 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
 
   public function testBuildFormFiltersCoordinatorsByHdWhenNotAll(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
-    $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
-    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', 'HD1', 'HD2']);
+    $this->nlsMock->method('getHdList')->willReturn(['1', '2']);
+    $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '1', '2']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(1);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('HD1');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(1);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
 
     $coordinators = [
-      10 => $this->baseCoordinator(10, 'HD1'),
-      20 => $this->baseCoordinator(20, 'HD2'),
+      10 => $this->baseCoordinator(10, '1'),
+      20 => $this->baseCoordinator(20, '2'),
     ];
     $this->drupalUserMock->method('getCoordinators')->willReturn($coordinators);
 
@@ -219,12 +219,12 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
 
     // mcid 10 is formally assigned, mcid 20 is not.
     $this->coordinatorsMock->method('getCoordinators')
-      ->willReturn([['mcid' => 10, 'firstName' => 'Assigned', 'lastName' => 'Coord', 'hd' => 'HD1']]);
+      ->willReturn([['mcid' => 10, 'firstName' => 'Assigned', 'lastName' => 'Coord', 'hd' => '1']]);
     $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
 
     $coordinators = [
@@ -273,11 +273,11 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
-    $this->sessionDataMock->method('getSavedHd')->willReturn('All');
+    $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->searchBarMock->method('searchBar')->willReturn([]);
 
     $this->coordinatorsMock->method('getCoordinators')
-      ->willReturn([['mcid' => 10, 'firstName' => 'Coord', 'lastName' => 'One', 'hd' => 'HD1']]);
+      ->willReturn([['mcid' => 10, 'firstName' => 'Coord', 'lastName' => 'One', 'hd' => '1']]);
     $this->drupalUserMock->expects($this->atLeastOnce())
       ->method('getUserByMcid')
       ->with(10)

@@ -118,9 +118,9 @@ class RemoveCoordinatorRoleFrom extends FormBase
     $coordinators = $this->drupalUserObj->getCoordinators($county);
 
     $hd = $this->sessionDataObj->getSavedHd();
-    if(!empty($hd) AND $hd != 'All') {
+    if(!empty($hd)) {
       foreach ($coordinators as $mcid => $coordinator) {
-        if($coordinator['hd'] != $hd) {
+        if((int)$coordinator['hd'] !== $hd) {
           unset($coordinators[$mcid]);
         }
       }
