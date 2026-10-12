@@ -6,10 +6,12 @@ use Drupal;
 use Drupal\Component\Plugin\Exception\InvalidPluginDefinitionException;
 use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\Entity\EntityStorageException;
+use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\user\Entity\User;
 use Drupal\user\UserAuthInterface;
+use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\HttpFoundation\RequestStack;
 use Exception;
@@ -40,6 +42,24 @@ class DrupalUser {
       $container->get('current_user'),
       $container->get('user.auth'),
     );
+  }
+
+  /**
+   * getUserStorage
+   *
+   * Returns the user entity storage, or NULL if the entity type can't be loaded.
+   *
+   * @param string $caller - identifies the caller in the debug message.
+   * @return EntityStorageInterface|null
+   */
+  private function getUserStorage(string $caller): ?EntityStorageInterface
+  {
+    try {
+      return $this->entityTypeManager->getStorage('user');
+    } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
+      nlp_debug_msg($caller, $e);
+      return NULL;
+    }
   }
 
   /**
@@ -100,6 +120,16 @@ class DrupalUser {
    * Returns the NLP User account array for the current user.
    *
    * @return array
+   * Used in:
+   *   nlpservices.module
+   *   ExportTableController.php
+   *   ReportsController.php
+   *   DataEntryForm.php
+   *   DataEntryPostcardsForm.php
+   *   TurfSelectForm.php
+   *   NlpDataEntryPrint.php
+   *   NlpSessionData.php
+   * @noinspection PhpUnused
    */
   public function getCurrentUser(): array
   {
@@ -115,6 +145,18 @@ class DrupalUser {
    *
    * @param array $user
    * @return bool - indicates the user has admin permissions.
+   * Used in:
+   *   nlpservices.module
+   *   CountyManagementController.php
+   *   AddDrupalAccountForm.php
+   *   DeleteDrupalAccountsForm.php
+   *   DocumentsForm.php
+   *   ExportNlsStatusForm.php
+   *   ManageDrupalAccountsForm.php
+   *   TurfDeliveryMessageForm.php
+   *   NlpResultsSummary.php
+   *   NlpSessionData.php
+   * @noinspection PhpUnused
    */
   public function isNlpAdminUser( array $user=[] ): bool
   {
@@ -134,6 +176,19 @@ class DrupalUser {
    *
    * @param int $mcid
    * @return array
+   * Used in:
+   *   SyncTurfBatch.php
+   *   AddDrupalAccountForm.php
+   *   CoordinatorsForm.php
+   *   ManageDrupalAccountsForm.php
+   *   ReassignMcidForm.php
+   *   RemoveCoordinatorRoleFrom.php
+   *   NlpCredentialsEmail.php
+   *   NlpMcidReassignment.php
+   *   NlpMinivan.php
+   *   NlpNlsListDisplay.php
+   *   NlpSyncActiveNlsProcessor.php
+   * @noinspection PhpUnused
    */
   public function getUserByMcid( int $mcid ): array
   {
@@ -153,10 +208,13 @@ class DrupalUser {
   /**
    * getLastAccessByMcid
    *
-   * Returns the last access time of every user with an mcid, keyed by mcid.
+   * Returns the last access time of every user with a mcid, keyed by mcid.
    * One query, so an export of many NLs doesn't load each user entity.
    *
    * @return array
+   * Used in:
+   *   NlpExportNlsStatus.php
+   * @noinspection PhpUnused
    */
   public function getLastAccessByMcid(): array
   {
@@ -180,11 +238,21 @@ class DrupalUser {
    *
    * @param string $userName
    * @return array
+   * Used in:
+   *   nlpservices.module
+   *   ImportUserAccountsBatch.php
+   *   CoordinatorsForm.php
+   *   ImportCredentialsForm.php
+   *   ManageDrupalAccountsForm.php
+   *   NlpSyncActiveNlsProcessor.php
+   * @noinspection PhpUnused
    */
   public function getUserByName( string $userName ): array
   {
     if(empty($userName)) {return [];}
-    $users = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $userName]);
+    $userStorage = $this->getUserStorage('getUserByName');
+    if(empty($userStorage)) {return [];}
+    $users = $userStorage->loadByProperties(['name' => $userName]);
     $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
@@ -198,10 +266,17 @@ class DrupalUser {
    *
    * @param string $email
    * @return array
+   * Used in:
+   *   CoordinatorsForm.php
+   *   ManageDrupalAccountsForm.php
+   *   NlpSyncActiveNlsProcessor.php
+   * @noinspection PhpUnused
    */
   public function getUserByEmail( string $email ): array
   {
-    $users = $this->entityTypeManager->getStorage('user')->loadByProperties(['mail' => $email]);
+    $userStorage = $this->getUserStorage('getUserByEmail');
+    if(empty($userStorage)) {return [];}
+    $users = $userStorage->loadByProperties(['mail' => $email]);
     $user = reset($users);
     if(empty($user)) {return [];}
     return $this->extractUserInfo($user);
@@ -214,6 +289,9 @@ class DrupalUser {
    *
    * @param int $uid
    * @return array
+   * Used in:
+   *   LoginCredentialsReminderForm.php
+   * @noinspection PhpUnused
    */
   public function getUserByUid( int $uid ): array
   {
@@ -276,6 +354,11 @@ class DrupalUser {
    *
    * @param array $user
    * @return array - simplified information from the newly created user entity.
+   * Used in:
+   *   ImportUserAccountsBatch.php
+   *   AddDrupalAccountForm.php
+   *   CoordinatorsForm.php
+   * @noinspection PhpUnused
    */
   public function addUser( array $user ): array
   {
@@ -313,19 +396,12 @@ class DrupalUser {
       $values['created'] = $user['created'];
     }
 
-    try {
-      $newUser = $this->entityTypeManager
-        ->getStorage('user')
-        ->create($values);
-    } catch (InvalidPluginDefinitionException $e) {
-      nlp_debug_msg('addUser', $e);
+    $userStorage = $this->getUserStorage('addUser');
+    if(empty($userStorage)) {
       $addUserError['status'] = 'add user error';
-      return $addUserError;
-    } catch (PluginNotFoundException $e) {
-      $addUserError['status'] = 'add user error';
-      nlp_debug_msg('addUser', $e);
       return $addUserError;
     }
+    $newUser = $userStorage->create($values);
 
     try {
       $newUser->save();
@@ -335,8 +411,12 @@ class DrupalUser {
       return $addUserError;
     }
 
-    $newUsers = $this->entityTypeManager->getStorage('user')->loadByProperties(['name' => $userName]);
+    $newUsers = $userStorage->loadByProperties(['name' => $userName]);
     $newUser = reset($newUsers);
+    if(!$newUser instanceof UserInterface) {
+      $addUserError['status'] = 'add user error';
+      return $addUserError;
+    }
 
     $newUser->set("field_first_name", $user['firstName']);
     $newUser->set("field_last_name", $user['lastName']);
@@ -387,6 +467,16 @@ class DrupalUser {
    *
    * @param array $editUpdate
    * @return array
+   * Used in:
+   *   ImportUserAccountsBatch.php
+   *   CoordinatorsForm.php
+   *   ManageDrupalAccountsForm.php
+   *   ReassignMcidForm.php
+   *   NlpExportUserAccounts.php
+   *   NlpMcidReassignment.php
+   *   NlpMinivan.php
+   *   NlpSyncActiveNlsProcessor.php
+   * @noinspection PhpUnused
    */
   public function updateUser( array $editUpdate ): array
   {
@@ -476,7 +566,8 @@ class DrupalUser {
    *
    * @param array $userInfo
    * @return array
-   * used in SyncActiveNlsBatch.php
+   * Used in:
+   *   NlpSyncActiveNlsProcessor.php
    * @noinspection PhpUnused
    */
   public function createDrupalAccount( array $userInfo ): array
@@ -512,10 +603,15 @@ class DrupalUser {
    * Returns a list of counties that have NLP users.
    *
    * @return array - of county names
+   * Used in:
+   *   NlpExportUserAccounts.php
+   * @noinspection PhpUnused
    */
   public function getCounties(): array
   {
-    $query = $this->entityTypeManager->getStorage('user')->getQuery()
+    $userStorage = $this->getUserStorage('getCounties');
+    if(empty($userStorage)) {return [];}
+    $query = $userStorage->getQuery()
       ->accessCheck(FALSE)
     ;
     $result = $query->execute();
@@ -537,10 +633,19 @@ class DrupalUser {
    *
    * @param string $searchCounty
    * @return array
+   * Used in:
+   *   NlpResetForm.php
+   *   DeleteDrupalAccountsForm.php
+   *   LoginCredentialsReminderForm.php
+   *   ManageDrupalAccountsForm.php
+   *   NlpExportUserAccounts.php
+   * @noinspection PhpUnused
    */
   public function getUsers( string $searchCounty=''): array
   {
-    $query = $this->entityTypeManager->getStorage('user')->getQuery()
+    $userStorage = $this->getUserStorage('getUsers');
+    if(empty($userStorage)) {return [];}
+    $query = $userStorage->getQuery()
       ->accessCheck(FALSE);
     if (!empty($searchCounty)) {
       $query->condition('field_county', $searchCounty);
@@ -568,6 +673,9 @@ class DrupalUser {
    * @param int $uid
    * @param array $rids
    * @return bool
+   * Used in:
+   *   RemoveCoordinatorRoleFrom.php
+   * @noinspection PhpUnused
    */
   public function removeNlpRoles( int $uid, array $rids): bool
   {
@@ -592,6 +700,11 @@ class DrupalUser {
    *
    * @param int $uid
    * @return void
+   * Used in:
+   *   NlpResetForm.php
+   *   DeleteDrupalAccountsForm.php
+   *   ReassignMcidForm.php
+   * @noinspection PhpUnused
    */
   public function deleteUser(int $uid ): void
   {
@@ -618,6 +731,9 @@ class DrupalUser {
    * @param string $userName
    * @param string $password
    * @return bool
+   * Used in:
+   *   ImportCredentialsForm.php
+   * @noinspection PhpUnused
    */
   public function verifyPassword( string $userName, string $password ): bool
   {
@@ -632,6 +748,10 @@ class DrupalUser {
    * Returns an array of NLP roles that are defined in Drupal.
    *
    * @return array
+   * Used in:
+   *   AddDrupalAccountForm.php
+   *   ManageDrupalAccountsForm.php
+   * @noinspection PhpUnused
    */
   public function getNlpRoles(): array
   {
@@ -661,6 +781,10 @@ class DrupalUser {
    * @param int $mcid
    * @param array $user
    * @return string
+   * Used in:
+   *   AddDrupalAccountForm.php
+   *   ManageDrupalAccountsForm.php
+   * @noinspection PhpUnused
    */
   public function displayCredentials( int $mcid, array $user=[]): string
   {
@@ -697,11 +821,16 @@ class DrupalUser {
    *
    * @param string $county
    * @return array
+   * Used in:
+   *   RemoveCoordinatorRoleFrom.php
+   * @noinspection PhpUnused
    */
   public function getCoordinators( string $county ): array
   {
     $userList = [];
-    $ids = $this->entityTypeManager->getStorage('user')->getQuery()
+    $userStorage = $this->getUserStorage('getCoordinators');
+    if(empty($userStorage)) {return [];}
+    $ids = $userStorage->getQuery()
       ->accessCheck(FALSE)
       ->condition('status', 1)
       ->condition('roles', 'nlp_coordinator')
@@ -724,6 +853,9 @@ class DrupalUser {
    * Returning NLs will get added back with their original login credentials.
    *
    * @return void
+   * Used in:
+   *   ExportUserAccountsController.php
+   * @noinspection PhpUnused
    */
   public function purgeNlUsers(): void
   {
