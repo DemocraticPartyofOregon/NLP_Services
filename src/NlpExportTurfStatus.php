@@ -28,7 +28,7 @@ class NlpExportTurfStatus
   public static function create(ContainerInterface $container): NlpExportTurfStatus
   {
     return new static(
-      $container->get('file.system'),
+      $container->get('file_system'),
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.nls'),

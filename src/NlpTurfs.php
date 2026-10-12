@@ -49,7 +49,7 @@ class NlpTurfs
   {
     return new static(
       $container->get('database'),
-      $container->get('file.system'),
+      $container->get('file_system'),
       $container->get('nlpservices.nls'),
       $container->get('nlpservices.paths'),
       $container->get('nlpservices.voters'),

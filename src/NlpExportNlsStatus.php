@@ -34,7 +34,7 @@ class NlpExportNlsStatus
   public static function create(ContainerInterface $container): NlpExportNlsStatus
   {
     return new static(
-      $container->get('file.system'),
+      $container->get('file_system'),
       $container->get('database'),
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
