@@ -4,6 +4,7 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpSyncTurfProcessor {
@@ -113,6 +114,13 @@ class NlpSyncTurfProcessor {
     $mcid          = $arg['mcid'];
 
     if (empty($context['sandbox']['currentBatch'])) {
+      if ($this->nlsObj->activeNlsSyncInProgress($county)
+        || empty($this->nlsObj->getNlById($mcid))) {
+        $context['finished']           = 1;
+        $context['results']['message'] = [0 => $this->nlUnavailableMessage($mcid, $county)];
+        $context['results']['result']  = 'error';
+        return;
+      }
       $database  = 0;
       $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $turfId);
       $context['sandbox']['votersInTurf'] = [];
@@ -315,6 +323,19 @@ class NlpSyncTurfProcessor {
       $turfIndex    = $context['sandbox']['turfIndex'];
       $votersInTurf = $context['sandbox']['votersInTurf'];
 
+      // An active NL sync deletes and rebuilds the county's NLs, so the NL
+      // can disappear while this batch runs.
+      $nl = $this->nlsObj->getNlById($mcid);
+      if (empty($nl)) {
+        $context['finished']             = 1;
+        $context['results']['message']   = [0 => $this->nlUnavailableMessage($mcid, $county)];
+        $context['results']['result']    = 'error';
+        $context['results']['turfIndex'] = $turfIndex;
+        $context['results']['mcid']      = $mcid;
+        $context['results']['county']    = $county;
+        return;
+      }
+
       foreach ($votersInTurf as $voter) {
         $turfVoter              = [];
         $turfVoter['mcid']      = $mcid;
@@ -342,8 +363,6 @@ class NlpSyncTurfProcessor {
         'expirationTime' => date('c', $now + $expirySecs),
         'status'         => NlpTurfStatus::TURF_CREATED,
       ]);
-
-      $nl = $this->nlsObj->getNlById($mcid);
 
       $context['results']['mcid']        = $mcid;
       $context['results']['turfName']    = $arg['turfName'];
@@ -485,6 +504,24 @@ class NlpSyncTurfProcessor {
     $comment      = $this->reportsObj->getComment($req);
     if (empty($comment['reportIndex'])) { return; }
     $this->votersObj->updateTurfNote($turfIndex, $vanid, $comment['text'], $comment['reportIndex'], 0);
+  }
+
+  /**
+   * Builds the error shown when the NL can't be used for the turf, either
+   * because the county's list of active NLs is being rebuilt or because the
+   * NL is no longer in it.
+   *
+   * @param int $mcid The MCID of the NL.
+   * @param string $county The county of the turf.
+   * @return TranslatableMarkup
+   */
+  private function nlUnavailableMessage(int $mcid, string $county): TranslatableMarkup {
+    if ($this->nlsObj->activeNlsSyncInProgress($county)) {
+      return t('The list of active NLs for @county is being rebuilt. Wait a few minutes for the rebuild to finish, then sync the turf again.',
+        ['@county' => $county]);
+    }
+    return t('The NL (MCID @mcid) is no longer in the active NL list for @county.',
+      ['@mcid' => $mcid, '@county' => $county]);
   }
 
   /**

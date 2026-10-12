@@ -75,6 +75,8 @@ class NlpSyncActiveNlsProcessor {
   public function processBatch(array $arg, array &$context): void {
     $uri    = $arg['uri'];
     $county = $arg['county'];
+    $context['results']['county'] = $county;
+    $this->nlsObj->markActiveNlsSync($county);
     $legislativeFixes = $this->legislativeFixesObj->getLegFixes($county);
 
     $fh = @fopen($uri, 'r');

@@ -12,6 +12,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Database\Query\Select;
   use Drupal\Core\Database\Query\Update;
   use Drupal\Core\Database\StatementInterface;
+  use Drupal\Core\Lock\LockBackendInterface;
+  use Drupal\Core\State\StateInterface;
   use Drupal\nlpservices\NlpNls;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -22,10 +24,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private ConfigFactoryInterface $configFactoryMock;
     private ImmutableConfig $nlpConfigMock;
     private array $surveyQuestions = [];
+    private StateInterface $stateMock;
+    /** Values held by the state mock, keyed by state key. */
+    private array $stateValues = [];
+    private LockBackendInterface $lockMock;
 
     protected function setUp(): void {
       parent::setUp();
       $this->connectionMock = $this->createMock(Connection::class);
+      $this->lockMock = $this->createMock(LockBackendInterface::class);
+      $this->stateMock = $this->createMock(StateInterface::class);
+      $this->stateMock->method('get')
+        ->willReturnCallback(fn(string $key) => $this->stateValues[$key] ?? NULL);
+      $this->stateMock->method('set')
+        ->willReturnCallback(function (string $key, $value) { $this->stateValues[$key] = $value; });
+      $this->stateMock->method('delete')
+        ->willReturnCallback(function (string $key) { unset($this->stateValues[$key]); });
       $this->configFactoryMock = $this->createMock(ConfigFactoryInterface::class);
       $this->nlpConfigMock = $this->createMock(ImmutableConfig::class);
 
@@ -52,7 +66,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function buildService(): NlpNls {
-      return new NlpNls($this->connectionMock);
+      return new NlpNls($this->connectionMock, $this->stateMock, $this->lockMock);
     }
 
     private function buildDeleteMock(): Delete {
@@ -126,6 +140,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testCreateFactoryUsesDatabaseServiceFromContainer(): void {
       $container = new ContainerBuilder();
       $container->set('database', $this->connectionMock);
+      $container->set('state', $this->stateMock);
+      $container->set('lock', $this->lockMock);
 
       $service = NlpNls::create($container);
 
@@ -135,6 +151,75 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
     // deleteNls()
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // Active NL sync marks
+    // -------------------------------------------------------------------------
+
+    public function testStartActiveNlsSyncClaimsCountyAndReleasesLock(): void {
+      $this->lockMock->method('acquire')->willReturn(TRUE);
+      $this->lockMock->expects($this->once())->method('release')
+        ->with(NlpNls::ACTIVE_NLS_SYNC_KEY . 'Denver');
+      $service = $this->buildService();
+
+      $this->assertTrue($service->startActiveNlsSync('Denver'));
+      $this->assertTrue($service->activeNlsSyncInProgress('Denver'));
+    }
+
+    public function testStartActiveNlsSyncRefusedWhileCountyInProgress(): void {
+      $this->lockMock->method('acquire')->willReturn(TRUE);
+      $service = $this->buildService();
+      $service->startActiveNlsSync('Denver');
+
+      $this->assertFalse($service->startActiveNlsSync('Denver'));
+      $this->assertTrue($service->startActiveNlsSync('Boulder'));
+    }
+
+    public function testStartActiveNlsSyncAllowedAfterStaleMark(): void {
+      $this->lockMock->method('acquire')->willReturn(TRUE);
+      $this->stateValues[NlpNls::ACTIVE_NLS_SYNC_KEY . 'Denver']
+        = time() - NlpNls::ACTIVE_NLS_SYNC_TIMEOUT_SECS;
+
+      $this->assertTrue($this->buildService()->startActiveNlsSync('Denver'));
+    }
+
+    public function testStartActiveNlsSyncRefusedWhenLockHeld(): void {
+      $this->lockMock->method('acquire')->willReturn(FALSE);
+      $this->lockMock->expects($this->never())->method('release');
+      $service = $this->buildService();
+
+      $this->assertFalse($service->startActiveNlsSync('Denver'));
+      $this->assertFalse($service->activeNlsSyncInProgress('Denver'));
+    }
+
+    public function testActiveNlsSyncNotInProgressWithoutMark(): void {
+      $this->assertFalse($this->buildService()->activeNlsSyncInProgress('Denver'));
+    }
+
+    public function testActiveNlsSyncInProgressAfterMark(): void {
+      $service = $this->buildService();
+      $service->markActiveNlsSync('Denver');
+      $this->assertTrue($service->activeNlsSyncInProgress('Denver'));
+    }
+
+    public function testActiveNlsSyncMarkIsPerCounty(): void {
+      $service = $this->buildService();
+      $service->markActiveNlsSync('Denver');
+      $this->assertFalse($service->activeNlsSyncInProgress('Boulder'));
+    }
+
+    public function testActiveNlsSyncNotInProgressAfterEnd(): void {
+      $service = $this->buildService();
+      $service->markActiveNlsSync('Denver');
+      $service->endActiveNlsSync('Denver');
+      $this->assertFalse($service->activeNlsSyncInProgress('Denver'));
+    }
+
+    public function testActiveNlsSyncStaleMarkIsIgnored(): void {
+      $this->stateValues[NlpNls::ACTIVE_NLS_SYNC_KEY . 'Denver']
+        = time() - NlpNls::ACTIVE_NLS_SYNC_TIMEOUT_SECS;
+      $this->assertFalse($this->buildService()->activeNlsSyncInProgress('Denver'));
+    }
 
     public function testDeleteNlsExecutesDeleteOnCounty(): void {
       $this->connectionMock->expects($this->once())->method('delete')->willReturn($this->buildDeleteMock());

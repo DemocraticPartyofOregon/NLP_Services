@@ -40,6 +40,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private array $tempFiles = [];
 
+    /** The record getNlById returns; tests empty it to simulate a missing NL. */
+    private array $nlRecord;
+
+    /** Whether activeNlsSyncInProgress reports a rebuild of the county's NLs. */
+    private bool $activeNlsSyncInProgress = FALSE;
+
     protected function setUp(): void {
       parent::setUp();
       $this->exportJobsMock      = $this->createMock(ApiExportJobs::class);
@@ -56,6 +62,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfAssignmentsMock = $this->createMock(NlpTurfAssignments::class);
       $this->turfStatusMock      = $this->createMock(NlpTurfStatus::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
+
+      $this->nlRecord = $this->baseNlRecord();
+      $this->nlsMock->method('getNlById')
+        ->willReturnCallback(fn() => $this->nlRecord);
+      $this->nlsMock->method('activeNlsSyncInProgress')
+        ->willReturnCallback(fn() => $this->activeNlsSyncInProgress);
 
       $loggerMock = $this->getMockBuilder(\stdClass::class)
         ->addMethods(['warning', 'error', 'notice'])
@@ -181,7 +193,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('updateTurfVoter')->willReturn(TRUE);
       $this->reportsMock->method('getReport')->willReturn([]);
       $this->reportsMock->method('getComment')->willReturn([]);
-      $this->nlsMock->method('getNlById')->willReturn($this->baseNlRecord());
       $this->nlsMock->method('getNlsStatus')->willReturn([]);
       $this->nlsMock->method('setNlsStatus')->willReturn(TRUE);
       $this->turfAssignmentsMock->method('getTurfAssignmentByTurfName')->willReturn([]);
@@ -465,6 +476,82 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $processor->processBatch($this->baseArg($uri), $context);
       $this->assertSame(1, $context['finished'], 'Second call should finalise');
+      $this->assertSame('success', $context['results']['result']);
+    }
+
+    // -------------------------------------------------------------------------
+    // processBatch — NL not in the active NL list
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchMissingNlAbortsBeforeCreatingTurf(): void {
+      $this->nlRecord = [];
+      $this->exportJobsMock->expects($this->never())->method('getExportJobs');
+      $this->turfsMock->expects($this->never())->method('createTurf');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg(''), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame(1, $context['finished']);
+      $this->assertArrayNotHasKey('turfIndex', $context['results']);
+      $this->assertStringContainsString('no longer in the active NL list',
+        $context['results']['message'][0]->getUntranslatedString());
+    }
+
+    public function testProcessBatchActiveNlsSyncInProgressAbortsBeforeCreatingTurf(): void {
+      $this->activeNlsSyncInProgress = TRUE;
+      $this->exportJobsMock->expects($this->never())->method('getExportJobs');
+      $this->turfsMock->expects($this->never())->method('createTurf');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg(''), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertArrayNotHasKey('turfIndex', $context['results']);
+      $this->assertStringContainsString('active NLs for @county is being rebuilt',
+        $context['results']['message'][0]->getUntranslatedString());
+    }
+
+    public function testProcessBatchNlRemovedMidSyncAbortsAndReturnsTurfForCleanup(): void {
+      $uri = $this->writeTurfCsv(range(101, 118));
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubForSuccess();
+      $this->votersMock->expects($this->never())->method('createTurfVoter');
+      $this->turfAssignmentsMock->expects($this->never())->method('setTurfAssignment');
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      // An active NL sync deletes the county's NLs between batch passes.
+      $this->nlRecord = [];
+      $this->activeNlsSyncInProgress = TRUE;
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame(1, $context['finished']);
+      $this->assertSame(7, $context['results']['turfIndex']);
+      $this->assertSame(42, $context['results']['mcid']);
+      $this->assertSame('Denver', $context['results']['county']);
+      $this->assertStringContainsString('active NLs for @county is being rebuilt',
+        $context['results']['message'][0]->getUntranslatedString());
+    }
+
+    public function testProcessBatchActiveNlsSyncStartedMidSyncWithNlPresentFinishes(): void {
+      $uri = $this->writeTurfCsv(range(101, 118));
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubForSuccess();
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      // The rebuild has already re-added this NL, so the turf can finish.
+      $this->activeNlsSyncInProgress = TRUE;
+      $processor->processBatch($this->baseArg($uri), $context);
+
       $this->assertSame('success', $context['results']['result']);
     }
 

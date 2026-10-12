@@ -271,7 +271,7 @@ services:
 
   nlpservices.nls:
     class: Drupal\nlpservices\NlpNls
-    arguments: [ '@database' ]
+    arguments: [ '@database', '@state', '@lock' ]
 
   nlpservices.nls_list_display:
     class: Drupal\nlpservices\NlpNlsListDisplay
