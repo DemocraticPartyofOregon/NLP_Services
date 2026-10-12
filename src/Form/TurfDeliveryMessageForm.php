@@ -16,9 +16,9 @@ use Drupal\nlpservices\DrupalUser;
  */
 class TurfDeliveryMessageForm extends FormBase
 {
-  // Select key for the statewide default message. It is not a county name,
+  // Select the key for the statewide default message. It is not a county name,
   // so it can't collide with one of the county options.
-  const STATE_OPTION = '__state__';
+  const string STATE_OPTION = '__state__';
 
   protected NlpConfiguration $nlpConfiguration;
   protected NlpSessionData $sessionData;
@@ -207,7 +207,7 @@ class TurfDeliveryMessageForm extends FormBase
   /**
    * countyOptions
    *
-   * The statewide default message followed by each county, keyed by name.
+   * The statewide default message is followed by each county, keyed by name.
    * The configured county names no longer include a 'State' entry (the State
    * Committee key is stored separately), so the state option is added here.
    *

@@ -105,7 +105,7 @@ class SyncTurfForm extends FormBase {
         $page = $this->nlpSessionDataObj->get('syncTurfPage') ?? 'turf_select';
         // A POST carries the page it was submitted from. Prefer that over the session so
         // a page revisited with the browser's back arrow rebuilds as itself; otherwise the
-        // clicked button wouldn't exist on the session's (later) page and Drupal would
+        // clicked button wouldn't exist on the session's (later) page, and Drupal would
         // fall back to that page's first button.
         $postedPage = $request->request->get('sync_turf_page', '');
         if (in_array($postedPage, self::PAGES, TRUE)) {

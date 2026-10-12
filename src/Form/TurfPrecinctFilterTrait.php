@@ -45,7 +45,7 @@ trait TurfPrecinctFilterTrait
    * filterTurfsByPrecinct
    *
    * Keeps only the turfs in the selected precinct.  Returns the list unchanged
-   * when 'All' precincts is selected.
+   * when 'All' precincts are selected.
    *
    * @param array $turfArray - Turf records keyed by turfIndex.
    * @param NlpSessionData $sessionDataObj
@@ -57,7 +57,7 @@ trait TurfPrecinctFilterTrait
     if ($currentPct === '') {
       return $turfArray;
     }
-    return array_filter($turfArray, fn($turf) => (string)($turf['turfPrecinct'] ?? '') === (string)$currentPct);
+    return array_filter($turfArray, fn($turf) => (string)($turf['turfPrecinct'] ?? '') === $currentPct);
   }
 
   /**

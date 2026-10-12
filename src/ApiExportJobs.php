@@ -11,7 +11,7 @@ use stdClass;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class ApiExportJobs {
-  
+
   const string EXPORT_JOBS_TBL = 'nlp_export_jobs';
 
   protected ClientInterface $client;
@@ -25,7 +25,7 @@ class ApiExportJobs {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiExportJobs
   {
     return new static(
@@ -35,7 +35,7 @@ class ApiExportJobs {
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * getExportJobs
    *
@@ -63,19 +63,19 @@ class ApiExportJobs {
     $req['startTime'] = time();
     $req['endTime'] = 0;
     $eventId = $this->insertExportJob($req);
-    
+
     $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    
+
     $post_url = "https://$user:$apiKey|$database@$apiURL/exportJobs";
 
     $jobObj = new stdClass();
     $jobObj->savedListId = $listId;
     $jobObj->type = 4;
     $jobObj->webhookUrl = "$base_url/nlp-webhook-callback?committee=$committee&listId=$listId&eventId=$eventId";
-    
+
     if(!empty($activistCode)) {
       $activistCodeNames = (is_array($activistCode))?$activistCode:[$activistCode,];
       $activistCodes = [];
@@ -97,7 +97,7 @@ class ApiExportJobs {
       $errorMessage = $e->getMessage();
       // Guzzle truncates the message, so check the full response body when there is one.
       if ($e instanceof RequestException && $e->hasResponse()) {
-        $errorMessage .= (string) $e->getResponse()->getBody();
+        $errorMessage .= $e->getResponse()->getBody();
       }
       $lostList = str_contains($errorMessage, "must be a valid saved list ID");
       if($lostList) {
@@ -119,7 +119,7 @@ class ApiExportJobs {
       'downloadUrl' => $dataObj->downloadUrl,
       'eventId' => $eventId,
     ];
-    
+
     // Pause for VoteBuilder to finish creating the file.   It's almost always done immediately.
     for ($index = 0; $index < 50; $index++) {
       $exportJobStatus = $this->getExportJobStatus($exportJob['eventId']);
@@ -128,7 +128,7 @@ class ApiExportJobs {
     }
     return $exportJob;
   }
-  
+
   /**
    * insertExportJob
    *
@@ -189,7 +189,7 @@ class ApiExportJobs {
     }
     return TRUE;
   }
-  
+
   /**
    * getExportJobStatus
    *
@@ -241,5 +241,5 @@ class ApiExportJobs {
     }
     return $elapsedTime;
   }
-  
+
 }

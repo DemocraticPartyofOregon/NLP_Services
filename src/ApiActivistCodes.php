@@ -5,7 +5,6 @@ namespace Drupal\nlpservices;
 use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -71,10 +70,7 @@ class ApiActivistCodes
         return [];
       }
       return $results['items'] ?? [];
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiActivistCodes', $e);
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException|Exception $e) {
       nlp_debug_msg('getApiActivistCodes', $e);
       return [];
     }
@@ -112,11 +108,7 @@ class ApiActivistCodes
         $codes[] = (int) $item['activistCodeId'];
       }
       return $codes;
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiVoterActivistCodes', $e);
-      nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException|Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e);
       nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
       return [];
@@ -202,10 +194,7 @@ class ApiActivistCodes
     ];
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode', $e);
-      return FALSE;
-    } catch (GuzzleException $e) {
+    } catch (Exception|GuzzleException $e) {
       nlp_debug_msg('setApiActivistCode', $e);
       return FALSE;
     }
@@ -222,10 +211,7 @@ class ApiActivistCodes
     );
     try {
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
-    } catch (Exception $e) {
-      nlp_debug_msg('setApiActivistCode retry', $e);
-      return FALSE;
-    } catch (GuzzleException $e) {
+    } catch (Exception|GuzzleException $e) {
       nlp_debug_msg('setApiActivistCode retry', $e);
       return FALSE;
     }
