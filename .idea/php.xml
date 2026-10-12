@@ -17,9 +17,6 @@
   </component>
   <component name="PhpIncludePathManager">
     <include_path>
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/core" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/modules" />
-      <path value="$USER_HOME$/OneDrive/Documents/drupal-10/vendor" />
       <path value="$PROJECT_DIR$/vendor/composer" />
       <path value="$PROJECT_DIR$/vendor/myclabs/deep-copy" />
       <path value="$PROJECT_DIR$/vendor/nikic/php-parser" />

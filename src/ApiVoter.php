@@ -4,7 +4,6 @@ namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Pool;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -164,10 +163,7 @@ class ApiVoter
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
       }
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiVoter', $e);
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException|Exception $e) {
       nlp_debug_msg('getApiVoter', $e);
       return [];
     }

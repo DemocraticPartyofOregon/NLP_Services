@@ -12,18 +12,17 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  * Prepares the salutation to the world.
  */
 class AwakeSalutation {
-  
+
   use StringTranslationTrait;
-  
+
   protected ConfigFactoryInterface $config;
-  
+
   public function __construct(ConfigFactoryInterface $config) {
     $this->config = $config;
   }
-  
+
   public static function create(ContainerInterface $container): AwakeSalutation
   {
-    /** @noinspection PhpParamsInspection */
     return new static(
       $container->get('config.factory'),
     );
@@ -39,12 +38,12 @@ class AwakeSalutation {
     if ((int) $time->format('G') >= 00 && (int) $time->format('G') < 12) {
       return 'Good morning world';
     }
-    
+
     if ((int) $time->format('G') >= 12 && (int) $time->format('G') < 18) {
       return 'Good afternoon world';
     }
 
     return 'Good evening world';
   }
-  
+
 }

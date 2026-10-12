@@ -13,7 +13,7 @@ class ApiSurveyQuestion
   const string SURVEY_RESPONSE = 'SurveyResponse';
   const string ACTIVIST_CODE = 'ActivistCode';
   const int CONTACT_TYPE_WALK = 2;
-  
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
@@ -22,7 +22,7 @@ class ApiSurveyQuestion
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiSurveyQuestion
   {
     return new static(
@@ -31,7 +31,7 @@ class ApiSurveyQuestion
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * getApiSurveyQuestions
    *
@@ -58,7 +58,6 @@ class ApiSurveyQuestion
    * @param string $cycleYear - Four digit year, eg 2024
    * @param int $database - 0 for VoterFile, 1 for MyCampaign.
    * @return array
-   * @noinspection GrazieStyle
    */
   public function getApiSurveyQuestions(string $cycleYear, int $database=0): array
   {
@@ -66,7 +65,7 @@ class ApiSurveyQuestion
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-   
+
     $url = "https://$user:$apiKey|$database@$apiURL/surveyQuestions";
     try {
       $request = $this->client->request('GET', $url);
@@ -74,10 +73,7 @@ class ApiSurveyQuestion
       if (json_last_error() !== JSON_ERROR_NONE) {
         return [];
       }
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getApiSurveyQuestions', $e);
-      return [];
-    } catch (Exception $e) {
+    } catch (GuzzleException|Exception $e) {
       nlp_debug_msg('getApiSurveyQuestions', $e);
       return [];
     }
@@ -95,7 +91,7 @@ class ApiSurveyQuestion
     }
     return $questionsArray;
   }
-  
+
   /**
    * reportSurveyResponse
    *
@@ -115,7 +111,6 @@ class ApiSurveyQuestion
    * @param string $committeeName - The name of the county or if empty the state committee is used.
    *
    * @return void
-   * @noinspection GrazieStyle
    */
   public function reportSurveyResponse(array $surveyResponse, string $committeeName=''): void
   {
@@ -123,17 +118,17 @@ class ApiSurveyQuestion
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    
+
     $responseObj = new stdClass();
     $canvassContextObj = new stdClass();
     $canvassResponseObj = new stdClass();
-    
+
     $canvassResponseCodes = $this->nlpConfigurationObj->getCanvassResponseCodes();
     $qid = $cid = $rid = 0;
     $type = '';
     $database = 0; // VoterFile.
     switch ($surveyResponse['type']) {
-      
+
       // The participation survey question records the activity of an NL for
       // the current election.  The question resides in the state committee's
       // MyCampaign database.
@@ -162,7 +157,7 @@ class ApiSurveyQuestion
         $database = 1; // MyCampaign
         $type = self::SURVEY_RESPONSE;
         break;
-        
+
       // The pledge to vote survey question records the response of a voter
       // to the question "Can we count on you to vote?"  The question resides in
       // the state committee's VoterFile database.
@@ -179,7 +174,7 @@ class ApiSurveyQuestion
         }
         if(empty($rid)) {return;}
         break;
-      
+
       // The contact attempt records a canvass survey response that is not
       // an answer to a survey question, e.g., "not home".
       case 'contactAttempt':
@@ -201,20 +196,20 @@ class ApiSurveyQuestion
       $surveyResponse = $this->getArr($surveyResponse, $canvassContextObj, $cid, $canvassResponseObj);
       $canvassResponseObj->resultCodeId = NULL;
       $canvassResponseObj->responses = [ $responseObj,];
-    
+
     } else {
-      
+
       // Report a voter contact attempt.
       $surveyResponse = $this->getArr($surveyResponse, $canvassContextObj, $cid, $canvassResponseObj);
       $canvassResponseObj->resultCodeId = $rid;
       $canvassResponseObj->responses = NULL;
-      
+
     }
-    
+
     // Issue the POST
     $vanid = $surveyResponse['vanid'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
-    
+
     $dataJson = json_encode( $canvassResponseObj );
     $headers = [
       'Content-Type' => 'application/json',
