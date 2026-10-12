@@ -5,6 +5,7 @@ namespace Drupal\nlpservices;
 use Drupal\Core\File\FileExists;
 use Drupal\file\FileRepositoryInterface;
 use Drupal\Core\File\FileUrlGeneratorInterface;
+use Exception;
 use Mpdf\Mpdf;
 use Mpdf\Output\Destination;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -37,31 +38,32 @@ class PdfGenerator {
    *   The page orientation: 'L' for landscape or 'P' for portrait.
    *
    * @return string
-   *   The URL of the generated PDF file.
+   *   The URL of the generated PDF file, or '' if it could not be created.
    */
   public function generatePdf(string $html, string $tempFile, string $orientation = 'L'): string
   {
-    $mpdf = new Mpdf(
-      [
-        'orientation' => $orientation,
-        'margin_left'   => 6.5,
-        'margin_right'  => 6.5,
-        'margin_top'    => 12,
-        'margin_bottom' => 12,
-      ]);
-    $mpdf->WriteHTML($html);
-    // Create a Drupal temporary file to store the PDF.  It's deleted in a few days.
-    $file = $this->fileRepository->writeData('Placeholder', $tempFile, FileExists::Replace);
-    if ($file) {
+    // Both mPDF (MpdfException) and the file save (EntityStorageException) can throw.
+    try {
+      $mpdf = new Mpdf(
+        [
+          'orientation' => $orientation,
+          'margin_left'   => 6.5,
+          'margin_right'  => 6.5,
+          'margin_top'    => 12,
+          'margin_bottom' => 12,
+        ]);
+      $mpdf->WriteHTML($html);
+      // Create a Drupal temporary file to store the PDF.  It's deleted in a few days.
+      $file = $this->fileRepository->writeData('Placeholder', $tempFile, FileExists::Replace);
       $file->setTemporary();
       $file->save();
       $file_uri = $file->getFileUri();
+      $mpdf->Output($file_uri, Destination::FILE);
     }
-    else {
-      nlp_debug_msg('PdfGenerator','Failed to create temporary file: ');
+    catch (Exception $e) {
+      nlp_debug_msg('PdfGenerator', $e);
       return '';
     }
-    $mpdf->Output($file_uri, Destination::FILE);
     // Return a URL for a hyperlink to the PDF file.
     return $this->fileUrlGenerator->generateAbsoluteString($file_uri);
   }

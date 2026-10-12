@@ -3,6 +3,7 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
+  use Drupal\Core\Entity\EntityStorageException;
   use Drupal\Core\File\FileExists;
   use Drupal\Core\File\FileUrlGeneratorInterface;
   use Drupal\file\FileInterface;
@@ -130,6 +131,19 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->setupContainer($repoMock, $urlGeneratorMock);
 
       $this->buildGenerator()->generatePdf('<p>Hello</p>', 'public://temp/walksheet.pdf');
+    }
+
+    public function testGeneratePdfReturnsEmptyStringWhenFileSaveFails(): void {
+      $fileMock = $this->makeFileMock($this->newTempPdfPath());
+      $fileMock->method('save')->willThrowException(new EntityStorageException('save failed'));
+
+      $repoMock = $this->createMock(FileRepositoryInterface::class);
+      $repoMock->method('writeData')->willReturn($fileMock);
+      $urlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
+      $urlGeneratorMock->expects($this->never())->method('generateAbsoluteString');
+      $this->setupContainer($repoMock, $urlGeneratorMock);
+
+      $this->assertSame('', $this->buildGenerator()->generatePdf('<p>Hello</p>', 'public://temp/walksheet.pdf'));
     }
 
     public function testGeneratePdfPassesFileUriToUrlGenerator(): void {

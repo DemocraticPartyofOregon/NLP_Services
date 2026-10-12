@@ -598,6 +598,11 @@ household with the names of all the voters.</p>';
       ];
     }
     $pdfUrl = $this->createWalksheetObj->createWalksheetPdf($walksheetData);
+    if (empty($pdfUrl)) {
+      return [
+        '#markup' => '<p>The walk sheet could not be created.  Please contact your coordinator.</p>',
+      ];
+    }
 
     return [
       '#markup' => '<p><a href="'.$pdfUrl.'" target="_blank">Click here to view or download your walk sheet</a></p>',

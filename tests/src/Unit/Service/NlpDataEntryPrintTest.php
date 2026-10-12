@@ -524,6 +524,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString('<a href=', $result['#markup']);
     }
 
+    public function testBuildWalksheetPageFailedPdfReturnsErrorMarkup(): void {
+      $this->createWalksheetMock->method('createWalksheetArray')->willReturn([['householdLineCount' => 2]]);
+      $this->createWalksheetMock->method('createWalksheetPdf')->willReturn('');
+      $result = $this->buildService()->buildWalksheetPage(7);
+      $this->assertStringContainsString('could not be created', $result['#markup']);
+      $this->assertStringNotContainsString('<a href=', $result['#markup']);
+    }
+
   }
 
 }
