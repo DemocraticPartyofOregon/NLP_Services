@@ -186,6 +186,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(0, $context['results']['recordCount']);
     }
 
+    public function testProcessBatchRefreshesActiveNlsSyncMarkAndReportsCounty(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader()]);
+      $county = $this->baseArg($uri)['county'];
+      $this->nlsMock->expects($this->once())->method('markActiveNlsSync')->with($county);
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame($county, $context['results']['county']);
+    }
+
     // -------------------------------------------------------------------------
     // processBatch — NL not returned by API (unknown mcid)
     // -------------------------------------------------------------------------

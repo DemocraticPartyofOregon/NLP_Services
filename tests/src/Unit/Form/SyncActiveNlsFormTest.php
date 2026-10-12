@@ -25,12 +25,17 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpEncryption $encryptMock;
     private NlpSessionData $sessionDataMock;
 
+    /** What startActiveNlsSync returns; FALSE simulates a rebuild already running. */
+    private bool $activeNlsSyncStarts = TRUE;
+
     protected function setUp(): void {
       parent::setUp();
       $this->exportJobsMock  = $this->createMock(ApiExportJobs::class);
       $this->savedListsMock  = $this->createMock(ApiSavedLists::class);
       $this->foldersMock     = $this->createMock(ApiFolders::class);
       $this->nlsMock         = $this->createMock(NlpNls::class);
+      $this->nlsMock->method('startActiveNlsSync')
+        ->willReturnCallback(fn() => $this->activeNlsSyncStarts);
       $this->encryptMock     = $this->createMock(NlpEncryption::class);
       $this->sessionDataMock = $this->createMock(NlpSessionData::class);
     }
@@ -265,6 +270,32 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
     // submitForm — export job failure paths
     // -------------------------------------------------------------------------
+
+    public function testSubmitFormBlockedWhileAnotherActiveNlsSyncRuns(): void {
+      $messengerMock = $this->setupContainerWithMessenger();
+      $messengerMock->expects($this->once())->method('addError');
+      $this->activeNlsSyncStarts = FALSE;
+      $this->exportJobsMock->expects($this->never())->method('getExportJobs');
+      $this->nlsMock->expects($this->never())->method('deleteNls');
+      $this->nlsMock->expects($this->never())->method('endActiveNlsSync');
+      $formStateMock = $this->buildFormStateMock();
+      $formStateMock->method('getValue')->willReturn('100');
+      $formStateMock->method('get')->willReturn('Denver');
+      $form = [];
+      $this->buildForm()->submitForm($form, $formStateMock);
+    }
+
+    public function testSubmitFormExportFailureReleasesActiveNlsSync(): void {
+      $this->setupContainerWithMessenger();
+      $this->exportJobsMock->method('getExportJobs')->willReturn([]);
+      $this->nlsMock->expects($this->never())->method('deleteNls');
+      $this->nlsMock->expects($this->once())->method('endActiveNlsSync')->with('Denver');
+      $formStateMock = $this->buildFormStateMock();
+      $formStateMock->method('getValue')->willReturn('100');
+      $formStateMock->method('get')->willReturn('Denver');
+      $form = [];
+      $this->buildForm()->submitForm($form, $formStateMock);
+    }
 
     public function testSubmitFormEmptyExportJobAddsError(): void {
       $messengerMock = $this->setupContainerWithMessenger();

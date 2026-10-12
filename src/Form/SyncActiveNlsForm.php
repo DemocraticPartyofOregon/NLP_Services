@@ -152,13 +152,22 @@ the NLP Services Admin.</p>',
     $messenger = Drupal::messenger();
     $listId = (int) $form_state->getValue('file_select');
     $county = $form_state->get('county');
-    
+
+    // Only one rebuild per county at a time. The mark also tells a turf sync
+    // in this county that the NLs are being rebuilt.
+    if (!$this->nls->startActiveNlsSync($county)) {
+      $messenger->addError(t('Someone else is already rebuilding the list of active NLs for @county. Wait a few minutes for the rebuild to finish, then sync the active NLs again if you still need to.',
+        ['@county' => $county]));
+      return;
+    }
+
     // Get a list of vanIds for the NLs in the list.
     $database = 1;
     $activistCodes = ['NLPNotRegisteredAC', 'NLPDropoutAC', ];
     $exportJob = $this->exportJobs->getExportJobs( $county, $database, $listId, $activistCodes );
     if (empty($exportJob) or $exportJob['result'] != 'ok' OR empty($exportJob['downloadUrl'])) {
       $messenger->addError('NL database build failed.');
+      $this->nls->endActiveNlsSync($county);
       return;
     }
     $this->nls->deleteNls($county);
@@ -173,6 +182,7 @@ the NLP Services Admin.</p>',
         FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.', $e);
+      $this->nls->endActiveNlsSync($county);
       return;
     }
     $file->setTemporary();
@@ -180,6 +190,7 @@ the NLP Services Admin.</p>',
       $file->save();
     } catch (Exception $e) {
       nlp_debug_msg('error', $e);
+      $this->nls->endActiveNlsSync($county);
       return;
     }
     $copied = copy($remoteUrl, $localFileUrl);

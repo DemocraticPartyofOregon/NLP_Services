@@ -49,6 +49,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private array $tempFiles = [];
 
+    /** The record getNlById returns; tests empty it to simulate a missing NL. */
+    private array $nlRecord;
+
+    /** Whether activeNlsSyncInProgress reports a rebuild of the county's NLs. */
+    private bool $activeNlsSyncInProgress = FALSE;
+
     protected function setUp(): void {
       parent::setUp();
       $this->exportJobsMock      = $this->createMock(ApiExportJobs::class);
@@ -66,6 +72,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfStatusMock      = $this->createMock(NlpTurfStatus::class);
       $this->messengerMock       = $this->createMock(MessengerInterface::class);
       $this->connectionMock      = $this->createMock(Connection::class);
+
+      $this->nlRecord = $this->baseNlRecord();
+      $this->nlsMock->method('getNlById')
+        ->willReturnCallback(fn() => $this->nlRecord);
+      $this->nlsMock->method('activeNlsSyncInProgress')
+        ->willReturnCallback(fn() => $this->activeNlsSyncInProgress);
 
       // A PHPUnit mock of Transaction still runs its real destructor, which needs a
       // real connection, so use a double that records what the processor does.
@@ -236,7 +248,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock->method('updateTurfVoter')->willReturn(TRUE);
       $this->reportsMock->method('getReport')->willReturn([]);
       $this->reportsMock->method('getComment')->willReturn([]);
-      $this->nlsMock->method('getNlById')->willReturn($this->baseNlRecord());
       $this->nlsMock->method('getNlsStatus')->willReturn([]);
       $this->nlsMock->method('setNlsStatus')->willReturn(TRUE);
       $this->turfAssignmentsMock->method('getTurfAssignmentByTurfName')->willReturn([]);
@@ -610,6 +621,76 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('error', $context['results']['result']);
       $this->assertStringContainsString('already assigned to Carol Davis', (string) $context['results']['message'][0]);
       $this->assertSame(['begin', 'rollback'], $this->events);
+    }
+
+    // -------------------------------------------------------------------------
+    // NL not available — missing from the active NL list or being rebuilt
+    // -------------------------------------------------------------------------
+
+    public function testMissingNlAbortsBeforeDownload(): void {
+      $this->nlRecord = [];
+      $this->exportJobsMock->expects($this->never())->method('getExportJobs');
+
+      $context = [];
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame(1, $context['finished']);
+      $this->assertStringContainsString('(MCID 42) is no longer in the active NL list for Denver',
+        (string) $context['results']['message'][0]);
+    }
+
+    public function testActiveNlsSyncInProgressAbortsBeforeDownload(): void {
+      $this->activeNlsSyncInProgress = TRUE;
+      $this->exportJobsMock->expects($this->never())->method('getExportJobs');
+
+      $context = [];
+      $this->step($this->buildProcessor(), $this->baseArg(), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertStringContainsString('active NLs for Denver is being rebuilt',
+        (string) $context['results']['message'][0]);
+    }
+
+    public function testNlRemovedDuringFetchRollsBackAndChangesNothing(): void {
+      $this->useCsv(range(101, 118));
+      $this->stubForSuccess();
+      $this->turfsMock->expects($this->never())->method('createTurf');
+      $this->turfAssignmentsMock->expects($this->never())->method('setTurfAssignment');
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $this->step($processor, $this->baseArg(), $context);
+
+      // An active NL sync deletes the county's NLs while the voters are fetched.
+      $this->nlRecord = [];
+      $this->activeNlsSyncInProgress = TRUE;
+      for ($i = 0; $i < 10 && ($context['finished'] ?? 0) < 1; $i++) {
+        $this->step($processor, $this->baseArg(), $context);
+      }
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertArrayNotHasKey('committed', $context['results']);
+      $this->assertStringContainsString('active NLs for Denver is being rebuilt',
+        (string) $context['results']['message'][0]);
+      $this->assertSame(['begin', 'rollback'], $this->events);
+    }
+
+    public function testActiveNlsSyncStartedDuringFetchWithNlPresentCompletes(): void {
+      $this->useCsv(range(101, 118));
+      $this->stubForSuccess();
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $this->step($processor, $this->baseArg(), $context);
+
+      // The rebuild has already re-added this NL, so the turf can finish.
+      $this->activeNlsSyncInProgress = TRUE;
+      for ($i = 0; $i < 10 && ($context['finished'] ?? 0) < 1; $i++) {
+        $this->step($processor, $this->baseArg(), $context);
+      }
+
+      $this->assertSame('success', $context['results']['result']);
     }
 
   }

@@ -3,6 +3,7 @@
 namespace Drupal\nlpservices\Batch;
 
 use Drupal;
+use Drupal\nlpservices\NlpNls;
 
 class SyncActiveNlsBatch {
 
@@ -25,6 +26,11 @@ class SyncActiveNlsBatch {
    * @return void
    */
   public static function finished(bool $success, array $results, array $operations): void {
+    if (!empty($results['county'])) {
+      /** @var NlpNls $nlsObj */
+      $nlsObj = Drupal::service('nlpservices.nls');
+      $nlsObj->endActiveNlsSync($results['county']);
+    }
     $messenger = Drupal::messenger();
     if ($success) {
       $messenger->addStatus(t('The list of active NLs is successfully updated.'));

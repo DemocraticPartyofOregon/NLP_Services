@@ -293,7 +293,7 @@ services:
 
   nlpservices.nls:
     class: Drupal\nlpservices\NlpNls
-    arguments: [ '@database', '@nlpservices.database_functions', '@config.factory' ]
+    arguments: [ '@database', '@nlpservices.database_functions', '@config.factory', '@state', '@lock' ]
 
   nlpservices.nls_list_display:
     class: Drupal\nlpservices\NlpNlsListDisplay

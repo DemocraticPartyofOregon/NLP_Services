@@ -5,6 +5,7 @@ namespace Drupal\nlpservices;
 use Drupal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use RuntimeException;
 use Throwable;
@@ -170,6 +171,11 @@ class NlpSyncTurfProcessor {
    */
   private function startSync(array $arg, array &$context): bool {
     $county   = $arg['county'];
+    if ($this->nlsObj->activeNlsSyncInProgress($county)
+      || empty($this->nlsObj->getNlById($arg['mcid']))) {
+      $this->abortSync($arg, $context, $this->nlUnavailableMessage($arg['mcid'], $county));
+      return FALSE;
+    }
     $database = 0;
     $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $arg['turfId']);
     if (empty($exportJob['downloadUrl'])) {
@@ -360,7 +366,12 @@ class NlpSyncTurfProcessor {
     // assignments to another turf.
     $this->votersObj->deleteOrphanTurfVoters($vanids);
 
-    $nl        = $this->nlsObj->getNlById($mcid);
+    // An active NL sync deletes and rebuilds the county's NLs, so the NL
+    // can disappear while the voters are fetched.
+    $nl = $this->nlsObj->getNlById($mcid);
+    if (empty($nl)) {
+      throw new NlpSyncTurfException((string) $this->nlUnavailableMessage($mcid, $county));
+    }
     $newNlName = trim(($nl['firstName'] ?? '') . ' ' . ($nl['lastName'] ?? ''));
 
     // A voter can be in only one turf.  Voters in another turf are moved to this one.
@@ -652,6 +663,24 @@ class NlpSyncTurfProcessor {
       $turf['minivanCreateDate'] = $arg['minivanCreateDate'];
     }
     return $turf;
+  }
+
+  /**
+   * Builds the error shown when the NL can't be used for the turf, either
+   * because the county's list of active NLs is being rebuilt or because the
+   * NL is no longer in it.
+   *
+   * @param int $mcid The MCID of the NL.
+   * @param string $county The county of the turf.
+   * @return TranslatableMarkup
+   */
+  private function nlUnavailableMessage(int $mcid, string $county): TranslatableMarkup {
+    if ($this->nlsObj->activeNlsSyncInProgress($county)) {
+      return t('The list of active NLs for @county is being rebuilt. Wait a few minutes for the rebuild to finish, then sync the turf again.',
+        ['@county' => $county]);
+    }
+    return t('The NL (MCID @mcid) is no longer in the active NL list for @county.',
+      ['@mcid' => $mcid, '@county' => $county]);
   }
 
   /**

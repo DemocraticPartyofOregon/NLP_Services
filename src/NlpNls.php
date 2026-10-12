@@ -4,6 +4,8 @@ namespace Drupal\nlpservices;
 
 use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Database\Connection;
+use Drupal\Core\Lock\LockBackendInterface;
+use Drupal\Core\State\StateInterface;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -17,6 +19,9 @@ class NlpNls {
   const string MAIL = 'mail';
   const int NOTES_MAX = 250;   // Notes max length of the note.
   const int NLS_ALL_MAX = 200;
+  const string ACTIVE_NLS_SYNC_KEY = 'nlpservices.active_nls_sync.';
+  // An active NL sync with no progress for this long is treated as abandoned.
+  const int ACTIVE_NLS_SYNC_TIMEOUT_SECS = 300;
   public array $contactList = [self::CANVASS, self::MINIVAN, self::PHONE, self::MAIL,];
   const string DASH = '-';
   const string ASKED = 'Asked';
@@ -36,9 +41,13 @@ class NlpNls {
   
   protected Connection $connection;
   protected DatabaseFunctions $dbFunctionsObj;
-  public function __construct( $connection, $dbFunctionsObj, ConfigFactoryInterface $configFactory) {
+  protected StateInterface $state;
+  protected LockBackendInterface $lock;
+  public function __construct( $connection, $dbFunctionsObj, ConfigFactoryInterface $configFactory, $state, $lock) {
     $this->connection = $connection;
     $this->dbFunctionsObj = $dbFunctionsObj;
+    $this->state = $state;
+    $this->lock = $lock;
     $nlpConfig = $configFactory->get('nlpservices.configuration');
     $surveyQuestions = $nlpConfig->get('nlpservices_survey_questions');
     if(empty($surveyQuestions['askList'])) {
@@ -58,7 +67,75 @@ class NlpNls {
       $container->get('database'),
       $container->get('nlpservices.database_functions'),
       $container->get('config.factory'),
+      $container->get('state'),
+      $container->get('lock'),
     );
+  }
+
+  /**
+   * startActiveNlsSync
+   *
+   * Claims the rebuild of the list of active NLs for a county. Only one
+   * rebuild per county can run at a time.
+   *
+   * @param string $county
+   * @return bool - FALSE if a rebuild for the county is already running.
+   */
+  public function startActiveNlsSync(string $county): bool
+  {
+    // The lock makes the check and the mark one step, so two people
+    // submitting at the same moment can't both start a rebuild.
+    $lockName = self::ACTIVE_NLS_SYNC_KEY . $county;
+    if (!$this->lock->acquire($lockName)) { return FALSE; }
+    $started = !$this->activeNlsSyncInProgress($county);
+    if ($started) {
+      $this->markActiveNlsSync($county);
+    }
+    $this->lock->release($lockName);
+    return $started;
+  }
+
+  /**
+   * markActiveNlsSync
+   *
+   * Records that the list of active NLs for a county is being rebuilt. Call it
+   * again as the sync makes progress so the mark does not expire.
+   *
+   * @param string $county
+   * @return void
+   */
+  public function markActiveNlsSync(string $county): void
+  {
+    $this->state->set(self::ACTIVE_NLS_SYNC_KEY . $county, time());
+  }
+
+  /**
+   * endActiveNlsSync
+   *
+   * Clears the mark that the list of active NLs for a county is being rebuilt.
+   *
+   * @param string $county
+   * @return void
+   */
+  public function endActiveNlsSync(string $county): void
+  {
+    $this->state->delete(self::ACTIVE_NLS_SYNC_KEY . $county);
+  }
+
+  /**
+   * activeNlsSyncInProgress
+   *
+   * Checks if the list of active NLs for a county is being rebuilt. A mark
+   * left by a sync that stopped making progress is ignored.
+   *
+   * @param string $county
+   * @return bool
+   */
+  public function activeNlsSyncInProgress(string $county): bool
+  {
+    $lastProgress = $this->state->get(self::ACTIVE_NLS_SYNC_KEY . $county);
+    if (empty($lastProgress)) { return FALSE; }
+    return time() - $lastProgress < self::ACTIVE_NLS_SYNC_TIMEOUT_SECS;
   }
   
   /**

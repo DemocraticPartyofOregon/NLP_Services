@@ -92,6 +92,16 @@ namespace Drupal\Tests\nlpservices\Unit\Batch {
       SyncActiveNlsBatch::finished(FALSE, [], []);
     }
 
+    public function testBatchFinishedClearsActiveNlsSyncMarkForCounty(): void {
+      $nlsMock = $this->createMock(NlpNls::class);
+      $nlsMock->expects($this->once())->method('endActiveNlsSync')->with('Denver');
+      $container = new ContainerBuilder();
+      $container->set('messenger', $this->messengerMock);
+      $container->set('nlpservices.nls', $nlsMock);
+      Drupal::setContainer($container);
+      SyncActiveNlsBatch::finished(FALSE, ['county' => 'Denver'], []);
+    }
+
     // -------------------------------------------------------------------------
     // NlpSyncActiveNlsProcessor::roleConvert
     // -------------------------------------------------------------------------
