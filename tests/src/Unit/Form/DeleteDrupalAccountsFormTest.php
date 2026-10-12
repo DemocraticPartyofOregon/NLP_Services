@@ -348,6 +348,36 @@ class DeleteDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
+  public function testSubmitFormDeleteSubmitLoadsUserMissingFromFormState(): void {
+    $this->drupalUserMock->method('getUserByUid')->with(7)
+      ->willReturn(['uid' => 7, 'firstName' => 'Jane', 'lastName' => 'Doe', 'roles' => []]);
+    $this->drupalUserMock->expects($this->once())->method('deleteUser')->with(7);
+    $this->messengerMock->expects($this->once())->method('addStatus');
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('userSelections', [['uid' => 7]]);
+    $formState->setTriggeringElement(['#name' => 'delete-submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormDeleteSubmitWarnsWhenUserNoLongerExists(): void {
+    $this->drupalUserMock->method('getUserByUid')->with(7)->willReturn([]);
+    $this->drupalUserMock->expects($this->never())->method('deleteUser');
+    $this->messengerMock->expects($this->once())->method('addWarning');
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('userSelections', [['uid' => 7]]);
+    $formState->set('users', []);
+    $formState->setTriggeringElement(['#name' => 'delete-submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
   public function testSubmitFormDeleteSubmitSkipsAdminUsers(): void {
     $this->drupalUserMock->expects($this->never())->method('deleteUser');
     $this->messengerMock->expects($this->once())->method('addStatus');
