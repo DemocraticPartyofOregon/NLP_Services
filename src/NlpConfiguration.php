@@ -458,18 +458,6 @@ class NlpConfiguration
   }
 
   /**
-   * setAltPhoneResponseCodes
-   *
-   * @param array $responseCodes
-   * @return void
-   */
-  public function setAltPhoneResponseCodes(array $responseCodes): void
-  {
-    $iConfig = $this->config->getEditable('nlpservices.configuration');
-    $iConfig->set('nlpservices_alt_phone_response_codes', $responseCodes)->save();
-  }
-
-  /**
    * getCrosstabCreateTime
    *
    * Get the time the crosstab information uploaded to NLP was created. This is the time
