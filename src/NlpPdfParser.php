@@ -31,7 +31,8 @@ class NlpPdfParser
 
     try {
       $parser = new Parser();
-      $pdf = $parser->parseFile($pdfPath);
+      // getPages() throws on a malformed PDF (no catalog), so it stays in the try.
+      $pages = $parser->parseFile($pdfPath)->getPages();
     } catch (Exception $e) {
       nlp_debug_msg('NlpPdfParser', $e);
       return false;
@@ -41,7 +42,7 @@ class NlpPdfParser
     // A large per-page y-offset keeps pages from interleaving when sorted.
     $segments = [];
     $pageOffset = 0.0;
-    foreach ($pdf->getPages() as $page) {
+    foreach ($pages as $page) {
       foreach ($page->getDataTm() as [$matrix, $text]) {
         if (trim($text) === '') {
           continue;

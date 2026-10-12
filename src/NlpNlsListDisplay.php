@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal\Component\Render\MarkupInterface;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
@@ -319,9 +320,9 @@ class NlpNlsListDisplay
    *
    * @param string $label - The column label.
    * @param string $hint - The popup text.
-   * @return Markup
+   * @return MarkupInterface|string
    */
-  private function hintHeader(string $label, string $hint): Markup
+  private function hintHeader(string $label, string $hint): MarkupInterface|string
   {
     return Markup::create('<div class="hint_note nlp-th-hint"><p>' . Html::escape($label)
       . '<span class="hint-list">' . Html::escape($hint) . '</span></p></div>');
