@@ -175,12 +175,37 @@ class DataEntryForm extends FormBase
     $form_state->set('voterArrays', $voterArrays);
     $form_state->setValue('dataEntry', NULL);
     $user_input = $form_state->getUserInput() ?? [];
-    unset($user_input['dataEntry']);
+    $contactMethodVanid = $this->contactMethodChangeVanid($form_state);
+    if ($contactMethodVanid !== NULL) {
+      // A contact method change only redraws the table so the voter gets that
+      // method's "Voter Wasn't Contacted" choices.  Keep what was entered for
+      // every voter, except that voter's old not-contacted pick.
+      unset($user_input['dataEntry']['row_2_' . $contactMethodVanid]['col_2_4']['line_2_4_2']);
+    } else {
+      // After a save or page change, show the table fresh from the database.
+      unset($user_input['dataEntry']);
+    }
     $form_state->setUserInput($user_input);
 
     $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable($voterArrays);
 
     $form['navigate'] = $this->dataEntryDateBarObj->navigate($pageCount,$currentPage);
+
+    // A right-aligned Save reports bar at the end of the form that sticks to the
+    // bottom of the window while the voters scroll but stays within the form (it
+    // never covers the footer). It stays hidden until unsaved-changes.js sees an
+    // edit, so it doesn't clutter a page that has nothing to save.
+    $form['save-floating'] = [
+      '#type'       => 'container',
+      '#attributes' => ['class' => ['nlp-floating-save']],
+      'save' => [
+        '#type'  => 'submit',
+        '#value' => t('Save reports'),
+        '#name'  => 'save_reports',
+      ],
+    ];
+    $form['#attached']['library'][] = 'nlpservices/unsaved-changes';
+    $form['#attributes']['class'][] = 'js-form-changed';
     return $form;
   }
 
@@ -190,19 +215,13 @@ class DataEntryForm extends FormBase
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
 
-    $triggeringElement = $form_state->getTriggeringElement();
-    $elementClicked = $triggeringElement['#name'];
-
-    if(str_contains($elementClicked, 'line_2_2_2')) {
+    $vanid = $this->contactMethodChangeVanid($form_state);
+    if($vanid !== NULL) {
 
       $form_state->setRebuild();
       $form_state->set('reenter',TRUE);
 
-      $rowPos = strpos($elementClicked,'row_2_');
-      $vanidEnd = strpos($elementClicked,']',$rowPos+6);
-      $vanid = substr($elementClicked,$rowPos+6,$vanidEnd-$rowPos-6);
-
-      $chosenMethodCode = $triggeringElement['#value'];
+      $chosenMethodCode = $form_state->getTriggeringElement()['#value'];
       $contactMethods = $this->nlpConfigurationObj->getContactMethods();
 
       $values =
@@ -712,6 +731,27 @@ not checked have already received a postcard for this election.</p></div>',
   {
     // Comprehensive phone number validation
     return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
+  }
+
+  /**
+   * contactMethodChangeVanid
+   *
+   * Returns the vanid of the voter whose contact method dropdown triggered
+   * this request, or NULL if something else did.  The dropdown's name looks
+   * like dataEntry[row_2_<vanid>][col_2_2][line_2_2_2].
+   *
+   * @param FormStateInterface $form_state
+   * @return string|null
+   */
+  private function contactMethodChangeVanid(FormStateInterface $form_state): ?string
+  {
+    $elementClicked = $form_state->getTriggeringElement()['#name'] ?? '';
+    if(!str_contains($elementClicked, 'line_2_2_2')) {
+      return NULL;
+    }
+    $rowPos = strpos($elementClicked,'row_2_');
+    $vanidEnd = strpos($elementClicked,']',$rowPos+6);
+    return substr($elementClicked,$rowPos+6,$vanidEnd-$rowPos-6);
   }
 
   /**

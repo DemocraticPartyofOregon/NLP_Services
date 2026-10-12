@@ -292,6 +292,8 @@ class NlpDataEntryVoterListDisplay
         '#type' => 'select',
         '#options' => $contactMethods,
         '#default_value' => $selectedContactMethod['code'],
+        // Only remembered for the session, not a report to save (unsaved-changes.js).
+        '#attributes' => ['class' => ['nlp-not-an-edit']],
         '#ajax' => [
           'callback' => '::formCallback',
           'wrapper' => 'data-entry-div',

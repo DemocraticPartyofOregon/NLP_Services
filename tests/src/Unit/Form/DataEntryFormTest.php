@@ -336,6 +336,108 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertContains('nlpservices/data-entry-table', $form['#attached']['library']);
   }
 
+  /**
+   * Configure mocks for buildForm to draw the voters page with two voters.
+   */
+  private function configureVoterPage(): void {
+    $this->configureValidSession();
+    $this->dataEntryVotersMock->method('fetchVoters')->willReturn([
+      1 => ['vanid' => 1, 'firstName' => 'Ann', 'lastName' => 'Jones'],
+      2 => ['vanid' => 2, 'firstName' => 'Bob', 'lastName' => 'Smith'],
+    ]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Walk', 1 => 'Phone']);
+    $this->dataEntryVoterListDisplayMock->method('buildDataEntryVoterArray')
+      ->willReturnCallback(static fn($voter) => $voter);
+    $this->dataEntryVoterListDisplayMock->method('buildVoterDataEntryTable')
+      ->willReturn(['#type' => 'table']);
+    $this->dataEntryDateBarMock->method('createDateBar')->willReturn(['#markup' => 'bar']);
+    $this->dataEntryDateBarMock->method('navigate')->willReturn(['#markup' => 'nav']);
+  }
+
+  /**
+   * What the browser sends for two voters who each have entries.
+   */
+  private function twoVotersInput(): array {
+    $row = static fn(int $notContacted) => [
+      'col_2_3' => ['line_2_3_3' => 0],
+      'col_2_4' => ['line_2_4_2' => $notContacted],
+      'col_2_5' => ['line_2_5_2' => 1],
+    ];
+    return ['dataEntry' => ['row_2_1' => $row(5), 'row_2_2' => $row(7)]];
+  }
+
+  public function testBuildFormContactMethodChangeKeepsOtherVotersEntries(): void {
+    $this->configureVoterPage();
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+    $formState->setUserInput($this->twoVotersInput());
+    $formState->setTriggeringElement(['#name' => 'dataEntry[row_2_1][col_2_2][line_2_2_2]', '#value' => 1]);
+
+    $this->form->buildForm([], $formState);
+
+    $input = $formState->getUserInput()['dataEntry'];
+    // The other voter's entries survive the redraw.
+    $this->assertSame(7, $input['row_2_2']['col_2_4']['line_2_4_2']);
+    $this->assertSame(1, $input['row_2_2']['col_2_5']['line_2_5_2']);
+    // The changed voter keeps everything except the not-contacted pick, whose
+    // choices depend on the contact method.
+    $this->assertArrayNotHasKey('line_2_4_2', $input['row_2_1']['col_2_4']);
+    $this->assertSame(1, $input['row_2_1']['col_2_5']['line_2_5_2']);
+  }
+
+  public function testBuildFormAfterSaveClearsAllEntries(): void {
+    $this->configureVoterPage();
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+    $formState->setUserInput($this->twoVotersInput());
+    $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => 'Save reports']);
+
+    $this->form->buildForm([], $formState);
+
+    $this->assertArrayNotHasKey('dataEntry', $formState->getUserInput());
+  }
+
+  public function testBuildFormAddsHiddenFloatingSaveButton(): void {
+    $this->configureVoterPage();
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+
+    $form = $this->form->buildForm([], $formState);
+
+    // Saves exactly like the nav bar's Save reports button.
+    $this->assertSame('save_reports', $form['save-floating']['save']['#name']);
+    $this->assertSame('submit', $form['save-floating']['save']['#type']);
+    // The bar is hidden by CSS until unsaved-changes.js sees an edit.
+    $this->assertSame('container', $form['save-floating']['#type']);
+    $this->assertContains('nlp-floating-save', $form['save-floating']['#attributes']['class']);
+    // It must be the last element so position: sticky keeps it inside the form.
+    $children = array_filter(array_keys($form), static fn($key) => !str_starts_with((string) $key, '#'));
+    $this->assertSame('save-floating', end($children));
+    $this->assertContains('nlpservices/unsaved-changes', $form['#attached']['library']);
+    $this->assertContains('js-form-changed', $form['#attributes']['class']);
+  }
+
+  public function testBuildFormPostcardsPageHasNoUnsavedChangesWarning(): void {
+    $this->configureValidSession();
+    $this->dataEntryVotersMock->method('fetchVoters')->willReturn([
+      111111 => ['vanid' => 111111, 'firstName' => 'Bob', 'lastName' => 'Smith'],
+    ]);
+    $this->reportsMock->method('voterSentPostcard')->willReturn(FALSE);
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'postcardsSent');
+
+    $form = $this->form->buildForm([], $formState);
+
+    $this->assertArrayNotHasKey('save-floating', $form);
+    $this->assertNotContains('nlpservices/unsaved-changes', $form['#attached']['library']);
+  }
+
   public function testBuildFormPaginatesToTenVotersPerPage(): void {
     $this->configureValidSession();
 

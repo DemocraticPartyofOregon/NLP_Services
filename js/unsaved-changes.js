@@ -3,10 +3,12 @@
   'use strict';
 
   // The HD/precinct selects and the name search only filter the list; they are
-  // not edits to save.
+  // not edits to save.  Other pages mark their non-edit controls (search boxes,
+  // date pickers, etc.) with the nlp-not-an-edit class.
   function isFilterControl(el) {
     return el.classList.contains('nlp-hd-select')
       || el.classList.contains('nlp-pct-select')
+      || el.classList.contains('nlp-not-an-edit')
       || el.name === 'search-needle';
   }
 

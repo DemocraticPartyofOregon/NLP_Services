@@ -232,6 +232,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertArrayHasKey('postcard', $result);
     }
 
+    public function testCreateDateBarMarksDateAndSearchAsNotEdits(): void {
+      // unsaved-changes.js ignores these, so they don't trigger the unsaved warning.
+      $this->setupDateBarMocks();
+      $result = $this->buildService()->createDateBar('2024-10-15', 7, 42, 0, 3);
+      $this->assertContains('nlp-not-an-edit', $result['canvass_date']['canvassDate']['#attributes']['class']);
+      $this->assertContains('nlp-not-an-edit', $result['search']['last-name']['#attributes']['class']);
+    }
+
+    public function testNavigateSaveReportsButtonIsColoredAfterAnEdit(): void {
+      // unsaved-changes.js finds the button by this class to color it after an edit.
+      $result = $this->buildService()->navigate(5, 0);
+      $this->assertContains('nlp-save-top', $result['nav']['save_reports']['#attributes']['class']);
+    }
+
   }
 
 }

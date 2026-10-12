@@ -262,6 +262,8 @@ class NlpDataEntryDateBar
     $form_element['canvassDate'] = [
       '#type' => 'date',
       '#title' => t('Date of the voter contact'),
+      // Picking a date alone is not a report to save (unsaved-changes.js).
+      '#attributes' => ['class' => ['nlp-not-an-edit']],
     ];
     if(!empty($defaultDate)) {
       $form_element['canvassDate']['#default_value'] = $defaultDate;
@@ -297,6 +299,8 @@ class NlpDataEntryDateBar
       //'#description' => t('Last name.'),
       '#size' => 20,
       '#maxlength' => 40,
+      // Typing a search is not a report to save (unsaved-changes.js).
+      '#attributes' => ['class' => ['nlp-not-an-edit']],
     ];
     $form_element['search-submit'] = ['#markup' => '</td><td class="no-white">'];
     $form_element['last_name_submit'] = [
@@ -428,6 +432,8 @@ class NlpDataEntryDateBar
       '#type' => 'submit',
       '#value' => t('Save reports'),
       '#name' => 'save_reports',
+      // unsaved-changes.js adds is-changed after an edit, which turns it light blue.
+      '#attributes' => ['class' => ['nlp-save-top']],
       '#prefix' => " \n".'<div class="nav_number" title="And stay on this page.">'." \n",
       '#suffix' => " \n".'</div>'." \n",
     ];
