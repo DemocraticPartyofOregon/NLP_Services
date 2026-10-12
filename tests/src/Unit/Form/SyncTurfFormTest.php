@@ -158,7 +158,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->nlsMock->expects($this->never())->method('getHdList');
 
       // Satisfy the nl_search_by_district page (uses form_state county, not sessionData).
-      $this->sessionDataMock->method('getSavedHd')->willReturn('');
+      $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->sessionDataMock->method('getPrecinctList')->willReturn([]);
       $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn(0);
       $this->nlsMock->method('getNls')->willReturn([]);
@@ -212,7 +212,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       // NL select page and submitted from it.
       $this->usePostRequest(['sync_turf_page' => 'nl_select']);
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
-      $this->sessionDataMock->method('get')->willReturnMap([['syncTurfPage', 'nl_search_by_name']]);
+      $this->sessionDataMock->method('get')->willReturnMap([
+        ['syncTurfPage', 'nl_search_by_name'],
+        ['turfId',       5],
+      ]);
       $this->sessionDataMock->expects($this->once())->method('set')->with('syncTurfPage', 'nl_select');
       $this->turfsMock->method('getTurfAssignment')->willReturn([]);
 
@@ -231,7 +234,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormPostIgnoresUnknownPostedPage(): void {
       $this->usePostRequest(['sync_turf_page' => 'bogus']);
       $this->sessionDataMock->method('getCounty')->willReturn('Denver');
-      $this->sessionDataMock->method('get')->willReturnMap([['syncTurfPage', 'nl_select']]);
+      $this->sessionDataMock->method('get')->willReturnMap([
+        ['syncTurfPage', 'nl_select'],
+        ['turfId',       5],
+      ]);
       $this->sessionDataMock->expects($this->never())->method('set');
       $this->turfsMock->method('getTurfAssignment')->willReturn([]);
 
@@ -245,6 +251,33 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $this->buildForm()->buildForm([], $formState);
       $this->assertContains(['page', 'nl_select'], $captured);
+    }
+
+    public function testBuildFormPostWithoutTurfReturnsToTurfSelect(): void {
+      // The NL pages need a turf; with none in the session, start over on the turf page.
+      $this->usePostRequest(['sync_turf_page' => 'nl_select']);
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('get')->willReturnMap([
+        ['syncTurfPage', 'nl_select'],
+        ['turfId',       NULL],
+      ]);
+      $setCalls = [];
+      $this->sessionDataMock->method('set')
+        ->willReturnCallback(function (string $key, $value) use (&$setCalls): void {
+          $setCalls[] = [$key, $value];
+        });
+
+      $captured = [];
+      $formState = $this->capturingFormState($captured, [
+        ['reenter', NULL],
+        ['county',  'Denver'],
+        ['page',    'turf_select'],
+        ['showLists', FALSE],
+      ]);
+
+      $this->buildForm()->buildForm([], $formState);
+      $this->assertContains(['page', 'turf_select'], $captured);
+      $this->assertSame(['syncTurfPage', 'turf_select'], end($setCalls));
     }
 
     public function testBuildFormRecordsPageInHiddenField(): void {
