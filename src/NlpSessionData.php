@@ -70,7 +70,21 @@ class NlpSessionData
   }
 
   /**
-   * Returns the voter contact method for a voter.  Defaults to Walk if none is set.
+   * Sets the default contact method and applies it to every voter, replacing
+   * any contact method chosen for a single voter.
+   *
+   * @param array $method - An array with the contact method data.
+   *   Example: ['code' => 1, 'name' => 'Phone']
+   */
+  public function setDefaultVoterContactMethod(array $method): void
+  {
+    $this->set('defaultVoterContactMethod', $method);
+    $this->set('voterContactMethods', []);
+  }
+
+  /**
+   * Returns the voter contact method for a voter.  Defaults to the default
+   * contact method, or Walk if no default is set.
    *
    * @param int $vanid - The Voter Access Number (VANID) of the voter.
    * @return array - An array with the contact method data.
@@ -81,6 +95,14 @@ class NlpSessionData
     $voterContactMethods = $this->get('voterContactMethods');
     if(!empty($voterContactMethods[$vanid])) {
       return $voterContactMethods[$vanid];
+    }
+    $defaultVoterContactMethod = $this->get('defaultVoterContactMethod');
+    if(!empty($defaultVoterContactMethod)) {
+      return [
+        'vanid' => $vanid,
+        'name' => $defaultVoterContactMethod['name'],
+        'code' => $defaultVoterContactMethod['code'],
+      ];
     }
     return ['vanid' => $vanid, 'name' => 'Walk', 'code' => 2];
   }

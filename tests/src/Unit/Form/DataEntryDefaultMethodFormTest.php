@@ -148,8 +148,8 @@ class DataEntryDefaultMethodFormTest extends UnitTestCase {
       ->willReturn([0 => 'Walk', 1 => 'Phone', 2 => 'Postcard']);
 
     $this->sessionDataMock->expects($this->once())
-      ->method('set')
-      ->with('defaultVoterContactMethod', ['code' => 1, 'name' => 'Phone']);
+      ->method('setDefaultVoterContactMethod')
+      ->with(['code' => 1, 'name' => 'Phone']);
 
     $formState = new FormState();
     $formState->setValue('contact_method', 1);

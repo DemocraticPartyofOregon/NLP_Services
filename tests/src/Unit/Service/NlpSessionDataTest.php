@@ -187,6 +187,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame($updated, $service->getVoterContactMethod('999'));
     }
 
+    public function testGetVoterContactMethodReturnsSavedDefaultWhenNotSet(): void {
+      $service = $this->buildService();
+      $service->setDefaultVoterContactMethod(['code' => 1, 'name' => 'Phone']);
+
+      $result = $service->getVoterContactMethod(123456);
+
+      $this->assertSame(['vanid' => 123456, 'name' => 'Phone', 'code' => 1], $result);
+    }
+
+    public function testSetDefaultVoterContactMethodReplacesEveryVotersMethod(): void {
+      $service = $this->buildService();
+      $service->setVoterContactMethod(['vanid' => '111', 'name' => 'Walk', 'code' => 2]);
+      $service->setVoterContactMethod(['vanid' => '222', 'name' => 'Postcard', 'code' => 3]);
+
+      $service->setDefaultVoterContactMethod(['code' => 1, 'name' => 'Phone']);
+
+      $this->assertSame(['vanid' => 111, 'name' => 'Phone', 'code' => 1], $service->getVoterContactMethod('111'));
+      $this->assertSame(['vanid' => 222, 'name' => 'Phone', 'code' => 1], $service->getVoterContactMethod('222'));
+      $this->assertSame(['code' => 1, 'name' => 'Phone'], $this->store['defaultVoterContactMethod']);
+    }
+
     // -------------------------------------------------------------------------
     // setNewDistricts() — first call (no prior session data)
     // -------------------------------------------------------------------------
