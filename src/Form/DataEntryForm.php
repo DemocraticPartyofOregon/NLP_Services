@@ -604,7 +604,7 @@ not checked have already received a postcard for this election.</p></div>',
     // the mailing date here without going back.
     $form['canvassDate'] = [
       '#type' => 'date',
-      '#title' => t('Date of the voter contact'),
+      '#title' => t('Date cards were mailed'),
       '#prefix' => '<div class="canvass_date">',
       '#suffix' => '</div>',
     ];
