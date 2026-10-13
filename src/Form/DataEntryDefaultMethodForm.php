@@ -89,7 +89,7 @@ class DataEntryDefaultMethodForm extends FormBase
       'code' => $selectedContactMethodIndex,
       'name' => $contactMethods[$selectedContactMethodIndex],
     ];
-    $this->sessionDataObj->set('defaultVoterContactMethod', $method);
+    $this->sessionDataObj->setDefaultVoterContactMethod($method);
     $this->messenger()->addStatus($this->t('You selected the method: @name', ['@name' => $method['name']]));
   }
 }
