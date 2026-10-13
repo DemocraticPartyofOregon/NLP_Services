@@ -168,6 +168,52 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([1001, 1002], $result);
     }
 
+    public function testGetApiVoterActivistCodesReadsEveryPage(): void {
+      $this->stubKeyValues();
+      $urls = [];
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method, string $url) use (&$urls): ResponseInterface {
+          $urls[] = $url;
+          return (count($urls) === 1)
+            ? $this->makeResponse(['items' => [['activistCodeId' => 1001]], 'nextPageLink' => 'https://next'])
+            : $this->makeResponse(['items' => [['activistCodeId' => 1002]], 'nextPageLink' => NULL]);
+        });
+
+      $result = $this->buildService()->getApiVoterActivistCodes(99999);
+
+      $this->assertSame([1001, 1002], $result);
+      $this->assertCount(2, $urls);
+      $this->assertStringContainsString('$top=200&$skip=0', $urls[0]);
+      $this->assertStringContainsString('$top=200&$skip=200', $urls[1]);
+    }
+
+    public function testGetApiVoterActivistCodesStopsAfterMaxPages(): void {
+      $this->stubKeyValues();
+      $this->clientMock->expects($this->exactly(ApiActivistCodes::VOTER_CODES_MAX_PAGES))
+        ->method('request')
+        ->willReturnCallback(fn() => $this->makeResponse(
+          ['items' => [['activistCodeId' => 1001]], 'nextPageLink' => 'https://next']));
+
+      $this->buildService()->getApiVoterActivistCodes(99999);
+    }
+
+    public function testSetApiActivistCodeApplyFindsCodeOnSecondPage(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method, string $url): ResponseInterface {
+          if ($method === 'POST') {
+            return $this->makeResponse(NULL);
+          }
+          return str_contains($url, '$skip=0')
+            ? $this->makeResponse(['items' => [['activistCodeId' => 2002]], 'nextPageLink' => 'https://next'])
+            : $this->makeResponse(['items' => [['activistCodeId' => 1001]]]);
+        });
+
+      $request = ['codeName' => 'NLPDropoutAC', 'vanid' => 99999, 'action' => 'Apply'];
+      $this->assertTrue($this->buildServiceWithoutWaits()->setApiActivistCode($request));
+    }
+
     public function testGetApiVoterActivistCodesEmptyItemsReturnsEmptyArray(): void {
       $this->stubKeyValues();
       $this->clientMock->method('request')->willReturn($this->makeResponse(['items' => []]));

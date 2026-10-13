@@ -16,6 +16,17 @@ class ApiActivistCodes
 
   const string ACTIVIST_CODE = 'ActivistCode';
 
+  /**
+   * Page size for reading a voter's activist codes. VAN's usual maximum
+   * $top is 200; without $top it sends a smaller default page.
+   */
+  const int VOTER_CODES_PAGE_SIZE = 200;
+
+  /**
+   * Stops a VAN response that always sends a nextPageLink from looping forever.
+   */
+  const int VOTER_CODES_MAX_PAGES = 10;
+
   private array $supportedActivistCodes = [
     'NLPVoterAC' => 0,
     'NLPHostileAC' => 0,
@@ -103,17 +114,27 @@ class ApiActivistCodes
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    $url = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
+    $baseUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes";
+    // VAN pages this list. A voter with many codes can have the one we want
+    // on a later page, so keep reading while VAN says there are more.
+    $codes = [];
+    $skip = 0;
+    $url = $baseUrl;
     try {
-      $request = $this->client->request('GET', $url);
-      $results = json_decode($request->getBody(), TRUE);
-      if (json_last_error() !== JSON_ERROR_NONE) {
-        return [];
-      }
-      $codes = [];
-      foreach ($results['items'] ?? [] as $item) {
-        $codes[] = (int) $item['activistCodeId'];
-      }
+      do {
+        $url = $baseUrl.'?$top='.self::VOTER_CODES_PAGE_SIZE.'&$skip='.$skip;
+        $request = $this->client->request('GET', $url);
+        $results = json_decode($request->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          return [];
+        }
+        $items = $results['items'] ?? [];
+        foreach ($items as $item) {
+          $codes[] = (int) $item['activistCodeId'];
+        }
+        $skip += self::VOTER_CODES_PAGE_SIZE;
+      } while (!empty($results['nextPageLink']) && !empty($items)
+        && $skip < self::VOTER_CODES_PAGE_SIZE * self::VOTER_CODES_MAX_PAGES);
       return $codes;
     } catch (GuzzleException | Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e);
@@ -204,7 +225,7 @@ class ApiActivistCodes
     Drupal::logger('nlpservices')->error(
       'Activist code @code (@rid) @action not confirmed for vanid @vanid after @sec seconds. '
       . 'POST response: @status @body. Database: @database, committee key: @committee. '
-      . 'Codes VAN returned for the voter: @codes.',
+      . 'Codes VAN returned for the voter (@count): @codes.',
       [
         '@code' => $activistCodeName,
         '@rid' => $rid,
@@ -215,6 +236,7 @@ class ApiActivistCodes
         '@body' => (string) $response->getBody() ?: '(empty)',
         '@database' => $database,
         '@committee' => $committee ?: 'State Committee',
+        '@count' => count($voterCodes),
         '@codes' => $voterCodes ? implode(', ', $voterCodes) : '(none)',
       ]
     );
@@ -253,7 +275,7 @@ class ApiActivistCodes
     $hasCode = [];
     $this->sendInRateLimitedGroups(
       $vanids,
-      fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes"),
+      fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes".'?$top='.self::VOTER_CODES_PAGE_SIZE),
       function($response, $vanid) use (&$hasCode, $rid) {
         $result = json_decode($response->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
