@@ -99,7 +99,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     /**
      * Expects one notice whose placeholder values, joined with ' | ', match the pattern.
      */
-    private function expectNotice(string $pattern): void {
+    private function expectLoggedNotice(string $pattern): void {
       $loggerChannel = $this->createMock(LoggerChannelInterface::class);
       $loggerChannel->expects($this->once())->method('notice')
         ->with($this->anything(), $this->callback(function (array $context) use ($pattern) {
@@ -516,7 +516,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testValidateFormSelectionNotInTurfArraySetsFormError(): void {
-      $this->expectNotice('/^73 \| 73 \| 1 \| Denver \| HD1 \| none \| \d+ \| form-abc \| yes \| 73: not in database$/');
+      $this->expectLoggedNotice('/^73 \| 73 \| 1 \| Denver \| HD1 \| none \| \d+ \| form-abc \| yes \| 73: not in database$/');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
@@ -539,7 +539,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testValidateFormMissingTurfLogsItsDatabaseRecord(): void {
-      $this->expectNotice('/73: county=Denver hd=HD2 mcid=99$/');
+      $this->expectLoggedNotice('/73: county=Denver hd=HD2 mcid=99$/');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
@@ -576,7 +576,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testSubmitFormSkipsTurfNoLongerInDatabase(): void {
-      $this->expectNotice('/^7 \| it no longer exists$/');
+      $this->expectLoggedNotice('/^7 \| it no longer exists$/');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
@@ -595,7 +595,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testSubmitFormSkipsTurfWhoseNlChanged(): void {
-      $this->expectNotice('/^7 \| its NL changed from 42 to 99$/');
+      $this->expectLoggedNotice('/^7 \| its NL changed from 42 to 99$/');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
