@@ -673,6 +673,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ['selections', [7 => 7]],
       ]);
 
+      $this->stubDatabaseTurfs([7 => $turf]);
       $this->turfsMock->expects($this->once())
         ->method('deleteTurf')
         ->with(['mcid' => 42, 'county' => 'Denver', 'turfIndex' => 7])
