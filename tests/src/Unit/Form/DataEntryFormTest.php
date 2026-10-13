@@ -463,9 +463,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertCount(10, $formState->get('voterArrays'));
   }
 
-  /**
-   * @covers ::buildForm
-   */
   public function testBuildFormRemembersVotersAndPageItShowed(): void {
     $this->configureValidSession();
     $voters = [1 => ['vanid' => 1, 'firstName' => 'Ann', 'lastName' => 'Jones']];
@@ -490,8 +487,6 @@ class DataEntryFormTest extends UnitTestCase {
    * A contact method change must rebuild the rows the browser is showing, even
    * when the session or the turf has changed since, or the changed select is
    * missing from the rebuilt form and Drupal's AJAX handler throws.
-   *
-   * @covers ::buildForm
    */
   public function testBuildFormContactMethodRebuildReusesShownVoters(): void {
     // The session now points at another turf and page, and the turf has
