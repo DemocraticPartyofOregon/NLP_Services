@@ -108,29 +108,49 @@ class DataEntryForm extends FormBase
       $form_state->set('page','voters');
     }
 
-    if(!$this->initializeDataReporting($form_state)) {
-      return $form;
-    }
-    $turfIndex = $this->sessionDataObj->get('turfIndex');
-    $form_state->set('turfIndex',$turfIndex);
-    if(!$form_state->get('reenter')) {
-      $this->updateMinivanInfo($turfIndex);
-    }
+    // A contact method change rebuilds the form in the middle of its AJAX
+    // request, and Drupal then looks the changed select up again in the rebuilt
+    // form. Rebuild the same turf, page and voters this form last showed rather
+    // than re-reading them from the session and database, which another browser
+    // tab or a turf update may have changed since. If that voter's row is gone,
+    // Drupal throws "The specified #ajax callback is empty or not callable."
+    $contactMethodRebuild = (bool) $form_state->get('contactMethodRebuild');
+    $form_state->set('contactMethodRebuild', FALSE);
 
-    $page = $form_state->get('page');
-    switch ($page) {
-      case 'unreportedChanges':
+    if($contactMethodRebuild) {
+      $turfIndex = $form_state->get('turfIndex');
+      $voters = $form_state->get('voters') ?? [];
+      $currentPage = $form_state->get('currentPage');
+    } else {
+      if(!$this->initializeDataReporting($form_state)) {
+        return $form;
+      }
+      $turfIndex = $this->sessionDataObj->get('turfIndex');
+      $form_state->set('turfIndex',$turfIndex);
+      if(!$form_state->get('reenter')) {
+        $this->updateMinivanInfo($turfIndex);
+      }
+
+      $page = $form_state->get('page');
+      switch ($page) {
+        case 'unreportedChanges':
+          $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
+          return $form;
+        case 'postcardsSent':
+          $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
+          $form['postcardsList'] = $this->displayVoterList($turfIndex, $canvassDate);
+          return $form;
+      }
+
+      if($form_state->get('unreportedChanges')) {
         $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
         return $form;
-      case 'postcardsSent':
-        $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
-        $form['postcardsList'] = $this->displayVoterList($turfIndex, $canvassDate);
-        return $form;
-    }
+      }
 
-    if($form_state->get('unreportedChanges')) {
-      $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
-      return $form;
+      $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
+      $currentPage = $this->sessionDataObj->get('currentPage');
+      $form_state->set('voters', $voters);
+      $form_state->set('currentPage', $currentPage);
     }
 
     $canvassDate = $this->sessionDataObj->get('canvassDate');
@@ -139,11 +159,7 @@ class DataEntryForm extends FormBase
 
     $form_state->set('defaultValues',NULL);
 
-    $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
-
     $pageCount = (int) ceil(count($voters)/$this::DE_PAGE_SIZE);
-
-    $currentPage = $this->sessionDataObj->get('currentPage');
 
     $contactMethods = $this->nlpConfigurationObj->getContactMethods();
     $defaultVoterContactMethod = $this->sessionDataObj->get('defaultVoterContactMethod');
@@ -221,6 +237,7 @@ class DataEntryForm extends FormBase
 
       $form_state->setRebuild();
       $form_state->set('reenter',TRUE);
+      $form_state->set('contactMethodRebuild',TRUE);
 
       $chosenMethodCode = $form_state->getTriggeringElement()['#value'];
       $contactMethods = $this->nlpConfigurationObj->getContactMethods();

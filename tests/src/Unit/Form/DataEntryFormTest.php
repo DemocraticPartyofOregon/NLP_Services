@@ -463,6 +463,75 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertCount(10, $formState->get('voterArrays'));
   }
 
+  /**
+   * @covers ::buildForm
+   */
+  public function testBuildFormRemembersVotersAndPageItShowed(): void {
+    $this->configureValidSession();
+    $voters = [1 => ['vanid' => 1, 'firstName' => 'Ann', 'lastName' => 'Jones']];
+    $this->dataEntryVotersMock->method('fetchVoters')->willReturn($voters);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Walk']);
+    $this->dataEntryVoterListDisplayMock->method('buildDataEntryVoterArray')
+      ->willReturnCallback(static fn($voter) => $voter);
+    $this->dataEntryVoterListDisplayMock->method('buildVoterDataEntryTable')
+      ->willReturn(['#type' => 'table']);
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+
+    $this->form->buildForm([], $formState);
+
+    $this->assertSame($voters, $formState->get('voters'));
+    $this->assertSame(0, $formState->get('currentPage'));
+  }
+
+  /**
+   * A contact method change must rebuild the rows the browser is showing, even
+   * when the session or the turf has changed since, or the changed select is
+   * missing from the rebuilt form and Drupal's AJAX handler throws.
+   *
+   * @covers ::buildForm
+   */
+  public function testBuildFormContactMethodRebuildReusesShownVoters(): void {
+    // The session now points at another turf and page, and the turf has
+    // unreported changes; none of that may reach this rebuild.
+    $this->sessionDataMock->method('get')->willReturnCallback(
+      static fn(string $key): mixed => match ($key) {
+        'turfIndex'   => 7,
+        'currentPage' => 3,
+        default       => NULL,
+      }
+    );
+    $this->turfsMock->method('unreportedChanges')->willReturn(TRUE);
+    $this->dataEntryVotersMock->expects($this->never())->method('fetchVoters');
+    $this->drupalUserMock->expects($this->never())->method('getCurrentUser');
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Walk']);
+    $this->dataEntryVoterListDisplayMock->method('buildDataEntryVoterArray')
+      ->willReturnCallback(static fn($voter) => $voter);
+    $this->dataEntryVoterListDisplayMock->method('buildVoterDataEntryTable')
+      ->willReturnCallback(static fn(array $voterArrays) => ['rows' => array_keys($voterArrays)]);
+
+    $voters = [];
+    for ($i = 1; $i <= 15; $i++) {
+      $voters[$i] = ['vanid' => $i, 'firstName' => "First$i", 'lastName' => "Last$i"];
+    }
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+    $formState->set('turfIndex', 42);
+    $formState->set('voters', $voters);
+    $formState->set('currentPage', 1);
+    $formState->set('mcid', 101);
+    $formState->set('contactMethodRebuild', TRUE);
+
+    $form = $this->form->buildForm([], $formState);
+
+    $this->assertSame([11, 12, 13, 14, 15], $form['dataEntryTable']['voters']['rows']);
+    $this->assertSame(42, $formState->get('turfIndex'));
+    $this->assertFalse($formState->get('contactMethodRebuild'));
+  }
+
   // ---------------------------------------------------------------------------
   // validateForm
   // ---------------------------------------------------------------------------
@@ -496,6 +565,7 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->validateForm($form, $formState);
 
     $this->assertTrue($formState->get('reenter'));
+    $this->assertTrue($formState->get('contactMethodRebuild'));
   }
 
   // ---------------------------------------------------------------------------
