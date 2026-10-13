@@ -563,6 +563,33 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame('voters', $formState->get('page'));
   }
 
+  public function testSubmitFormPostcardSelectReportsDateChosenOnPostcardPage(): void {
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane']);
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('get')->willReturnMap([['canvassDate', '2026-10-12']]);
+    $this->nlpConfigurationMock->method('getResponseId')->willReturn(5);
+    $this->nlpConfigurationMock->method('getContactId')->willReturn(3);
+
+    $reportedDate = NULL;
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+        $reportedDate = $report['contactDate'];
+      });
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('turfIndex', 42);
+    $formState->set('mcid', 101);
+    $formState->setValue('canvassDate', '2026-10-09');
+    $formState->setValue('postcardsSentList', [111111 => 111111]);
+    $formState->setTriggeringElement(['#name' => 'postcardSelect', '#value' => '']);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame('2026-10-09', $reportedDate);
+  }
+
   // ---------------------------------------------------------------------------
   // submitForm — navigation
   // ---------------------------------------------------------------------------
@@ -656,6 +683,33 @@ class DataEntryFormTest extends UnitTestCase {
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
     $this->form->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormSaveReportsUsesChosenContactDate(): void {
+    $reportedDate = NULL;
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+        $reportedDate = $report['contactDate'];
+      });
+    $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
+    $formState->setValue('canvassDate', '2026-10-09');
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame('2026-10-09', $reportedDate);
+  }
+
+  public function testSubmitFormSaveReportsDefaultsContactDateToToday(): void {
+    $reportedDate = NULL;
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+        $reportedDate = $report['contactDate'];
+      });
+    $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame(date('Y-m-d'), $reportedDate);
   }
 
   public function testSubmitFormMovedCallsVoterMoved(): void {

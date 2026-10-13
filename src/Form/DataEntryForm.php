@@ -123,7 +123,8 @@ class DataEntryForm extends FormBase
         $form['unreportedChanges'] = $this->unreportedChangesDisplay($turfIndex);
         return $form;
       case 'postcardsSent':
-        $form['postcardsList'] = $this->displayVoterList($turfIndex);
+        $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
+        $form['postcardsList'] = $this->displayVoterList($turfIndex, $canvassDate);
         return $form;
     }
 
@@ -253,6 +254,7 @@ class DataEntryForm extends FormBase
     $canvassDate = $this->sessionDataObj->get('canvassDate') ?? '';
     if(!empty($newCanvassDate) AND $canvassDate != $newCanvassDate) {
       $this->sessionDataObj->set('canvassDate',$newCanvassDate);
+      $canvassDate = $newCanvassDate;
     }
     switch ($elementClicked) {
       case 'acknowledgeUnreportedChanges':
@@ -317,7 +319,10 @@ class DataEntryForm extends FormBase
     $nlsInfo = $this->nlsObj->getNlById($mcid);
 
     $county = $this->sessionDataObj->getCounty();
-    $canvassDate = date('Y-m-d');
+    // Report with the date of the voter contact the NL chose, or today if none.
+    if (empty($canvassDate)) {
+      $canvassDate = date('Y-m-d');
+    }
     $voterArrays = $form_state->get('voterArrays');
 
     foreach ($actions as $vanid => $actionSet) {
@@ -572,9 +577,10 @@ Please acknowledge that you have reviewed these changes.</p>',
    * 3. A submit form element button is provided to report changes.
    *
    * @param int $turfIndex
+   * @param string $canvassDate - the date of the voter contact chosen so far.
    * @return array
    */
-  private function displayVoterList(int $turfIndex): array
+  private function displayVoterList(int $turfIndex, string $canvassDate = ''): array
   {
     $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
     $voterDisplay = $postcardsSent = [];
@@ -594,6 +600,17 @@ was sent to them.  Check the box for those that you mailed the postcard.  If
 the voter has not already received a postcard, the box will be checked.   Those
 not checked have already received a postcard for this election.</p></div>',
     ];
+    // The same date entry as the data entry page's date bar, so the NL can set
+    // the mailing date here without going back.
+    $form['canvassDate'] = [
+      '#type' => 'date',
+      '#title' => t('Date of the voter contact'),
+      '#prefix' => '<div class="canvass_date">',
+      '#suffix' => '</div>',
+    ];
+    if(!empty($canvassDate)) {
+      $form['canvassDate']['#default_value'] = $canvassDate;
+    }
     $form['postcardsSentList'] = [
       '#type' => 'checkboxes',
       '#options' => $voterDisplay,
