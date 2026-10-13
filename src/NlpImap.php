@@ -77,6 +77,8 @@ class NlpImap
     $connection = imap_open($hostname,$emailInfo['email'],$emailInfo['password']);
     if($connection === false) {
       $error = imap_last_error();
+      // Clear c-client's error queue, or PHP prints it as notices at shutdown.
+      imap_errors();
       Drupal::logger('nlpservices')->notice('getImapConnection: '.$error.', '.$emailName);
       return false;
     }
@@ -127,6 +129,8 @@ class NlpImap
     $connection = imap_open($hostname,$emailInfo['email'],$emailInfo['password']);
     if($connection === false) {
       $error = imap_last_error();
+      // Clear c-client's error queue, or PHP prints it as notices at shutdown.
+      imap_errors();
       return ['result'=>'error', 'message'=>$error, ];
     }
     imap_close($connection);
