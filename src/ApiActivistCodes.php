@@ -39,7 +39,7 @@ class ApiActivistCodes
    * by setApiActivistCode(). The first check is immediate, so a normal save
    * isn't delayed.
    */
-  private array $verifyDelaysMs = [0, 1000, 2000, 3000, 4000];
+  private array $verifyDelaysMs = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000, 5000];
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
