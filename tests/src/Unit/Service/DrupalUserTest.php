@@ -304,6 +304,45 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       }
     }
 
+
+    // -------------------------------------------------------------------------
+    // loginNameForEmail
+    // -------------------------------------------------------------------------
+
+    /**
+     * Wires the user storage to find users by name and by mail separately.
+     */
+    private function mockUsersByNameAndMail(array $byName, array $byMail): void {
+      $storageMock = $this->createMock(EntityStorageInterface::class);
+      $storageMock->method('loadByProperties')->willReturnCallback(
+        static fn(array $properties): array => isset($properties['name']) ? $byName : $byMail);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
+    }
+
+    public function testLoginNameForEmailIgnoresAUsername(): void {
+      $this->mockUsersByNameAndMail([], [$this->buildUserStub()]);
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('alice.smith'));
+    }
+
+    public function testLoginNameForEmailReturnsTheAccountsUsername(): void {
+      $this->mockUsersByNameAndMail([], [$this->buildUserStub()]);
+      $this->assertSame('alice.smith', $this->buildDrupalUser()->loginNameForEmail(' alice@example.com '));
+    }
+
+    public function testLoginNameForEmailReturnsEmptyForAnEmailNotOnFile(): void {
+      $this->mockUsersByNameAndMail([], []);
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('nobody@example.com'));
+    }
+
+    public function testLoginNameForEmailLeavesAUsernameWithAnAtSignAlone(): void {
+      // An account is named with what was typed, so Drupal checks it as is.
+      $this->mockUsersByNameAndMail(
+        [$this->buildUserStub(['userName' => 'alice@example.com'])],
+        [$this->buildUserStub(['userName' => 'other.name'])]);
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('alice@example.com'));
+    }
+
   }
 
 }

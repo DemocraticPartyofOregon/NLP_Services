@@ -2,6 +2,7 @@
 
 use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Psr\Log\LogLevel;
 
@@ -216,11 +217,41 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
 
     case 'user_login_form':
       $form['actions']['submit']['#value'] = t('Login to Account');
+      // Swap an email address for its username before Drupal checks the login.
+      array_unshift($form['#validate'], 'nlpservices_login_email_validate');
       $form['#validate'][] = 'nlpservices_login_validate';
+      $form['name']['#title'] = t('Username or email');
+      $form['name']['#description'] = t('Enter your username or the email address your coordinator has for you.');
+      $form['login_help'] = [
+        '#markup' => '<p>' . t('Forgot your username or password? <a href=":url">Email me my login</a>',
+            [':url' => Url::fromRoute('nlpservices.login_help')->toString()]) . '</p>',
+        '#weight' => 200,
+      ];
       break;
   }
 }
 
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_login_email_validate
+ *
+ * NLs often type their email address as the username.  Replace it with the
+ * username of the account that has that email, so the login works.
+ *
+ * @param $form
+ * @param FormStateInterface $form_state
+ * @return void
+ * @noinspection PhpUnused
+ * @noinspection PhpUnusedParameterInspection
+ */
+function nlpservices_login_email_validate(&$form, FormStateInterface $form_state): void
+{
+  $name = (string) $form_state->getValue('name');
+  $userName = Drupal::service('nlpservices.drupal_user')->loginNameForEmail($name);
+  if(empty($userName)) { return; }
+  Drupal::logger('nlpservices')->notice('Login with email for: '.$userName);
+  $form_state->setValue('name', $userName);
+}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * nlpservices_login_validate
@@ -248,8 +279,10 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
     Drupal::logger('nlpservices')->notice('Unknown user login attempt: '.$userName.' '.$pass);
     ///nlp_debug_msg('$values',$values);
     if(filter_var($userName, FILTER_VALIDATE_EMAIL)) {
+      // nlpservices_login_email_validate() found no account with this email.
       $messenger = Drupal::messenger();
-      $messenger->addWarning(t('An email address is not a valid Username.'));
+      $messenger->addWarning(t('No account uses that email address.  Try your username, or ask your
+        coordinator which email address they have for you.'));
     }
     return;
   }
