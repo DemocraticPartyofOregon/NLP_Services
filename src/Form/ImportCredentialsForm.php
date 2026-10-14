@@ -186,8 +186,10 @@ accounts before restoring any passwords.</p>',
       }
 
       // --- import (original behaviour) ---
+      // A blank password stays blank: no reminder is sent for it, and the next
+      // restore of the NL's account gives Drupal and the table a new one.
       if (empty($credentials['magicWord'])) {
-        $credentials['magicWord'] = 'Unknown';
+        $credentials['magicWord'] = '';
       }
       if (empty($credentials['hd']) || !is_numeric($credentials['hd'])) {
         $credentials['hd'] = NULL;

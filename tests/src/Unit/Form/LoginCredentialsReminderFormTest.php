@@ -26,12 +26,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpConfiguration $nlpConfigurationMock;
     private NlpSessionData $nlpSessionDataMock;
     private MessengerInterface $messengerMock;
+    /** What hasKnownLogin() returns: an account with a saved password. */
+    private bool $knownLogin = TRUE;
 
     protected function setUp(): void {
       parent::setUp();
       $this->drupalUserMock      = $this->createMock(DrupalUser::class);
       $this->nlsObjMock          = $this->createMock(NlpNls::class);
       $this->credentialsEmailMock = $this->createMock(NlpCredentialsEmail::class);
+      $this->credentialsEmailMock->method('hasKnownLogin')->willReturnCallback(fn(): bool => $this->knownLogin);
       $this->searchBarMock       = $this->createMock(NlpSearchBar::class);
       $this->userDisplayMock     = $this->createMock(NlpUserDisplay::class);
       $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
@@ -524,6 +527,25 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       // The reminder must go to the Drupal account's own email (what the admin sees in the
       // selection table), not whatever nlp_nls happens to have on file for the NL.
       $this->assertSame('jane@example.com', $capturedTo);
+    }
+
+
+    public function testSubmitFormReminderSelectSendsNothingWithoutASavedPassword(): void {
+      $this->knownLogin = FALSE;
+      $this->drupalUserMock->method('getUserByUid')->willReturn($this->sampleUser(1));
+
+      $this->credentialsEmailMock->expects($this->never())->method('sendCredentialsEmail');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->stringContains('has no saved password'));
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'reminder_select']);
+      $formState->method('get')->willReturnMap([
+        ['userSelections', [['uid' => 1]]],
+      ]);
+
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
     }
 
   }

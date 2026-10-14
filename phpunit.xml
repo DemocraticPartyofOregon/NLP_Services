@@ -4,6 +4,7 @@
     <testsuite name="nlpservices">
       <directory>tests/src/Unit/Batch</directory>
       <directory>tests/src/Unit/Config</directory>
+      <directory>tests/src/Unit/Controller</directory>
       <directory>tests/src/Unit/Form</directory>
       <directory>tests/src/Unit/Service</directory>
     </testsuite>

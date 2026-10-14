@@ -234,6 +234,13 @@ class LoginCredentialsReminderForm extends FormBase
               ' does not have the MCID field set and may not be a valid NL.');
             continue;
           }
+          if(!$this->credentialsEmailObj->hasKnownLogin((int) $mcid)) {
+            // Drupal keeps only a hash of the password, so without a saved
+            // copy we don't know it and have nothing to remind the NL of.
+            $messenger->addError($user['firstName'].' '.$user['lastName'].
+              ' has no saved password, so no reminder was sent.  Set a new password for them in Manage Drupal accounts.');
+            continue;
+          }
 
           $result = $this->remindUserCredentials($user);
           if($result) {

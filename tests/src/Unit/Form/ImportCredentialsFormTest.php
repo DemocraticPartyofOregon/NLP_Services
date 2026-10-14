@@ -311,10 +311,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->submitFormWithRows([$this->baseRow(['userName' => ''])]);
     }
 
-    public function testSubmitFormImportDefaultsMissingMagicWordToUnknown(): void {
+    public function testSubmitFormImportLeavesAMissingMagicWordBlank(): void {
+      // "Unknown" would be saved as if it were the NL's password.
       $this->magicWordMock->expects($this->once())
         ->method('updateCredentials')
-        ->with($this->callback(fn(array $c): bool => $c['magicWord'] === 'Unknown'));
+        ->with($this->callback(fn(array $c): bool => $c['magicWord'] === ''));
 
       $this->submitFormWithRows([$this->baseRow(['magicWord' => ''])]);
     }
