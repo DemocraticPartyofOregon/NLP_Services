@@ -233,6 +233,13 @@ class LoginCredentialsReminderForm extends FormBase
               ' does not have the MCID field set and may not be a valid NL.');
             continue;
           }
+          if(empty($this->magicWord->getMagicWord($mcid))) {
+            // Drupal keeps only a hash of the password, so without a saved
+            // copy we don't know it and have nothing to remind the NL of.
+            $messenger->addError($user['firstName'].' '.$user['lastName'].
+              ' has no saved password, so no reminder was sent.  Set a new password for them in Manage Drupal accounts.');
+            continue;
+          }
           
           $result = $this->remindUserCredentials($user);
           if($result) {
@@ -284,10 +291,10 @@ class LoginCredentialsReminderForm extends FormBase
   {
     $messenger = Drupal::messenger();
     $mcid = $user['mcid'];
-    $password = 'unknown';
-    if(!empty($mcid)) {
-      $magicWord = $this->magicWord->getMagicWord($mcid);
-      $password = (!empty($magicWord))?$magicWord:'unknown';
+    $password = (!empty($mcid)) ? $this->magicWord->getMagicWord($mcid) : '';
+    if(empty($password)) {
+      // Never remind an NL of a password we don't know.
+      return FALSE;
     }
     
     $today = date("F j, Y, g:i a");

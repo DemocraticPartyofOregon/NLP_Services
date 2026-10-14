@@ -369,9 +369,27 @@ class DeliverTurfForm extends FormBase
     $coordinatorContactTemplate = '<p>@firstName @lastName<br>Phone: @phone<br>Email:
 <a href="mailto:@email?subject=Request for help with turf">@email</a></p>';
 
+    $mcid = $turfChoice['mcid'];
+    $magicWord = $this->magicWordObj->getMagicWord($mcid);
+    $user = $this->drupalUserObj->getUserByMcid($mcid);
+    $userName = $user['userName'] ?? '';
+
     /** @noinspection HtmlUnknownTarget */
     $nlpLoginTemplate = '<p><b>Neighborhood Leader Login: </b><a href="@server_url" target="_blank">@server_url</a>
 <br><b>Username:</b> @name<br><b>Password:</b> @pass</p>';
+    if(empty($user) OR empty($magicWord)) {
+      // Without an account (the NL isn't active) or a saved password, there is
+      // no login to send.
+      Drupal::logger('nlpservices')->notice('Turf delivered without a login, no account or saved password for mcid: '.$mcid);
+      /** @noinspection HtmlUnknownTarget */
+      $nlpLoginTemplate = '<p><b>Neighborhood Leader Login: </b><a href="@server_url" target="_blank">@server_url</a>
+<br>Ask your coordinator for your username and password.</p>';
+      $messenger->addWarning(t('@first @last has no login account or no saved password, so the email asks them
+        to contact their coordinator for their login.', [
+        '@first' => $turfChoice['nlFirstName'],
+        '@last'  => $turfChoice['nlLastName'],
+      ]));
+    }
 
     $minivanNumber = 0;
     $minivanCreateDate = '';
@@ -394,20 +412,6 @@ class DeliverTurfForm extends FormBase
     $ballotDropDate = $this->nlpConfigurationObj->getBallotDropDate();
     $electionTimeStamp = strtotime($electionDate);
     $ballotDropTimeStamp = strtotime($ballotDropDate);
-
-    $mcid = $turfChoice['mcid'];
-    $magicWord = $this->magicWordObj->getMagicWord($mcid);
-    if(empty($magicWord)) {
-      $magicWord = 'Your Password';
-    }
-
-    $user = $this->drupalUserObj->getUserByMcid($mcid);
-    if(empty($user)) {
-      Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
-      $userName = 'unknown';
-    } else {
-      $userName = $user['userName'];
-    }
 
     $nl = $this->nlsObj->getNlById($mcid);
     $to = $nl['email'];

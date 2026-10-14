@@ -645,8 +645,8 @@ class NlpSyncActiveNlsProcessor {
     if ($vfid != $credentials['vfid']) {
       $credentials['vfid'] = $vfid;
     }
-    foreach (['email', 'county', 'hd', 'created', 'access'] as $field) {
-      if ($credentials[$field] != $drupalUser[$field]) {
+    foreach (['userName', 'email', 'county', 'hd', 'created', 'access'] as $field) {
+      if (($credentials[$field] ?? NULL) != $drupalUser[$field]) {
         $credentials[$field] = $drupalUser[$field];
       }
     }
@@ -704,7 +704,12 @@ class NlpSyncActiveNlsProcessor {
         return ['accountOk' => FALSE, 'message' => $uniqueUsernameArray['message']];
       }
       $userInfo['userName']  = $uniqueUsername;
-      $userInfo['magicWord'] = $this->magicWordObj->createMagicWord();
+      // Keep a saved password, so the account and the saved copy match and the
+      // NL can still use the one they know.  A new password is saved by
+      // verifyCredentials(), since the saved one is blank.
+      $userInfo['magicWord'] = !empty($savedCredentials['magicWord'])
+        ? $savedCredentials['magicWord']
+        : $this->magicWordObj->createMagicWord();
     }
     $newAccount = $this->drupalUserObj->createDrupalAccount($userInfo);
     if (empty($newAccount)) {

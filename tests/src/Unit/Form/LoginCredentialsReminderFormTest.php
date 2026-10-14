@@ -444,18 +444,15 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // remindUserCredentials — falls back to 'unknown' password when no magic word
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormReminderSelectUsesUnknownPasswordWhenNoMagicWord(): void {
+    public function testSubmitFormReminderSelectSendsNothingWithoutASavedPassword(): void {
       $user = $this->sampleUser(1);
       $this->drupalUserMock->method('getUserByUid')->willReturn($user);
       $this->drupalUserMock->method('getCurrentUser')->willReturn($this->currentUserFixture());
       $this->magicWordMock->method('getMagicWord')->willReturn('');
 
-      $capturedMessage = '';
-      $this->sendEmailMock->method('sendEmail')
-        ->willReturnCallback(function ($type, $to, $subject, $message, $from) use (&$capturedMessage) {
-          $capturedMessage = $message;
-          return TRUE;
-        });
+      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->stringContains('has no saved password'));
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getTriggeringElement')->willReturn(['#name' => 'reminder_select']);
@@ -465,7 +462,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $form = [];
       $this->buildForm()->submitForm($form, $formState);
-      $this->assertStringContainsString('unknown', $capturedMessage);
     }
 
   }

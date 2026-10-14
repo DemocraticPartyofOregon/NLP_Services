@@ -350,6 +350,82 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // processBatch — restoring a returning NL's account
+    // -------------------------------------------------------------------------
+
+    /**
+     * Restores a returning NL whose saved credentials are given, and returns
+     * the account info createDrupalAccount() was given and the credentials
+     * saved afterwards.
+     */
+    private function restoreReturningNl(array $savedCredentials, string $newUserName): array {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
+      $this->apiNlsMock->method('getNls')->willReturn([101 => $this->baseNlRecord()]);
+
+      $this->magicWordMock->method('getCredentials')->willReturn($savedCredentials);
+      $this->magicWordMock->method('getMagicWord')->willReturn($savedCredentials['magicWord']);
+      // The NL's account was deleted after the last election.
+      $this->drupalUserMock->method('getUserByEmail')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $this->magicWordMock->method('uniqueUserName')->willReturn($newUserName);
+      $this->drupalUserMock->method('getUserByName')->willReturn([]);
+      $this->magicWordMock->method('createMagicWord')->willReturn('newpw5');
+
+      $result = ['accountInfo' => [], 'savedCredentials' => []];
+      $this->drupalUserMock->method('createDrupalAccount')
+        ->willReturnCallback(function (array $userInfo) use (&$result): array {
+          $result['accountInfo'] = $userInfo;
+          return $this->baseDrupalUser(['userName' => $userInfo['userName']]);
+        });
+      $this->magicWordMock->method('updateCredentials')
+        ->willReturnCallback(function (array $credentials) use (&$result): bool {
+          $result['savedCredentials'] = $credentials;
+          return TRUE;
+        });
+      $this->nlsMock->method('createNl')->willReturn(TRUE);
+      $this->messengerMock->expects($this->never())->method('addError');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+      return $result;
+    }
+
+    private function savedCredentials(array $overrides = []): array {
+      return array_merge([
+        'mcid' => 101, 'userName' => 'asmith', 'email' => 'alice@example.com', 'magicWord' => 'planet7',
+        'vfid' => 50, 'county' => 'Denver', 'hd' => '6', 'roles' => [], 'created' => 0, 'access' => 0,
+      ], $overrides);
+    }
+
+    public function testProcessBatchRestoresTheSavedUsernameAndPassword(): void {
+      $this->magicWordMock->expects($this->never())->method('createMagicWord');
+      $result = $this->restoreReturningNl($this->savedCredentials(), 'unused');
+      $this->assertSame('asmith', $result['accountInfo']['userName']);
+      $this->assertSame('planet7', $result['accountInfo']['magicWord']);
+    }
+
+    public function testProcessBatchKeepsTheSavedPasswordWhenTheSavedUsernameIsBlank(): void {
+      $this->magicWordMock->expects($this->never())->method('createMagicWord');
+      $this->magicWordMock->expects($this->never())->method('setMagicWord');
+
+      $result = $this->restoreReturningNl($this->savedCredentials(['userName' => '']), 'alice.smith');
+
+      $this->assertSame('alice.smith', $result['accountInfo']['userName']);
+      $this->assertSame('planet7', $result['accountInfo']['magicWord']);
+      // The new username is saved too.
+      $this->assertSame('alice.smith', $result['savedCredentials']['userName']);
+    }
+
+    public function testProcessBatchSavesANewPasswordForABlankOneWithTheAccount(): void {
+      // Drupal and the saved copy must get the same new password.
+      $this->magicWordMock->expects($this->once())->method('setMagicWord')->with(101, 'newpw5');
+
+      $result = $this->restoreReturningNl($this->savedCredentials(['magicWord' => '']), 'alice.smith');
+
+      $this->assertSame('newpw5', $result['accountInfo']['magicWord']);
+    }
+
+    // -------------------------------------------------------------------------
     // processBatch — second call (sandbox already initialised) resumes seek
     // -------------------------------------------------------------------------
 

@@ -511,7 +511,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   /**
    * @covers ::notifyUserCredentials
    */
-  public function testNotifyUserCredentialsUsesFallbackMagicWordWhenMissing(): void {
+  public function testNotifyUserCredentialsSendsNoLoginWithoutASavedPassword(): void {
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([
       'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
@@ -533,10 +533,42 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->nlsMock->method('updateNlStatus');
     $this->turfsMock->method('setTurfDelivered');
     $this->messengerMock->method('addMessage');
+    $this->messengerMock->expects($this->once())->method('addWarning');
 
     $this->buildFormInstance()->notifyUserCredentials($this->baseTurfChoice(), '');
 
-    $this->assertStringContainsString('Your Password', $capturedMessage);
+    $this->assertStringContainsString('Ask your coordinator for your username and password', $capturedMessage);
+    $this->assertStringNotContainsString('jane.doe', $capturedMessage);
+    $this->assertStringNotContainsString('Password:', $capturedMessage);
+  }
+
+  /**
+   * @covers ::notifyUserCredentials
+   */
+  public function testNotifyUserCredentialsSendsNoLoginWithoutAnAccount(): void {
+    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->coordinatorsMock->method('getCoordinator')->willReturn([
+      'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
+    ]);
+    $this->turfMsgMock->method('getTurfMsg')->willReturn('@nlpLogin @coordinatorContactInfo @plainNote');
+    $this->nlpConfigurationMock->method('getElectionDate')->willReturn('2026-11-03');
+    $this->nlpConfigurationMock->method('getBallotDropDate')->willReturn('2026-10-14');
+    $this->magicWordMock->method('getMagicWord')->willReturn('secret');
+    $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+    $this->nlsMock->method('getNlById')->willReturn(['email' => 'nl@example.com']);
+
+    $capturedMessage = '';
+    $this->sendMailMock->method('sendEmail')
+      ->willReturnCallback(function ($type, $to, $subject, $message) use (&$capturedMessage): bool {
+        $capturedMessage = $message;
+        return TRUE;
+      });
+    $this->messengerMock->expects($this->once())->method('addWarning');
+
+    $this->buildFormInstance()->notifyUserCredentials($this->baseTurfChoice(), '');
+
+    $this->assertStringContainsString('Ask your coordinator for your username and password', $capturedMessage);
+    $this->assertStringNotContainsString('secret', $capturedMessage);
   }
 
   // -------------------------------------------------------------------------

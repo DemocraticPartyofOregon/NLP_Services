@@ -167,7 +167,8 @@ services:
   nlpservices.credentials_email:
     class: Drupal\nlpservices\NlpCredentialsEmail
     arguments: [ '@nlpservices.drupal_user', '@nlpservices.coordinators', '@nlpservices.mcid_recovery',
-                 '@nlpservices.configuration', '@nlpservices.send_email', '@nlpservices.nls', '@request_stack' ]
+                 '@nlpservices.configuration', '@nlpservices.send_email', '@nlpservices.nls', '@request_stack',
+                 '@nlpservices.magic_word' ]
 
   nlpservices.reports:
     class: Drupal\nlpservices\NlpReports

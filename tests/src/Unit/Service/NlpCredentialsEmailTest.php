@@ -5,6 +5,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\DrupalUser;
+  use Drupal\nlpservices\MagicWord;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpCredentialsEmail;
@@ -25,6 +26,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpSendEmail $sendMailMock;
     private NlpNls $nlsMock;
     private RequestStack $requestStackMock;
+    private MagicWord $magicWordMock;
+    /** What getMagicWord() returns; '' means no password is saved. */
+    private string $savedPassword = 'planet7';
 
     protected function setUp(): void {
       parent::setUp();
@@ -35,6 +39,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->sendMailMock     = $this->createMock(NlpSendEmail::class);
       $this->nlsMock          = $this->createMock(NlpNls::class);
       $this->requestStackMock = $this->createMock(RequestStack::class);
+      $this->magicWordMock    = $this->createMock(MagicWord::class);
+      $this->magicWordMock->method('getMagicWord')->willReturnCallback(fn(): string => $this->savedPassword);
 
       $loggerMock = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
@@ -64,6 +70,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->sendMailMock,
         $this->nlsMock,
         $this->requestStackMock,
+        $this->magicWordMock,
       );
     }
 
@@ -135,11 +142,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertFalse($result);
     }
 
-    public function testSendCredentialsEmailUnknownUserFallsBackToUnknownUserName(): void {
+    /**
+     * Sends the turf email for an NL and returns its message.
+     */
+    private function sendWithoutALogin(array $drupalUser): string {
       $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->baseCoordinator());
-      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
-      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
+      $this->drupalUserMock->method('getUserByMcid')->willReturn($drupalUser);
+      $this->mcidRecoveryMock->expects($this->never())->method('saveRecoveryKey');
       $this->configMock->method('getElectionDate')->willReturn('2024-11-05');
       $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');
       $this->setupRequestMock();
@@ -151,8 +161,24 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           return TRUE;
         });
 
-      $this->buildService()->sendCredentialsEmail(42, '@nlpLogin');
-      $this->assertStringContainsString('unknown', $capturedMessage);
+      $this->assertTrue($this->buildService()->sendCredentialsEmail(42, '@nlpLogin'));
+      return $capturedMessage;
+    }
+
+    public function testSendCredentialsEmailWithoutAnAccountSendsNoLogin(): void {
+      // An NL who isn't active has no account.
+      $message = $this->sendWithoutALogin([]);
+      $this->assertStringContainsString('Ask your coordinator for your username and password', $message);
+      $this->assertStringNotContainsString('nlp-mcid-recovery', $message);
+    }
+
+    public function testSendCredentialsEmailWithoutASavedPasswordSendsNoLogin(): void {
+      // Drupal has only a hash, so a blank saved password is unknown.
+      $this->savedPassword = '';
+      $message = $this->sendWithoutALogin(['userName' => 'bsmith']);
+      $this->assertStringContainsString('Ask your coordinator for your username and password', $message);
+      $this->assertStringNotContainsString('bsmith', $message);
+      $this->assertStringNotContainsString('nlp-mcid-recovery', $message);
     }
 
     public function testSendCredentialsEmailNlpLoginPlaceholderContainsServerUrl(): void {

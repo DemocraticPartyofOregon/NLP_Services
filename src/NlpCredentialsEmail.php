@@ -15,9 +15,10 @@ class NlpCredentialsEmail
   protected NlpSendEmail $sendMailObj;
   protected NlpNls $nlsObj;
   protected RequestStack $requestStack;
+  protected MagicWord $magicWordObj;
 
   public function __construct( $drupalUserObj, $coordinatorsObj, $mcidRecoveryObj,
-                               $nlpConfigurationObj, $sendMailObj, $nlsObj, $requestStack )
+                               $nlpConfigurationObj, $sendMailObj, $nlsObj, $requestStack, $magicWordObj )
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->coordinatorsObj = $coordinatorsObj;
@@ -26,6 +27,7 @@ class NlpCredentialsEmail
     $this->sendMailObj = $sendMailObj;
     $this->nlsObj = $nlsObj;
     $this->requestStack = $requestStack;
+    $this->magicWordObj = $magicWordObj;
   }
 
 
@@ -39,6 +41,7 @@ class NlpCredentialsEmail
       $container->get('nlpservices.send_email'),
       $container->get('nlpservices.nls'),
       $container->get('request_stack'),
+      $container->get('nlpservices.magic_word'),
     );
   }
 
@@ -73,21 +76,20 @@ class NlpCredentialsEmail
 
     $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
 
-    $user = $this->drupalUserObj->getUserByMcid($mcid);
-    if(empty($user)) {
-      Drupal::logger('nlpservices')->notice('Unknown user: '.$mcid );
-      $userName = 'unknown';
-    } else {
-      $userName = $user['userName'];
-    }
-
-    $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
-    $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
-
     $nlpLoginInfo = "<p><b>Neighborhood Leader Login: </b>".
-      '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>'.
-      "<br><b>Username:</b> $userName".
-      '<br><a href="' . $revealUrl . '">Click here to retrieve your password</a> (this link can only be used once)</p>';
+      '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>';
+    $user = $this->drupalUserObj->getUserByMcid($mcid);
+    if(empty($user) OR empty($this->magicWordObj->getMagicWord($mcid))) {
+      // Without an account (the NL isn't active) or a saved password, there is
+      // no login to send.
+      Drupal::logger('nlpservices')->notice('sendCredentialsEmail: no account or saved password for mcid: '.$mcid);
+      $nlpLoginInfo .= "<br>Ask your coordinator for your username and password.</p>";
+    } else {
+      $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
+      $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
+      $nlpLoginInfo .= "<br><b>Username:</b> ".$user['userName'].
+        '<br><a href="' . $revealUrl . '">Click here to retrieve your password</a> (this link can only be used once)</p>';
+    }
 
     $miniVanInfo = '';
     if(!empty($miniVanArray)) {
