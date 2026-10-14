@@ -351,6 +351,66 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNull($capturedReply);
     }
 
+
+    // -------------------------------------------------------------------------
+    // sendLoginHelpEmail
+    // -------------------------------------------------------------------------
+
+    private function loginHelpUser(): array {
+      return ['mcid' => 42, 'userName' => 'bsmith', 'email' => 'bob@example.com', 'firstName' => 'Bob'];
+    }
+
+    public function testSendLoginHelpEmailSendsUsernameAndPasswordLinkToTheNl(): void {
+      $this->setupStandardMocks();
+      $sent = [];
+      $this->sendMailMock->expects($this->once())->method('sendEmail')
+        ->willReturnCallback(function ($key, $to, $subject, $message, $reply) use (&$sent): bool {
+          $sent = compact('key', 'to', 'message', 'reply');
+          return TRUE;
+        });
+
+      $this->assertTrue($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
+
+      $this->assertSame('account_reminder', $sent['key']);
+      $this->assertSame('bob@example.com', $sent['to']);
+      $this->assertStringContainsString('bsmith', $sent['message']);
+      $this->assertStringContainsString('https://example.com/nlp-mcid-recovery?key=abc-key-123', $sent['message']);
+      $this->assertStringContainsString('Jane Doe', $sent['message']);
+      $this->assertSame('jane@example.com', $sent['reply']);
+    }
+
+    public function testSendLoginHelpEmailWithoutACoordinatorLeavesOutTheContact(): void {
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->coordinatorsMock->expects($this->never())->method('getAssignedCoordinator');
+      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
+      $this->setupRequestMock();
+      $sent = [];
+      $this->sendMailMock->method('sendEmail')
+        ->willReturnCallback(function ($key, $to, $subject, $message, $reply) use (&$sent): bool {
+          $sent = compact('message', 'reply');
+          return TRUE;
+        });
+
+      $this->assertTrue($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
+      $this->assertStringNotContainsString('contact your coordinator', $sent['message']);
+      $this->assertNull($sent['reply']);
+    }
+
+    public function testSendLoginHelpEmailReturnsFalseWithoutARecoveryKey(): void {
+      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('');
+      $this->sendMailMock->expects($this->never())->method('sendEmail');
+      $this->assertFalse($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
+    }
+
+    public function testSendLoginHelpEmailReturnsFalseWhenSendingFails(): void {
+      $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->baseCoordinator());
+      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
+      $this->sendMailMock->method('sendEmail')->willReturn(FALSE);
+      $this->setupRequestMock();
+      $this->assertFalse($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
+    }
+
   }
 
 }

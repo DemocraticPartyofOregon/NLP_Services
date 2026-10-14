@@ -293,6 +293,32 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       }
     }
 
+
+    // -------------------------------------------------------------------------
+    // loginNameForEmail
+    // -------------------------------------------------------------------------
+
+    public function testLoginNameForEmailIgnoresAUsername(): void {
+      \NlpTestGlobals::$stubUserByMail = $this->buildUserStub();
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('alice.smith'));
+    }
+
+    public function testLoginNameForEmailReturnsTheAccountsUsername(): void {
+      \NlpTestGlobals::$stubUserByMail = $this->buildUserStub();
+      $this->assertSame('alice.smith', $this->buildDrupalUser()->loginNameForEmail(' alice@example.com '));
+    }
+
+    public function testLoginNameForEmailReturnsEmptyForAnEmailNotOnFile(): void {
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('nobody@example.com'));
+    }
+
+    public function testLoginNameForEmailLeavesAUsernameWithAnAtSignAlone(): void {
+      // An account is named with what was typed, so Drupal checks it as is.
+      \NlpTestGlobals::$stubUserByName = $this->buildUserStub(['userName' => 'alice@example.com']);
+      \NlpTestGlobals::$stubUserByMail = $this->buildUserStub(['userName' => 'other.name']);
+      $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('alice@example.com'));
+    }
+
   }
 
 }

@@ -69,15 +69,7 @@ class NlpCredentialsEmail
     }
     $county = $nl['county'];
     $nlCoordinator = $this->coordinatorsObj->getAssignedCoordinator($nl);
-    $coordinatorContactInfo = '';
-    if(!empty($nlCoordinator)) {
-      $firstName = $nlCoordinator['firstName'];
-      $lastName = $nlCoordinator['lastName'];
-      $phone = $nlCoordinator['phone'];
-      $email = $nlCoordinator['email'];
-      $coordinatorContactInfo = "<p>$firstName $lastName<br>Phone: $phone<br>Email:".
-        '<a href="mailto:'.$email.'?subject=Request for help with turf">'."$email</a></p>";
-    }
+    $coordinatorContactInfo = $this->coordinatorContactInfo($nlCoordinator, 'Request for help with turf');
 
     $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
 
@@ -141,5 +133,76 @@ class NlpCredentialsEmail
     }
 
     return TRUE;
+  }
+
+  /**
+   * sendLoginHelpEmail
+   *
+   * Emails an NL who asked for help logging in their username and a one-time
+   * link to their password, along with their coordinator's contact information.
+   *
+   * @param array $user - the NL's Drupal user array.
+   * @return bool
+   */
+  public function sendLoginHelpEmail(array $user): bool
+  {
+    $mcid = (int) $user['mcid'];
+    $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
+    if(empty($key)) {
+      return FALSE;
+    }
+    $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
+    $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
+
+    $nl = $this->nlsObj->getNlById($mcid);
+    $nlCoordinator = (!empty($nl)) ? $this->coordinatorsObj->getAssignedCoordinator($nl) : [];
+    $firstName = (!empty($user['firstName'])) ? $user['firstName'] : 'Neighborhood Leader';
+
+    $message = "<p>$firstName,</p>".
+      "<p>Here is your login for NLP Services, as you asked.</p>".
+      "<p><b>Neighborhood Leader Login: </b>".
+      '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>'.
+      "<br><b>Username:</b> ".$user['userName'].
+      '<br><a href="' . $revealUrl . '">Click here to see your password</a> (this link can only be used once)</p>'.
+      "<p>Type the username and password exactly as shown, or copy and paste them.  ".
+      "You can also type your email address in place of the username.</p>";
+    if(!empty($nlCoordinator)) {
+      $message .= "<p>If you still can't log in, contact your coordinator:</p>".
+        $this->coordinatorContactInfo($nlCoordinator, 'Request for help with login');
+    }
+    $message .= "<p>If you didn't ask for this email, you can ignore it.</p>";
+
+    $subject = 'Your Neighborhood Leader login';
+    $result = $this->sendMailObj->sendEmail('account_reminder', $user['email'], $subject, $message,
+      $nlCoordinator['email'] ?? NULL);
+    if (!$result) {
+      Drupal::logger('nlpservices')->notice('sendLoginHelpEmail failed for: @userName',
+        ['@userName' => $user['userName']]);
+      return FALSE;
+    }
+    return TRUE;
+  }
+
+  /**
+   * coordinatorContactInfo
+   *
+   * Returns a paragraph with the coordinator's name, phone and email, or '' if
+   * the NL has no coordinator.
+   *
+   * @param array $nlCoordinator
+   * @param string $subject - the subject for a reply by email.
+   * @return string
+   */
+  private function coordinatorContactInfo(array $nlCoordinator, string $subject): string
+  {
+    if(empty($nlCoordinator)) {
+      return '';
+    }
+    $firstName = $nlCoordinator['firstName'];
+    $lastName = $nlCoordinator['lastName'];
+    $phone = $nlCoordinator['phone'];
+    $email = $nlCoordinator['email'];
+    return "<p>$firstName $lastName<br>Phone: $phone<br>Email:".
+      '<a href="mailto:'.$email.'?subject='.$subject.'">'."$email</a></p>";
   }
 }

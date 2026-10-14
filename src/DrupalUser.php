@@ -194,6 +194,26 @@ class DrupalUser {
   }
 
   /**
+   * loginNameForEmail
+   *
+   * Returns the username of the account whose email address was typed into
+   * the login form's username field, or '' if what was typed isn't such an
+   * email.  NLs often log in with their email, which Drupal doesn't accept.
+   * A username that happens to contain an @ is left for Drupal to check.
+   *
+   * @param string $name - what was typed as the username.
+   * @return string
+   */
+  public function loginNameForEmail( string $name ): string
+  {
+    $email = trim($name);
+    if(!str_contains($email, '@')) {return '';}
+    if(!empty($this->getUserByName($email))) {return '';}
+    $user = $this->getUserByEmail($email);
+    return $user['userName'] ?? '';
+  }
+
+  /**
    * getUserByUid
    *
    * Returns the NLP user array given the Drupal uid.
