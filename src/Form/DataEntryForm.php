@@ -117,6 +117,7 @@ class DataEntryForm extends FormBase
     // replaces the table with the rows the user was looking at.
     $contactMethodRebuild = (bool) $form_state->get('contactMethodRebuild');
     $form_state->set('contactMethodRebuild', FALSE);
+    $postedVanids = [];
 
     if($contactMethodRebuild) {
       $turfIndex = $form_state->get('turfIndex');
@@ -150,6 +151,21 @@ class DataEntryForm extends FormBase
 
       $voters = $this->dataEntryVotersObj->fetchVoters($turfIndex);
       $currentPage = $this->sessionDataObj->get('currentPage');
+
+      // Drupal keeps a copy of the form it showed for six hours. Once that has
+      // expired, a submitted form is built here from scratch as if the page were
+      // new, which would show page 1 and throw away what the user entered.
+      // Rebuild the rows the browser posted instead, so a save, page change or
+      // contact method change gets the user's entries.
+      if(!$form_state->get('reenter')) {
+        $postedVanids = $this->expiredFormVanids($form_state, $voters);
+        if(!empty($postedVanids)) {
+          Drupal::logger('nlpservices')->notice('Rebuilt the posted rows of an expired data entry form.');
+          $voterPosition = array_search(reset($postedVanids), array_keys($voters));
+          $currentPage = intdiv($voterPosition, $this::DE_PAGE_SIZE);
+          $this->sessionDataObj->set('currentPage', $currentPage);
+        }
+      }
       $form_state->set('voters', $voters);
       $form_state->set('currentPage', $currentPage);
     }
@@ -177,9 +193,13 @@ class DataEntryForm extends FormBase
     $start = $currentPage * $this::DE_PAGE_SIZE;
     $end = min(($start + $this::DE_PAGE_SIZE), count($vanidKeys));
 
+    $shownVanids = $postedVanids;
+    if(empty($shownVanids)) {
+      $shownVanids = array_slice($vanidKeys, $start, $end - $start);
+    }
     $voterArrays = [];
-    for ($vanidKey = $start; $vanidKey < $end; $vanidKey++) {
-      $voter = $voters[$vanidKeys[$vanidKey]];
+    foreach ($shownVanids as $vanid) {
+      $voter = $voters[$vanid];
       $voterArray = $this->dataEntryVoterListDisplayObj->buildDataEntryVoterArray($voter);
       $voterArrays[$voter['vanid']] = $voterArray;
     }
@@ -199,7 +219,7 @@ class DataEntryForm extends FormBase
       // method's "Voter Wasn't Contacted" choices.  Keep what was entered for
       // every voter, except that voter's old not-contacted pick.
       unset($user_input['dataEntry']['row_2_' . $contactMethodVanid]['col_2_4']['line_2_4_2']);
-    } else {
+    } elseif(empty($postedVanids)) {
       // After a save or page change, show the table fresh from the database.
       unset($user_input['dataEntry']);
     }
@@ -234,12 +254,12 @@ class DataEntryForm extends FormBase
   {
 
     // Drupal answers an AJAX request from its cached copy of the form, which
-    // expires after six hours. Once it has, Drupal builds the form again from
-    // scratch, on the first page of voters, and if the changed select isn't on
-    // that page Drupal falls back to the first button, last_name_search. That
-    // button has no #ajax callback, so Drupal throws "The specified #ajax
-    // callback is empty or not callable." Skip the submit and tell the user to
-    // reload the page instead.
+    // expires after six hours. Once it has, buildForm() rebuilds the rows the
+    // browser posted, but a voter who has since left the turf gets no row, so
+    // Drupal can't find the changed select and falls back to the first button,
+    // last_name_search. That button has no #ajax callback, so Drupal throws
+    // "The specified #ajax callback is empty or not callable." Skip the submit
+    // and tell the user to reload the page instead.
     $userInput = $form_state->getUserInput();
     $ajaxElementName = $userInput['_triggering_element_name'] ?? '';
     $elementClicked = $form_state->getTriggeringElement()['#name'] ?? '';
@@ -786,6 +806,40 @@ not checked have already received a postcard for this election.</p></div>',
   {
     // Comprehensive phone number validation
     return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
+  }
+
+  /**
+   * expiredFormVanids
+   *
+   * Returns the vanids of the voter rows a submitted data entry form posted,
+   * in the order it showed them, keeping only voters still in the turf, or []
+   * if the request posted no voter rows.  The rows are posted as
+   * dataEntry[row_<n>_<vanid>][...].
+   *
+   * @param FormStateInterface $form_state
+   * @param array $voters
+   *   The turf's voters, keyed by vanid.
+   * @return int[]
+   */
+  private function expiredFormVanids(FormStateInterface $form_state, array $voters): array
+  {
+    $userInput = $form_state->getUserInput();
+    if(($userInput['form_id'] ?? '') != $this->getFormId() OR !is_array($userInput['dataEntry'] ?? NULL)) {
+      return [];
+    }
+    $postedVanids = [];
+    foreach (array_keys($userInput['dataEntry']) as $rowKey) {
+      if(preg_match('/^row_\d+_(\d+)$/', $rowKey, $matches)) {
+        $postedVanids[(int) $matches[1]] = (int) $matches[1];
+      }
+    }
+    $vanids = array_values(array_filter($postedVanids,
+      static fn(int $vanid): bool => isset($voters[$vanid])));
+    if(count($vanids) < count($postedVanids)) {
+      Drupal::messenger()->addWarning('Some voters on the page you submitted are no
+      longer in your turf, so what you entered for them was not saved.');
+    }
+    return $vanids;
   }
 
   /**

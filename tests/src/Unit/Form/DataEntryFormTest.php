@@ -53,6 +53,8 @@ class DataEntryFormTest extends UnitTestCase {
   protected $mapRegionsMock;
   protected $messengerMock;
   protected DataEntryForm $form;
+  /** @var array The currentPage values buildForm() stored in the session. */
+  protected array $currentPages = [];
 
   protected function setUp(): void {
     parent::setUp();
@@ -525,6 +527,93 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame([11, 12, 13, 14, 15], $form['dataEntryTable']['voters']['rows']);
     $this->assertSame(42, $formState->get('turfIndex'));
     $this->assertFalse($formState->get('contactMethodRebuild'));
+  }
+
+  /**
+   * Sets up buildForm() for a turf of 25 voters, vanids 1 to 25.
+   */
+  protected function configureTwentyFiveVoters(): void {
+    $this->configureValidSession();
+    $voters = [];
+    for ($vanid = 1; $vanid <= 25; $vanid++) {
+      $voters[$vanid] = ['vanid' => $vanid, 'firstName' => 'V' . $vanid, 'lastName' => 'L'];
+    }
+    $this->dataEntryVotersMock->method('fetchVoters')->willReturn($voters);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Walk']);
+    $this->dataEntryVoterListDisplayMock->method('buildDataEntryVoterArray')
+      ->willReturnCallback(static fn($voter) => $voter);
+    $this->dataEntryVoterListDisplayMock->method('buildVoterDataEntryTable')
+      ->willReturn(['#type' => 'table']);
+  }
+
+  /**
+   * Returns the user input a browser posts for the given voter rows.
+   */
+  protected function postedInput(array $vanids): array {
+    $dataEntry = [];
+    foreach ($vanids as $vanid) {
+      $dataEntry['row_2_' . $vanid]['col_2_2']['line_2_2_2'] = '0';
+      $dataEntry['row_3_' . $vanid]['col_3_1']['line_3_1_1'] = 'note ' . $vanid;
+    }
+    return [
+      'form_id' => 'nlpservices_data_entry_form',
+      'form_build_id' => 'form-expired',
+      'dataEntry' => $dataEntry,
+    ];
+  }
+
+  /**
+   * A save from a page whose cached form has expired reaches buildForm() with
+   * no form state. The rows the browser posted must be rebuilt, with their
+   * entries, or the save finds nothing to report.
+   */
+  public function testBuildFormRebuildsPostedRowsWhenFormExpired(): void {
+    $this->configureTwentyFiveVoters();
+    $this->sessionDataMock->method('set')
+      ->willReturnCallback(function (string $key, mixed $value): void {
+        if ($key === 'currentPage') {
+          $this->currentPages[] = $value;
+        }
+      });
+
+    $formState = new FormState();
+    $input = $this->postedInput(range(11, 20));
+    $formState->setUserInput($input);
+
+    $this->form->buildForm([], $formState);
+
+    $this->assertSame(range(11, 20), array_keys($formState->get('voterArrays')));
+    $this->assertSame(1, $formState->get('currentPage'));
+    $this->assertSame(1, end($this->currentPages));
+    $this->assertSame($input['dataEntry'], $formState->getUserInput()['dataEntry']);
+  }
+
+  public function testBuildFormDropsPostedVotersNoLongerInTurf(): void {
+    $this->configureTwentyFiveVoters();
+    $this->messengerMock->expects($this->once())->method('addWarning')
+      ->with($this->stringContains('no'));
+
+    $formState = new FormState();
+    $formState->setUserInput($this->postedInput([3, 99, 4]));
+
+    $this->form->buildForm([], $formState);
+
+    $this->assertSame([3, 4], array_keys($formState->get('voterArrays')));
+    $this->assertSame(0, $formState->get('currentPage'));
+  }
+
+  public function testBuildFormClearsPostedEntriesAfterSave(): void {
+    $this->configureTwentyFiveVoters();
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+    $formState->setUserInput($this->postedInput(range(11, 20)));
+
+    $this->form->buildForm([], $formState);
+
+    $this->assertSame(range(1, 10), array_keys($formState->get('voterArrays')));
+    $this->assertArrayNotHasKey('dataEntry', $formState->getUserInput());
   }
 
   // ---------------------------------------------------------------------------
