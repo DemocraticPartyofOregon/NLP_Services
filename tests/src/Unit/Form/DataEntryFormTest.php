@@ -35,6 +35,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'validateForm')]
 #[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'submitForm')]
 #[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'validatePhoneNumber')]
+#[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'expiredFormCallback')]
 #[Group('nlpservices')]
 class DataEntryFormTest extends UnitTestCase {
 
@@ -485,8 +486,7 @@ class DataEntryFormTest extends UnitTestCase {
 
   /**
    * A contact method change must rebuild the rows the browser is showing, even
-   * when the session or the turf has changed since, or the changed select is
-   * missing from the rebuilt form and Drupal's AJAX handler throws.
+   * when the session or the turf has changed since.
    */
   public function testBuildFormContactMethodRebuildReusesShownVoters(): void {
     // The session now points at another turf and page, and the turf has
@@ -561,6 +561,39 @@ class DataEntryFormTest extends UnitTestCase {
 
     $this->assertTrue($formState->get('reenter'));
     $this->assertTrue($formState->get('contactMethodRebuild'));
+  }
+
+  public function testValidateFormHandlesContactMethodChangeOnExpiredForm(): void {
+    $this->sessionDataMock->expects($this->never())->method('setVoterContactMethod');
+    $this->sessionDataMock->expects($this->never())->method('set');
+
+    // Drupal rebuilt the expired form on page 1, didn't find the select and
+    // fell back to the first button.
+    $formState = new FormState();
+    $formState->setUserInput([
+      '_triggering_element_name' => 'line_2_2_2[row_2_99999]',
+      '_triggering_element_value' => '1',
+      'last-name' => '',
+    ]);
+    $formState->setTriggeringElement(['#name' => 'last_name_search', '#value' => 'Search']);
+
+    $form = [];
+    $this->form->validateForm($form, $formState);
+
+    $this->assertTrue($formState->get('formExpired'));
+    $this->assertSame('::expiredFormCallback', $formState->getTriggeringElement()['#ajax']['callback']);
+
+    $this->form->submitForm($form, $formState);
+    $this->assertFalse($formState->isRebuilding());
+  }
+
+  public function testExpiredFormCallbackReturnsWarning(): void {
+    $commands = $this->form->expiredFormCallback()->getCommands();
+
+    $this->assertCount(1, $commands);
+    $this->assertSame('message', $commands[0]['command']);
+    $this->assertStringContainsString('Reload the page', $commands[0]['message']);
+    $this->assertSame('warning', $commands[0]['messageOptions']['type']);
   }
 
   // ---------------------------------------------------------------------------

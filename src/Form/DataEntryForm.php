@@ -3,6 +3,8 @@
 namespace Drupal\nlpservices\Form;
 
 use Drupal;
+use Drupal\Core\Ajax\AjaxResponse;
+use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -109,11 +111,10 @@ class DataEntryForm extends FormBase
     }
 
     // A contact method change rebuilds the form in the middle of its AJAX
-    // request, and Drupal then looks the changed select up again in the rebuilt
-    // form. Rebuild the same turf, page and voters this form last showed rather
-    // than re-reading them from the session and database, which another browser
-    // tab or a turf update may have changed since. If that voter's row is gone,
-    // Drupal throws "The specified #ajax callback is empty or not callable."
+    // request. Rebuild the same turf, page and voters this form last showed
+    // rather than re-reading them from the session and database, which another
+    // browser tab or a turf update may have changed since, so the reply
+    // replaces the table with the rows the user was looking at.
     $contactMethodRebuild = (bool) $form_state->get('contactMethodRebuild');
     $form_state->set('contactMethodRebuild', FALSE);
 
@@ -232,6 +233,23 @@ class DataEntryForm extends FormBase
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
 
+    // Drupal answers an AJAX request from its cached copy of the form, which
+    // expires after six hours. Once it has, Drupal builds the form again from
+    // scratch, on the first page of voters, and if the changed select isn't on
+    // that page Drupal falls back to the first button, last_name_search. That
+    // button has no #ajax callback, so Drupal throws "The specified #ajax
+    // callback is empty or not callable." Skip the submit and tell the user to
+    // reload the page instead.
+    $userInput = $form_state->getUserInput();
+    $ajaxElementName = $userInput['_triggering_element_name'] ?? '';
+    $elementClicked = $form_state->getTriggeringElement()['#name'] ?? '';
+    if(str_contains($ajaxElementName, 'line_2_2_2') AND !str_contains($elementClicked, 'line_2_2_2')) {
+      Drupal::logger('nlpservices')->notice('Data entry form expired before a contact method change: '.$ajaxElementName);
+      $form_state->set('formExpired', TRUE);
+      $form_state->setTriggeringElement(['#ajax' => ['callback' => '::expiredFormCallback']]);
+      return;
+    }
+
     $vanid = $this->contactMethodChangeVanid($form_state);
     if($vanid !== NULL) {
 
@@ -258,6 +276,9 @@ class DataEntryForm extends FormBase
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
+    if($form_state->get('formExpired')) {
+      return;
+    }
     $form_state->setRebuild();
     $form_state->set('reenter',TRUE);
     $messenger = Drupal::messenger();
@@ -837,6 +858,21 @@ not checked have already received a postcard for this election.</p></div>',
    */
   function selectionCallback($form, FormStateInterface $form_state) {
     return $form['dataEntryTable'];
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * expiredFormCallback
+   *
+   * Answers a contact method change that reached an expired form.
+   *
+   * @noinspection PhpUnused
+   */
+  function expiredFormCallback(): AjaxResponse {
+    $response = new AjaxResponse();
+    $response->addCommand(new MessageCommand(
+      'This page has been open too long and has expired. Reload the page, then
+      change the contact method again.', NULL, ['type' => 'warning']));
+    return $response;
   }
 
 }
