@@ -57,7 +57,7 @@ class ImportReportsForm extends FormBase {
       '#description' => t('Select a file of historical results reported by NLs.'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
-      '#upload_validators' => ['file_validate_extensions' => ['csv'],],
+      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv'],],
     ];
     
     $form['upload_file'] = [

@@ -54,7 +54,7 @@ class ImportStateEarlyVotingForm extends FormBase
       '#description' => $this->t('Select a state early voting CSV file. The first row must contain the headers "Assigned Voter ID" and "Ballot Received Date".'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
-      '#upload_validators' => ['file_validate_extensions' => ['csv txt']],
+      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv txt']],
       '#required' => TRUE,
     ];
 

@@ -53,7 +53,7 @@ class ImportUserAccountsForm extends FormBase {
       '#description' => t('Select a user accounts file.<br>'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
-      '#upload_validators' => ['file_validate_extensions' => ['csv']],
+      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv']],
     ];
 
     // A button for the upload of voting results.
