@@ -108,7 +108,8 @@ class ApiExportJobs {
       }
       nlp_debug_msg('getExportJobs', $e);
       nlp_debug_msg('$dataJson', $dataJson);
-      nlp_debug_msg('$post_url', $post_url);
+      // The URL carries the API key, so log it without the credentials.
+      nlp_debug_msg('$post_url', "https://$apiURL/exportJobs (database $database)");
       return [];
     }
     $body = (string) $response->getBody();
