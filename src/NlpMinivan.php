@@ -4,12 +4,15 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use Drupal\Core\Config\ConfigFactoryInterface;
+use Drupal\Core\State\StateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpMinivan {
 
   const int MINIVAN_MAX_QUEUE = 200;
   const int CANVASSED = 11;  // Report from VAN that voters were canvassed - redundant.
+  const string MISSING_NL_STATE = 'nlpservices.minivan_missing_nl_notified';
+  const int MISSING_NL_NOTIFY_INTERVAL = 86400;  // Warn a coordinator at most once a day per NL.
 
   private array $minivanHdr = [
     'survey' => [
@@ -54,10 +57,15 @@ class NlpMinivan {
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected DrupalUser $drupalUserObj;
   protected NlpConfiguration $nlpConfigurationObj;
+  protected ApiNls $apiNlsObj;
+  protected NlpCoordinators $coordinatorsObj;
+  protected NlpSendEmail $sendEmailObj;
+  protected StateInterface $state;
 
 
   public function __construct( $config, $nlpReportsObj, $voterObj, $nlsObj, $imapObj,
-                               $apiSurveyQuestionObj, $drupalUserObj, $nlpConfigurationObj ) {
+                               $apiSurveyQuestionObj, $drupalUserObj, $nlpConfigurationObj,
+                               $apiNlsObj, $coordinatorsObj, $sendEmailObj, $state ) {
     $this->config = $config;
     $this->nlpReportsObj = $nlpReportsObj;
     $this->voterObj = $voterObj;
@@ -66,6 +74,10 @@ class NlpMinivan {
     $this->apiSurveyQuestionObj = $apiSurveyQuestionObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
+    $this->apiNlsObj = $apiNlsObj;
+    $this->coordinatorsObj = $coordinatorsObj;
+    $this->sendEmailObj = $sendEmailObj;
+    $this->state = $state;
   }
 
   public static function create(ContainerInterface $container): NlpMinivan
@@ -79,6 +91,10 @@ class NlpMinivan {
       $container->get('nlpservices.survey_question'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.api_nls'),
+      $container->get('nlpservices.coordinators'),
+      $container->get('nlpservices.send_email'),
+      $container->get('state'),
     );
   }
 
@@ -268,8 +284,10 @@ class NlpMinivan {
     if(!empty($report['noteText'])) { // A note is included.
       $cd = $this->voterObj->getVoterCd($vanid);
       $nl = $this->nlsObj->getNlById($mcid);
-      $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
-      $result['county'] = $nl['county'];
+      if(!empty($nl)) {  // The voter's turf can outlive the NL's record.
+        $result['nickname'] = (empty($nl['nickname']))?$nl['firstName']:$nl['nickname'];
+        $result['county'] = $nl['county'];
+      }
       $result['cd'] = $cd;
       $report['mcid'] = $mcid;
       $action = $this->processNote($report,$result);
@@ -503,7 +521,9 @@ class NlpMinivan {
     $result['qid'] = NULL;
 
     $nl = $this->nlsObj->getNlById($mcid);
-    $result['county'] = $nl['county'];
+    if(!empty($nl)) {
+      $result['county'] = $nl['county'];
+    }
 
     // Record the new note.
     $rIndex = $this->nlpReportsObj->setNlReport($result);
@@ -736,9 +756,6 @@ class NlpMinivan {
 
     $cid = ApiSurveyQuestion::CONTACT_TYPE_WALK;
 
-    $commonResult['county'] = NULL;
-    $commonResult['firstName'] = NULL;
-    $commonResult['lastName'] = NULL;
     $commonResult['cycle'] = $nlpConfigurationObj->getCycle();
 
     $counts = [];
@@ -750,6 +767,10 @@ class NlpMinivan {
     foreach ($reports as $reportRaw) {
       $report = json_decode($reportRaw,true);
       $counts['recordCount']++;
+      // Clear the previous report's NL so it isn't credited for this one.
+      $commonResult['county'] = NULL;
+      $commonResult['firstName'] = NULL;
+      $commonResult['lastName'] = NULL;
       $vanid = $report['vanid'];
       $mcid = $this->voterObj->getMcidByVanid($vanid);
       if (!empty($mcid)) {
@@ -766,6 +787,9 @@ class NlpMinivan {
             ];
             $this->drupalUserObj->updateUser($update);
           }
+        } else {
+          // The voter's turf is assigned to an NL who is no longer in the NLs table.
+          $this->notifyMissingNl($mcid);
         }
       } else {
         // There is no NL assigned to this voter.
@@ -828,6 +852,62 @@ class NlpMinivan {
     }
 
     return $counts;
+  }
+
+  /**
+   * notifyMissingNl
+   *
+   * A MiniVAN user reported a result for a voter in a turf, but the NL who owns the turf is
+   * missing from the NLs table.  Get the NL's name and region from VAN, and warn the NL's
+   * coordinator so the NL can be added back to the list of active NLs.  A coordinator is warned
+   * at most once a day for each missing NL.
+   *
+   * @param int $mcid
+   * @return bool - TRUE if the coordinator was sent the email.
+   */
+  public function notifyMissingNl(int $mcid): bool
+  {
+    $notified = $this->state->get(self::MISSING_NL_STATE, []);
+    if(!empty($notified[$mcid]) && time() - $notified[$mcid] < self::MISSING_NL_NOTIFY_INTERVAL) {
+      return FALSE;
+    }
+
+    $nl = $this->apiNlsObj->getApiNls('', $mcid);
+    if(empty($nl) || empty($nl['county'])) {
+      Drupal::logger('nlpservices')->error('MiniVAN report for missing NL, mcid: '.$mcid.
+        '. VAN has no record or county for this NL, so no coordinator was notified.');
+      return FALSE;
+    }
+    $region = [
+      'county' => $nl['county'],
+      'hd' => !empty($nl['hd']) ? ltrim($nl['hd'], '0') : 0,
+      'precinct' => !empty($nl['precinct']) ? trim($nl['precinct']) : 0,
+    ];
+    $coordinator = $this->coordinatorsObj->getAssignedCoordinator($region);
+    $nlName = $nl['firstName'].' '.$nl['lastName'];
+    if(empty($coordinator)) {
+      Drupal::logger('nlpservices')->error('MiniVAN report for missing NL '.$nlName.', mcid: '.$mcid.
+        '. No coordinator is assigned for '.$nl['county'].' county.');
+      return FALSE;
+    }
+
+    $firstName = $coordinator['firstName'];
+    $subject = "NL missing from the list of active NLs";
+    $message = "<p>$firstName,</p>";
+    $message .= "<p>$nlName (MCID: $mcid) reported results with MiniVAN for a voter in their turf, but $nlName
+ is missing from the list of active NLs in NLP Services.  These results can't be credited to $nlName
+ until this is corrected.</p>";
+    $message .= "<p>To correct this, please add $nlName back to the list of active NLs in VAN and then sync
+ the list of active NLs with NLP Services again.</p>";
+    if(!$this->sendEmailObj->sendEmail('missing_nl_notification', $coordinator['email'], $subject, $message)) {
+      return FALSE;
+    }
+
+    $notified[$mcid] = time();
+    $this->state->set(self::MISSING_NL_STATE, $notified);
+    Drupal::logger('nlpservices')->notice('Missing NL notification sent to: '.$firstName.' '.
+      $coordinator['lastName'].' ['.$coordinator['email'].'] for '.$nlName.', mcid: '.$mcid);
+    return TRUE;
   }
 
 }

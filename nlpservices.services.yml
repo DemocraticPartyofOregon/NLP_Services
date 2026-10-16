@@ -290,7 +290,8 @@ services:
     class: Drupal\nlpservices\NlpMinivan
     arguments: [ '@config.factory' , '@nlpservices.reports' , '@nlpservices.voters', '@nlpservices.nls',
                    '@nlpservices.imap', '@nlpservices.survey_question', '@nlpservices.drupal_user',
-                 '@nlpservices.configuration' ]
+                 '@nlpservices.configuration', '@nlpservices.api_nls', '@nlpservices.coordinators',
+                 '@nlpservices.send_email', '@state' ]
 
   nlpservices.nls:
     class: Drupal\nlpservices\NlpNls

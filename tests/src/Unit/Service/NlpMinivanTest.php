@@ -4,13 +4,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Config\ConfigFactoryInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\State\StateInterface;
+  use Drupal\nlpservices\ApiNls;
   use Drupal\nlpservices\ApiSurveyQuestion;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\NlpConfiguration;
+  use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpImap;
   use Drupal\nlpservices\NlpMinivan;
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpReports;
+  use Drupal\nlpservices\NlpSendEmail;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
   use Psr\Log\LoggerInterface;
@@ -26,6 +30,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private ApiSurveyQuestion $apiSurveyQuestionMock;
     private DrupalUser $drupalUserMock;
     private NlpConfiguration $nlpConfigurationMock;
+    private ApiNls $apiNlsMock;
+    private NlpCoordinators $coordinatorsMock;
+    private NlpSendEmail $sendEmailMock;
+    private StateInterface $stateMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -37,6 +45,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->apiSurveyQuestionMock = $this->createMock(ApiSurveyQuestion::class);
       $this->drupalUserMock = $this->createMock(DrupalUser::class);
       $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
+      $this->apiNlsMock = $this->createMock(ApiNls::class);
+      $this->coordinatorsMock = $this->createMock(NlpCoordinators::class);
+      $this->sendEmailMock = $this->createMock(NlpSendEmail::class);
+      $this->stateMock = $this->createMock(StateInterface::class);
     }
 
     protected function tearDown(): void {
@@ -54,6 +66,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->apiSurveyQuestionMock,
         $this->drupalUserMock,
         $this->nlpConfigurationMock,
+        $this->apiNlsMock,
+        $this->coordinatorsMock,
+        $this->sendEmailMock,
+        $this->stateMock,
       );
     }
 
@@ -98,6 +114,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.survey_question', $this->apiSurveyQuestionMock);
       $container->set('nlpservices.drupal_user', $this->drupalUserMock);
       $container->set('nlpservices.configuration', $this->nlpConfigurationMock);
+      $container->set('nlpservices.api_nls', $this->apiNlsMock);
+      $container->set('nlpservices.coordinators', $this->coordinatorsMock);
+      $container->set('nlpservices.send_email', $this->sendEmailMock);
+      $container->set('state', $this->stateMock);
 
       $service = NlpMinivan::create($container);
 
@@ -422,6 +442,126 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->assertTrue($action['processReport']);
       $this->assertSame('attemptedContact', $action['type']);
+    }
+
+    public function testProcessCanvassWithNoteTextHandlesMissingNlRecord(): void {
+      $report = [
+        'contactId' => 203,
+        'vanid' => 999,
+        'resultId' => 101,
+        'contactTypeId' => 1,
+        'noteText' => 'Voter was friendly.',
+      ];
+      $allowedResponseCodes = [
+        'Walk' => ['code' => 1, 'responses' => ['Left Message/Lit' => 101]],
+      ];
+
+      $this->reportsMock->method('reportExists')->willReturn(FALSE);
+      $this->reportsMock->expects($this->once())->method('setNlReport')
+        ->with($this->callback(fn(array $r) => $r['type'] === 'Comment' && $r['county'] === 'Denver'))
+        ->willReturn(5);
+      $this->votersMock->method('getVoterCd')->willReturn(1);
+      $this->votersMock->method('getTurfIndexByVanid')->willReturn(10);
+      $this->nlsMock->method('getNlById')->willReturn([]);
+
+      $action = $this->buildService()->processCanvass($report, $this->baseResult(), 42, $allowedResponseCodes, 7);
+
+      $this->assertTrue($action['processReport']);
+      $this->assertSame('attemptedContact', $action['type']);
+      $this->assertArrayNotHasKey('nickname', $action['result']);
+    }
+
+    // -------------------------------------------------------------------------
+    // notifyMissingNl()
+    // -------------------------------------------------------------------------
+
+    private function vanNl(array $overrides = []): array {
+      return array_replace([
+        'mcid' => 42,
+        'firstName' => 'Bob',
+        'lastName' => 'Jones',
+        'county' => 'Lane',
+        'hd' => '08',
+        'precinct' => ' 1234 ',
+      ], $overrides);
+    }
+
+    private function coordinator(): array {
+      return ['firstName' => 'Carol', 'lastName' => 'King', 'email' => 'coord@example.com'];
+    }
+
+    public function testNotifyMissingNlEmailsCoordinatorWithNlNameAndRemedy(): void {
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerMock->expects($this->once())->method('notice')
+        ->with('Missing NL notification sent to: Carol King [coord@example.com] for Bob Jones, mcid: 42');
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->with('nlpservices')->willReturn($loggerMock);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactoryMock);
+      \Drupal::setContainer($container);
+      $this->stateMock->method('get')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->with('', 42)->willReturn($this->vanNl());
+      $this->coordinatorsMock->expects($this->once())->method('getAssignedCoordinator')
+        ->with(['county' => 'Lane', 'hd' => '8', 'precinct' => '1234'])
+        ->willReturn($this->coordinator());
+      $this->sendEmailMock->expects($this->once())->method('sendEmail')
+        ->with('missing_nl_notification', 'coord@example.com', $this->anything(),
+          $this->callback(fn(string $m) => str_contains($m, 'Bob Jones') && str_contains($m, '42')
+            && str_contains($m, 'list of active NLs')))
+        ->willReturn(TRUE);
+      $this->stateMock->expects($this->once())->method('set')
+        ->with(NlpMinivan::MISSING_NL_STATE, $this->callback(fn(array $n) => isset($n[42])));
+
+      $this->assertTrue($this->buildService()->notifyMissingNl(42));
+    }
+
+    public function testNotifyMissingNlSkipsNlAlreadyNotifiedToday(): void {
+      $this->stateMock->method('get')->willReturn([42 => time() - 3600]);
+      $this->apiNlsMock->expects($this->never())->method('getApiNls');
+      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+
+      $this->assertFalse($this->buildService()->notifyMissingNl(42));
+    }
+
+    public function testNotifyMissingNlNotifiesAgainAfterADay(): void {
+      $this->setUpLoggerContainer();
+      $this->stateMock->method('get')->willReturn([42 => time() - NlpMinivan::MISSING_NL_NOTIFY_INTERVAL - 1]);
+      $this->apiNlsMock->method('getApiNls')->willReturn($this->vanNl());
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->coordinator());
+      $this->sendEmailMock->expects($this->once())->method('sendEmail')->willReturn(TRUE);
+
+      $this->assertTrue($this->buildService()->notifyMissingNl(42));
+    }
+
+    public function testNotifyMissingNlDoesNotEmailWhenVanHasNoRecord(): void {
+      $this->setUpLoggerContainer();
+      $this->stateMock->method('get')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn([]);
+      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+      $this->stateMock->expects($this->never())->method('set');
+
+      $this->assertFalse($this->buildService()->notifyMissingNl(42));
+    }
+
+    public function testNotifyMissingNlDoesNotEmailWhenNoCoordinatorAssigned(): void {
+      $this->setUpLoggerContainer();
+      $this->stateMock->method('get')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn($this->vanNl());
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
+      $this->sendEmailMock->expects($this->never())->method('sendEmail');
+      $this->stateMock->expects($this->never())->method('set');
+
+      $this->assertFalse($this->buildService()->notifyMissingNl(42));
+    }
+
+    public function testNotifyMissingNlTriesAgainWhenEmailFails(): void {
+      $this->stateMock->method('get')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn($this->vanNl());
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->coordinator());
+      $this->sendEmailMock->method('sendEmail')->willReturn(FALSE);
+      $this->stateMock->expects($this->never())->method('set');
+
+      $this->assertFalse($this->buildService()->notifyMissingNl(42));
     }
 
     // -------------------------------------------------------------------------
