@@ -2,7 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
-  use Drupal;
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\NlpTurfAcChecker;
@@ -11,7 +11,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
   use Psr\Log\LoggerInterface;
-  use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class NlpTurfAcCheckerTest extends UnitTestCase {
 
@@ -26,18 +25,24 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->votersMock           = $this->createMock(NlpVoters::class);
       $this->apiActivistCodesMock = $this->createMock(ApiActivistCodes::class);
       $this->turfStatusMock       = $this->createMock(NlpTurfStatus::class);
+
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->willReturn($this->createMock(LoggerInterface::class));
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactoryMock);
+      \Drupal::setContainer($container);
     }
 
     protected function tearDown(): void {
       parent::tearDown();
-      Drupal::setContainer(new ContainerBuilder());
+      \Drupal::setContainer(new ContainerBuilder());
     }
 
     // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
-    private function buildChecker(): NlpTurfAcChecker {
+    private function buildService(): NlpTurfAcChecker {
       return new NlpTurfAcChecker(
         $this->turfsMock,
         $this->votersMock,
@@ -46,118 +51,126 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       );
     }
 
-    private function setupContainerWithLogger(): void {
-      $loggerMock = $this->createMock(LoggerInterface::class);
-      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
-      $loggerFactoryMock->method('get')->willReturn($loggerMock);
-      $container = new ContainerBuilder();
-      $container->set('logger.factory', $loggerFactoryMock);
-      Drupal::setContainer($container);
-    }
-
-    private function baseRecord(array $overrides = []): array {
-      return array_merge([
-        'folderName' => 'TEST County',
+    private function record(array $overrides = []): array {
+      return array_replace([
+        'folderName' => 'HD24',
         'folderId'   => 10,
-        'turfName'   => 'Turf 1',
-        'turfId'     => 5,
+        'turfName'   => 'Ds Turf 19',
+        'turfId'     => 20,
+        'createTime' => '2026-10-15T17:00:00-07:00',
         'status'     => NlpTurfStatus::TURF_CREATED,
       ], $overrides);
     }
 
-    // -------------------------------------------------------------------------
-    // checkExpiredTurfAc
-    // -------------------------------------------------------------------------
-
-    public function testCheckExpiredTurfAcTurfNotFoundValidatesCreateStatus(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn([]);
-      $this->votersMock->expects($this->never())->method('getVotersInTurf');
-      $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::TURF_CREATE_VALIDATED);
-
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord());
+    private function turfWithVoters(array $vanids): void {
+      $this->turfsMock->method('getTurfByTurfName')->with(10, 'Ds Turf 19')->willReturn(['turfIndex' => 3492]);
+      $this->votersMock->method('getVotersInTurf')->with(3492)->willReturn(array_fill_keys($vanids, []));
     }
 
-    public function testCheckExpiredTurfAcTurfNotFoundValidatesDeleteStatus(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn([]);
-      $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::TURF_DELETE_VALIDATED);
+    // -------------------------------------------------------------------------
+    // Stale queue items
+    // -------------------------------------------------------------------------
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord(['status' => NlpTurfStatus::TURF_DELETED]));
+    public function testStaleDeleteItemDoesNotRemoveCodeFromNewTurfWithSameName(): void {
+      // The turf was deleted, cron queued the expired record, then a new turf
+      // with the same name was synced before the worker ran.
+      $queued = $this->record(['status' => NlpTurfStatus::TURF_DELETED]);
+      $this->turfStatusMock->method('getTurfStatus')
+        ->willReturn($this->record(['createTime' => '2026-10-15T17:34:06-07:00']));
+      $this->turfWithVoters([101, 102]);
+      $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
+      $this->turfStatusMock->expects($this->never())->method('setTurfStatusValidated');
+
+      $this->buildService()->checkExpiredTurfAc($queued);
     }
 
-    public function testCheckExpiredTurfAcNoVotersInTurfSetsValidated(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([]);
+    public function testStaleItemIsSkippedWhenTurfWasSyncedAgainSinceQueued(): void {
+      $this->turfStatusMock->method('getTurfStatus')
+        ->willReturn($this->record(['createTime' => '2026-10-15T18:00:00-07:00']));
       $this->apiActivistCodesMock->expects($this->never())->method('hasApiActivistCodeBatch');
-      $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::TURF_CREATE_VALIDATED);
+      $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord());
+      $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
-    public function testCheckExpiredTurfAcCreateAllCodesAppliedSetsValidated(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([101 => [], 102 => []]);
+    public function testItemIsSkippedWhenStatusRecordIsGone(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn([]);
+      $this->apiActivistCodesMock->expects($this->never())->method('hasApiActivistCodeBatch');
+      $this->turfStatusMock->expects($this->never())->method('setTurfStatusValidated');
+
+      $this->buildService()->checkExpiredTurfAc($this->record());
+    }
+
+    // -------------------------------------------------------------------------
+    // Deleted turfs
+    // -------------------------------------------------------------------------
+
+    public function testCurrentDeleteIsValidatedWithoutTouchingTurfFoundByName(): void {
+      $record = $this->record(['status' => NlpTurfStatus::TURF_DELETED]);
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($record);
+      $this->turfsMock->expects($this->never())->method('getTurfByTurfName');
+      $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
+      $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::TURF_DELETE_VALIDATED);
+
+      $this->buildService()->checkExpiredTurfAc($record);
+    }
+
+    // -------------------------------------------------------------------------
+    // Synced turfs
+    // -------------------------------------------------------------------------
+
+    public function testCreateIsValidatedWhenEveryVoterHasCode(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfWithVoters([101, 102]);
       $this->apiActivistCodesMock->method('hasApiActivistCodeBatch')->willReturn([]);
       $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
-      $this->turfStatusMock->expects($this->never())->method('extendTurfStatusExpiration');
       $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::TURF_CREATE_VALIDATED);
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::TURF_CREATE_VALIDATED);
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord());
+      $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
-    public function testCheckExpiredTurfAcCreateSomeCodesMissingRetriesApply(): void {
-      $this->setupContainerWithLogger();
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([101 => [], 102 => []]);
+    public function testCreateRetriesApplyForVotersMissingCode(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfWithVoters([101, 102, 103]);
       $this->apiActivistCodesMock->method('hasApiActivistCodeBatch')->willReturn([102]);
       $this->apiActivistCodesMock->expects($this->once())->method('setApiActivistCodeBatch')
-        ->with([102], 'NLPVoterAC', 'Apply');
+        ->with([102], 'NLPVoterAC', 'Apply', 'expired turf check of HD24/Ds Turf 19');
       $this->turfStatusMock->expects($this->never())->method('setTurfStatusValidated');
       $this->turfStatusMock->expects($this->once())->method('extendTurfStatusExpiration')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord());
+      $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
-    public function testCheckExpiredTurfAcDeleteAllCodesRemovedSetsValidated(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([101 => [], 102 => []]);
-      $this->apiActivistCodesMock->method('hasApiActivistCodeBatch')->willReturn([101, 102]);
-      $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
-      $this->turfStatusMock->expects($this->never())->method('extendTurfStatusExpiration');
+    public function testCreateIsValidatedWhenTurfHasNoVoters(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfWithVoters([]);
+      $this->apiActivistCodesMock->expects($this->never())->method('hasApiActivistCodeBatch');
       $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::TURF_DELETE_VALIDATED);
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::TURF_CREATE_VALIDATED);
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord(['status' => NlpTurfStatus::TURF_DELETED]));
+      $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
-    public function testCheckExpiredTurfAcDeleteSomeCodesStillPresentRetriesRemove(): void {
-      $this->setupContainerWithLogger();
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([101 => [], 102 => []]);
-      // Only vanid 102 is missing the code, so 101 still has it and must be retried.
-      $this->apiActivistCodesMock->method('hasApiActivistCodeBatch')->willReturn([102]);
-      $this->apiActivistCodesMock->expects($this->once())->method('setApiActivistCodeBatch')
-        ->with([101], 'NLPVoterAC', 'Remove');
-      $this->turfStatusMock->expects($this->never())->method('setTurfStatusValidated');
-      $this->turfStatusMock->expects($this->once())->method('extendTurfStatusExpiration')
-        ->with('TEST County', 'Turf 1', NlpTurfStatus::DELETED_EXPIRY_SMALL_SECS);
-
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord(['status' => NlpTurfStatus::TURF_DELETED]));
-    }
-
-    public function testCheckExpiredTurfAcPassesCodeNameAndVanidsToBatchCheck(): void {
-      $this->turfsMock->method('getTurfByTurfName')->willReturn(['turfIndex' => 7]);
-      $this->votersMock->method('getVotersInTurf')->willReturn([101 => [], 102 => []]);
+    public function testCreatePassesCodeNameAndVanidsToBatchCheck(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfWithVoters([101, 102]);
       $this->apiActivistCodesMock->expects($this->once())->method('hasApiActivistCodeBatch')
         ->with([101, 102], 'NLPVoterAC')
         ->willReturn([]);
-      $this->turfStatusMock->method('setTurfStatusValidated');
 
-      $this->buildChecker()->checkExpiredTurfAc($this->baseRecord());
+      $this->buildService()->checkExpiredTurfAc($this->record());
+    }
+
+    public function testCreateIsValidatedWhenTurfIsGone(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfsMock->method('getTurfByTurfName')->willReturn([]);
+      $this->turfStatusMock->expects($this->once())->method('setTurfStatusValidated')
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::TURF_CREATE_VALIDATED);
+
+      $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
   }

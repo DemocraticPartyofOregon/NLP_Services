@@ -34,13 +34,19 @@ class NlpTurfAcChecker
    * checkExpiredTurfAc
    *
    * Called by the queue worker for each expired turfCreated / turfDeleted
-   * record.  Checks whether NLPVoterAC has been fully applied or removed.
-   * On success the record is stamped with the validated status.  On failure
-   * the incomplete voters are retried via the VAN API, the expiration is
-   * extended, and the status is left unchanged so the next cron run re-checks.
+   * record.  Checks whether NLPVoterAC has been fully applied to a synced
+   * turf.  On success the record is stamped with the validated status.  On
+   * failure the voters missing the code are retried via the VAN API, the
+   * expiration is extended, and the status is left unchanged so the next cron
+   * run re-checks.
+   *
+   * A deleted turf is stamped validated without checking.  deleteTurf()
+   * removes the turf and its voters at once, so a turf found by this name is
+   * a newer turf, and the removal is already checked on cron by the
+   * nlpservices_ac_verify_queue.
    *
    * @param array $record  Queue item: keys folderName, folderId, turfName,
-   *                       turfId, status (turfCreated|turfDeleted).
+   *                       turfId, createTime, status (turfCreated|turfDeleted).
    * @return void
    */
   public function checkExpiredTurfAc(array $record): void
@@ -51,66 +57,53 @@ class NlpTurfAcChecker
     $turfId     = (int) $record['turfId'];
     $status     = $record['status'];
 
-    $isDelete = ($status === NlpTurfStatus::TURF_DELETED);
-    $validatedStatus = $isDelete
-      ? NlpTurfStatus::TURF_DELETE_VALIDATED
-      : NlpTurfStatus::TURF_CREATE_VALIDATED;
+    // The queue item is a copy of the record when cron queued it.  If the turf
+    // was synced or deleted again since then, the copy is stale and the item
+    // queued for the current record does the check.
+    $current = $this->turfStatusObj->getTurfStatus($folderName, $turfName);
+    if (empty($current) || $current['status'] !== $status
+      || ($current['createTime'] ?? '') !== ($record['createTime'] ?? '')) {
+      return;
+    }
+
+    if ($status === NlpTurfStatus::TURF_DELETED) {
+      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_DELETE_VALIDATED);
+      return;
+    }
 
     $turf = $this->turfsObj->getTurfByTurfName($folderId, $turfName);
     if (empty($turf)) {
-      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, $validatedStatus);
+      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_CREATE_VALIDATED);
       return;
     }
 
     $turfIndex = (int) $turf['turfIndex'];
     $vanids    = array_keys($this->votersObj->getVotersInTurf($turfIndex));
     if (empty($vanids)) {
-      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, $validatedStatus);
+      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_CREATE_VALIDATED);
       return;
     }
 
     $missingCode = $this->apiActivistCodesObj->hasApiActivistCodeBatch($vanids, 'NLPVoterAC');
 
-    if ($isDelete) {
-      // All removed means every voter is missing the code.
-      if (count($missingCode) === count($vanids)) {
-        $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, $validatedStatus);
-        return;
-      }
-      $stillHaveCode = array_values(array_diff($vanids, $missingCode));
-      Drupal::logger('nlpservices')->warning(
-        'Expired turf @folder/@turf (turfId:@turfId): NLPVoterAC removal incomplete. @count voter(s) still have the code, retrying: @vanids',
-        [
-          '@folder' => $folderName,
-          '@turf'   => $turfName,
-          '@turfId' => $turfId,
-          '@count'  => count($stillHaveCode),
-          '@vanids' => implode(', ', $stillHaveCode),
-        ]
-      );
-      $this->apiActivistCodesObj->setApiActivistCodeBatch($stillHaveCode, 'NLPVoterAC', 'Remove',
-        "expired turf check of $folderName/$turfName");
-      $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::DELETED_EXPIRY_SMALL_SECS);
-    } else {
-      // All applied means no voter is missing the code.
-      if (empty($missingCode)) {
-        $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, $validatedStatus);
-        return;
-      }
-      Drupal::logger('nlpservices')->warning(
-        'Expired turf @folder/@turf (turfId:@turfId): NLPVoterAC application incomplete. @count voter(s) still missing the code, retrying: @vanids',
-        [
-          '@folder' => $folderName,
-          '@turf'   => $turfName,
-          '@turfId' => $turfId,
-          '@count'  => count($missingCode),
-          '@vanids' => implode(', ', $missingCode),
-        ]
-      );
-      $this->apiActivistCodesObj->setApiActivistCodeBatch($missingCode, 'NLPVoterAC', 'Apply',
-        "expired turf check of $folderName/$turfName");
-      $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
+    // All applied means no voter is missing the code.
+    if (empty($missingCode)) {
+      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_CREATE_VALIDATED);
+      return;
     }
+    Drupal::logger('nlpservices')->warning(
+      'Expired turf @folder/@turf (turfId:@turfId): NLPVoterAC application incomplete. @count voter(s) still missing the code, retrying: @vanids',
+      [
+        '@folder' => $folderName,
+        '@turf'   => $turfName,
+        '@turfId' => $turfId,
+        '@count'  => count($missingCode),
+        '@vanids' => implode(', ', $missingCode),
+      ]
+    );
+    $this->apiActivistCodesObj->setApiActivistCodeBatch($missingCode, 'NLPVoterAC', 'Apply',
+      "expired turf check of $folderName/$turfName");
+    $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
   }
 
 }
