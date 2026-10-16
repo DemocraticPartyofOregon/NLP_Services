@@ -542,33 +542,36 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertTrue($this->buildService()->notifyMissingNl(42));
     }
 
-    public function testNotifyMissingNlDoesNotEmailWhenVanHasNoRecord(): void {
+    public function testNotifyMissingNlRecordsLookupWhenVanHasNoRecord(): void {
       $this->setUpLoggerContainer();
       $this->stateMock->method('get')->willReturn([]);
       $this->apiNlsMock->method('getApiNls')->willReturn([]);
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
-      $this->stateMock->expects($this->never())->method('set');
+      $this->stateMock->expects($this->once())->method('set')
+        ->with(NlpMinivan::MISSING_NL_STATE, $this->callback(fn(array $n) => isset($n[42])));
 
       $this->assertFalse($this->buildService()->notifyMissingNl(42));
     }
 
-    public function testNotifyMissingNlDoesNotEmailWhenNoCoordinatorAssigned(): void {
+    public function testNotifyMissingNlRecordsLookupWhenNoCoordinatorAssigned(): void {
       $this->setUpLoggerContainer();
       $this->stateMock->method('get')->willReturn([]);
       $this->apiNlsMock->method('getApiNls')->willReturn($this->vanNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
-      $this->stateMock->expects($this->never())->method('set');
+      $this->stateMock->expects($this->once())->method('set')
+        ->with(NlpMinivan::MISSING_NL_STATE, $this->callback(fn(array $n) => isset($n[42])));
 
       $this->assertFalse($this->buildService()->notifyMissingNl(42));
     }
 
-    public function testNotifyMissingNlTriesAgainWhenEmailFails(): void {
+    public function testNotifyMissingNlRecordsLookupWhenEmailFails(): void {
       $this->stateMock->method('get')->willReturn([]);
       $this->apiNlsMock->method('getApiNls')->willReturn($this->vanNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->coordinator());
       $this->sendEmailMock->method('sendEmail')->willReturn(FALSE);
-      $this->stateMock->expects($this->never())->method('set');
+      $this->stateMock->expects($this->once())->method('set')
+        ->with(NlpMinivan::MISSING_NL_STATE, $this->callback(fn(array $n) => isset($n[42])));
 
       $this->assertFalse($this->buildService()->notifyMissingNl(42));
     }

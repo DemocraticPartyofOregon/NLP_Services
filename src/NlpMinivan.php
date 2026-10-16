@@ -856,8 +856,9 @@ class NlpMinivan {
    *
    * A MiniVAN user reported a result for a voter in a turf, but the NL who owns the turf is
    * missing from the NLs table.  Get the NL's name and region from VAN, and warn the NL's
-   * coordinator so the NL can be added back to the list of active NLs.  A coordinator is warned
-   * at most once a day for each missing NL.
+   * coordinator so the NL can be added back to the list of active NLs.  Each missing NL is
+   * looked up at most once a day, whether or not the email can be sent, since a MiniVAN email
+   * can hold hundreds of reports for the same NL and cron would call VAN for each one.
    *
    * @param int $mcid
    * @return bool - TRUE if the coordinator was sent the email.
@@ -868,6 +869,8 @@ class NlpMinivan {
     if(!empty($notified[$mcid]) && time() - $notified[$mcid] < self::MISSING_NL_NOTIFY_INTERVAL) {
       return FALSE;
     }
+    $notified[$mcid] = time();
+    $this->state->set(self::MISSING_NL_STATE, $notified);
 
     $nl = $this->apiNlsObj->getApiNls('', $mcid);
     if(empty($nl) || empty($nl['county'])) {
@@ -900,8 +903,6 @@ class NlpMinivan {
       return FALSE;
     }
 
-    $notified[$mcid] = time();
-    $this->state->set(self::MISSING_NL_STATE, $notified);
     Drupal::logger('nlpservices')->notice('Missing NL notification sent to: '.$firstName.' '.
       $coordinator['lastName'].' ['.$coordinator['email'].'] for '.$nlName.', mcid: '.$mcid);
     return TRUE;
