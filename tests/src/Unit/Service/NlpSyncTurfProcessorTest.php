@@ -275,7 +275,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturn(['downloadUrl' => $uri]);
       $this->stubForSuccess();
 
-      $this->votersMock->expects($this->once())->method('duplicateVoters')
+      $this->votersMock->method('duplicateVoters')
         ->willReturn([101 => ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver']]);
       $this->votersMock->method('getVotersInList')
         ->willReturn([101 => ['vanid' => 101, 'firstName' => 'Bob', 'lastName' => 'Jones']]);
@@ -346,40 +346,97 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — too many moved voters: the ones taken out of their old
-    // turf in the aborted group lose NLPVoterAC
+    // processBatch — too many voters in other turfs: the sync stops before
+    // anything is changed
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchTooManyMovedVotersRemovesTheirActivistCode(): void {
+    /**
+     * Stubs duplicateVoters so the given VANIDs are in another live turf, and
+     * returns only the ones asked about, as the database query does.
+     */
+    private function stubVotersInOtherTurf(array $dupVanids): void {
+      $this->votersMock->method('duplicateVoters')
+        ->willReturnCallback(function (array $vanids) use ($dupVanids): array {
+          $found = [];
+          foreach ($vanids as $vanid) {
+            if (in_array((int) $vanid, $dupVanids, TRUE)) {
+              $found[(int) $vanid] = ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver'];
+            }
+          }
+          return $found;
+        });
+      $this->votersMock->method('getVotersInList')
+        ->willReturnCallback(fn(array $vanids) => array_map(
+          fn($vanid) => ['vanid' => $vanid, 'firstName' => 'Bob', 'lastName' => 'Jones'],
+          array_combine($vanids, $vanids)));
+      $this->turfsMock->method('getTurf')
+        ->willReturn(['turfName' => 'Oak Ave', 'folderName' => 'HD38', 'mapRegionName' => 'Region B',
+          'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+    }
+
+    public function testProcessBatchTooManyMovedVotersAbortsBeforeChangingAnything(): void {
       $vanids = [101, 102, 103, 104, 105, 106, 107];
       $uri = $this->writeTurfCsv($vanids);
       $this->exportJobsMock->method('getExportJobs')
         ->willReturn(['downloadUrl' => $uri]);
-      $this->stubForSuccess();
+      $this->stubVotersInOtherTurf($vanids);
 
-      $duplicates = [];
-      $voters = [];
-      foreach ($vanids as $vanid) {
-        $duplicates[$vanid] = ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver'];
-        $voters[$vanid] = ['vanid' => $vanid, 'firstName' => 'Bob', 'lastName' => 'Jones'];
-      }
-      $this->votersMock->method('duplicateVoters')->willReturn($duplicates);
-      $this->votersMock->method('getVotersInList')->willReturn($voters);
-      $this->turfsMock->method('getTurf')
-        ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+      $this->turfsMock->expects($this->never())->method('createTurf');
+      $this->votersMock->expects($this->never())->method('deleteVoterInTurf');
+      $this->activistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
 
-      $acCalls = [];
-      $this->activistCodesMock->method('setApiActivistCodeBatch')
-        ->willReturnCallback(function (array $vanids, string $codeName, string $action = 'Apply') use (&$acCalls): void {
-          $acCalls[] = [$action, $vanids];
-        });
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame(1, $context['finished']);
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertArrayNotHasKey('turfIndex', $context['results']);
+      $arguments = $context['results']['message'][0]->getArguments();
+      $this->assertSame(7, $arguments['@count']);
+      $this->assertSame('Oak Ave', $arguments['@firstTurfName']);
+      $this->assertSame('HD38', $arguments['@firstFolderName']);
+      $this->assertSame('Region B', $arguments['@firstMapRegionName']);
+    }
+
+    public function testProcessBatchConflictsSpreadAcrossBatchesStopTheSyncUpFront(): void {
+      // 20 voters is two batches; 3 conflicts in the first and 4 in the second.
+      // Checked batch by batch, the first 3 would be taken out of their old turf
+      // before the sync stopped.
+      $vanids = range(101, 120);
+      $uri = $this->writeTurfCsv($vanids);
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubVotersInOtherTurf([101, 102, 103, 118, 119, 120, 117]);
+
+      $this->turfsMock->expects($this->never())->method('createTurf');
+      $this->apiVoterMock->expects($this->never())->method('getVoters');
+      $this->votersMock->expects($this->never())->method('deleteVoterInTurf');
+      $this->activistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
 
       $context   = [];
       $processor = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
 
       $this->assertSame('error', $context['results']['result']);
-      $this->assertSame([['Remove', $vanids]], $acCalls);
+    }
+
+    public function testProcessBatchSixMovedVotersStillSync(): void {
+      $vanids = [101, 102, 103, 104, 105, 106];
+      $uri = $this->writeTurfCsv($vanids);
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubForSuccess();
+      $this->stubVotersInOtherTurf($vanids);
+
+      $this->votersMock->expects($this->exactly(6))->method('deleteVoterInTurf');
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame('success', $context['results']['result']);
+      $this->assertCount(6, $context['results']['movedVoters']);
     }
 
     // -------------------------------------------------------------------------

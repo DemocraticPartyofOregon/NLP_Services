@@ -10,6 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class NlpSyncTurfProcessor {
 
   const int MAX_QUEUE_LIMIT = 17;
+  const int MAX_MOVED_VOTERS = 6;  // More voters than this in other turfs stops the sync.
 
   protected ApiExportJobs $exportJobsObj;
   protected ApiSavedLists $savedListsObj;
@@ -171,13 +172,36 @@ class NlpSyncTurfProcessor {
       }
       fclose($fh);
 
+      // Check the whole turf for voters already in another turf before anything is
+      // changed.  The voters are read in batches, so a check made batch by batch would
+      // take some voters out of their old turf before stopping, and each retry would
+      // find fewer conflicts until the sync went through.
+      $conflicts = $this->turfConflicts(array_merge(...$turfVoters));
+      if ($conflicts['count'] > self::MAX_MOVED_VOTERS) {
+        $newNl     = $this->nlsObj->getNlById($mcid);
+        $newNlName = trim(($newNl['firstName'] ?? '') . ' ' . ($newNl['lastName'] ?? ''));
+        $firstConflict = $conflicts['firstConflict'];
+        $context['finished']           = 1;
+        $context['results']['message'] = [0 => t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
+          '@count'               => $conflicts['count'],
+          '@turfName'            => $turfName,
+          '@folderName'          => $folderName,
+          '@mapRegionName'       => $mapRegionName,
+          '@newNlName'           => $newNlName,
+          '@firstTurfName'       => $firstConflict['turfName'] ?? '',
+          '@firstFolderName'     => $firstConflict['folderName'] ?? '',
+          '@firstMapRegionName'  => $firstConflict['mapRegionName'] ?? '',
+        ])];
+        $context['results']['result']  = 'error';
+        return;
+      }
+
       $context['sandbox']['batchCount']    = count($turfVoters);
       $context['sandbox']['currentBatch'] = 0;
       $context['sandbox']['turfVoters']   = $turfVoters;
       $context['sandbox']['duplicates']    = [];
       $context['sandbox']['votersInTurf']  = [];
       $context['sandbox']['movedVoters']   = [];
-      $context['sandbox']['firstConflict'] = [];
 
       $turf = [
         'county'     => $county,
@@ -237,13 +261,6 @@ class NlpSyncTurfProcessor {
         // A voter-in-turf row left behind by a deleted turf is not a real
         // conflict; its row is still deleted below.
         if (empty($oldTurf)) { continue; }
-        if (empty($context['sandbox']['firstConflict'])) {
-          $context['sandbox']['firstConflict'] = [
-            'folderName'    => $oldTurf['folderName'] ?? '',
-            'mapRegionName' => $oldTurf['mapRegionName'] ?? '',
-            'turfName'      => $oldTurf['turfName'] ?? '',
-          ];
-        }
         $movedVoters[$vanid] = [
           'firstName'   => $duplicate['firstName'],
           'lastName'    => $duplicate['lastName'],
@@ -272,29 +289,6 @@ class NlpSyncTurfProcessor {
         $this->votersObj->deleteVoterInTurf($vanid);
       }
       $context['sandbox']['movedVoters'] = $movedVoters;
-      if (count($movedVoters) > 6) {
-        // The voters in this group were taken out of their old turf but
-        // won't be added to this one, so they are in no turf now.
-        $this->activistCodesObj->setApiActivistCodeBatch($duplicateVanids, 'NLPVoterAC', 'Remove',
-          "aborted turf sync of $turfName (turfIndex $turfIndex)");
-        $firstConflict = $context['sandbox']['firstConflict'];
-        $context['finished']             = 1;
-        $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
-          '@count'               => count($movedVoters),
-          '@turfName'            => $turfName,
-          '@folderName'          => $folderName,
-          '@mapRegionName'       => $mapRegionName,
-          '@newNlName'           => $newNlName,
-          '@firstTurfName'       => $firstConflict['turfName'] ?? '',
-          '@firstFolderName'     => $firstConflict['folderName'] ?? '',
-          '@firstMapRegionName'  => $firstConflict['mapRegionName'] ?? '',
-        ])];
-        $context['results']['result']    = 'error';
-        $context['results']['turfIndex'] = $context['sandbox']['turfIndex'];
-        $context['results']['mcid']      = $context['sandbox']['mcid'];
-        $context['results']['county']    = $context['sandbox']['county'];
-        return;
-      }
     }
 
     $applyVanids = [];
@@ -442,6 +436,7 @@ class NlpSyncTurfProcessor {
    */
   private function getDuplicates(array $voters): array {
     $vanids        = array_keys($voters);
+    if (empty($vanids)) { return []; }
     $dupVoterTurfs = $this->votersObj->duplicateVoters($vanids);
     if (empty($dupVoterTurfs)) { return []; }
     $dupVanids = array_keys($dupVoterTurfs);
@@ -452,6 +447,34 @@ class NlpSyncTurfProcessor {
       $dupVoters[$vanid]['county']    = $dupVoterTurfs[$vanid]['county'];
     }
     return $dupVoters;
+  }
+
+  /**
+   * turfConflicts
+   *
+   * Counts the voters in a turf's list who are already in another synced turf.  A voter
+   * left behind by a deleted turf is not counted, since the sync only deletes its row.
+   *
+   * @param array $vanids - every VANID in the turf's list.
+   * @return array - keys count, and firstConflict (folderName, mapRegionName and turfName of
+   *   the first other turf found).
+   */
+  private function turfConflicts(array $vanids): array {
+    $conflicts  = ['count' => 0, 'firstConflict' => []];
+    $duplicates = $this->getDuplicates(array_flip($vanids));
+    foreach ($duplicates as $duplicate) {
+      $oldTurf = $this->turfsObj->getTurf($duplicate['turfIndex']);
+      if (empty($oldTurf)) { continue; }
+      if (empty($conflicts['firstConflict'])) {
+        $conflicts['firstConflict'] = [
+          'folderName'    => $oldTurf['folderName'] ?? '',
+          'mapRegionName' => $oldTurf['mapRegionName'] ?? '',
+          'turfName'      => $oldTurf['turfName'] ?? '',
+        ];
+      }
+      $conflicts['count']++;
+    }
+    return $conflicts;
   }
 
   /**
