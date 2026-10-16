@@ -121,7 +121,7 @@ class NlpVoterAcProcessor {
       );
       $this->sendEmailObj->sendEmail('nlp_admin_notice', $adminEmail, $subject, $message);
 
-      $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC', 'Apply');
+      $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC', 'Apply', "voter AC check of $turfName");
     }
   }
 
@@ -207,7 +207,7 @@ class NlpVoterAcProcessor {
     }
 
     if (!empty($toApply)) {
-      $this->activistCodesObj->setApiActivistCodeBatch($toApply, 'NLPVoterAC', 'Apply');
+      $this->activistCodesObj->setApiActivistCodeBatch($toApply, 'NLPVoterAC', 'Apply', "voter AC check of $turfName");
     }
     $context['results']['turfsProcessed']++;
 

@@ -74,6 +74,7 @@ class NlpDataEntryReports
       'vanid' => $report['vanid'],
       'codeName' => 'NLPHostileAC',
       'action' => ($report['value'])?'Apply':'Remove',
+      'source' => 'data entry by NL '.$report['mcid'],
     ];
     $this->apiActivistCodesObj->setApiActivistCode($request);
     

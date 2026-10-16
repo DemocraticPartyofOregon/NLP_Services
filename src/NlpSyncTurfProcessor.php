@@ -294,12 +294,10 @@ class NlpSyncTurfProcessor {
 
     $this->storeWalksheet($arg, $turfIndex);
 
-    // Voters taken from another turf get their activist code removed and then
-    // applied again for the new turf.
+    // A voter taken from another turf keeps NLPVoterAC and gets it applied
+    // again with the rest. Removing it first could leave the voter without it
+    // if VAN handled the Apply before the Remove.
     $acQueue = [];
-    foreach (array_chunk(array_keys($movedVoters), self::MAX_QUEUE_LIMIT) as $vanids) {
-      $acQueue[] = ['action' => 'Remove', 'vanids' => $vanids];
-    }
     foreach (array_chunk(array_keys($sandbox['voters']), self::MAX_QUEUE_LIMIT) as $vanids) {
       $acQueue[] = ['action' => 'Apply', 'vanids' => $vanids];
     }
@@ -468,7 +466,8 @@ class NlpSyncTurfProcessor {
     $acIndex = $context['sandbox']['acIndex'];
     $acQueue = $context['sandbox']['acQueue'];
     if (!empty($acQueue[$acIndex])) {
-      $this->activistCodesObj->setApiActivistCodeBatch($acQueue[$acIndex]['vanids'], 'NLPVoterAC', $acQueue[$acIndex]['action']);
+      $this->activistCodesObj->setApiActivistCodeBatch($acQueue[$acIndex]['vanids'], 'NLPVoterAC', $acQueue[$acIndex]['action'],
+        "turf sync of {$context['results']['turfName']} (turfIndex {$context['results']['turfIndex']})");
     }
     $acIndex++;
     $context['sandbox']['acIndex'] = $acIndex;

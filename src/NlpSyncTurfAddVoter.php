@@ -60,6 +60,7 @@ class NlpSyncTurfAddVoter
       'vanid' => $vanid,
       'codeName' => 'NLPVoterAC',
       'action' => 'Apply',
+      'source' => "turf resync (turfIndex $turfIndex)",
     ];
     $this->activistCodesObj->setApiActivistCode($acRequest);
 

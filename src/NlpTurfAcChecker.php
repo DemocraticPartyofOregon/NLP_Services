@@ -88,7 +88,8 @@ class NlpTurfAcChecker
           '@vanids' => implode(', ', $stillHaveCode),
         ]
       );
-      $this->apiActivistCodesObj->setApiActivistCodeBatch($stillHaveCode, 'NLPVoterAC', 'Remove');
+      $this->apiActivistCodesObj->setApiActivistCodeBatch($stillHaveCode, 'NLPVoterAC', 'Remove',
+        "expired turf check of $folderName/$turfName");
       $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::DELETED_EXPIRY_SMALL_SECS);
     } else {
       // All applied means no voter is missing the code.
@@ -106,7 +107,8 @@ class NlpTurfAcChecker
           '@vanids' => implode(', ', $missingCode),
         ]
       );
-      $this->apiActivistCodesObj->setApiActivistCodeBatch($missingCode, 'NLPVoterAC', 'Apply');
+      $this->apiActivistCodesObj->setApiActivistCodeBatch($missingCode, 'NLPVoterAC', 'Apply',
+        "expired turf check of $folderName/$turfName");
       $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
     }
   }

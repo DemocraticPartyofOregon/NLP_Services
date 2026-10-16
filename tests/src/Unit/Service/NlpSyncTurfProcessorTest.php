@@ -505,14 +505,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->runBatch($this->baseArg());
     }
 
-    public function testDuplicateVoterActivistCodeRemovedThenReapplied(): void {
+    public function testMovedVoterActivistCodeIsNotRemoved(): void {
       $this->useCsv([101]);
       $this->stubForSuccess();
       $this->stubDuplicates([101]);
 
       $this->runBatch($this->baseArg());
 
-      $this->assertSame(['begin', 'commit', 'ac:Remove', 'ac:Apply'], $this->events);
+      $this->assertSame(['begin', 'commit', 'ac:Apply'], $this->events);
     }
 
     public function testMovedVoterCarriedIntoSuccessResults(): void {
