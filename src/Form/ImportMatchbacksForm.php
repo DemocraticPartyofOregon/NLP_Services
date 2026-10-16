@@ -61,7 +61,7 @@ class ImportMatchbacksForm extends FormBase
       '#description' => t('Select a Ballot Received file.<br>'),
       '#progress_message' => 'Uploading',
       '#upload_location' => $tempDir,
-      '#upload_validators' => ['file_validate_extensions' => ['csv txt']],
+      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv txt']],
     ];
     // A button for the upload of voting results.
     $form['upload_file'] = [

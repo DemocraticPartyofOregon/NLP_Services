@@ -119,7 +119,7 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   public function testBuildFormFileFieldRestrictsToCsvAndTxtExtensions(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-    $allowed = $form['matchback_file']['#upload_validators']['file_validate_extensions'][0];
+    $allowed = $form['matchback_file']['#upload_validators']['FileExtension']['extensions'];
     $this->assertStringContainsString('csv', $allowed);
     $this->assertStringContainsString('txt', $allowed);
   }
