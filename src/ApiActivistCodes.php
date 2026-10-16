@@ -123,7 +123,6 @@ class ApiActivistCodes
     // on a later page, so keep reading while VAN says there are more.
     $codes = [];
     $skip = 0;
-    $url = $baseUrl;
     try {
       do {
         $url = $baseUrl.'?$top='.self::VOTER_CODES_PAGE_SIZE.'&$skip='.$skip;
@@ -142,7 +141,9 @@ class ApiActivistCodes
       return $codes;
     } catch (GuzzleException|Exception $e) {
       nlp_debug_msg('getApiVoterActivistCodes', $e);
-      nlp_debug_msg('getApiVoterActivistCodes', "URL: $url");
+      // The URL carries the API key, so log it without the credentials.
+      nlp_debug_msg('getApiVoterActivistCodes', 'URL: https://'.$apiURL."/people/$vanid/activistCodes".'?$top='
+        .self::VOTER_CODES_PAGE_SIZE.'&$skip='.$skip." (database $database)");
       return [];
     }
   }

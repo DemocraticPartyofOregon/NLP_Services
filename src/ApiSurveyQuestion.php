@@ -220,7 +220,8 @@ class ApiSurveyQuestion
       $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (GuzzleException $e) {
       nlp_debug_msg('reportSurveyResponse', $e);
-      nlp_debug_msg('reportSurveyResponse', "postUrl: $postUrl");
+      // The URL carries the API key, so log it without the credentials.
+      nlp_debug_msg('reportSurveyResponse', "postUrl: https://$apiURL/people/$vanid/canvassResponses (database $database)");
       nlp_debug_msg('reportSurveyResponse', "dataJson: $dataJson");
       nlp_debug_msg('$surveyResponse', $surveyResponse);
     } catch (Exception $e) {
