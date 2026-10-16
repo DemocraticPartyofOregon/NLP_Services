@@ -275,8 +275,9 @@ class NlpTurfStatus
    * @param string $folderName
    * @param string $turfName
    * @return array
+   * Used in: NlpTurfAcChecker
    */
-  private function getTurfStatus(string $folderName, string $turfName): array
+  public function getTurfStatus(string $folderName, string $turfName): array
   {
     try {
       $query = $this->connection->select(self::TURF_STATUS_TBL, 's');
