@@ -116,12 +116,11 @@ class ImportMatchbacksFormTest extends UnitTestCase {
   /**
    * @covers ::buildForm
    */
-  public function testBuildFormFileFieldRestrictsToCsvAndTxtExtensions(): void {
+  public function testBuildFormFileFieldAllowsAnyExtension(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-    $allowed = $form['matchback_file']['#upload_validators']['FileExtension']['extensions'];
-    $this->assertStringContainsString('csv', $allowed);
-    $this->assertStringContainsString('txt', $allowed);
+    // An empty FileExtension validator tells Drupal to allow any extension.
+    $this->assertSame([], $form['matchback_file']['#upload_validators']['FileExtension']);
   }
 
   /**
