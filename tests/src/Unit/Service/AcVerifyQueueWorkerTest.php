@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\Tests\nlpservices\Unit\Plugin;
+namespace Drupal\Tests\nlpservices\Unit\Service;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Queue\DelayedRequeueException;
