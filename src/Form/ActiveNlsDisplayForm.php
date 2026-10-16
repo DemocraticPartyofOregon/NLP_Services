@@ -360,6 +360,7 @@ class ActiveNlsDisplayForm extends FormBase
       'vanid' => $mcid,
       'codeName' => 'NLPDropoutAC',
       'committee' => $county,
+      'source' => 'NL display',
     ];
     if ($askStatus == 'Dropout') {
       $request['action'] = 'Apply';

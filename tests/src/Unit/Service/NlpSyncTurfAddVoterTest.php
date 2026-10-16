@@ -222,6 +222,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           'vanid' => 10001,
           'codeName' => 'NLPVoterAC',
           'action' => 'Apply',
+          'source' => 'turf resync (turfIndex 5)',
         ]);
 
       $this->buildService()->syncAddVoter('Multnomah', $this->baseVoter(10001), 5, 42);

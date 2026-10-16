@@ -264,13 +264,19 @@ class NlpSyncTurfProcessor {
           ]
         );
       }
+      // A moved voter keeps NLPVoterAC, since this turf applies it again
+      // below. Removing it first could leave the voter without it if VAN
+      // handled the Apply before the Remove.
       $duplicateVanids = array_keys($duplicates);
-      $this->activistCodesObj->setApiActivistCodeBatch($duplicateVanids, 'NLPVoterAC', 'Remove');
       foreach ($duplicateVanids as $vanid) {
         $this->votersObj->deleteVoterInTurf($vanid);
       }
       $context['sandbox']['movedVoters'] = $movedVoters;
       if (count($movedVoters) > 6) {
+        // The voters in this group were taken out of their old turf but
+        // won't be added to this one, so they are in no turf now.
+        $this->activistCodesObj->setApiActivistCodeBatch($duplicateVanids, 'NLPVoterAC', 'Remove',
+          "aborted turf sync of $turfName (turfIndex $turfIndex)");
         $firstConflict = $context['sandbox']['firstConflict'];
         $context['finished']             = 1;
         $context['results']['message']   = [0 => t('Too many voters moved from existing turfs (@count) while syncing turf "@turfName" (Folder: @folderName, Map Region: @mapRegionName, NL: @newNlName). The first conflict was with turf "@firstTurfName" (Folder: @firstFolderName, Map Region: @firstMapRegionName). Sync aborted.', [
@@ -310,7 +316,8 @@ class NlpSyncTurfProcessor {
       $votersInTurf[$vanid] = $voter;
     }
 
-    $this->activistCodesObj->setApiActivistCodeBatch($applyVanids, 'NLPVoterAC');
+    $this->activistCodesObj->setApiActivistCodeBatch($applyVanids, 'NLPVoterAC', 'Apply',
+      "turf sync of $turfName (turfIndex $turfIndex)");
 
     $currentBatch++;
     $context['sandbox']['currentBatch'] = $currentBatch;

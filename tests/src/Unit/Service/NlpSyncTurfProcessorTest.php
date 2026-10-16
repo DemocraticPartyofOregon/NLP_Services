@@ -316,10 +316,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // processBatch — duplicate voter: NLPVoterAC is removed before re-apply
+    // processBatch — moved voter keeps NLPVoterAC; it is only applied again
     // -------------------------------------------------------------------------
 
-    public function testProcessBatchDuplicateVoterActivistCodeRemovedThenReapplied(): void {
+    public function testProcessBatchMovedVoterActivistCodeIsNotRemoved(): void {
       $uri = $this->writeTurfCsv([101]);
       $this->exportJobsMock->method('getExportJobs')
         ->willReturn(['downloadUrl' => $uri]);
@@ -342,11 +342,44 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $processor = $this->buildProcessor();
       $processor->processBatch($this->baseArg($uri), $context);
 
-      $this->assertContains('Remove', $acSetActions, 'setApiActivistCodeBatch Remove should be called to clear old turf AC');
-      $this->assertContains('Apply',  $acSetActions, 'setApiActivistCodeBatch Apply should be called to set new turf AC');
-      $removePos = array_search('Remove', $acSetActions);
-      $applyPos  = array_search('Apply',  $acSetActions);
-      $this->assertLessThan($applyPos, $removePos, 'Remove must precede Apply');
+      $this->assertSame(['Apply'], $acSetActions);
+    }
+
+    // -------------------------------------------------------------------------
+    // processBatch — too many moved voters: the ones taken out of their old
+    // turf in the aborted group lose NLPVoterAC
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchTooManyMovedVotersRemovesTheirActivistCode(): void {
+      $vanids = [101, 102, 103, 104, 105, 106, 107];
+      $uri = $this->writeTurfCsv($vanids);
+      $this->exportJobsMock->method('getExportJobs')
+        ->willReturn(['downloadUrl' => $uri]);
+      $this->stubForSuccess();
+
+      $duplicates = [];
+      $voters = [];
+      foreach ($vanids as $vanid) {
+        $duplicates[$vanid] = ['mcid' => 55, 'turfIndex' => 3, 'county' => 'Denver'];
+        $voters[$vanid] = ['vanid' => $vanid, 'firstName' => 'Bob', 'lastName' => 'Jones'];
+      }
+      $this->votersMock->method('duplicateVoters')->willReturn($duplicates);
+      $this->votersMock->method('getVotersInList')->willReturn($voters);
+      $this->turfsMock->method('getTurf')
+        ->willReturn(['turfName' => 'Oak Ave', 'nlFirstName' => 'Carol', 'nlLastName' => 'Davis']);
+
+      $acCalls = [];
+      $this->activistCodesMock->method('setApiActivistCodeBatch')
+        ->willReturnCallback(function (array $vanids, string $codeName, string $action = 'Apply') use (&$acCalls): void {
+          $acCalls[] = [$action, $vanids];
+        });
+
+      $context   = [];
+      $processor = $this->buildProcessor();
+      $processor->processBatch($this->baseArg($uri), $context);
+
+      $this->assertSame('error', $context['results']['result']);
+      $this->assertSame([['Remove', $vanids]], $acCalls);
     }
 
     // -------------------------------------------------------------------------

@@ -152,6 +152,7 @@ class NlpResyncTurf
               'vanid' => $vanid,
               'codeName' => 'NLPVoterAC',
               'action' => 'Remove',
+              'source' => "turf resync (turfIndex $turfIndex)",
             ];
             $this->activistCodesObj->setApiActivistCode($request);
           }
@@ -493,6 +494,7 @@ If the turf is still valid and the NL is still active, then please sync the turf
     $request = [
       'codeName' => 'NLPVoterAC',
       'action' => 'Apply',
+      'source' => "missing AC fix for $turfName (turfIndex $turfIndex)",
     ];
     foreach ($vanids as $vanid) {
       $request['vanid'] = $vanid;

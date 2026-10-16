@@ -5,10 +5,13 @@ namespace Drupal\nlpservices;
 use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
+use ReflectionClass;
 use stdClass;
+use Throwable;
 
 class ApiActivistCodes
 {
@@ -27,6 +30,13 @@ class ApiActivistCodes
    */
   const int VOTER_CODES_MAX_PAGES = 10;
 
+  /**
+   * Queue of activist code changes to check on cron. VAN can take seconds to
+   * show a change it accepted, so the check is done later instead of making
+   * the person who saved the change wait for it.
+   */
+  const string VERIFY_QUEUE = 'nlpservices_ac_verify_queue';
+
   private array $supportedActivistCodes = [
     'NLPVoterAC' => 0,
     'NLPHostileAC' => 0,
@@ -34,12 +44,6 @@ class ApiActivistCodes
     'NLPDropoutAC' => 1,
   ];
 
-  /**
-   * Waits, in milliseconds, before each check that VAN shows the change made
-   * by setApiActivistCode(). The first check is immediate, so a normal save
-   * isn't delayed.
-   */
-  private array $verifyDelaysMs = [0, 1000, 2000, 3000, 4000, 5000, 5000, 5000, 5000];
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
@@ -156,11 +160,15 @@ class ApiActivistCodes
    *     uses the State Committee key. MyCampaign codes belong to a specific
    *     county committee, so callers setting a MyCampaign code must pass
    *     that county here.
+   *   - source - optional; what made the change, like 'data entry'. It is
+   *     logged if the POST fails or VAN doesn't show the change.
+   *
+   * Returns as soon as VAN answers the POST. Whether VAN shows the change is
+   * checked later on cron by verifyActivistCodeChange().
    *
    * @param array $request
-   * @return bool - TRUE on success, FALSE if the activist code ID is unknown,
-   *   the API call fails, or VAN still doesn't show the change after the
-   *   waits in $verifyDelaysMs.
+   * @return bool - TRUE if VAN accepted the POST, FALSE if the activist code
+   *   ID is unknown or the POST failed.
    */
   public function setApiActivistCode(array $request): bool
   {
@@ -170,6 +178,7 @@ class ApiActivistCodes
     $vanid  = $request['vanid'];
     $action = $request['action'];
     $committee = $request['committee'] ?? '';
+    $source = $request['source'] ?? '';
     $database = $this->supportedActivistCodes[$activistCodeName];
 
     $responseObj = new stdClass();
@@ -201,46 +210,16 @@ class ApiActivistCodes
       'Expect'       => '',
     ];
     try {
-      $response = $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
+      $this->client->request('POST', $postUrl, ['headers' => $headers, 'body' => $dataJson,]);
     } catch (GuzzleException | Exception $e) {
-      nlp_debug_msg('setApiActivistCode', $e);
+      $this->logPostFailure($e, $vanid, $activistCodeName, $action, $source);
+      if ($this->outcomeUnknown($e)) {
+        $this->queueVerification([$vanid], $activistCodeName, $rid, $action, $database, $committee, $source);
+      }
       return FALSE;
     }
-
-    // VAN accepted the POST, but it can take a few seconds before a read
-    // shows the change. Check again after short waits instead of POSTing a
-    // second time, since nothing says the first POST failed.
-    $voterCodes = [];
-    foreach ($this->verifyDelaysMs as $delayMs) {
-      if ($delayMs > 0) {
-        $this->sleepMs($delayMs);
-      }
-      $voterCodes = $this->getApiVoterActivistCodes($vanid, $database, $committee);
-      $codeIsSet = in_array($rid, $voterCodes);
-      if (($action === 'Apply') ? $codeIsSet : !$codeIsSet) {
-        return TRUE;
-      }
-    }
-
-    Drupal::logger('nlpservices')->error(
-      'Activist code @code (@rid) @action not confirmed for vanid @vanid after @sec seconds. '
-      . 'POST response: @status @body. Database: @database, committee key: @committee. '
-      . 'Codes VAN returned for the voter (@count): @codes.',
-      [
-        '@code' => $activistCodeName,
-        '@rid' => $rid,
-        '@action' => $action,
-        '@vanid' => $vanid,
-        '@sec' => array_sum($this->verifyDelaysMs) / 1000,
-        '@status' => $response->getStatusCode(),
-        '@body' => (string) $response->getBody() ?: '(empty)',
-        '@database' => $database,
-        '@committee' => $committee ?: 'State Committee',
-        '@count' => count($voterCodes),
-        '@codes' => $voterCodes ? implode(', ', $voterCodes) : '(none)',
-      ]
-    );
-    return FALSE;
+    $this->queueVerification([$vanid], $activistCodeName, $rid, $action, $database, $committee, $source);
+    return TRUE;
   }
 
   /**
@@ -305,11 +284,16 @@ class ApiActivistCodes
    *
    * Applies (or removes) an activist code to multiple voters concurrently.
    *
+   * A POST that fails is logged with its vanid. Every change VAN accepted,
+   * or may have accepted, is queued to be checked on cron.
+   *
    * @param array  $vanids   - flat array of int vanids to update
    * @param string $codeName - e.g. 'NLPVoterAC'
    * @param string $action   - 'Apply' or 'Remove'
+   * @param string $source   - what made the change, like 'turf sync'; logged
+   *   if a POST fails or VAN doesn't show the change.
    */
-  public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action = 'Apply'): void
+  public function setApiActivistCodeBatch(array $vanids, string $codeName, string $action = 'Apply', string $source = ''): void
   {
     if (empty($vanids)) {
       return;
@@ -350,14 +334,173 @@ class ApiActivistCodes
       'Expect'       => '',
     ];
 
+    $toVerify = [];
     $this->sendInRateLimitedGroups(
       $vanids,
       fn($vanid) => new GuzzleRequest('POST', "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses", $headers, $dataJson),
-      function() {},
-      function($reason) {
-        nlp_debug_msg('setApiActivistCodeBatch', $reason->getMessage());
+      function($response, $vanid) use (&$toVerify) {
+        $toVerify[] = $vanid;
+      },
+      function($reason, $vanid) use (&$toVerify, $codeName, $action, $source) {
+        $this->logPostFailure($reason, $vanid, $codeName, $action, $source);
+        if ($this->outcomeUnknown($reason)) {
+          $toVerify[] = $vanid;
+        }
       },
     );
+    $this->queueVerification($toVerify, $codeName, $rid, $action, $database, '', $source);
+  }
+
+  /**
+   * verifyActivistCodeChange
+   *
+   * Checks that VAN shows a change queued by queueVerification(), and logs an
+   * error naming the voters it doesn't. Called on cron by the
+   * nlpservices_ac_verify_queue worker.
+   *
+   * @param array $item - keys vanids, codeName, rid, action, database,
+   *   committee, source, queuedAt.
+   * @return void
+   */
+  public function verifyActivistCodeChange(array $item): void
+  {
+    $vanids = $item['vanids'] ?? [];
+    if (empty($vanids)) {
+      return;
+    }
+    $rid = (int) $item['rid'];
+    $action = $item['action'];
+    $database = (int) $item['database'];
+    $committee = $item['committee'] ?? '';
+
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user   = $committeeKey['App Name'];
+
+    $hasCode = [];
+    $unread = [];
+    $this->sendInRateLimitedGroups(
+      $vanids,
+      fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes".'?$top='.self::VOTER_CODES_PAGE_SIZE),
+      function($response, $vanid) use (&$hasCode, &$unread, $rid, $database, $committee) {
+        $result = json_decode($response->getBody(), TRUE);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+          $unread[] = $vanid;
+          return;
+        }
+        $codes = array_map(fn($code) => (int) $code['activistCodeId'], $result['items'] ?? []);
+        if (!in_array($rid, $codes) && !empty($result['nextPageLink'])) {
+          // The code may be on a later page.
+          $codes = $this->getApiVoterActivistCodes($vanid, $database, $committee);
+        }
+        $hasCode[$vanid] = in_array($rid, $codes);
+      },
+      function($reason, $vanid) use (&$unread) {
+        $unread[] = $vanid;
+      },
+    );
+
+    $notShown = [];
+    foreach ($hasCode as $vanid => $codeIsSet) {
+      if (($action === 'Apply') ? !$codeIsSet : $codeIsSet) {
+        $notShown[] = $vanid;
+      }
+    }
+
+    $context = [
+      '@code' => $item['codeName'],
+      '@rid' => $rid,
+      '@action' => $action,
+      '@source' => $item['source'] ?: 'unknown',
+      '@time' => date('Y-m-d H:i:s', (int) $item['queuedAt']),
+      '@database' => $database ? 'MyCampaign' : 'VoterFile',
+      '@committee' => $committee ?: 'State Committee',
+    ];
+    if ($notShown) {
+      $this->log('error',
+        'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s): @vanids. '
+        . 'Database: @database, committee key: @committee.',
+        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown)]);
+    }
+    if ($unread) {
+      $this->log('warning',
+        'Could not read activist codes from VAN to check @code (@rid) @action from @source at @time for @count voter(s): @vanids. '
+        . 'Database: @database, committee key: @committee.',
+        $context + ['@count' => count($unread), '@vanids' => implode(', ', $unread)]);
+    }
+  }
+
+  /**
+   * Queues a change for verifyActivistCodeChange(). The code's ID is stored,
+   * not just its name, since after an election the name goes to a new code.
+   */
+  private function queueVerification(array $vanids, string $codeName, int $rid, string $action,
+                                     int $database, string $committee, string $source): void
+  {
+    if (empty($vanids) || !Drupal::hasService('queue')) {
+      return;
+    }
+    Drupal::queue(self::VERIFY_QUEUE)->createItem([
+      'vanids' => array_values($vanids),
+      'codeName' => $codeName,
+      'rid' => $rid,
+      'action' => $action,
+      'database' => $database,
+      'committee' => $committee,
+      'source' => $source,
+      'queuedAt' => time(),
+    ]);
+  }
+
+  /**
+   * Whether VAN may have applied a POST that failed: there was no answer at
+   * all (a timeout or dropped connection), or VAN or its gateway answered
+   * with a 5xx. A 4xx means VAN refused it.
+   */
+  private function outcomeUnknown(Throwable $reason): bool
+  {
+    if (!($reason instanceof RequestException) || !$reason->hasResponse()) {
+      return TRUE;
+    }
+    return $reason->getResponse()->getStatusCode() >= 500;
+  }
+
+  /**
+   * Logs a POST that failed, with the voter it was for. VAN's error body is
+   * logged rather than the exception message, which repeats the request URL.
+   */
+  private function logPostFailure(Throwable $reason, int|string $vanid, string $codeName,
+                                  string $action, string $source): void
+  {
+    $response = ($reason instanceof RequestException) ? $reason->getResponse() : NULL;
+    if ($response) {
+      $detail = mb_substr((string) $response->getBody(), 0, 500) ?: '(empty body)';
+    } else {
+      $context = method_exists($reason, 'getHandlerContext') ? $reason->getHandlerContext() : [];
+      $detail = $context['error'] ?? 'no response';
+    }
+    $this->log('error',
+      'Activist code @code @action failed for vanid @vanid from @source (@class, status @status: @detail). @outcome',
+      [
+        '@code' => $codeName,
+        '@action' => $action,
+        '@vanid' => $vanid,
+        '@source' => $source ?: 'unknown',
+        '@class' => (new ReflectionClass($reason))->getShortName(),
+        '@status' => $response ? $response->getStatusCode() : 'none',
+        '@detail' => $detail,
+        '@outcome' => $this->outcomeUnknown($reason)
+          ? 'VAN may still have applied it; it will be checked on cron.'
+          : 'VAN refused it.',
+      ]);
+  }
+
+  private function log(string $level, string $message, array $context): void
+  {
+    if (Drupal::hasService('logger.factory')) {
+      Drupal::logger('nlpservices')->log($level, $message, $context);
+    }
   }
 
 }
