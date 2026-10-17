@@ -337,12 +337,16 @@ class NlpNlsListDisplay
    * The form API provides the contact array in the form_state values.   The syntax is created
    * in the buildNlsTable() function, where the checkbox is created.
    *
-   * @param array $contacts
+   * A table with no rows (e.g. a name search that matched nobody) has no
+   * child values, so Drupal gives it an empty string instead of an array.
+   *
+   * @param mixed $contacts
    * @return array
    */
-  public function validateNlSelection(array $contacts): array
+  public function validateNlSelection(mixed $contacts): array
   {
     $selections = [];
+    if(!is_array($contacts)) {return $selections;}
     foreach($contacts as $contact) {
       foreach ($contact as $key => $value) {
         $keyParts = explode('-',$key);

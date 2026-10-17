@@ -201,6 +201,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(['42' => ['rowCount' => '42', 'mcid' => '42']], $result);
     }
 
+    public function testValidateNlSelectionReturnsEmptyForEmptyTable(): void {
+      // A table with no rows comes back from the form API as an empty string.
+      $this->assertSame([], $this->service->validateNlSelection(''));
+      $this->assertSame([], $this->service->validateNlSelection(NULL));
+    }
+
     public function testGetSortFieldReturnsExpectedField(): void {
       $this->assertSame('hd', $this->service->getSortField('HD', true));
       $this->assertSame('lastAccess', $this->service->getSortField('Last access', false));
