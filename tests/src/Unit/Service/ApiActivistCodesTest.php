@@ -600,27 +600,105 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildService()->verifyActivistCodeChange($this->verifyItem(['vanids' => [111, 222]]));
     }
 
-    public function testVerifyActivistCodeChangeLogsVotersMissingAppliedCode(): void {
+    public function testVerifyActivistCodeChangeResendsToVotersMissingAppliedCode(): void {
       $this->stubKeyValues();
       $loggerMock = $this->setContainerMocks();
       $loggerMock->expects($this->once())->method('log')
-        ->with('error', $this->anything(), $this->callback(fn(array $context) =>
+        ->with('warning', $this->stringContains('Sending it again'), $this->callback(fn(array $context) =>
+          $context['@vanids'] === '222'));
+      $posts = [];
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function (RequestInterface $request) use (&$posts) {
+          if ($request->getMethod() === 'POST') {
+            $posts[] = [(string) $request->getUri(), (string) $request->getBody()];
+            return new FulfilledPromise($this->createMock(ResponseInterface::class));
+          }
+          return new FulfilledPromise(str_contains((string) $request->getUri(), '/people/222/')
+            ? $this->makeResponse(['items' => [['activistCodeId' => 2002]]])
+            : $this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
+        });
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem(['vanids' => [111, 222]]));
+
+      $this->assertCount(1, $posts, 'Only the voter missing the code is sent it again.');
+      $this->assertStringContainsString('/people/222/canvassResponses', $posts[0][0]);
+      $body = json_decode($posts[0][1], TRUE);
+      $this->assertSame(1001, $body['responses'][0]['activistCodeId']);
+      $this->assertSame('Apply', $body['responses'][0]['action']);
+      $this->assertCount(1, $this->queuedItems);
+      $this->assertSame([222], $this->queuedItems[0]['vanids']);
+      $this->assertSame(1700000000, $this->queuedItems[0]['firstQueuedAt']);
+      $this->assertSame('turf sync of Oak Ave (turfIndex 7)', $this->queuedItems[0]['source']);
+    }
+
+    public function testVerifyActivistCodeChangeResendUsesCommitteeKeyAndDatabase(): void {
+      $this->setContainerMocks();
+      $this->apiKeyManagementMock->method('getKeyValues')
+        ->with('Lane')
+        ->willReturn(['API Key' => 'k', 'Url' => 'api.example.com/v4', 'App Name' => 'app']);
+      $postUrls = [];
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function (RequestInterface $request) use (&$postUrls) {
+          if ($request->getMethod() === 'POST') {
+            $postUrls[] = (string) $request->getUri();
+            return new FulfilledPromise($this->createMock(ResponseInterface::class));
+          }
+          return new FulfilledPromise($this->makeResponse(['items' => []]));
+        });
+
+      $this->buildService()->verifyActivistCodeChange(
+        $this->verifyItem(['rid' => 3003, 'database' => 1, 'committee' => 'Lane', 'vanids' => [555]]));
+
+      $this->assertCount(1, $postUrls);
+      $this->assertStringContainsString('|1@', urldecode($postUrls[0]));
+      $this->assertSame('Lane', $this->queuedItems[0]['committee']);
+      $this->assertSame(1, $this->queuedItems[0]['database']);
+    }
+
+    public function testVerifyActivistCodeChangeResendRefusedIsNotCheckedAgain(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $levels = [];
+      $loggerMock->method('log')
+        ->willReturnCallback(function ($level) use (&$levels) {
+          $levels[] = $level;
+        });
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(fn(RequestInterface $request) => $request->getMethod() === 'POST'
+          ? new RejectedPromise($this->makeHttpException(400, 'bad'))
+          : new FulfilledPromise($this->makeResponse(['items' => []])));
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem());
+
+      $this->assertSame(['warning', 'error'], $levels);
+      $this->assertSame([], $this->queuedItems);
+    }
+
+    public function testVerifyActivistCodeChangeLogsVotersStillMissingAppliedCodeAfterResend(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $loggerMock->expects($this->once())->method('log')
+        ->with('error', $this->stringContains('even after it was sent again'), $this->callback(fn(array $context) =>
           $context['@vanids'] === '222'
           && $context['@count'] === 1
           && $context['@rid'] === 1001
           && $context['@source'] === 'turf sync of Oak Ave (turfIndex 7)'
+          && $context['@time'] === date('Y-m-d H:i:s', 1600000000)
           && $context['@database'] === 'VoterFile'
           && $context['@committee'] === 'State Committee'));
-      $this->clientMock->method('sendAsync')
+      $this->clientMock->expects($this->exactly(2))->method('sendAsync')
         ->willReturnCallback(fn(RequestInterface $request) => new FulfilledPromise(
           str_contains((string) $request->getUri(), '/people/222/')
             ? $this->makeResponse(['items' => [['activistCodeId' => 2002]]])
             : $this->makeResponse(['items' => [['activistCodeId' => 1001]]])));
 
-      $this->buildService()->verifyActivistCodeChange($this->verifyItem(['vanids' => [111, 222]]));
+      $this->buildService()->verifyActivistCodeChange(
+        $this->verifyItem(['vanids' => [111, 222], 'firstQueuedAt' => 1600000000]));
+
+      $this->assertSame([], $this->queuedItems, 'A change is sent again only once.');
     }
 
-    public function testVerifyActivistCodeChangeLogsVotersStillHavingRemovedCode(): void {
+    public function testVerifyActivistCodeChangeLogsVotersStillHavingRemovedCodeAfterResend(): void {
       $this->stubKeyValues();
       $loggerMock = $this->setContainerMocks();
       $loggerMock->expects($this->once())->method('log')
@@ -629,7 +707,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->clientMock->method('sendAsync')
         ->willReturn(new FulfilledPromise($this->makeResponse(['items' => [['activistCodeId' => 1001]]])));
 
-      $this->buildService()->verifyActivistCodeChange($this->verifyItem(['action' => 'Remove']));
+      $this->buildService()->verifyActivistCodeChange(
+        $this->verifyItem(['action' => 'Remove', 'firstQueuedAt' => 1600000000]));
     }
 
     public function testVerifyActivistCodeChangeReadsLaterPagesBeforeLogging(): void {
