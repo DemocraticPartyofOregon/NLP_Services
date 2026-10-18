@@ -182,29 +182,13 @@ class ApiActivistCodes
     $source = $request['source'] ?? '';
     $database = $this->supportedActivistCodes[$activistCodeName];
 
-    $responseObj = new stdClass();
-    $canvassContextObj = new stdClass();
-    $canvassResponseObj = new stdClass();
-
     $committeeKey = $this->apiKeyManagementObj->getKeyValues($committee);
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
     $postUrl = "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses";
 
-    $responseObj->type = self::ACTIVIST_CODE;
-    $responseObj->activistCodeId = $rid;
-    $responseObj->action = $action;
-
-    $canvassContextObj->dateCanvassed = NULL;
-    $canvassContextObj->contactTypeId = NULL;
-    $canvassContextObj->inputTypeId = 11;
-
-    $canvassResponseObj->canvassContext = $canvassContextObj;
-    $canvassResponseObj->resultCodeId = NULL;
-    $canvassResponseObj->responses = [ $responseObj,];
-
-    $dataJson = json_encode( $canvassResponseObj );
+    $dataJson = $this->canvassResponseJson($rid, $action);
     $headers = [
       'Content-Type' => 'application/json',
       'Accept'       => 'application/json',
@@ -305,14 +289,54 @@ class ApiActivistCodes
     }
     $database = $this->supportedActivistCodes[$codeName];
     $stateCommitteeKey = $this->apiKeyManagementObj->getKeyValues('State Committee');
-    $apiKey = $stateCommitteeKey['API Key'];
-    $apiURL = $stateCommitteeKey['Url'];
-    $user   = $stateCommitteeKey['App Name'];
-    if (empty($apiKey) || empty($apiURL) || empty($user)) {
+    if (empty($stateCommitteeKey['API Key']) || empty($stateCommitteeKey['Url']) || empty($stateCommitteeKey['App Name'])) {
       Drupal::logger('nlpservices')->error('setApiActivistCodeBatch: missing State Committee API credentials.');
       return;
     }
 
+    $toVerify = $this->postActivistCodeBatch($vanids, $stateCommitteeKey, $codeName, $rid, $action, $database, $source);
+    $this->queueVerification($toVerify, $codeName, $rid, $action, $database, '', $source);
+  }
+
+  /**
+   * POSTs an activist code change for each voter, and logs each POST that
+   * failed. Returns the vanids VAN accepted, or may have accepted.
+   */
+  private function postActivistCodeBatch(array $vanids, array $committeeKey, string $codeName, int $rid,
+                                         string $action, int $database, string $source): array
+  {
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user   = $committeeKey['App Name'];
+    $dataJson = $this->canvassResponseJson($rid, $action);
+    $headers = [
+      'Content-Type' => 'application/json',
+      'Accept'       => 'application/json',
+      'Expect'       => '',
+    ];
+
+    $sent = [];
+    $this->sendInRateLimitedGroups(
+      $vanids,
+      fn($vanid) => new GuzzleRequest('POST', "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses", $headers, $dataJson),
+      function($response, $vanid) use (&$sent) {
+        $sent[] = $vanid;
+      },
+      function($reason, $vanid) use (&$sent, $codeName, $action, $source) {
+        $this->logPostFailure($reason, $vanid, $codeName, $action, $source);
+        if ($this->outcomeUnknown($reason)) {
+          $sent[] = $vanid;
+        }
+      },
+    );
+    return $sent;
+  }
+
+  /**
+   * The canvassResponses body that applies or removes one activist code.
+   */
+  private function canvassResponseJson(int $rid, string $action): string
+  {
     $responseObj = new stdClass();
     $responseObj->type = self::ACTIVIST_CODE;
     $responseObj->activistCodeId = $rid;
@@ -328,39 +352,19 @@ class ApiActivistCodes
     $canvassResponseObj->resultCodeId = NULL;
     $canvassResponseObj->responses = [$responseObj];
 
-    $dataJson = json_encode($canvassResponseObj);
-    $headers = [
-      'Content-Type' => 'application/json',
-      'Accept'       => 'application/json',
-      'Expect'       => '',
-    ];
-
-    $toVerify = [];
-    $this->sendInRateLimitedGroups(
-      $vanids,
-      fn($vanid) => new GuzzleRequest('POST', "https://$user:$apiKey|$database@$apiURL/people/$vanid/canvassResponses", $headers, $dataJson),
-      function($response, $vanid) use (&$toVerify) {
-        $toVerify[] = $vanid;
-      },
-      function($reason, $vanid) use (&$toVerify, $codeName, $action, $source) {
-        $this->logPostFailure($reason, $vanid, $codeName, $action, $source);
-        if ($this->outcomeUnknown($reason)) {
-          $toVerify[] = $vanid;
-        }
-      },
-    );
-    $this->queueVerification($toVerify, $codeName, $rid, $action, $database, '', $source);
+    return json_encode($canvassResponseObj);
   }
 
   /**
    * verifyActivistCodeChange
    *
-   * Checks that VAN shows a change queued by queueVerification(), and logs an
-   * error naming the voters it doesn't. Called on cron by the
-   * nlpservices_ac_verify_queue worker.
+   * Checks that VAN shows a change queued by queueVerification(). The change
+   * is sent once more to voters VAN doesn't show it for, and checked again
+   * on a later cron. If VAN still doesn't show it, an error names them.
+   * Called on cron by the nlpservices_ac_verify_queue worker.
    *
    * @param array $item - keys vanids, codeName, rid, action, database,
-   *   committee, source, queuedAt.
+   *   committee, source, queuedAt; a retry also has firstQueuedAt.
    * @return void
    */
   public function verifyActivistCodeChange(array $item): void
@@ -414,14 +418,23 @@ class ApiActivistCodes
       '@rid' => $rid,
       '@action' => $action,
       '@source' => $item['source'] ?: 'unknown',
-      '@time' => date('Y-m-d H:i:s', (int) $item['queuedAt']),
+      '@time' => date('Y-m-d H:i:s', (int) ($item['firstQueuedAt'] ?? $item['queuedAt'])),
       '@database' => $database ? 'MyCampaign' : 'VoterFile',
       '@committee' => $committee ?: 'State Committee',
     ];
-    if ($notShown) {
-      $this->log('error',
+    if ($notShown && empty($item['firstQueuedAt'])) {
+      $this->log('warning',
         'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s): @vanids. '
-        . 'Database: @database, committee key: @committee.',
+        . 'Database: @database, committee key: @committee. Sending it again.',
+        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown)]);
+      $sent = $this->postActivistCodeBatch($notShown, $committeeKey, $item['codeName'], $rid, $action, $database,
+        $item['source']);
+      $this->queueVerification($sent, $item['codeName'], $rid, $action, $database, $committee, $item['source'],
+        (int) $item['queuedAt']);
+    } elseif ($notShown) {
+      $this->log('error',
+        'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s): @vanids, '
+        . 'even after it was sent again. Database: @database, committee key: @committee.',
         $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown)]);
     }
     if ($unread) {
@@ -435,14 +448,18 @@ class ApiActivistCodes
   /**
    * Queues a change for verifyActivistCodeChange(). The code's ID is stored,
    * not just its name, since after an election the name goes to a new code.
+   * $firstQueuedAt is set when the change is being sent again, and is when
+   * it was first queued.
    */
   private function queueVerification(array $vanids, string $codeName, int $rid, string $action,
-                                     int $database, string $committee, string $source): void
+                                     int $database, string $committee, string $source,
+                                     int $firstQueuedAt = 0): void
   {
     if (empty($vanids) || !Drupal::hasService('queue')) {
       return;
     }
-    Drupal::queue(self::VERIFY_QUEUE)->createItem([
+    $retry = $firstQueuedAt ? ['firstQueuedAt' => $firstQueuedAt] : [];
+    Drupal::queue(self::VERIFY_QUEUE)->createItem($retry + [
       'vanids' => array_values($vanids),
       'codeName' => $codeName,
       'rid' => $rid,
