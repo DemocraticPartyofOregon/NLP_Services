@@ -45,6 +45,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'contactType',
         'qid',
         'rid',
+        'reportTime',
+        'reportIp',
       ]);
     }
 
@@ -191,6 +193,43 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildService()->setNlReport(['vanid' => 999, 'type' => 'Survey', 'contactId' => 42]);
 
       $this->assertSame(42, $capturedFields['contactId']);
+    }
+
+    public function testSetNlReportStampsReportTimeAndKeepsIp(): void {
+      $capturedFields = [];
+      $insertMock = $this->buildInsertMock();
+      $insertMock->method('fields')
+        ->willReturnCallback(function (array $fields) use (&$capturedFields, $insertMock): Insert {
+          $capturedFields = $fields;
+          return $insertMock;
+        });
+      $this->connectionMock->method('insert')->willReturn($insertMock);
+
+      $before = time();
+      $this->buildService()->setNlReport(['vanid' => 999, 'type' => 'contact', 'reportIp' => '203.0.113.7']);
+
+      $this->assertGreaterThanOrEqual($before, $capturedFields['reportTime']);
+      $this->assertLessThanOrEqual(time(), $capturedFields['reportTime']);
+      $this->assertSame('203.0.113.7', $capturedFields['reportIp']);
+    }
+
+    public function testSetNlReportSkipsNewColumnsUntilSchemaIsRepaired(): void {
+      $dbFunctionsMock = $this->createMock(DatabaseFunctions::class);
+      $dbFunctionsMock->method('getColumnNames')->willReturn(['reportIndex', 'vanid', 'cycle', 'contactId', 'type']);
+      $capturedFields = [];
+      $insertMock = $this->buildInsertMock();
+      $insertMock->method('fields')
+        ->willReturnCallback(function (array $fields) use (&$capturedFields, $insertMock): Insert {
+          $capturedFields = $fields;
+          return $insertMock;
+        });
+      $this->connectionMock->method('insert')->willReturn($insertMock);
+
+      $service = new NlpReports($this->configMock, $this->connectionMock, $dbFunctionsMock);
+      $service->setNlReport(['vanid' => 999, 'type' => 'contact', 'reportIp' => '203.0.113.7']);
+
+      $this->assertArrayNotHasKey('reportTime', $capturedFields);
+      $this->assertArrayNotHasKey('reportIp', $capturedFields);
     }
 
     public function testSetNlReportReturnsZeroOnInsertException(): void {

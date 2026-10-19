@@ -293,6 +293,8 @@ function nlpservices_schema(): array
       'text' => [ 'type' => 'varchar', 'length' => 1023, ],
       'qid' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'description' => 'Question ID from VoteBuilder.'],
       'contactId' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'description' => 'Unique code for a VoteBuilder contact report (for MiniVAN)'],
+      'reportTime' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'description' => 'Unix time the report was saved in NLP Services.'],
+      'reportIp' => [ 'type' => 'varchar', 'length' => 45, 'description' => 'IP address of the person who submitted the report in NLP Services.'],
     ],
     'indexes' => [
       'vanid' => [ 'vanid', ],
