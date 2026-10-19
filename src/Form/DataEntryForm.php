@@ -396,6 +396,7 @@ class DataEntryForm extends FormBase
           'nickname' => $nlsInfo['nickname'],
           'qid' => 0,
           'contactId' => 0,
+          'reportIp' => $this->getRequest()->getClientIp(),
         ];
         $contactMethods = $this->nlpConfigurationObj->getContactMethods();
 
@@ -723,6 +724,7 @@ not checked have already received a postcard for this election.</p></div>',
       'contactType' => $contactMethodName,
       'responseName' => 'Mailed',
       'nickname' => $nls['nickname'],
+      'reportIp' => $this->getRequest()->getClientIp(),
     ];
     foreach ($voters as $vanid => $selected) {
       if(empty($selected)) {continue;}  // Card already reported as sent.

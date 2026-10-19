@@ -18,6 +18,8 @@ use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 #[CoversClass(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class)]
 #[CoversMethod(\Drupal\nlpservices\Form\DataEntryPostcardsForm::class, 'getFormId')]
@@ -56,7 +58,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   private function buildFormInstance(): DataEntryPostcardsForm {
-    return new DataEntryPostcardsForm(
+    $form = new DataEntryPostcardsForm(
       $this->drupalUserMock,
       $this->reportsMock,
       $this->votersMock,
@@ -66,6 +68,10 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
       $this->configurationMock,
       $this->apiSurveyQuestionMock,
     );
+    $requestStack = new RequestStack();
+    $requestStack->push(Request::create('/', 'POST', [], [], [], ['REMOTE_ADDR' => '203.0.113.7']));
+    $form->setRequestStack($requestStack);
+    return $form;
   }
 
   private function baseVoter(int $vanid = 11111): array {
@@ -401,6 +407,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->assertSame('Postcard', $capturedReport['contactType']);
     $this->assertSame('Mailed', $capturedReport['value']);
     $this->assertSame('2026-06-27', $capturedReport['contactDate']);
+    $this->assertSame('203.0.113.7', $capturedReport['reportIp']);
   }
 
   public function testReportPostcardMailedCallsReportSurveyResponseWithCorrectData(): void {

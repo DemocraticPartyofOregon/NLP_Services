@@ -257,6 +257,7 @@ sent.  There is no need to report this an additional time.</p>',
       'type'=>'contact',
       'value'=>$noContactOption,
       'text'=>'',
+      'reportIp'=>$this->getRequest()->getClientIp(),
     ];
     $rIndex = $this->reportsObj->setNlReport($report);
 

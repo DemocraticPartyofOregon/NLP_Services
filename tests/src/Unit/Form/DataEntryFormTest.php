@@ -27,6 +27,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
 #[CoversClass(\Drupal\nlpservices\Form\DataEntryForm::class)]
 #[CoversMethod(\Drupal\nlpservices\Form\DataEntryForm::class, 'getFormId')]
@@ -99,6 +101,9 @@ class DataEntryFormTest extends UnitTestCase {
     );
     $this->form->setStringTranslation($this->getStringTranslationStub());
     $this->form->setMessenger($this->messengerMock);
+    $requestStack = new RequestStack();
+    $requestStack->push(Request::create('/', 'POST', [], [], [], ['REMOTE_ADDR' => '203.0.113.7']));
+    $this->form->setRequestStack($requestStack);
   }
 
   protected function tearDown(): void {
@@ -938,6 +943,21 @@ class DataEntryFormTest extends UnitTestCase {
       ->method('setNlReport')
       ->with($this->callback(function ($report) {
         return $report['text'] === '206-555-1234';
+      }));
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'updateContact',
+      'updateContact' => ['contactChange' => 'OO', 'newContact' => ''],
+    ]);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormSavesSubmitterIpWithReport(): void {
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->reportsMock->expects($this->once())
+      ->method('setNlReport')
+      ->with($this->callback(function ($report) {
+        return $report['reportIp'] === '203.0.113.7';
       }));
     $formState = $this->buildActionFormState(99999, [
       'type' => 'updateContact',

@@ -389,7 +389,12 @@ class NlpReports {
     if(empty($canvassResult['cycle'])) {
       $canvassResult['cycle'] = $this->cycle;
     }
-    
+
+    // VoteBuilder only records the date, so keep the time the report was saved.
+    if(empty($canvassResult['reportTime'])) {
+      $canvassResult['reportTime'] = time();
+    }
+
     $fields = [];
     foreach ($this->reportFields as $field)  {
       if(key_exists($field,$canvassResult)) {
