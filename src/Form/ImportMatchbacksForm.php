@@ -75,6 +75,32 @@ class ImportMatchbacksForm extends FormBase
 
   /**
    * {@inheritdoc}
+   *
+   * The upload field accepts any extension, so check here that the file is
+   * a comma-separated (.csv) or tab-delimited (.txt) export.
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void
+  {
+    // The file field's own Upload and Remove buttons also run this.
+    $trigger = $form_state->getTriggeringElement();
+    if(($trigger['#id'] ?? '') != 'upload-file') {return;}
+
+    $matchbacksFile = $form_state->getValue('matchback_file');
+    if(empty($matchbacksFile)) {
+      $form_state->setErrorByName('matchback_file', t('No file uploaded.'));
+      return;
+    }
+    $matchbacksLoad = File::load($matchbacksFile[0]);
+    $fileName = ($matchbacksLoad instanceof File) ? $matchbacksLoad->getFilename() : '';
+    $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    if(!in_array($fileType, ['csv', 'txt'])) {
+      $form_state->setErrorByName('matchback_file',
+        t('The matchback file must be a .csv or .txt file.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
@@ -96,8 +122,7 @@ class ImportMatchbacksForm extends FormBase
     $fileUri = 'public://temp/'.$fileName;
     $form_state->set('fileUri',$fileUri);
 
-    $fileNameParts = explode('.', $fileName);
-    $fileType = end($fileNameParts);
+    $fileType = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
     $fh = fopen($fileUri, "r");
     if (!$fh) {
