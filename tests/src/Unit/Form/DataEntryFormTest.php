@@ -734,13 +734,17 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testSubmitFormPostcardSelectProcessesOnlyCheckedVoters(): void {
-    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane']);
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(5);
     $this->nlpConfigurationMock->method('getContactId')->willReturn(3);
+    $this->votersMock->method('getVoterCd')->with(111111)->willReturn(4);
 
     // Voter 111111 is selected (truthy), 222222 is not (0 = already sent).
-    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse');
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
+      ->with($this->callback(static function (array $report): bool {
+        return $report['vanid'] === 111111 && $report['lastName'] === 'Doe' && $report['cd'] === 4;
+      }));
 
     $formState = new FormState();
     $formState->set('reenter', TRUE);
