@@ -4,12 +4,19 @@ namespace Drupal\nlpservices;
 
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
-use GuzzleHttp\Exception\RequestException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 class ApiMapRegions
 {
+  use ApiRetryTrait;
+
+  /**
+   * The data entry and turf pages wait on this request while they load, so a
+   * stalled VAN request is retried only once instead of MAX_RETRIES times.
+   */
+  private const int PAGE_LOAD_RETRIES = 1;
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
@@ -137,24 +144,23 @@ class ApiMapRegions
       $foldersURL .= '/'.$mapRegionId;
     }
     
-    try {
-      $request = $this->client->request('GET', $foldersURL);
-    } catch (RequestException $e) {
-      // Request error
-      $code = $e->getCode();
-      if ($code == 404) {
-        // Not found error
+    for ($attempt = 0; ; $attempt++) {
+      try {
+        $request = $this->client->request('GET', $foldersURL, self::REQUEST_OPTIONS);
+        break;
+      } catch (GuzzleException $e) {
+        if ($e->getCode() == 404) {return [];}
+        if ($this->isRetryable($e) && $attempt < self::PAGE_LOAD_RETRIES) {
+          $this->logRetry($e, $folderId, $attempt);
+          $this->sleepMs($this->retryDelayMs($e, $attempt));
+          continue;
+        }
+        nlp_debug_msg('getMapRegionInfo', $e);
+        return [];
+      } catch (Exception $e) {
+        nlp_debug_msg('getMapRegionInfo', $e);
         return [];
       }
-      nlp_debug_msg('getMapRegionInfo', $e);
-      return [];
-    } catch (Exception $e) {
-      // Handle other errors
-      nlp_debug_msg('getMapRegionInfo', $e);
-      return [];
-    } catch (GuzzleException $e) {
-      nlp_debug_msg('getMapRegionInfo', $e);
-      return [];
     }
 
     $regions = json_decode($request->getBody(), true);
