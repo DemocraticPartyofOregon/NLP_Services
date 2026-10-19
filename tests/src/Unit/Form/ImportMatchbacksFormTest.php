@@ -15,6 +15,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Form\ImportMatchbacksForm;
 use Drupal\nlpservices\NlpMatchbacks;
 use Drupal\Tests\UnitTestCase;
+use Drupal\file\Entity\File;
 
 /**
  * @coversDefaultClass \Drupal\nlpservices\Form\ImportMatchbacksForm
@@ -131,6 +132,79 @@ class ImportMatchbacksFormTest extends UnitTestCase {
 
     $this->assertArrayHasKey('upload_file', $form);
     $this->assertSame('submit', $form['upload_file']['#type']);
+  }
+
+  // -------------------------------------------------------------------------
+  // validateForm — file type
+  // -------------------------------------------------------------------------
+
+  private function validateUpload(?string $fileName): FormState {
+    $file = NULL;
+    if ($fileName !== NULL) {
+      $file = $this->createMock(File::class);
+      $file->method('getFilename')->willReturn($fileName);
+    }
+    $this->stubEntityTypeManager($file);
+
+    $formState = new FormState();
+    $formState->setTriggeringElement(['#id' => 'upload-file']);
+    $formState->setValue('matchback_file', [42]);
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+    return $formState;
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormAcceptsCsvAndTxtInAnyCase(): void {
+    foreach (['ballots.csv', 'ballots.txt', 'BALLOTS.CSV', 'Ballots.Txt'] as $fileName) {
+      $this->assertSame([], $this->validateUpload($fileName)->getErrors(), $fileName);
+    }
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormRejectsOtherFileTypes(): void {
+    foreach (['ballots.xlsx', 'ballots.pdf', 'ballots', 'ballots.csv.zip'] as $fileName) {
+      $formState = $this->validateUpload($fileName);
+      $this->assertArrayHasKey('matchback_file', $formState->getErrors(), $fileName);
+    }
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormRejectsFileThatCannotBeLoaded(): void {
+    $this->assertArrayHasKey('matchback_file', $this->validateUpload(NULL)->getErrors());
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormRequiresAFile(): void {
+    $formState = new FormState();
+    $formState->setTriggeringElement(['#id' => 'upload-file']);
+    $formState->setValue('matchback_file', []);
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+
+    $this->assertArrayHasKey('matchback_file', $formState->getErrors());
+  }
+
+  /**
+   * @covers ::validateForm
+   */
+  public function testValidateFormSkipsTheFileFieldsOwnButtons(): void {
+    // The managed_file Remove button submits with no file; that must not fail.
+    $formState = new FormState();
+    $formState->setTriggeringElement(['#id' => 'edit-matchback-file-remove-button']);
+    $formState->setValue('matchback_file', []);
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+
+    $this->assertSame([], $formState->getErrors());
   }
 
   // -------------------------------------------------------------------------
