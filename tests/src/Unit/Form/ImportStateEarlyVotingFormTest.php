@@ -96,9 +96,7 @@ class ImportStateEarlyVotingFormTest extends UnitTestCase {
   public function testBuildFormFileFieldRestrictsToCsvAndTxtExtensions(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-    $allowed = $form['state_early_voting_file']['#upload_validators']['file_validate_extensions'][0];
-    $this->assertStringContainsString('csv', $allowed);
-    $this->assertStringContainsString('txt', $allowed);
+    $this->assertSame(['extensions' => 'csv txt'], $form['state_early_voting_file']['#upload_validators']['FileExtension']);
   }
 
   public function testBuildFormContainsSubmitButton(): void {

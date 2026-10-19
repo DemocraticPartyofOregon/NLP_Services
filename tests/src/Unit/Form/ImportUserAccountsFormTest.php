@@ -87,7 +87,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $form = $this->buildFormInstance()->buildForm([], new FormState());
 
       $this->assertSame('managed_file', $form['user_file']['#type']);
-      $this->assertSame(['csv'], $form['user_file']['#upload_validators']['file_validate_extensions']);
+      $this->assertSame(['extensions' => 'csv'], $form['user_file']['#upload_validators']['FileExtension']);
     }
 
     public function testBuildFormContainsImportSubmitButton(): void {

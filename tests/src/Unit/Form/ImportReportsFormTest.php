@@ -104,7 +104,7 @@ class ImportReportsFormTest extends UnitTestCase {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
     $this->assertSame('managed_file', $form['nl_reports_file']['#type']);
-    $this->assertSame(['csv'], $form['nl_reports_file']['#upload_validators']['file_validate_extensions']);
+    $this->assertSame(['extensions' => 'csv'], $form['nl_reports_file']['#upload_validators']['FileExtension']);
   }
 
   public function testBuildFormContainsUploadSubmitButton(): void {
