@@ -8,8 +8,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Tests\UnitTestCase;
   use Exception;
   use GuzzleHttp\ClientInterface;
+  use GuzzleHttp\Exception\ConnectException;
   use GuzzleHttp\Exception\RequestException;
   use GuzzleHttp\Exception\TransferException;
+  use GuzzleHttp\Psr7\Request as GuzzleRequest;
   use Psr\Http\Message\RequestInterface;
   use Psr\Http\Message\ResponseInterface;
   use Psr\Http\Message\StreamInterface;
@@ -165,6 +167,35 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->stubKeyValues();
       $this->clientMock->method('request')
         ->willThrowException(new TransferException('transfer error'));
+
+      $this->assertSame([], $this->buildService()->getMapRegionInfo('TEST', 10));
+    }
+
+    public function testGetMapRegionInfoRetriesAfterTimeout(): void {
+      // VAN sometimes accepts the request and never answers (cURL error 28),
+      // which left the data entry page waiting 30 seconds with no minivan info.
+      $this->stubKeyValues();
+      $calls = 0;
+      $this->clientMock->expects($this->exactly(2))->method('request')
+        ->willReturnCallback(function (string $method, string $url, array $options) use (&$calls) {
+          $this->assertSame(20, $options['timeout']);
+          if ($calls++ === 0) {
+            throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
+          }
+          return $this->makeResponse($this->twoRegionResponse());
+        });
+
+      $result = $this->buildService()->getMapRegionInfo('TEST', 10);
+
+      $this->assertSame([200, 100], array_keys($result));
+    }
+
+    public function testGetMapRegionInfoRetriesOnlyOnceSoThePageDoesNotWait(): void {
+      $this->stubKeyValues();
+      $this->clientMock->expects($this->exactly(2))->method('request')
+        ->willReturnCallback(function (string $method, string $url) {
+          throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
+        });
 
       $this->assertSame([], $this->buildService()->getMapRegionInfo('TEST', 10));
     }
