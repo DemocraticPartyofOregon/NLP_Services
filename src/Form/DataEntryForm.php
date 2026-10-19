@@ -671,11 +671,13 @@ not checked have already received a postcard for this election.</p></div>',
       'contactType' => $contactMethodName,
       'responseName' => 'Mailed',
       'nickname' => $nls['nickname'],
+      'lastName' => $nls['lastName'],
       'reportIp' => $this->getRequest()->getClientIp(),
     ];
     foreach ($voters as $vanid => $selected) {
       if(empty($selected)) {continue;}  // Card already reported as sent.
       $report['vanid'] = $vanid;
+      $report['cd'] = $this->votersObj->getVoterCd($vanid);
       $this->dataEntryReportsObj->noContactResponse($report,$action);
     }
 
