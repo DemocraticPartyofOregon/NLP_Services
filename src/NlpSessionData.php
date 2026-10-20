@@ -104,7 +104,15 @@ class NlpSessionData
         'code' => $defaultVoterContactMethod['code'],
       ];
     }
-    return ['vanid' => $vanid, 'name' => 'Walk', 'code' => 2];
+    // The codes are VAN contact type ids, so look up the configured Walk code
+    // rather than assuming one.  Use the first configured method if there is
+    // no Walk.
+    $contactMethods = $this->nlpConfigurationObj->getContactMethods();
+    $code = array_search('Walk', $contactMethods);
+    if($code === FALSE) {
+      $code = array_key_first($contactMethods) ?? 0;
+    }
+    return ['vanid' => $vanid, 'name' => $contactMethods[$code] ?? '', 'code' => $code];
   }
 
   /**

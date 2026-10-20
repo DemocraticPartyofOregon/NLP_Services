@@ -149,12 +149,34 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // setVoterContactMethod() / getVoterContactMethod()
     // -------------------------------------------------------------------------
 
-    public function testGetVoterContactMethodReturnsDefaultWalkWhenNotSet(): void {
+    public function testGetVoterContactMethodReturnsConfiguredWalkWhenNotSet(): void {
+      $this->nlpConfigurationMock->method('getContactMethods')
+        ->willReturn([1 => 'Phone', 2 => 'Walk', 37 => 'Postcard']);
       $service = $this->buildService();
 
       $result = $service->getVoterContactMethod(123456);
 
       $this->assertSame(['vanid' => 123456, 'name' => 'Walk', 'code' => 2], $result);
+    }
+
+    public function testGetVoterContactMethodUsesConfiguredWalkCodeNotTwo(): void {
+      $this->nlpConfigurationMock->method('getContactMethods')
+        ->willReturn([1 => 'Phone', 5 => 'Walk', 37 => 'Postcard']);
+      $service = $this->buildService();
+
+      $result = $service->getVoterContactMethod(123456);
+
+      $this->assertSame(['vanid' => 123456, 'name' => 'Walk', 'code' => 5], $result);
+    }
+
+    public function testGetVoterContactMethodUsesFirstMethodWhenWalkNotConfigured(): void {
+      $this->nlpConfigurationMock->method('getContactMethods')
+        ->willReturn([1 => 'Phone', 37 => 'Postcard']);
+      $service = $this->buildService();
+
+      $result = $service->getVoterContactMethod(123456);
+
+      $this->assertSame(['vanid' => 123456, 'name' => 'Phone', 'code' => 1], $result);
     }
 
     public function testSetAndGetVoterContactMethod(): void {

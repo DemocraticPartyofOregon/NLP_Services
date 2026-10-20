@@ -508,11 +508,12 @@ class NlpDataEntryVoterListDisplay
       $savedContactMethod = $this->nlpSessionDataObj->getVoterContactMethod($vanid);
       $contactMethod = $savedContactMethod['code'];
       if($savedContactMethod['code'] != $selection['contactMethod']) {
+        // Remember the method the NL chose for this voter.
         $contactMethods = $this->nlpConfigurationObj->getContactMethods();
         $setContactMethod = [
           'vanid' => $vanid,
-          'code' => $savedContactMethod['code'],
-          'name' => $contactMethods[$savedContactMethod['code']],
+          'code' => $selection['contactMethod'],
+          'name' => $contactMethods[$selection['contactMethod']] ?? '',
         ];
         $this->nlpSessionDataObj->setVoterContactMethod($setContactMethod);
         $contactMethod = $selection['contactMethod'];

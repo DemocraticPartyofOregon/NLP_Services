@@ -279,6 +279,23 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
   /**
    * @covers ::whatChanged
    */
+  public function testWhatChangedSavesChosenMethodWhenSavedCodeIsNotConfigured(): void {
+    // The saved code 2 is not a configured method; the NL chose Phone (1).
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 2]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([1 => 'Phone', 37 => 'Postcard']);
+    $this->sessionDataMock->expects($this->once())->method('setVoterContactMethod')
+      ->with(['vanid' => '99999', 'code' => 1, 'name' => 'Phone']);
+    $selections  = ['99999' => $this->baseSelection(['surveyResponse' => 3])];
+    $voterArrays = ['99999' => $this->baseVoterArray()];
+
+    $result = $this->service->whatChanged($selections, $voterArrays);
+
+    $this->assertSame(1, $result['99999'][0]['contactMethod']);
+  }
+
+  /**
+   * @covers ::whatChanged
+   */
   public function testWhatChangedSkipsVoterNotInVoterArrays(): void {
     $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 1]);
     $selections  = ['99999' => $this->baseSelection()];
@@ -457,7 +474,7 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
 
     $this->sessionDataMock->expects($this->once())
       ->method('setVoterContactMethod')
-      ->with($this->callback(static fn($v) => $v['code'] === 1 && $v['name'] === 'Walk'));
+      ->with($this->callback(static fn($v) => $v['code'] === 2 && $v['name'] === 'Phone'));
 
     $selections  = ['99999' => $this->baseSelection(['contactMethod' => 2, 'surveyResponse' => 3])];
     $voterArrays = ['99999' => $this->baseVoterArray()];
