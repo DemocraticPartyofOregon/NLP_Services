@@ -3,16 +3,22 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\ApiResponseCodes;
   use Drupal\nlpservices\NlpConfiguration;
+  use Drupal\nlpservices\VanRateLimiter;
   use Drupal\Tests\UnitTestCase;
-  use Exception;
   use GuzzleHttp\ClientInterface;
+  use GuzzleHttp\Exception\RequestException;
   use GuzzleHttp\Exception\TransferException;
+  use GuzzleHttp\Promise\FulfilledPromise;
+  use GuzzleHttp\Promise\RejectedPromise;
+  use Psr\Http\Message\RequestInterface;
   use Psr\Http\Message\ResponseInterface;
   use Psr\Http\Message\StreamInterface;
+  use Psr\Log\LoggerInterface;
 
   class ApiResponseCodesTest extends UnitTestCase {
 
@@ -23,6 +29,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     protected function setUp(): void {
       parent::setUp();
+      VanRateLimiter::reset();
       $this->clientMock           = $this->createMock(ClientInterface::class);
       $this->configurationMock    = $this->createMock(NlpConfiguration::class);
       $this->apiKeyManagementMock = $this->createMock(ApiKeyManagement::class);
@@ -30,6 +37,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $container = new ContainerBuilder();
       $container->set('messenger', $this->messengerMock);
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->willReturn($this->createMock(LoggerInterface::class));
+      $container->set('logger.factory', $loggerFactory);
       \Drupal::setContainer($container);
     }
 
@@ -77,6 +87,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return $response;
     }
 
+    private function makeHttpException(int $status, string $body): RequestException {
+      $stream = $this->createMock(StreamInterface::class);
+      $stream->method('__toString')->willReturn($body);
+      $response = $this->createMock(ResponseInterface::class);
+      $response->method('getStatusCode')->willReturn($status);
+      $response->method('getBody')->willReturn($stream);
+      return new RequestException('error', $this->createMock(RequestInterface::class), $response);
+    }
+
     // -------------------------------------------------------------------------
     // getApiContactTypes
     // -------------------------------------------------------------------------
@@ -87,16 +106,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ['name' => 'Walk',  'contactTypeId' => 1],
         ['name' => 'Phone', 'contactTypeId' => 2],
       ];
-      $this->clientMock->method('request')->willReturn($this->makeResponse($apiData));
+      $this->clientMock->method('sendAsync')->willReturn(new FulfilledPromise($this->makeResponse($apiData)));
 
       $result = $this->buildService()->getApiContactTypes();
 
       $this->assertSame(['Walk' => 1, 'Phone' => 2], $result);
     }
 
-    public function testGetApiContactTypesReturnsEmptyAndAddsStatusOnException(): void {
+    public function testGetApiContactTypesReturnsEmptyAndAddsStatusOnHttpError(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('request')->willThrowException(new Exception('timeout'));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new RejectedPromise($this->makeHttpException(400, 'bad request')));
       $this->messengerMock->expects($this->once())->method('addStatus');
 
       $this->assertSame([], $this->buildService()->getApiContactTypes());
@@ -104,7 +124,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiContactTypesReturnsEmptyAndAddsStatusOnGuzzleException(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('request')->willThrowException(new TransferException('connect error'));
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new RejectedPromise(new TransferException('connect error')));
       $this->messengerMock->expects($this->once())->method('addStatus');
 
       $this->assertSame([], $this->buildService()->getApiContactTypes());
@@ -112,15 +133,57 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetApiContactTypesReturnsEmptyArrayWhenApiReturnsNoItems(): void {
       $this->stubKeyValues();
-      $this->clientMock->method('request')->willReturn($this->makeResponse([]));
+      $this->clientMock->method('sendAsync')->willReturn(new FulfilledPromise($this->makeResponse([])));
 
       $this->assertSame([], $this->buildService()->getApiContactTypes());
     }
 
     // -------------------------------------------------------------------------
+    // getApiResultCodes
+    // -------------------------------------------------------------------------
+
+    public function testGetApiResultCodesReturnsNameToIdMap(): void {
+      $this->stubKeyValues();
+      $apiData = [
+        ['name' => 'Not Home', 'resultCodeId' => 101],
+        ['name' => 'Moved',    'resultCodeId' => 102],
+      ];
+      $this->clientMock->method('sendAsync')->willReturn(new FulfilledPromise($this->makeResponse($apiData)));
+
+      $this->assertSame(['Not Home' => 101, 'Moved' => 102], $this->buildService()->getApiResultCodes(37));
+    }
+
+    public function testGetApiResultCodesRetriesAfterRateLimit(): void {
+      $this->stubKeyValues();
+      $rateLimited = $this->makeHttpException(429, '{"errors":[{"code":"429","text":"Rate limit exceeded. Try again in 0 ms."}]}');
+      $this->clientMock->expects($this->exactly(2))->method('sendAsync')
+        ->willReturnOnConsecutiveCalls(
+          new RejectedPromise($rateLimited),
+          new FulfilledPromise($this->makeResponse([['name' => 'Mailed', 'resultCodeId' => 55]])),
+        );
+      $this->messengerMock->expects($this->never())->method('addStatus');
+
+      $this->assertSame(['Mailed' => 55], $this->buildService()->getApiResultCodes(37));
+    }
+
+    public function testGetApiResultCodesSendsCredentialsInHeaderNotUrl(): void {
+      $this->stubKeyValues();
+      $sent = NULL;
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function(RequestInterface $request) use (&$sent) {
+          $sent = $request;
+          return new FulfilledPromise($this->makeResponse([]));
+        });
+
+      $this->buildService()->getApiResultCodes(37);
+
+      $this->assertSame('https://api.example.com/v4/canvassResponses/resultCodes?contactTypeId=37', (string) $sent->getUri());
+      $this->assertSame('Basic '.base64_encode('testapp:test-key|0'), $sent->getHeaderLine('Authorization'));
+    }
+
+    // -------------------------------------------------------------------------
     // getApiKnownResultCodes
-    // Note: getApiResultCodes uses curl directly and cannot be unit-tested here;
-    // it is stubbed via partial mock.
+    // getApiResultCodes is stubbed via partial mock.
     // -------------------------------------------------------------------------
 
     public function testGetApiKnownResultCodesReturnsEmptyWhenNoContactTypes(): void {
