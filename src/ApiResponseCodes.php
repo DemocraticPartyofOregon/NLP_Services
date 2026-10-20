@@ -4,12 +4,13 @@ namespace Drupal\nlpservices;
 
 use Drupal;
 use GuzzleHttp\ClientInterface;
-use GuzzleHttp\Exception\GuzzleException;
+use GuzzleHttp\Psr7\Request as GuzzleRequest;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Exception;
 
 class ApiResponseCodes
 {
+  use ApiRetryTrait;
+
   // The list of recommended contact types and associated response code expected by NLP.
   private  array $expectedContactTypes = [
     'Walk' => [
@@ -93,24 +94,7 @@ class ApiResponseCodes
    */
   public function getApiContactTypes(): array
   {
-    $messenger = Drupal::messenger();
-    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
-    $apiKey = $committeeKey['API Key'];
-    $apiURL = $committeeKey['Url'];
-    $user = $committeeKey['App Name'];
-    $post_url = "https://$user:$apiKey|0@$apiURL/canvassResponses/contactTypes?inputTypeId=11";
-    try {
-      $request = $this->client->request('GET', $post_url);
-      $result = json_decode($request->getBody(), true);
-    } catch (Exception $e)  {
-      $error = $e->getMessage();
-      $messenger->addStatus( t('An error occurred. Please contact the Administrator. '.$error));
-      return [];
-    } catch (GuzzleException $e) {
-      $error = $e->getMessage();
-      $messenger->addStatus( t('An error occurred. Please contact the Administrator. '.$error));
-      return [];
-    }
+    $result = $this->getApiJson('canvassResponses/contactTypes?inputTypeId=11');
     $contactTypes = [];
     foreach ($result as $contactType) {
       $contactTypes[$contactType['name']] = $contactType['contactTypeId'];
@@ -129,31 +113,45 @@ class ApiResponseCodes
    */
   public function getApiResultCodes(int $contactTypeId ): array
   {
-    $messenger = Drupal::messenger();
-    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
-    $apiKey = $committeeKey['API Key'];
-    $apiURL = $committeeKey['Url'];
-    $user = $committeeKey['App Name'];
-    $url = "https://$apiURL/canvassResponses/resultCodes?contactTypeId=$contactTypeId";
-    try {
-      $request = $this->client->request('GET', $url, [
-        'auth' => [$user, "$apiKey|0"],
-      ]);
-      $resultArray = json_decode($request->getBody(), true);
-    } catch (Exception $e) {
-      $error = $e->getMessage();
-      $messenger->addStatus(t('An error occurred. Please contact the Administrator. '.$error));
-      return [];
-    } catch (GuzzleException $e) {
-      $error = $e->getMessage();
-      $messenger->addStatus(t('An error occurred. Please contact the Administrator. '.$error));
-      return [];
-    }
+    $resultArray = $this->getApiJson("canvassResponses/resultCodes?contactTypeId=$contactTypeId");
     $resultCodes = [];
     foreach ($resultArray as $resultCodeObj) {
       $resultCodes[$resultCodeObj['name']] = $resultCodeObj['resultCodeId'];
     }
     return $resultCodes;
+  }
+  
+  /**
+   * getApiJson
+   *
+   * Sends one GET to VAN with the committee key and decodes the reply.  The
+   * request goes through sendInRateLimitedGroups() so it shares the 15
+   * requests per second budget and is retried if VAN answers with a 429.
+   *
+   * @param string $path - the API path after the version, with any query.
+   * @return array - the decoded reply, or [] if the request failed.
+   */
+  private function getApiJson(string $path): array
+  {
+    $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
+    $apiKey = $committeeKey['API Key'];
+    $apiURL = $committeeKey['Url'];
+    $user = $committeeKey['App Name'];
+    // Credentials go in a header so they never appear in an exception message.
+    $headers = ['Authorization' => 'Basic '.base64_encode("$user:$apiKey|0")];
+
+    $result = [];
+    $this->sendInRateLimitedGroups(
+      [$path],
+      fn($path) => new GuzzleRequest('GET', "https://$apiURL/$path", $headers),
+      function($response) use (&$result) {
+        $result = json_decode($response->getBody(), true) ?? [];
+      },
+      function($reason) {
+        Drupal::messenger()->addStatus(t('An error occurred. Please contact the Administrator. '.$reason->getMessage()));
+      },
+    );
+    return $result;
   }
   
   /**
