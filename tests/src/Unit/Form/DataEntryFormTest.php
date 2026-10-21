@@ -786,6 +786,23 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame('2026-10-09', $reportedDate);
   }
 
+  public function testSubmitFormPostcardSelectWarnsAndSavesNothingWhenNlMissing(): void {
+    $this->nlsMock->method('getNlById')->willReturn([]);
+    $this->messengerMock->expects($this->once())->method('addWarning')
+      ->with(DataEntryForm::NL_MISSING_MSG);
+    $this->dataEntryReportsMock->expects($this->never())->method('noContactResponse');
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('turfIndex', 42);
+    $formState->set('mcid', 101);
+    $formState->setValue('postcardsSentList', [111111 => 111111]);
+    $formState->setTriggeringElement(['#name' => 'postcardSelect', '#value' => '']);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
   // ---------------------------------------------------------------------------
   // submitForm — navigation
   // ---------------------------------------------------------------------------
@@ -876,6 +893,17 @@ class DataEntryFormTest extends UnitTestCase {
 
   public function testSubmitFormNotContactedCallsNoContactResponse(): void {
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse');
+    $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormWarnsAndSavesNothingWhenNlMissing(): void {
+    // Configured before buildActionFormState() so this stub matches first.
+    $this->nlsMock->method('getNlById')->willReturn([]);
+    $this->messengerMock->expects($this->once())->method('addWarning')
+      ->with(DataEntryForm::NL_MISSING_MSG);
+    $this->dataEntryReportsMock->expects($this->never())->method('noContactResponse');
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
     $this->form->submitForm($form, $formState);
