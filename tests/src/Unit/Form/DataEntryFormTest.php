@@ -760,7 +760,7 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testSubmitFormPostcardSelectReportsDateChosenOnPostcardPage(): void {
-    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane']);
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
     $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturnMap([['canvassDate', '2026-10-12']]);
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(5);
