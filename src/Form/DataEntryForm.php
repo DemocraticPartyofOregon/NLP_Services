@@ -93,6 +93,10 @@ class DataEntryForm extends FormBase
   }
 
   const int DE_PAGE_SIZE = 10;
+  const string NL_MISSING_MSG = 'Your reports were not saved because your
+    Neighborhood Leader record was not found.  If the NL list is being
+    updated, wait a few minutes and try again.  Otherwise, contact your
+    coordinator.';
 
   /**
    * {@inheritdoc}
@@ -335,6 +339,12 @@ class DataEntryForm extends FormBase
 
     $mcid = $form_state->get('mcid');
     $nlsInfo = $this->nlsObj->getNlById($mcid);
+    // The NL was found when the form was built, but the record can be gone by
+    // the time of the save, e.g., while an active NLs sync rebuilds the list.
+    if (!empty($actions) AND empty($nlsInfo)) {
+      $messenger->addWarning(self::NL_MISSING_MSG);
+      return;
+    }
 
     $county = $this->sessionDataObj->getCounty();
     $canvassDate = date('Y-m-d');
@@ -649,6 +659,10 @@ not checked have already received a postcard for this election.</p></div>',
     int $mcid, string $canvassDate): void
   {
     $nls = $this->nlsObj->getNlById($mcid);
+    if (empty($nls)) {
+      Drupal::messenger()->addWarning(self::NL_MISSING_MSG);
+      return;
+    }
     $county = $this->sessionDataObj->getCounty();
     $contactMethodName = 'Postcard';
 
