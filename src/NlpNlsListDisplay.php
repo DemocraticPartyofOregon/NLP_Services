@@ -343,7 +343,10 @@ class NlpNlsListDisplay
     $this->headerBuild($brief);
     foreach ($this->header as $headerInfo) {
       if(empty($headerInfo['field'])) {continue;}
-      if($headerInfo['data'] == $data) {
+      // Also accept just the first line of a multi-line label, so an order
+      // of "Name" matches "Name<br>MCID<br>(Coordinator)".
+      $label = (string)$headerInfo['data'];
+      if($label == $data || explode('<br>', $label)[0] == $data) {
         return $headerInfo['field'];
       }
     }
@@ -363,8 +366,11 @@ class NlpNlsListDisplay
   public function sortNlsTable(array &$nlsTable, string $sort, string $order, bool $brief=FALSE): void
   {
     $sortColumn = $this->getSortField($order,$brief);
+    if(empty($sortColumn)) {return;}
     $sortOrder = ($sort=='asc')?SORT_ASC:SORT_DESC;
     $column = array_column($nlsTable, $sortColumn);
+    // array_multisort() throws a ValueError unless every row has the column.
+    if(count($column) != count($nlsTable)) {return;}
     array_multisort($column, $sortOrder, $nlsTable);
   }
 

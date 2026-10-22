@@ -178,6 +178,42 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('Alice', $table[1]['name']);
     }
 
+    public function testSortNlsTableAcceptsFirstLineOfLabel(): void {
+      $table = [
+        ['name' => 'Zara'],
+        ['name' => 'Alice'],
+      ];
+
+      $this->service->sortNlsTable($table, 'asc', 'Name', true);
+
+      $this->assertSame('Alice', $table[0]['name']);
+      $this->assertSame('Zara', $table[1]['name']);
+    }
+
+    public function testSortNlsTableUnknownOrderLeavesTableUnsorted(): void {
+      $table = [
+        ['name' => 'Zara'],
+        ['name' => 'Alice'],
+      ];
+
+      $this->service->sortNlsTable($table, 'asc', 'Unknown Header', true);
+
+      $this->assertSame('Zara', $table[0]['name']);
+      $this->assertSame('Alice', $table[1]['name']);
+    }
+
+    public function testSortNlsTableRowMissingColumnLeavesTableUnsorted(): void {
+      $table = [
+        ['name' => 'Zara'],
+        ['hd' => 6],
+      ];
+
+      $this->service->sortNlsTable($table, 'asc', 'Name', true);
+
+      $this->assertSame('Zara', $table[0]['name']);
+      $this->assertSame(6, $table[1]['hd']);
+    }
+
   }
 
 }
