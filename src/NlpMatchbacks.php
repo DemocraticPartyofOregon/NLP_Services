@@ -400,11 +400,15 @@ class NlpMatchbacks
       $args[":date$i"] = $record['date'];
     }
     try {
-      $result = $this->connection->query(
+      // A raw query() result refuses rowCount() for INSERT, so prepare the
+      // statement with row counting allowed.
+      $statement = $this->connection->prepareStatement(
         'INSERT IGNORE INTO {nlp_matchback} (vanid, date) VALUES ' . implode(',', $placeholders),
-        $args
+        [],
+        TRUE
       );
-      return $result->rowCount();
+      $statement->execute($args);
+      return (int) $statement->rowCount();
     } catch (Exception $e) {
       Drupal::logger('nlpservices')->notice('insertIgnoreMatchbacks: ' . $e->getMessage());
       return 0;
