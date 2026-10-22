@@ -216,6 +216,16 @@ nlpservices.import_minivan_form:
   requirements:
     _permission: 'nlp administer'
 
+nlpservices.minivan_response_codes:
+  path: '/nlpservices-minivan-response-codes'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\MinivanResponseCodesController::minivanResponseCodes
+    _title: 'MiniVAN contact response codes'
+  requirements:
+    _permission: 'nlp data entry+nlp tools access'
+  options:
+    no_cache: TRUE
+
 nlpservices.import_table_form:
   path: '/nlpservices-import-table/{tableName}'
   defaults:

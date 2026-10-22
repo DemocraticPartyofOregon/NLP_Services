@@ -10,6 +10,7 @@ Links for functions to set up and manage the county.
 {% set importCountyEarlyVoting = path('nlpservices.import_county_early_voting_form') %}
 {% set cancelMoved = path('nlpservices.cancel_moved_report') %}
 {% set changeCounty = path('nlpservices.change_county_form') %}
+{% set minivanResponseCodes = path('nlpservices.minivan_response_codes') %}
 
 <div class="nlp-menu-page">
 
@@ -32,6 +33,12 @@ Links for functions to set up and manage the county.
 {% if stateName == 'Mississippi' %}
         <li><a href={{ importCountyEarlyVoting }}>{% trans %}Upload early voting PDF.{% endtrans %}</a></li>
 {% endif %}
+    </ul>
+
+    <h1>{% trans %}MiniVAN Setup{% endtrans %}</h1>
+
+    <ul>
+        <li><a href={{ minivanResponseCodes }}>{% trans %}Allowed canvass response codes{% endtrans %}</a></li>
     </ul>
 
 {% trans %}
