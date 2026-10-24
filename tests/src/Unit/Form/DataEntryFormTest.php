@@ -6,6 +6,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
+use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
+use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\DrupalUser;
@@ -45,6 +48,8 @@ class DataEntryFormTest extends UnitTestCase {
   protected $dataEntryReportsMock;
   protected $mapRegionsMock;
   protected $messengerMock;
+  protected $lockMock;
+  protected $savedSubmissionsMock;
   protected DataEntryForm $form;
 
   protected function setUp(): void {
@@ -74,7 +79,19 @@ class DataEntryFormTest extends UnitTestCase {
     $container->set('logger.factory', $loggerFactoryMock);
     \Drupal::setContainer($container);
 
-    $this->form = new DataEntryForm(
+    $this->lockMock = $this->createMock(LockBackendInterface::class);
+    $this->lockMock->method('acquire')->willReturn(TRUE);
+    $this->savedSubmissionsMock = $this->createMock(KeyValueStoreExpirableInterface::class);
+    $this->form = $this->newForm($this->lockMock, $this->savedSubmissionsMock);
+  }
+
+  /**
+   * Construct the form with the given save lock and saved-submissions store.
+   */
+  protected function newForm($lock, $savedSubmissions): DataEntryForm {
+    $keyValueFactory = $this->createMock(KeyValueExpirableFactoryInterface::class);
+    $keyValueFactory->method('get')->with(DataEntryForm::SAVED_SUBMISSIONS)->willReturn($savedSubmissions);
+    $form = new DataEntryForm(
       $this->nlsMock,
       $this->votersMock,
       $this->turfsMock,
@@ -87,12 +104,15 @@ class DataEntryFormTest extends UnitTestCase {
       $this->dataEntryVoterListDisplayMock,
       $this->dataEntryReportsMock,
       $this->mapRegionsMock,
+      $lock,
+      $keyValueFactory,
     );
-    $this->form->setStringTranslation($this->getStringTranslationStub());
-    $this->form->setMessenger($this->messengerMock);
+    $form->setStringTranslation($this->getStringTranslationStub());
+    $form->setMessenger($this->messengerMock);
     $requestStack = new RequestStack();
     $requestStack->push(Request::create('/', 'POST', [], [], [], ['REMOTE_ADDR' => '203.0.113.7']));
-    $this->form->setRequestStack($requestStack);
+    $form->setRequestStack($requestStack);
+    return $form;
   }
 
   protected function tearDown(): void {
@@ -358,6 +378,7 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertArrayHasKey('navigate', $form);
     $this->assertArrayHasKey('#attached', $form);
     $this->assertContains('nlpservices/data-entry-table', $form['#attached']['library']);
+    $this->assertContains('core/drupal.form', $form['#attached']['library']);
   }
 
   /**
@@ -727,6 +748,138 @@ class DataEntryFormTest extends UnitTestCase {
     ]);
     $form = [];
     $this->form->submitForm($form, $formState);
+  }
+
+  // ---------------------------------------------------------------------------
+  // submitForm — double-submit protection
+  // ---------------------------------------------------------------------------
+
+  /**
+   * A survey response action posted from the page with the given build id.
+   */
+  protected function buildPostedActionFormState(string $buildId = 'form-abc'): FormState {
+    $formState = $this->buildActionFormState(99999, [
+      'type' => 'surveyResponse', 'contactMethod' => 1,
+    ]);
+    $formState->setUserInput(['form_build_id' => $buildId, 'op' => 'Submit']);
+    return $formState;
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormSavesAndRemembersSubmission(): void {
+    $this->dataEntryReportsMock->expects($this->once())->method('pledgeToVote');
+    $this->savedSubmissionsMock->expects($this->once())->method('setWithExpire')
+      ->with($this->callback('is_string'), TRUE, DataEntryForm::SAVED_SUBMISSION_SECS);
+    $this->lockMock->expects($this->once())->method('release');
+
+    $formState = $this->buildPostedActionFormState();
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormIgnoresSecondCopyOfSavedSubmission(): void {
+    $savedSubmissions = $this->createMock(KeyValueStoreExpirableInterface::class);
+    $savedSubmissions->method('get')->willReturn(TRUE);
+    $form = $this->newForm($this->lockMock, $savedSubmissions);
+    $this->dataEntryReportsMock->expects($this->never())->method('pledgeToVote');
+    $savedSubmissions->expects($this->never())->method('setWithExpire');
+    $this->messengerMock->expects($this->once())->method('addStatus')
+      ->with(DataEntryForm::ALREADY_SAVED_MSG);
+
+    $formState = $this->buildPostedActionFormState();
+    $build = [];
+    $form->submitForm($build, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormWaitsThenGivesUpWhileOtherCopyIsSaving(): void {
+    $lock = $this->createMock(LockBackendInterface::class);
+    $lock->method('acquire')->willReturn(FALSE);
+    $lock->expects($this->once())->method('wait');
+    $form = $this->newForm($lock, $this->savedSubmissionsMock);
+    $this->dataEntryReportsMock->expects($this->never())->method('pledgeToVote');
+    $this->messengerMock->expects($this->once())->method('addWarning')
+      ->with(DataEntryForm::SAVE_IN_PROGRESS_MSG);
+
+    $formState = $this->buildPostedActionFormState();
+    $build = [];
+    $form->submitForm($build, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormSavesAfterOtherCopyFinishesWithoutSaving(): void {
+    // The other copy held the lock, then died before marking the submission saved.
+    $lock = $this->createMock(LockBackendInterface::class);
+    $lock->method('acquire')->willReturnOnConsecutiveCalls(FALSE, TRUE);
+    $lock->expects($this->once())->method('wait');
+    $form = $this->newForm($lock, $this->savedSubmissionsMock);
+    $this->dataEntryReportsMock->expects($this->once())->method('pledgeToVote');
+
+    $formState = $this->buildPostedActionFormState();
+    $build = [];
+    $form->submitForm($build, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormWithoutChangesSkipsDuplicateCheck(): void {
+    $this->lockMock->expects($this->never())->method('acquire');
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $this->configureSubmitBase($formState);
+    $formState->setUserInput(['form_build_id' => 'form-abc']);
+    $formState->setTriggeringElement(['#name' => 'next', '#value' => '']);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmissionKeyMatchesOnlyTheSamePost(): void {
+    $key = new \ReflectionMethod(DataEntryForm::class, 'submissionKey');
+    $post = static function (array $input): FormState {
+      return (new FormState())->setUserInput($input);
+    };
+    $first = $key->invoke($this->form, $post(['form_build_id' => 'form-abc', 'note' => 'x']));
+
+    $this->assertSame($first, $key->invoke($this->form, $post(['form_build_id' => 'form-abc', 'note' => 'x'])));
+    $this->assertNotSame($first, $key->invoke($this->form, $post(['form_build_id' => 'form-def', 'note' => 'x'])));
+    $this->assertNotSame($first, $key->invoke($this->form, $post(['form_build_id' => 'form-abc', 'note' => 'y'])));
+    $this->assertSame('', $key->invoke($this->form, $post(['note' => 'x'])));
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormPostcardSelectIgnoresSecondCopy(): void {
+    $savedSubmissions = $this->createMock(KeyValueStoreExpirableInterface::class);
+    $savedSubmissions->method('get')->willReturn(TRUE);
+    $form = $this->newForm($this->lockMock, $savedSubmissions);
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
+    $this->dataEntryReportsMock->expects($this->never())->method('noContactResponse');
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('turfIndex', 42);
+    $formState->set('mcid', 101);
+    $formState->setValue('postcardsSentList', [111111 => 111111]);
+    $formState->setUserInput(['form_build_id' => 'form-abc', 'postcardsSentList' => [111111 => 111111]]);
+    $formState->setTriggeringElement(['#name' => 'postcardSelect', '#value' => '']);
+
+    $build = [];
+    $form->submitForm($build, $formState);
   }
 
   /**
