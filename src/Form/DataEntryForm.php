@@ -7,6 +7,8 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
+use Drupal\Core\Lock\LockBackendInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpVoters;
@@ -38,12 +40,14 @@ class DataEntryForm extends FormBase
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
   protected ApiMapRegions $mapRegionsObj;
+  protected LockBackendInterface $lock;
+  protected KeyValueStoreExpirableInterface $savedSubmissions;
 
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
                                 $dataEntryDateBarObj, $nlpConfigurationObj,
                                 $dataEntryVoterListDisplayObj, $dataEntryReportsObj,
-                                $mapRegionsObj ) {
+                                $mapRegionsObj, $lock, $keyValueExpirable ) {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
@@ -58,6 +62,8 @@ class DataEntryForm extends FormBase
     $this->dataEntryVoterListDisplayObj = $dataEntryVoterListDisplayObj;
     $this->dataEntryReportsObj = $dataEntryReportsObj;
     $this->mapRegionsObj = $mapRegionsObj;
+    $this->lock = $lock;
+    $this->savedSubmissions = $keyValueExpirable->get(self::SAVED_SUBMISSIONS);
   }
 
   /**
@@ -79,7 +85,9 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
       $container->get('nlpservices.data_entry_reports'),
-      $container->get('nlpservices.api_map_regions')
+      $container->get('nlpservices.api_map_regions'),
+      $container->get('lock'),
+      $container->get('keyvalue.expirable')
     );
   }
 
@@ -96,6 +104,17 @@ class DataEntryForm extends FormBase
     Neighborhood Leader record was not found.  If the NL list is being
     updated, wait a few minutes and try again.  Otherwise, contact your
     coordinator.';
+  const string ALREADY_SAVED_MSG = 'Your reports were saved.  The page was
+    submitted twice, so the second copy was ignored.';
+  const string SAVE_IN_PROGRESS_MSG = 'Your reports are still being saved.
+    Wait a minute, then check your turf before entering them again.';
+
+  // Key-value collection that remembers which submissions have been saved.
+  const string SAVED_SUBMISSIONS = 'nlpservices.data_entry_saved';
+  // How long a duplicate of a saved submission is recognized.
+  const int SAVED_SUBMISSION_SECS = 3600;
+  // How long one copy of a submission may hold the save lock.
+  const int SAVE_LOCK_SECS = 60;
 
   /**
    * {@inheritdoc}
@@ -106,6 +125,8 @@ class DataEntryForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/button';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
     $form['#attached']['library'][] = 'nlpservices/table-helper';
+    // Core's single-submit behavior ignores a second click of Submit.
+    $form['#attached']['library'][] = 'core/drupal.form';
 
     if(!$form_state->get('reenter')) {
       $this->sessionDataObj->set('currentPage', 0);
@@ -337,7 +358,8 @@ class DataEntryForm extends FormBase
       case 'postcardSelect':
         $form_state->set('page','voters');
         $postcardsSent = $form_state->getValue('postcardsSentList');
-        $this->processPostcardsSent($form_state->get('turfIndex'),$postcardsSent,$form_state->get('mcid'),$canvassDate);
+        $this->processPostcardsSent($form_state->get('turfIndex'),$postcardsSent,$form_state->get('mcid'),
+          $canvassDate,$this->submissionKey($form_state));
         return;
     }
 
@@ -383,6 +405,12 @@ class DataEntryForm extends FormBase
     // the time of the save, e.g., while an active NLs sync rebuilds the list.
     if (!empty($actions) AND empty($nlsInfo)) {
       $messenger->addWarning(self::NL_MISSING_MSG);
+      return;
+    }
+
+    // A double-click posts the same page twice; save its reports only once.
+    $submissionKey = empty($actions) ? '' : $this->submissionKey($form_state);
+    if (!$this->claimSubmission($submissionKey)) {
       return;
     }
 
@@ -577,6 +605,77 @@ class DataEntryForm extends FormBase
         }
       }
     }
+    $this->finishSubmission($submissionKey);
+  }
+
+  /**
+   * submissionKey
+   *
+   * Identifies one submission of the data entry page.  Both copies of a
+   * double-clicked submit post the same form build id and values, so they
+   * get the same key.  A later submit comes from a rebuilt page with a new
+   * form build id, so it gets a new key.
+   *
+   * @param FormStateInterface $form_state
+   * @return string - The key, or '' if the post has no form build id.
+   */
+  private function submissionKey(FormStateInterface $form_state): string
+  {
+    $input = $form_state->getUserInput();
+    if (empty($input['form_build_id'])) {
+      return '';
+    }
+    return hash('sha256', serialize($input));
+  }
+
+  /**
+   * claimSubmission
+   *
+   * Claim the right to save the reports of this submission.  If another copy
+   * of the submission is saving now, wait for it to finish.  A submission
+   * is marked saved only after its reports are saved (finishSubmission), so a
+   * copy that died partway through doesn't stop the other copy from saving.
+   *
+   * @param string $submissionKey - From submissionKey(), '' skips the check.
+   * @return bool - TRUE if the caller should save the reports.
+   */
+  private function claimSubmission(string $submissionKey): bool
+  {
+    if (empty($submissionKey)) {
+      return TRUE;
+    }
+    $lockName = self::SAVED_SUBMISSIONS . ':' . $submissionKey;
+    if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
+      $this->lock->wait($lockName, self::SAVE_LOCK_SECS);
+      if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
+        Drupal::messenger()->addWarning(self::SAVE_IN_PROGRESS_MSG);
+        return FALSE;
+      }
+    }
+    if ($this->savedSubmissions->get($submissionKey)) {
+      $this->lock->release($lockName);
+      Drupal::messenger()->addStatus(self::ALREADY_SAVED_MSG);
+      return FALSE;
+    }
+    // The browser drops the first copy of a double-click; finish saving anyway.
+    ignore_user_abort(TRUE);
+    return TRUE;
+  }
+
+  /**
+   * finishSubmission
+   *
+   * Remember that this submission's reports are saved and release its lock.
+   *
+   * @param string $submissionKey - From submissionKey(), '' does nothing.
+   */
+  private function finishSubmission(string $submissionKey): void
+  {
+    if (empty($submissionKey)) {
+      return;
+    }
+    $this->savedSubmissions->setWithExpire($submissionKey, TRUE, self::SAVED_SUBMISSION_SECS);
+    $this->lock->release(self::SAVED_SUBMISSIONS . ':' . $submissionKey);
   }
 
   /**
@@ -707,13 +806,17 @@ not checked have already received a postcard for this election.</p></div>',
    * @param array $voters
    * @param int $mcid
    * @param string $canvassDate
+   * @param string $submissionKey - From submissionKey(), see claimSubmission().
    */
   private function processPostcardsSent(int $turfIndex, array $voters,
-    int $mcid, string $canvassDate): void
+    int $mcid, string $canvassDate, string $submissionKey = ''): void
   {
     $nls = $this->nlsObj->getNlById($mcid);
     if (empty($nls)) {
       Drupal::messenger()->addWarning(self::NL_MISSING_MSG);
+      return;
+    }
+    if (!$this->claimSubmission($submissionKey)) {
       return;
     }
     $county = $this->sessionDataObj->getCounty();
@@ -747,7 +850,7 @@ not checked have already received a postcard for this election.</p></div>',
       $report['cd'] = $this->votersObj->getVoterCd($vanid);
       $this->dataEntryReportsObj->noContactResponse($report,$action);
     }
-
+    $this->finishSubmission($submissionKey);
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
