@@ -994,6 +994,22 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertSame('', $key->invoke($this->form, $post(['note' => 'x'])));
   }
 
+  public function testFormCachedWithoutSaveServicesGetsThemFromContainer(): void {
+    // A form object cached before the save lock was added unserializes without it.
+    $class = DataEntryForm::class;
+    $oldForm = unserialize('O:' . strlen($class) . ':"' . $class . '":0:{}');
+    $keyValueFactory = $this->createMock(KeyValueExpirableFactoryInterface::class);
+    $keyValueFactory->method('get')->with(DataEntryForm::SAVED_SUBMISSIONS)
+      ->willReturn($this->savedSubmissionsMock);
+    \Drupal::getContainer()->set('lock', $this->lockMock);
+    \Drupal::getContainer()->set('keyvalue.expirable', $keyValueFactory);
+
+    $lock = new \ReflectionMethod($class, 'lock');
+    $savedSubmissions = new \ReflectionMethod($class, 'savedSubmissions');
+    $this->assertSame($this->lockMock, $lock->invoke($oldForm));
+    $this->assertSame($this->savedSubmissionsMock, $savedSubmissions->invoke($oldForm));
+  }
+
   public function testSubmitFormPostcardSelectIgnoresSecondCopy(): void {
     $savedSubmissions = $this->createMock(KeyValueStoreExpirableInterface::class);
     $savedSubmissions->method('get')->willReturn(TRUE);
