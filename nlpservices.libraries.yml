@@ -48,7 +48,7 @@ hint-note:
     layout:
       css/hint-note.css: {}
 nlp-table:
-  version: "1.0.0"
+  version: "1.0.1"
   css:
     layout:
       css/nlp-table.css: {}

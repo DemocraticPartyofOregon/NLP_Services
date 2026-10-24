@@ -110,6 +110,17 @@ table.nlp-nls-table th .nlp-th-hint p {
     text-decoration: underline dotted;
 }
 
+/* NL name, address and email text colored by the NL's status. */
+table.nlp-nls-table td.nlp-nl-inactive {
+    color: #a0a0a0;
+}
+table.nlp-nls-table td.nlp-nl-turf-cut {
+    color: #e07000;
+}
+table.nlp-nls-table td.nlp-nl-reported {
+    color: #1a8a1a;
+}
+
 table.nlp-nls-table textarea.nl-notes-textarea {
     min-width: 12rem;
     width: 100%;

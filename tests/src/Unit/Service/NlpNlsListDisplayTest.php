@@ -8,6 +8,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpNlsListDisplay;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\Attributes\DataProvider;
   use Drupal\Core\Routing\UrlGeneratorInterface;
   use Symfony\Component\HttpFoundation\Request;
   use Symfony\Component\HttpFoundation\RequestStack;
@@ -128,6 +129,65 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $result = $this->service->createTableArray([42 => $record], false);
 
       $this->assertSame('never', $result[42]['lastAccess']);
+    }
+
+    /**
+     * @dataProvider highlightProvider
+     */
+    #[DataProvider('highlightProvider')]
+    public function testCreateTableArrayHighlightsByNlStatus(string $asked, string $turfCut, int $attempts, string $expected): void {
+      $record = $this->baseNlRecord([
+        'status' => ['asked' => $asked, 'turfCut' => $turfCut],
+        'progress' => ['attempts' => $attempts],
+      ]);
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+
+      $result = $this->service->createTableArray([42 => $record], false);
+
+      $this->assertSame($expected, $result[42]['highlight']);
+    }
+
+    public static function highlightProvider(): array {
+      return [
+        'dropout wins over reports' => [NlpNls::QUIT, 'Y', 5, 'nlp-nl-inactive'],
+        'not this election' => [NlpNls::NO, 'N', 0, 'nlp-nl-inactive'],
+        'reports win over turf cut' => ['Yes', 'Y', 5, 'nlp-nl-reported'],
+        'reports without turf cut' => ['Yes', 'N', 2, 'nlp-nl-reported'],
+        'turf cut only' => ['Yes', 'Y', 0, 'nlp-nl-turf-cut'],
+        'nothing yet' => ['Asked', 'N', 0, ''],
+      ];
+    }
+
+    public function testCreateTableArrayBriefHasNoHighlight(): void {
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
+
+      $result = $this->service->createTableArray([42 => $this->baseNlRecord()], true);
+
+      $this->assertArrayNotHasKey('highlight', $result[42]);
+    }
+
+    public function testBuildNlsTableColorsOnlyNameAddressAndEmailCells(): void {
+      $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn([]);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn([]);
+      $requestStack = new RequestStack();
+      $requestStack->push(Request::create('/active-nls'));
+      $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+      $urlGenerator->method('generateFromRoute')->willReturn('/active-nls');
+      \Drupal::getContainer()->set('url_generator', $urlGenerator);
+      $service = new NlpNlsListDisplay(
+        $this->drupalUserMock, $this->coordinatorsMock, $this->nlsMock, $requestStack,
+      );
+      $rows = $service->createTableArray([42 => $this->baseNlRecord()], false);
+
+      $result = $service->buildNlsTable($rows);
+
+      $row = $result['contacts'][42];
+      foreach (['name-0', 'address-0', 'email-0'] as $cell) {
+        $this->assertSame(['class' => ['nlp-nl-reported']], $row[$cell]['#wrapper_attributes']);
+      }
+      $this->assertArrayNotHasKey('#wrapper_attributes', $row['hd-0']);
+      $this->assertArrayNotHasKey('highlight-0', $row);
     }
 
     public function testValidateNlSelectionReturnsSelectedRows(): void {

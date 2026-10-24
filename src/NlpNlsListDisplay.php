@@ -66,6 +66,8 @@ class NlpNlsListDisplay
    * - lastAccess - the last date the NL accessed the turf, if $brief is FALSE.
    * - voterCount - the voter count and door count for the NL, if $brief is FALSE.
    * - attempts - the number of attempts and contacts for the NL, if $brief is FALSE.
+   * - highlight - CSS class for the name, address and email cells, if $brief is FALSE.
+   *        See highlightClass().
    * * @see headerBuild() for details on the $brief parameter.
    *
    */
@@ -142,12 +144,41 @@ class NlpNlsListDisplay
         $row['voterCount'] = "$voterCount<br>$doorCount";
 
         $row['attempts'] = "$attempts<br>$contacts";
+
+        $row['highlight'] = $this->highlightClass($currentAsk, $nlRecord['status']['turfCut'], $attempts);
       }
       $rowCount++;
       $rows[$nlRecord['mcid']] = $row;
 
     }
     return $rows;
+  }
+
+  /**
+   * highlightClass
+   *
+   * Pick the color for an NL's name, address and email cells.  An NL who
+   * dropped out or isn't participating this election is grey, even with
+   * turf cut or reports.  Otherwise, an NL who has reported voter contacts
+   * is green, and an NL whose turf is cut is orange.
+   *
+   * @param string|null $asked - NLP participation status.
+   * @param string|null $turfCut - 'Y' if the turf is cut.
+   * @param int $attempts - number of voters with reported contact attempts.
+   * @return string - CSS class, or '' for no highlight.
+   */
+  private function highlightClass(?string $asked, ?string $turfCut, int $attempts): string
+  {
+    if($asked == NlpNls::QUIT || $asked == NlpNls::NO) {
+      return 'nlp-nl-inactive';
+    }
+    if($attempts > 0) {
+      return 'nlp-nl-reported';
+    }
+    if($turfCut == 'Y') {
+      return 'nlp-nl-turf-cut';
+    }
+    return '';
   }
 
   /**
@@ -208,7 +239,10 @@ class NlpNlsListDisplay
           break;
         }
       }
+      $highlight = $row['highlight'] ?? '';
+      unset($row['highlight']);
       foreach($row as $columnName => $columnValue) {
+        $highlightCell = !empty($highlight) && in_array($columnName, ['name', 'address', 'email']);
         $mcid = empty($columnValue['mcid'])?0:$columnValue['mcid'];
         $columnName = "$columnName-$mcid";
         if(is_array($columnValue)) {
@@ -269,6 +303,9 @@ class NlpNlsListDisplay
           $form_element[$type][$rowMcid][$columnName] = [
             '#markup' => $columnValue,
           ];
+          if($highlightCell) {
+            $form_element[$type][$rowMcid][$columnName]['#wrapper_attributes'] = ['class' => [$highlight]];
+          }
         }
       }
     }
