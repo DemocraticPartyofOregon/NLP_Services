@@ -8,6 +8,7 @@ use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\MessageCommand;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
 use Drupal\Core\Lock\LockBackendInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -41,8 +42,10 @@ class DataEntryForm extends FormBase
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
   protected ApiMapRegions $mapRegionsObj;
-  protected LockBackendInterface $lock;
-  protected KeyValueStoreExpirableInterface $savedSubmissions;
+  // Nullable so a form object cached before these were added still unserializes;
+  // see lock() and savedSubmissions().
+  protected ?LockBackendInterface $lock = NULL;
+  protected ?KeyValueExpirableFactoryInterface $keyValueExpirable = NULL;
 
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
@@ -64,7 +67,7 @@ class DataEntryForm extends FormBase
     $this->dataEntryReportsObj = $dataEntryReportsObj;
     $this->mapRegionsObj = $mapRegionsObj;
     $this->lock = $lock;
-    $this->savedSubmissions = $keyValueExpirable->get(self::SAVED_SUBMISSIONS);
+    $this->keyValueExpirable = $keyValueExpirable;
   }
 
   /**
@@ -604,15 +607,15 @@ class DataEntryForm extends FormBase
       return TRUE;
     }
     $lockName = self::SAVED_SUBMISSIONS . ':' . $submissionKey;
-    if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
-      $this->lock->wait($lockName, self::SAVE_LOCK_SECS);
-      if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
+    if (!$this->lock()->acquire($lockName, self::SAVE_LOCK_SECS)) {
+      $this->lock()->wait($lockName, self::SAVE_LOCK_SECS);
+      if (!$this->lock()->acquire($lockName, self::SAVE_LOCK_SECS)) {
         Drupal::messenger()->addWarning(self::SAVE_IN_PROGRESS_MSG);
         return FALSE;
       }
     }
-    if ($this->savedSubmissions->get($submissionKey)) {
-      $this->lock->release($lockName);
+    if ($this->savedSubmissions()->get($submissionKey)) {
+      $this->lock()->release($lockName);
       Drupal::messenger()->addStatus(self::ALREADY_SAVED_MSG);
       return FALSE;
     }
@@ -633,8 +636,35 @@ class DataEntryForm extends FormBase
     if (empty($submissionKey)) {
       return;
     }
-    $this->savedSubmissions->setWithExpire($submissionKey, TRUE, self::SAVED_SUBMISSION_SECS);
-    $this->lock->release(self::SAVED_SUBMISSIONS . ':' . $submissionKey);
+    $this->savedSubmissions()->setWithExpire($submissionKey, TRUE, self::SAVED_SUBMISSION_SECS);
+    $this->lock()->release(self::SAVED_SUBMISSIONS . ':' . $submissionKey);
+  }
+
+  /**
+   * lock
+   *
+   * The save lock service.  A form object cached by a version of this form
+   * without the lock unserializes with it NULL, so get it from the container.
+   *
+   * @return LockBackendInterface
+   */
+  private function lock(): LockBackendInterface
+  {
+    return $this->lock ??= Drupal::lock();
+  }
+
+  /**
+   * savedSubmissions
+   *
+   * The store that remembers which submissions have been saved.  See lock()
+   * for why the factory can be NULL.
+   *
+   * @return KeyValueStoreExpirableInterface
+   */
+  private function savedSubmissions(): KeyValueStoreExpirableInterface
+  {
+    $this->keyValueExpirable ??= Drupal::service('keyvalue.expirable');
+    return $this->keyValueExpirable->get(self::SAVED_SUBMISSIONS);
   }
 
   /**
