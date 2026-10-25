@@ -318,10 +318,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // validateForm — selected turf no longer in the displayed list → form error
+    // validateForm — selected turf already deleted (e.g. a double submit) → warning, no error
     // -------------------------------------------------------------------------
 
-    public function testValidateFormSelectionNotInTurfArraySetsFormError(): void {
+    public function testValidateFormSelectionAlreadyDeletedWarnsWithoutError(): void {
       $this->expectLoggedNotice('/^73 \| 73 \| 1 \| Denver \| HD1 \| none \| \d+ \| form-abc \| yes \| 73: not in database$/');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -333,18 +333,32 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ['county', 'Denver'],
       ]);
       $formState->method('isCached')->willReturn(TRUE);
-      $formState->expects($this->once())
-        ->method('setErrorByName')
-        ->with('submit', $this->anything());
+      $formState->expects($this->never())->method('setErrorByName');
+      $savedSelections = NULL;
+      $formState->method('set')->willReturnCallback(
+        function (string $key, $value) use (&$savedSelections, $formState) {
+          if ($key == 'selections') {
+            $savedSelections = $value;
+          }
+          return $formState;
+        });
 
       $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73]);
       $this->turfsMock->method('getTurf')->with(73)->willReturn([]);
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->callback(fn($message) => str_contains((string) $message, '73')
+          && str_contains((string) $message, 'already been deleted')));
 
       $form = ['#build_id' => 'form-abc'];
       $this->buildForm()->validateForm($form, $formState);
+      $this->assertSame([], $savedSelections);
     }
 
-    public function testValidateFormMissingTurfLogsItsDatabaseRecord(): void {
+    // -------------------------------------------------------------------------
+    // validateForm — selected turf still in the database but not in the list → form error
+    // -------------------------------------------------------------------------
+
+    public function testValidateFormMissingTurfStillInDatabaseSetsFormError(): void {
       $this->expectLoggedNotice('/73: county=Denver hd=HD2 mcid=99$/');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -353,10 +367,35 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $formState->method('get')->willReturnMap([
         ['turfArray', [7 => $this->baseTurfRecord()]],
       ]);
+      $formState->expects($this->once())
+        ->method('setErrorByName')
+        ->with('submit', $this->anything());
 
       $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73]);
       $this->turfsMock->method('getTurf')->with(73)
         ->willReturn(['turfIndex' => 73, 'county' => 'Denver', 'turfHd' => 'HD2', 'mcid' => 99]);
+      $this->messengerMock->expects($this->never())->method('addWarning');
+
+      $form = [];
+      $this->buildForm()->validateForm($form, $formState);
+    }
+
+    public function testValidateFormOneDeletedAndOneStillInDatabaseSetsFormError(): void {
+      $this->expectLoggedNotice('/73: not in database; 74: county=Denver hd=HD2 mcid=99$/');
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'delete_submit']);
+      $formState->method('getValues')->willReturn(['contacts' => [73 => 1, 74 => 1]]);
+      $formState->method('get')->willReturnMap([
+        ['turfArray', [7 => $this->baseTurfRecord()]],
+      ]);
+      $formState->expects($this->once())
+        ->method('setErrorByName')
+        ->with('submit', $this->anything());
+
+      $this->turfDisplayMock->method('validateTurfSelection')->willReturn([73 => 73, 74 => 74]);
+      $this->stubDatabaseTurfs([74 => ['turfIndex' => 74, 'county' => 'Denver', 'turfHd' => 'HD2', 'mcid' => 99]]);
+      $this->messengerMock->expects($this->never())->method('addWarning');
 
       $form = [];
       $this->buildForm()->validateForm($form, $formState);

@@ -180,9 +180,21 @@ class DeleteTurfForm extends FormBase
     $turfArray = $form_state->get('turfArray') ?? [];
     $missing = array_diff(array_keys($selections), array_keys($turfArray));
     if (!empty($missing)) {
+      $missingDbTurfs = [];
+      foreach ($missing as $turfIndex) {
+        $missingDbTurfs[$turfIndex] = $this->turfs->getTurf((int) $turfIndex);
+      }
+      $this->logMissingTurfs($form, $form_state, $missingDbTurfs, $selections, $turfArray);
+      if (empty(array_filter($missingDbTurfs))) {
+        // None of the missing turfs are in the database.  Usually the page was submitted twice and the
+        // first submit deleted them, so say so rather than report that the list changed.
+        Drupal::messenger()->addWarning(t('The selected turf(s) @turfIndexes had already been deleted.',
+          ['@turfIndexes' => implode(', ', $missing)]));
+        $form_state->set('selections', array_diff_key($selections, $missingDbTurfs));
+        return;
+      }
       // Reloading the page would resubmit the same selection, so send the user back through the menu.
       $form_state->setErrorByName('submit', t('The list of turfs has changed since this page was loaded. Open Delete Turf again from the menu and select the turf(s) again.'));
-      $this->logMissingTurfs($form, $form_state, $missing, $selections, $turfArray);
     }
 
   }
@@ -286,19 +298,19 @@ class DeleteTurfForm extends FormBase
    *
    * @param array $form
    * @param FormStateInterface $form_state
-   * @param array $missing - Turf indexes selected but not in the turf list.
+   * @param array $missingDbTurfs - Database records of the turfs selected but not in the turf list,
+   *   keyed by turf index.  An empty record means the turf isn't in the database.
    * @param array $selections - All selected turfs, keyed by turf index.
    * @param array $turfArray - The turf list saved with the form.
    * @return void
    */
-  private function logMissingTurfs(array $form, FormStateInterface $form_state, array $missing,
+  private function logMissingTurfs(array $form, FormStateInterface $form_state, array $missingDbTurfs,
                                    array $selections, array $turfArray): void
   {
     $turfListInfo = $form_state->get('turfListInfo') ?? [];
     $builtAt = $turfListInfo['builtAt'] ?? NULL;
     $inDatabase = [];
-    foreach ($missing as $turfIndex) {
-      $dbTurf = $this->turfs->getTurf((int) $turfIndex);
+    foreach ($missingDbTurfs as $turfIndex => $dbTurf) {
       $inDatabase[] = empty($dbTurf) ? "$turfIndex: not in database"
         : "$turfIndex: county=" . $dbTurf['county'] . ' hd=' . $dbTurf['turfHd'] . ' mcid=' . $dbTurf['mcid'];
     }
@@ -307,7 +319,7 @@ class DeleteTurfForm extends FormBase
       . 'Turf list: @count turfs, county=@county, hd=@hd, search=@needle, built @age seconds earlier. '
       . 'Form build @buildId, from form cache: @cached. Database: @inDatabase.',
       [
-        '@missing' => implode(', ', $missing),
+        '@missing' => implode(', ', array_keys($missingDbTurfs)),
         '@selected' => implode(', ', array_keys($selections)),
         '@count' => count($turfArray),
         '@county' => $form_state->get('county') ?? '',
