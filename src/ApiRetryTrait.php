@@ -31,6 +31,14 @@ use Throwable;
 trait ApiRetryTrait {
 
   private const int MAX_RETRIES = 4;
+
+  /**
+   * A 429 gets more retries than other failures. VAN's per-key limit is
+   * shared with every other process using the key (cron queues, other
+   * users), and while one of them keeps the key busy the "Try again in X ms"
+   * hint is too short to wait out.
+   */
+  private const int MAX_RATE_LIMIT_RETRIES = 6;
   private const int RETRY_GROUP_SIZE = 3;
 
   /**
@@ -66,7 +74,7 @@ trait ApiRetryTrait {
     $pending = $keys;
     $groupSize = VanRateLimiter::MAX_REQUESTS;
 
-    for ($attempt = 0; $pending && $attempt <= self::MAX_RETRIES; $attempt++) {
+    for ($attempt = 0; $pending && $attempt <= self::MAX_RATE_LIMIT_RETRIES; $attempt++) {
       if ($attempt > 0) {
         $this->sleepMs($retryDelayMs);
         $groupSize = self::RETRY_GROUP_SIZE;
@@ -88,7 +96,7 @@ trait ApiRetryTrait {
           'options' => self::REQUEST_OPTIONS,
           'fulfilled' => fn($response, $key) => $onFulfilled($response, $key),
           'rejected' => function($reason, $key) use (&$retry, &$retryDelayMs, $attempt, $onFailed) {
-            if ($this->isRetryable($reason) && $attempt < self::MAX_RETRIES) {
+            if ($this->isRetryable($reason) && $attempt < $this->maxRetries($reason)) {
               $this->logRetry($reason, $key, $attempt);
               $retry[] = $key;
               $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
@@ -120,7 +128,7 @@ trait ApiRetryTrait {
         return $this->client->request($method, $url, self::REQUEST_OPTIONS);
       }
       catch (GuzzleException $e) {
-        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+        if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
           $this->logRetry($e, $logKey, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
@@ -146,6 +154,10 @@ trait ApiRetryTrait {
 
   private function isRateLimited(Throwable $reason): bool {
     return $reason->getCode() == 429;
+  }
+
+  private function maxRetries(Throwable $reason): int {
+    return $this->isRateLimited($reason) ? self::MAX_RATE_LIMIT_RETRIES : self::MAX_RETRIES;
   }
 
   /**
@@ -191,7 +203,7 @@ trait ApiRetryTrait {
         '@code' => $reason->getCode(),
         '@detail' => $detail,
         '@retry' => $attempt + 1,
-        '@max' => self::MAX_RETRIES,
+        '@max' => $this->maxRetries($reason),
       ],
     );
   }
@@ -199,31 +211,35 @@ trait ApiRetryTrait {
   /**
    * How long to wait before the next retry, in whole milliseconds.
    *
-   * Prefers a `Retry-After` header, then the "Try again in X ms" hint VAN
-   * puts in the response body, falling back to exponential backoff. A
-   * small random jitter is added in all cases so that requests which were
-   * rate-limited together don't all retry at exactly the same instant.
+   * Exponential backoff (250 ms, 500 ms, 1 s, ...), stretched to a
+   * `Retry-After` header or the "Try again in X ms" hint VAN puts in the
+   * response body when either asks for longer. The hint alone is not
+   * enough: it is often only a few ms, so a key kept busy by another
+   * process would use up every retry in about a second. A small random
+   * jitter is added so that requests which were rate-limited together
+   * don't all retry at exactly the same instant.
    */
   private function retryDelayMs(Throwable $reason, int $attempt): int {
+    $backoffMs = (int) (250 * (2 ** $attempt));
     $response = method_exists($reason, 'getResponse') ? $reason->getResponse() : NULL;
     if ($response) {
       if ($response->hasHeader('Retry-After')) {
         $retryAfter = trim($response->getHeaderLine('Retry-After'));
         if (is_numeric($retryAfter)) {
-          return max((int) $retryAfter * 1000, 250) + random_int(0, 250);
+          return max((int) $retryAfter * 1000, $backoffMs) + random_int(0, 250);
         }
       }
       try {
         $body = (string) $response->getBody();
         if (preg_match('/Try again in\s+(\d+)\s*ms/i', $body, $matches)) {
-          return max((int) $matches[1], 250) + random_int(0, 250);
+          return max((int) $matches[1], $backoffMs) + random_int(0, 250);
         }
       }
       catch (Throwable $e) {
         // Body unavailable/unreadable; fall through to backoff below.
       }
     }
-    return (int) (250 * (2 ** $attempt)) + random_int(0, 250);
+    return $backoffMs + random_int(0, 250);
   }
 
   private function sleepMs(int $ms): void {

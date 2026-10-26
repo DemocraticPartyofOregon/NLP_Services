@@ -207,6 +207,41 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertCount(1, $double->sleeps);
     }
 
+    public function testRateLimitBacksOffPastAShortHintAndGetsMoreRetries(): void {
+      // While another process keeps the key busy, VAN keeps answering 429
+      // with a hint of a few ms; waiting only that long used up every retry
+      // in about a second.
+      $rateLimited = array_fill(0, 6, fn($request) => $this->statusException($request, 429, '{"errors":[{"code":"429","text":"Rate limit exceeded. Try again in 38 ms."}]}'));
+      [$double, $fulfilled, $failed, $options] = $this->sendThroughTrait([1754250], 'GET', [...$rateLimited, new Response(200, [], '{}')]);
+
+      $this->assertSame([1754250], $fulfilled);
+      $this->assertSame([], $failed);
+      $this->assertCount(7, $options);
+      $this->assertCount(6, $double->sleeps);
+      foreach ([250, 500, 1000, 2000, 4000, 8000] as $i => $minMs) {
+        $this->assertGreaterThanOrEqual($minMs, $double->sleeps[$i]);
+        $this->assertLessThanOrEqual($minMs + 250, $double->sleeps[$i]);
+      }
+    }
+
+    public function testRateLimitGivesUpAfterMaxRateLimitRetries(): void {
+      $rateLimited = array_fill(0, 10, fn($request) => $this->statusException($request, 429, '{"errors":[{"code":"429","text":"Rate limit exceeded. Try again in 38 ms."}]}'));
+      [, $fulfilled, $failed, $options] = $this->sendThroughTrait([1754250], 'GET', $rateLimited);
+
+      $this->assertSame([], $fulfilled);
+      $this->assertSame([1754250], $failed);
+      $this->assertCount(7, $options);
+    }
+
+    public function testLongerRateLimitHintIsHonored(): void {
+      [$double] = $this->sendThroughTrait([1754250], 'GET', [
+        fn($request) => $this->statusException($request, 429, '{"errors":[{"code":"429","text":"Rate limit exceeded. Try again in 900 ms."}]}'),
+        new Response(200, [], '{}'),
+      ]);
+
+      $this->assertGreaterThanOrEqual(900, $double->sleeps[0]);
+    }
+
     public function testGetNotFoundIsNotRetried(): void {
       [, $fulfilled, $failed, $options] = $this->sendThroughTrait([3034261], 'GET', [
         fn($request) => $this->statusException($request, 404),
