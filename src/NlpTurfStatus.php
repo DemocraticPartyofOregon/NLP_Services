@@ -140,7 +140,7 @@ class NlpTurfStatus
       return ($status !== self::TURF_DELETED) || $expired;
     }
 
-    $missingCode = $this->apiActivistCodesObj->hasApiActivistCodeBatch($vanids, 'NLPVoterAC');
+    $missingCode = $this->apiActivistCodesObj->hasApiActivistCodeBatch($vanids, 'NLPVoterAC', $unread);
 
     if ($status === self::TURF_DELETED) {
       // All removed = every voter is missing the code.
@@ -165,21 +165,24 @@ class NlpTurfStatus
       return FALSE;
     }
 
-    // TURF_CREATED: all applied = no voter is missing the code.
-    if (empty($missingCode)) {
+    // TURF_CREATED: all applied = no voter is missing the code, and every voter was read.
+    if (empty($missingCode) && empty($unread)) {
       $this->setTurfStatusValidated($folderName, $turfName, self::TURF_CREATE_VALIDATED);
       return TRUE;
     }
     if ($expired) {
-      Drupal::logger('nlpservices')->error(
-        'Turf @folder/@turf: NLPVoterAC application incomplete after expiration. @count voter(s) still missing the code: @vanids',
-        [
-          '@folder' => $folderName,
-          '@turf'   => $turfName,
-          '@count'  => count($missingCode),
-          '@vanids' => implode(', ', $missingCode),
-        ]
-      );
+      // Voters that couldn't be read were already logged by hasApiActivistCodeBatch().
+      if (!empty($missingCode)) {
+        Drupal::logger('nlpservices')->error(
+          'Turf @folder/@turf: NLPVoterAC application incomplete after expiration. @count voter(s) still missing the code: @vanids',
+          [
+            '@folder' => $folderName,
+            '@turf'   => $turfName,
+            '@count'  => count($missingCode),
+            '@vanids' => implode(', ', $missingCode),
+          ]
+        );
+      }
       $this->setTurfStatusValidated($folderName, $turfName, self::TURF_CREATE_VALIDATED);
       return TRUE;
     }

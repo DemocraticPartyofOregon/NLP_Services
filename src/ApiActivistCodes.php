@@ -213,12 +213,18 @@ class ApiActivistCodes
    * Checks multiple voters concurrently and returns the subset that does NOT
    * have the named activist code applied.
    *
+   * A voter whose codes couldn't be read (VAN refused or didn't answer the
+   * request, as it does with a 404 for a merged vanid) is not counted as
+   * missing the code.  Those voters are logged and returned in $unread.
+   *
    * @param array  $vanids   - flat array of int vanids to check
    * @param string $codeName - e.g., 'NLPVoterAC'
+   * @param array|null $unread - set to the vanids whose codes couldn't be read.
    * @return array            - vanids (int) that are missing the code
    */
-  public function hasApiActivistCodeBatch(array $vanids, string $codeName): array
+  public function hasApiActivistCodeBatch(array $vanids, string $codeName, ?array &$unread = NULL): array
   {
+    $unread = [];
     if (empty($vanids)) {
       return [];
     }
@@ -237,29 +243,49 @@ class ApiActivistCodes
     }
 
     $hasCode = [];
+    $unreadReasons = [];
     $this->sendInRateLimitedGroups(
       $vanids,
       fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|$database@$apiURL/people/$vanid/activistCodes".'?$top='.self::VOTER_CODES_PAGE_SIZE),
-      function($response, $vanid) use (&$hasCode, $rid) {
+      function($response, $vanid) use (&$hasCode, &$unreadReasons, $rid, $database) {
         $result = json_decode($response->getBody(), TRUE);
         if (json_last_error() !== JSON_ERROR_NONE) {
-          $hasCode[$vanid] = FALSE;
+          $unreadReasons[$vanid] = 'invalid JSON';
           return;
         }
         $codes = array_map(fn($item) => (int) $item['activistCodeId'], $result['items'] ?? []);
+        if (!in_array($rid, $codes) && !empty($result['nextPageLink'])) {
+          // The code may be on a later page.
+          $codes = $this->getApiVoterActivistCodes($vanid, $database);
+        }
         $hasCode[$vanid] = in_array($rid, $codes);
       },
-      function($reason, $vanid) use (&$hasCode) {
-        nlp_debug_msg('hasApiActivistCodeBatch', $reason->getMessage());
-        $hasCode[$vanid] = FALSE;
+      function($reason, $vanid) use (&$unreadReasons) {
+        $response = ($reason instanceof RequestException) ? $reason->getResponse() : NULL;
+        $unreadReasons[$vanid] = $response ? 'status '.$response->getStatusCode() : 'no response';
       },
     );
 
     $missing = [];
     foreach ($vanids as $vanid) {
-      if (!($hasCode[$vanid] ?? FALSE)) {
+      if (isset($unreadReasons[$vanid])) {
+        $unread[] = $vanid;
+      } elseif (!($hasCode[$vanid] ?? FALSE)) {
         $missing[] = $vanid;
       }
+    }
+    if ($unreadReasons) {
+      $byReason = [];
+      foreach ($unreadReasons as $vanid => $why) {
+        $byReason[$why][] = $vanid;
+      }
+      $details = [];
+      foreach ($byReason as $why => $reasonVanids) {
+        $details[] = "$why: ".implode(', ', $reasonVanids);
+      }
+      $this->log('warning',
+        'Could not read activist codes from VAN to check @code for @count voter(s), so they were not counted as missing. @details',
+        ['@code' => $codeName, '@count' => count($unreadReasons), '@details' => implode('; ', $details)]);
     }
     return $missing;
   }
@@ -411,6 +437,13 @@ class ApiActivistCodes
       if (($action === 'Apply') ? !$codeIsSet : $codeIsSet) {
         $notShown[] = $vanid;
       }
+    }
+    if ($notShown && $action === 'Remove' && $item['codeName'] === 'NLPVoterAC'
+      && Drupal::hasService('nlpservices.voters')) {
+      // A voter synced into a turf after the Remove was sent has the code again on purpose.
+      // Sending the Remove again would take it from a voter whose NL needs it.
+      $inTurfs = Drupal::service('nlpservices.voters')->getVanidsInTurfs($notShown);
+      $notShown = array_values(array_diff($notShown, $inTurfs));
     }
 
     $context = [

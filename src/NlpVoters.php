@@ -511,6 +511,59 @@ class NlpVoters {
   }
 
   /**
+   * deleteVoterFromTurf
+   *
+   * Delete a voter from one turf, leaving the voter in any other turf.  Used by the resync
+   * when VoteBuilder no longer lists the voter in this turf.
+   *
+   * @param int $vanid
+   * @param int $turfIndex
+   * @return void
+   */
+  public function deleteVoterFromTurf(int $vanid, int $turfIndex): void
+  {
+    try {
+      $this->connection->delete(self::VOTER_TURF_TBL)
+        ->condition('vanid', $vanid)
+        ->condition('turfIndex', $turfIndex)
+        ->execute();
+      $this->connection->delete(self::VOTER_ADDRESS_TBL)
+        ->condition('vanid', $vanid)
+        ->condition('turfIndex', $turfIndex)
+        ->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('deleteVoterFromTurf', $e);
+    }
+  }
+
+  /**
+   * getVanidsInTurfs
+   *
+   * Returns the vanids, of those given, that are in a turf that still exists.  A voter in a
+   * turf needs the NLPVoterAC activist code, so it must not be removed from them.
+   *
+   * @param array $vanids
+   * @return array - the vanids in a turf, as ints.
+   */
+  public function getVanidsInTurfs(array $vanids): array
+  {
+    if (empty($vanids)) {return [];}
+    try {
+      $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
+      $query->join(NlpTurfs::TURF_TBL, 't', 't.turfIndex = g.turfIndex');
+      $query->addField('g', 'vanid');
+      $query->condition('g.vanid', $vanids, 'IN');
+      $query->distinct();
+      $result = $query->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('getVanidsInTurfs', $e);
+      return [];
+    }
+    return array_map('intval', $result->fetchCol());
+  }
+
+  /**
    * deleteAddressInTurf
    *
    * Delete a voter address in a turf table.  This is used when a voter address is removed from a turf.

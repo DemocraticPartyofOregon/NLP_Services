@@ -4,6 +4,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal;
   use Drupal\Core\Database\Connection;
+  use Drupal\Core\Database\Query\Delete;
   use Drupal\Core\Database\Query\Insert;
   use Drupal\Core\Database\Query\Merge;
   use Drupal\Core\Database\Query\Select;
@@ -297,6 +298,53 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturnOnConsecutiveCalls($address1, false, $address2, false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->assertSame(2, $this->buildVoters()->getDoorCount([101, 102]));
+    }
+
+    // -------------------------------------------------------------------------
+    // getVanidsInTurfs
+    // -------------------------------------------------------------------------
+
+    public function testGetVanidsInTurfsEmptyListSkipsQuery(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildVoters()->getVanidsInTurfs([]));
+    }
+
+    public function testGetVanidsInTurfsOnlyCountsTurfsThatStillExist(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchCol')->willReturn(['222']);
+      $selectMock = $this->buildSelectMock($stmtMock);
+      $selectMock->expects($this->once())->method('join')
+        ->with('nlp_turf', 't', 't.turfIndex = g.turfIndex');
+      $selectMock->expects($this->once())->method('condition')->with('g.vanid', [111, 222], 'IN');
+      $this->connectionMock->method('select')->with('nlp_voter_turf', 'g')->willReturn($selectMock);
+
+      $this->assertSame([222], $this->buildVoters()->getVanidsInTurfs([111, 222]));
+    }
+
+    // -------------------------------------------------------------------------
+    // deleteVoterFromTurf
+    // -------------------------------------------------------------------------
+
+    public function testDeleteVoterFromTurfDeletesOnlyThatTurfsRows(): void {
+      $conditions = [];
+      $this->connectionMock->method('delete')
+        ->willReturnCallback(function (string $table) use (&$conditions) {
+          $deleteMock = $this->createMock(Delete::class);
+          $deleteMock->method('condition')
+            ->willReturnCallback(function (string $field, $value) use (&$conditions, $table, $deleteMock) {
+              $conditions[$table][$field] = $value;
+              return $deleteMock;
+            });
+          $deleteMock->method('execute')->willReturn(1);
+          return $deleteMock;
+        });
+
+      $this->buildVoters()->deleteVoterFromTurf(111, 7);
+
+      $this->assertSame([
+        'nlp_voter_turf' => ['vanid' => 111, 'turfIndex' => 7],
+        'nlp_voter_address' => ['vanid' => 111, 'turfIndex' => 7],
+      ], $conditions);
     }
 
   }

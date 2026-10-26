@@ -850,11 +850,15 @@ class NlpTurfs
 
     $voters = $this->votersObj->fetchVotersByTurf($turfIndex);
     $vanids = array_keys($voters);
-    $this->apiActivistCodesObj->setApiActivistCodeBatch($vanids, 'NLPVoterAC', 'Remove', "turf delete (turfIndex $turfIndex)");
 
     // remove the list of voters.
     $this->votersObj->deleteVotersInTurf($turfIndex);
     $this->votersObj->deleteAddressesInTurf($turfIndex);
+
+    // A voter who is also in another turf keeps NLPVoterAC.
+    $inOtherTurfs = $this->votersObj->getVanidsInTurfs($vanids);
+    $toRemove = array_values(array_diff($vanids, $inOtherTurfs));
+    $this->apiActivistCodesObj->setApiActivistCodeBatch($toRemove, 'NLPVoterAC', 'Remove', "turf delete (turfIndex $turfIndex)");
 
     $status = $this->removeTurf($turf);
     if (!$status) { return FALSE; }

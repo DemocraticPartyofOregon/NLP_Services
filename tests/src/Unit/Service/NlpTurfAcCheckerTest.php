@@ -164,6 +164,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildService()->checkExpiredTurfAc($this->record());
     }
 
+    public function testCreateIsCheckedAgainLaterWhenSomeVotersCouldNotBeRead(): void {
+      $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
+      $this->turfWithVoters([101, 102]);
+      $this->apiActivistCodesMock->method('hasApiActivistCodeBatch')
+        ->willReturnCallback(function (array $vanids, string $codeName, ?array &$unread = NULL) {
+          $unread = [102];
+          return [];
+        });
+      $this->apiActivistCodesMock->expects($this->never())->method('setApiActivistCodeBatch');
+      $this->turfStatusMock->expects($this->never())->method('setTurfStatusValidated');
+      $this->turfStatusMock->expects($this->once())->method('extendTurfStatusExpiration')
+        ->with('HD24', 'Ds Turf 19', NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
+
+      $this->buildService()->checkExpiredTurfAc($this->record());
+    }
+
     public function testCreateIsValidatedWhenTurfIsGone(): void {
       $this->turfStatusMock->method('getTurfStatus')->willReturn($this->record());
       $this->turfsMock->method('getTurfByTurfName')->willReturn([]);

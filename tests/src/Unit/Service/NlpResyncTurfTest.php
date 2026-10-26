@@ -514,11 +514,30 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ]);
       $this->votersMock->method('getVoterById')->willReturn(['firstName' => 'Bob', 'lastName' => 'Jones']);
       $this->databaseFunctionsMock->method('getColumnSize')->willReturn(1000);
-      $this->votersMock->expects($this->once())->method('deleteVoterInTurf')->with(201);
-      $this->votersMock->expects($this->once())->method('deleteAddressInTurf')->with(201);
+      $this->votersMock->expects($this->once())->method('deleteVoterFromTurf')->with(201, 5);
+      $this->votersMock->expects($this->never())->method('deleteVoterInTurf');
+      $this->votersMock->method('getVanidsInTurfs')->willReturn([]);
       $this->activistCodesMock->expects($this->once())
         ->method('setApiActivistCode')
         ->with($this->callback(fn($r) => $r['vanid'] === 201 && $r['action'] === 'Remove'));
+
+      $service->resyncTurf('King', 5, FALSE);
+    }
+
+    public function testResyncTurfChangesKeepsActivistCodeForVoterInAnotherTurf(): void {
+      $service = $this->buildPartialService(['turfResyncCheck']);
+      $service->method('turfResyncCheck')->willReturn([
+        'result' => 'changes', 'newTurfId' => 0, 'previousTurfId' => 0,
+        'missingNlpVoterAc' => [], 'deletedVoters' => [201], 'addedVoters' => [],
+      ]);
+      $this->turfsMock->method('getTurf')->willReturn([
+        'mcid' => 10, 'turfName' => 'Elm', 'changeHistory' => '',
+      ]);
+      $this->votersMock->method('getVoterById')->willReturn(['firstName' => 'Bob', 'lastName' => 'Jones']);
+      $this->databaseFunctionsMock->method('getColumnSize')->willReturn(1000);
+      $this->votersMock->expects($this->once())->method('deleteVoterFromTurf')->with(201, 5);
+      $this->votersMock->method('getVanidsInTurfs')->with([201])->willReturn([201]);
+      $this->activistCodesMock->expects($this->never())->method('setApiActivistCode');
 
       $service->resyncTurf('King', 5, FALSE);
     }

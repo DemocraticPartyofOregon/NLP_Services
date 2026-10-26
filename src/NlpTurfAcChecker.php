@@ -84,11 +84,16 @@ class NlpTurfAcChecker
       return;
     }
 
-    $missingCode = $this->apiActivistCodesObj->hasApiActivistCodeBatch($vanids, 'NLPVoterAC');
+    $missingCode = $this->apiActivistCodesObj->hasApiActivistCodeBatch($vanids, 'NLPVoterAC', $unread);
 
     // All applied means no voter is missing the code.
     if (empty($missingCode)) {
-      $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_CREATE_VALIDATED);
+      if (empty($unread)) {
+        $this->turfStatusObj->setTurfStatusValidated($folderName, $turfName, NlpTurfStatus::TURF_CREATE_VALIDATED);
+      } else {
+        // Some voters couldn't be read, so check the turf again on a later cron run.
+        $this->turfStatusObj->extendTurfStatusExpiration($folderName, $turfName, NlpTurfStatus::CREATED_EXPIRY_SMALL_SECS);
+      }
       return;
     }
     Drupal::logger('nlpservices')->warning(

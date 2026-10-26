@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Logger\LoggerChannelInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpReports;
@@ -23,6 +25,11 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->reportsMock = $this->createMock(NlpReports::class);
       $this->activistCodesMock = $this->createMock(ApiActivistCodes::class);
       $this->configurationMock = $this->createMock(NlpConfiguration::class);
+    }
+
+    protected function tearDown(): void {
+      parent::tearDown();
+      \Drupal::setContainer(new ContainerBuilder());
     }
 
     private function buildService(): NlpSyncTurfAddVoter {
@@ -598,6 +605,61 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->method('getComment')
         ->with(['vanid' => 10001, 'mcid' => 42])
         ->willReturn([]);
+
+      $this->buildService()->syncAddVoter('Multnomah', $this->baseVoter(10001), 5, 42);
+    }
+
+    // -------------------------------------------------------------------------
+    // syncAddVoter() — a voter in another turf is moved, not added twice
+    // -------------------------------------------------------------------------
+
+    public function testSyncAddVoterMovesVoterOutOfTheirOldTurf(): void {
+      $this->configurationMock->method('getCycle')->willReturn('2024');
+      $this->votersMock->method('getVoterStatus')->willReturn([]);
+      $this->setupDefaultReloadMocks();
+      $this->votersMock->method('getTurfIndexByVanid')->willReturn(9);
+
+      $logger = $this->createMock(LoggerChannelInterface::class);
+      $logger->expects($this->once())->method('notice')
+        ->with($this->anything(), ['@vanid' => 10001, '@old' => 9, '@new' => 5]);
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->with('nlpservices')->willReturn($logger);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactory);
+      \Drupal::setContainer($container);
+
+      $calls = [];
+      $this->votersMock->method('deleteVoterInTurf')
+        ->willReturnCallback(function (int $vanid) use (&$calls) { $calls[] = "deleteVoterInTurf $vanid"; });
+      $this->votersMock->method('deleteAddressInTurf')
+        ->willReturnCallback(function (int $vanid) use (&$calls) { $calls[] = "deleteAddressInTurf $vanid"; });
+      $this->votersMock->method('createTurfVoter')
+        ->willReturnCallback(function (array $turfVoter) use (&$calls) {
+          $calls[] = 'createTurfVoter '.$turfVoter['turfIndex'];
+          return TRUE;
+        });
+      $this->activistCodesMock->expects($this->once())->method('setApiActivistCode')
+        ->with($this->callback(fn($r) => $r['action'] === 'Apply'));
+
+      $this->buildService()->syncAddVoter('Multnomah', $this->baseVoter(10001), 5, 42);
+
+      $this->assertSame(['deleteVoterInTurf 10001', 'deleteAddressInTurf 10001', 'createTurfVoter 5'], $calls);
+    }
+
+    public function testSyncAddVoterNotInAnotherTurfLogsNoMove(): void {
+      $this->configurationMock->method('getCycle')->willReturn('2024');
+      $this->votersMock->method('getVoterStatus')->willReturn([]);
+      $this->setupDefaultReloadMocks();
+      $this->votersMock->method('getTurfIndexByVanid')->willReturn(0);
+      $this->votersMock->method('createTurfVoter')->willReturn(TRUE);
+
+      $logger = $this->createMock(LoggerChannelInterface::class);
+      $logger->expects($this->never())->method('notice');
+      $loggerFactory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactory->method('get')->willReturn($logger);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactory);
+      \Drupal::setContainer($container);
 
       $this->buildService()->syncAddVoter('Multnomah', $this->baseVoter(10001), 5, 42);
     }
