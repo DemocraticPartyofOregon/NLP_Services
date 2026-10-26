@@ -223,9 +223,13 @@ class ApiExportJobs {
     }
     // If more than 4 seconds have passed, the export job has taken too long.
     $elapsedTime = $exportJob['endTime']-$exportJob['startTime'];
-    $nice = 'getExportJobStatus: elapsedTime=' . $elapsedTime;
-    Drupal::logger('nlpservices')->notice($nice);
-    if($elapsedTime < 4) {
+    if($elapsedTime >= 4) {
+      Drupal::logger('nlpservices')->warning('VAN export job @eventId took @seconds seconds.', [
+        '@eventId' => $eventId,
+        '@seconds' => $elapsedTime,
+      ]);
+    }
+    else {
       try {
         $this->connection->delete(self::EXPORT_JOBS_TBL)
           ->condition('eventId', $eventId)

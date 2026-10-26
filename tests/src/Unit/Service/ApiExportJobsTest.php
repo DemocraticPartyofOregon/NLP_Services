@@ -28,6 +28,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private Connection $connectionMock;
     private NlpConfiguration $configurationMock;
     private ApiKeyManagement $apiKeyManagementMock;
+    private LoggerInterface $loggerMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -36,9 +37,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->configurationMock    = $this->createMock(NlpConfiguration::class);
       $this->apiKeyManagementMock = $this->createMock(ApiKeyManagement::class);
 
-      $loggerMock        = $this->createMock(LoggerInterface::class);
+      $this->loggerMock  = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
-      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
       \Drupal::setContainer($container);
@@ -217,6 +218,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ]);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->connectionMock->method('delete')->willReturn($this->buildDeleteMock());
+      $this->loggerMock->expects($this->never())->method($this->anything());
 
       $this->assertSame(2, $this->buildService()->getExportJobStatus(42));
     }
@@ -232,6 +234,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ]);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->connectionMock->expects($this->never())->method('delete');
+      $this->loggerMock->expects($this->once())->method('warning')
+        ->with($this->anything(), ['@eventId' => 42, '@seconds' => 5]);
 
       $this->assertSame(5, $this->buildService()->getExportJobStatus(42));
     }
