@@ -793,6 +793,31 @@ class DrupalUser {
   }
 
   /**
+   * getRoleLabels
+   *
+   * Returns the labels of all the Drupal roles, keyed by role id.
+   *
+   * @return array
+   * Used in:
+   *   CoordinatorsForm.php
+   * @noinspection PhpUnused
+   */
+  public function getRoleLabels(): array
+  {
+    $roleLabels = [];
+    try {
+      $drupalRoles = $this->entityTypeManager->getStorage('user_role')->loadMultiple();
+    } catch (InvalidPluginDefinitionException|PluginNotFoundException $e) {
+      nlp_debug_msg('getRoleLabels', $e);
+      return [];
+    }
+    foreach ($drupalRoles as $drupalRole) {
+      $roleLabels[$drupalRole->id()] = $drupalRole->label();
+    }
+    return $roleLabels;
+  }
+
+  /**
    * displayCredentials
    *
    * Returns a displayable string with the login credentials for an NLP user given an NLP user array or

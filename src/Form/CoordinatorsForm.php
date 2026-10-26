@@ -127,13 +127,14 @@ coordinator and not to the NLP Site admin.</p>"),
     
     // Get all the coordinators assigned for this county.
     $assignedCoordinators = $this->coordinatorsObj->getCoordinators($county);
+    $roleLabels = $this->drupalUserObj->getRoleLabels();
     foreach ($assignedCoordinators as $cIndex=>$assignedCoordinator) {
       $mcid = $assignedCoordinator['mcid'];
       $assignedCoordinators[$cIndex]['roles'] = [];
       $assignedCoordinators[$cIndex]['uid'] = '';
       $coordinator = $this->drupalUserObj->getUserByMcid($mcid);
       if(!empty($coordinator)) {
-        $assignedCoordinators[$cIndex]['roles'] = $coordinator['roles'];
+        $assignedCoordinators[$cIndex]['roles'] = $this->roleLabels($coordinator['roles'],$roleLabels);
         $assignedCoordinators[$cIndex]['uid'] = $coordinator['uid'];
       }
     }
@@ -162,7 +163,18 @@ coordinator and not to the NLP Site admin.</p>"),
       $allCountyNls = $this->nlsObj->getCountyNls($county);
       $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCountyNls);
     }
-    
+
+    // The NL records don't have the Drupal roles, get them from the user accounts.
+    $userRoles = [];
+    foreach ($this->drupalUserObj->getUsers($county) as $user) {
+      if(!empty($user['mcid'])) {
+        $userRoles[$user['mcid']] = $this->roleLabels($user['roles'],$roleLabels);
+      }
+    }
+    foreach ($availableNLs as $mcid=>$availableNL) {
+      $availableNLs[$mcid]['roles'] = $userRoles[$mcid] ?? [];
+    }
+
     $scope = $form_state->get('scope');
     
     $form['manageCoordinators']['assignmentRemoval'] = $this->buildCoordinatorAssignment($assignedCoordinators,$sortRequest);
@@ -547,6 +559,26 @@ coordinator to groups of NLs.</p>',
     return $form;
   }
   
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * roleLabels
+   *
+   * Converts a list of role ids to their labels.  An id without a label is kept as is.
+   * The authenticated role is skipped since every account has it.
+   *
+   * @param array $roleIds
+   * @param array $roleLabels
+   * @return array
+   */
+  private function roleLabels(array $roleIds, array $roleLabels): array
+  {
+    $labels = [];
+    foreach ($roleIds as $roleId) {
+      if($roleId == 'authenticated') {continue;}
+      $labels[] = $roleLabels[$roleId] ?? $roleId;
+    }
+    return $labels;
+  }
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * buildCoordinatorAssignment
    *
