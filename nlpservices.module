@@ -214,6 +214,7 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
   switch ($form_id) {
     case 'user_form':
       $form['actions']['submit']['#submit'][] = 'nlpservices_user_submit';
+      nlpservices_add_password_caution($form);
       break;
 
     case 'user_login_form':
@@ -232,6 +233,34 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
   }
 }
 
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_add_password_caution
+ *
+ * Adds a warning box just above the password field of the account form.  NLs
+ * set their password there both when editing their account and after following
+ * a password reset link.  Drupal leaves the password field out for users who
+ * can't change it, so the warning is only added when the field is there.
+ *
+ * @param array $form
+ * @return void
+ */
+function nlpservices_add_password_caution(array &$form): void
+{
+  if (!isset($form['account']['pass'])) {return;}
+  $caution = [
+    '#theme' => 'status_messages',
+    '#message_list' => ['warning' => [
+      t('Do not use an important password.  The reminder credentials can send the password in clear text.'),
+    ]],
+    '#status_headings' => ['warning' => t('Warning message')],
+  ];
+  // Insert it just before the password field.  The fields have equal weights,
+  // so they display in the order they are in the array.
+  $position = array_search('pass', array_keys($form['account']), TRUE);
+  $form['account'] = array_slice($form['account'], 0, $position, TRUE)
+    + ['pass_caution' => $caution]
+    + array_slice($form['account'], $position, NULL, TRUE);
+}
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * nlpservices_login_email_validate
