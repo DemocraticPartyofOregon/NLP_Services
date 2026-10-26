@@ -97,10 +97,12 @@ trait ApiRetryTrait {
           'fulfilled' => fn($response, $key) => $onFulfilled($response, $key),
           'rejected' => function($reason, $key) use (&$retry, &$retryDelayMs, $attempt, $onFailed) {
             if ($this->isRetryable($reason) && $attempt < $this->maxRetries($reason)) {
-              $this->logRetry($reason, $key, $attempt);
               $retry[] = $key;
               $retryDelayMs = max($retryDelayMs, $this->retryDelayMs($reason, $attempt));
               return;
+            }
+            if ($this->isRetryable($reason)) {
+              $this->logRetriesExhausted($reason, $key, $attempt);
             }
             $onFailed($reason, $key);
           },
@@ -129,9 +131,11 @@ trait ApiRetryTrait {
       }
       catch (GuzzleException $e) {
         if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
-          $this->logRetry($e, $logKey, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
+        }
+        if ($this->isRetryable($e)) {
+          $this->logRetriesExhausted($e, $logKey, $attempt);
         }
         throw $e;
       }
@@ -183,27 +187,28 @@ trait ApiRetryTrait {
   }
 
   /**
-   * Records a retry in the Drupal log, so a VAN support ticket can cite the
-   * time and the person ID of a request VAN didn't answer. Only the cURL
+   * Records in the Drupal log a request that was still failing when its
+   * retries ran out, so a VAN support ticket can cite the time and the
+   * person ID of a request VAN didn't answer. Retries that later succeed
+   * are not logged; they are routine and flooded the log. Only the cURL
    * error text and status code are logged, never the exception message:
    * Guzzle's message embeds the request URL, which carries the API
    * credentials.
    */
-  private function logRetry(Throwable $reason, int|string $key, int $attempt): void {
+  private function logRetriesExhausted(Throwable $reason, int|string $key, int $retries): void {
     if (!Drupal::hasContainer()) {
       return;
     }
     $context = method_exists($reason, 'getHandlerContext') ? $reason->getHandlerContext() : [];
     $detail = $context['error'] ?? '';
-    Drupal::logger('nlpservices')->warning(
-      'VAN request for ID @key failed (@class, status @code: @detail); retry @retry of @max.',
+    Drupal::logger('nlpservices')->error(
+      'VAN request for ID @key failed (@class, status @code: @detail) after @retries retries.',
       [
         '@key' => $key,
         '@class' => (new ReflectionClass($reason))->getShortName(),
         '@code' => $reason->getCode(),
         '@detail' => $detail,
-        '@retry' => $attempt + 1,
-        '@max' => $this->maxRetries($reason),
+        '@retries' => $retries,
       ],
     );
   }

@@ -151,9 +151,11 @@ class ApiMapRegions
       } catch (GuzzleException $e) {
         if ($e->getCode() == 404) {return [];}
         if ($this->isRetryable($e) && $attempt < self::PAGE_LOAD_RETRIES) {
-          $this->logRetry($e, $folderId, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
+        }
+        if ($this->isRetryable($e)) {
+          $this->logRetriesExhausted($e, $folderId, $attempt);
         }
         nlp_debug_msg('getMapRegionInfo', $e);
         return [];
