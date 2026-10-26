@@ -68,9 +68,11 @@ class ApiNls {
           return ['Invalid key'];
         }
         if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
-          $this->logRetry($e, $mcid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
+        }
+        if ($this->isRetryable($e)) {
+          $this->logRetriesExhausted($e, $mcid, $attempt);
         }
         nlp_debug_msg('nlApiCall', $e);
         return [];

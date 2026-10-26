@@ -39,7 +39,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function log(Throwable $reason, int $key, int $attempt): void {
-      $this->logRetry($reason, $key, $attempt);
+      $this->logRetriesExhausted($reason, $key, $attempt);
     }
 
     private function sleepMs(int $ms): void {
@@ -286,17 +286,63 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // logRetry
+    // logRetriesExhausted
     // -------------------------------------------------------------------------
 
-    public function testRetryIsLoggedWithoutCredentials(): void {
+    /**
+     * Installs a logger that counts the errors logged to nlpservices.
+     */
+    private function countLoggedErrors(): \ArrayObject {
+      $logged = new \ArrayObject();
       $logger = $this->createMock(LoggerInterface::class);
-      $logger->expects($this->once())->method('warning')
+      $logger->expects($this->never())->method('warning');
+      $logger->method('error')->willReturnCallback(function (string $message, array $context) use ($logged) {
+        $logged[] = $context;
+      });
+      $factory = $this->createMock(LoggerChannelFactoryInterface::class);
+      $factory->method('get')->with('nlpservices')->willReturn($logger);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $factory);
+      \Drupal::setContainer($container);
+      return $logged;
+    }
+
+    public function testRetryThatSucceedsIsNotLogged(): void {
+      $logged = $this->countLoggedErrors();
+      $this->sendThroughTrait([32933], 'GET', [
+        fn($request) => $this->timeout($request),
+        new Response(200, [], '{}'),
+      ]);
+
+      $this->assertCount(0, $logged);
+    }
+
+    public function testRetriesRunningOutIsLoggedOnce(): void {
+      $logged = $this->countLoggedErrors();
+      $alwaysTimeout = array_fill(0, 10, fn($request) => $this->timeout($request));
+      $this->sendThroughTrait([32933], 'GET', $alwaysTimeout);
+
+      $this->assertCount(1, $logged);
+      $this->assertSame(32933, $logged[0]['@key']);
+      $this->assertSame(4, $logged[0]['@retries']);
+    }
+
+    public function testFailureThatIsNotRetriedIsNotLoggedByTheTrait(): void {
+      // The caller reports it through $onFailed.
+      $logged = $this->countLoggedErrors();
+      $this->sendThroughTrait([32933], 'GET', [fn($request) => $this->statusException($request, 404)]);
+
+      $this->assertCount(0, $logged);
+    }
+
+    public function testRetriesExhaustedIsLoggedWithoutCredentials(): void {
+      $logger = $this->createMock(LoggerInterface::class);
+      $logger->expects($this->once())->method('error')
         ->willReturnCallback(function (string $message, array $context) {
           $this->assertSame(3034261, $context['@key']);
           $this->assertSame('ConnectException', $context['@class']);
           $this->assertStringContainsString('0 bytes received', $context['@detail']);
-          $this->assertSame(1, $context['@retry']);
+          $this->assertSame(4, $context['@retries']);
           $flat = $message . ' ' . implode(' ', array_map('strval', $context));
           $this->assertStringNotContainsString('secret-key', $flat);
           $this->assertStringNotContainsString('api.example.com', $flat);
@@ -308,7 +354,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       \Drupal::setContainer($container);
 
       $double = new ApiRetryTraitTestDouble($this->createMock(ClientInterface::class));
-      $double->log($this->timeout($this->request('GET')), 3034261, 0);
+      $double->log($this->timeout($this->request('GET')), 3034261, 4);
     }
 
     public function testRetryLogIsSkippedWithoutContainer(): void {

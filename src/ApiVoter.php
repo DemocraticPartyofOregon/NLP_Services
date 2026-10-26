@@ -168,9 +168,11 @@ class ApiVoter
         break;
       } catch (GuzzleException $e) {
         if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
-          $this->logRetry($e, $vanid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
+        }
+        if ($this->isRetryable($e)) {
+          $this->logRetriesExhausted($e, $vanid, $attempt);
         }
         nlp_debug_msg('getApiVoter', $e);
         return [];
