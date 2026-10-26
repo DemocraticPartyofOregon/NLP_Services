@@ -167,7 +167,7 @@ class ApiVoter
         }
         break;
       } catch (GuzzleException $e) {
-        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+        if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
           $this->logRetry($e, $vanid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;

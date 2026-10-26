@@ -67,7 +67,7 @@ class ApiNls {
         if ($errorStatus && $code == 401) {
           return ['Invalid key'];
         }
-        if ($this->isRetryable($e) && $attempt < self::MAX_RETRIES) {
+        if ($this->isRetryable($e) && $attempt < $this->maxRetries($e)) {
           $this->logRetry($e, $mcid, $attempt);
           $this->sleepMs($this->retryDelayMs($e, $attempt));
           continue;
