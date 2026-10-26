@@ -805,6 +805,30 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertTrue($result);
     }
 
+    public function testDeleteTurfRemovesCodeOnlyFromVotersNotInAnotherTurf(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn(['turfIndex' => 7, 'turfPDF' => '']);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->connectionMock->method('delete')->willReturn($this->buildDeleteMock());
+      $this->votersMock->method('fetchVotersByTurf')->willReturn([111 => [], 222 => [], 333 => []]);
+      $this->nlsMock->method('getNlsStatus')->willReturn(['mcid' => 42, 'county' => 'Denver']);
+
+      // The voter rows are deleted before checking which voters are in another turf.
+      $calls = [];
+      $this->votersMock->method('deleteVotersInTurf')
+        ->willReturnCallback(function () use (&$calls) { $calls[] = 'deleteVotersInTurf'; });
+      $this->votersMock->method('getVanidsInTurfs')
+        ->willReturnCallback(function (array $vanids) use (&$calls) {
+          $calls[] = 'getVanidsInTurfs';
+          return array_values(array_intersect($vanids, [222]));
+        });
+      $this->activistCodesMock->expects($this->once())->method('setApiActivistCodeBatch')
+        ->with([111, 333], 'NLPVoterAC', 'Remove', $this->anything());
+
+      $this->assertTrue($this->buildTurfs()->deleteTurf(['turfIndex' => 7, 'county' => 'Denver', 'mcid' => 42]));
+      $this->assertSame(['deleteVotersInTurf', 'getVanidsInTurfs'], $calls);
+    }
+
     public function testDeleteTurfReturnsFalseWhenRemoveTurfFails(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
       $result = $this->buildTurfs()->deleteTurf(['turfIndex' => 7, 'county' => 'Denver', 'mcid' => 42]);

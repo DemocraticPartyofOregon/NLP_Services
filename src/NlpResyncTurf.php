@@ -146,8 +146,11 @@ class NlpResyncTurf
         // Delete any records for voters that are no longer on the turf.
         if(!empty($deletedVanids)) {
           foreach ($deletedVanids as $vanid) {
-            $this->votersObj->deleteVoterInTurf($vanid);
-            $this->votersObj->deleteAddressInTurf($vanid);
+            $this->votersObj->deleteVoterFromTurf($vanid, $turfIndex);
+            // A voter who is also in another turf keeps NLPVoterAC.
+            if (!empty($this->votersObj->getVanidsInTurfs([$vanid]))) {
+              continue;
+            }
             $request = [
               'vanid' => $vanid,
               'codeName' => 'NLPVoterAC',

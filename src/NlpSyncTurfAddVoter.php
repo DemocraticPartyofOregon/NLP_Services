@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpSyncTurfAddVoter
@@ -63,6 +64,17 @@ class NlpSyncTurfAddVoter
       'source' => "turf resync (turfIndex $turfIndex)",
     ];
     $this->activistCodesObj->setApiActivistCode($acRequest);
+
+    // A voter is in one turf at a time, so a voter VoteBuilder moved here from
+    // another turf is taken out of it, as the turf sync does.  The voter keeps
+    // NLPVoterAC since it was applied again above.
+    $oldTurfIndex = $this->votersObj->getTurfIndexByVanid($vanid);
+    if (!empty($oldTurfIndex) && $oldTurfIndex != $turfIndex) {
+      Drupal::logger('nlpservices')->notice('Turf resync moved voter @vanid from turfIndex @old to turfIndex @new.',
+        ['@vanid' => $vanid, '@old' => $oldTurfIndex, '@new' => $turfIndex]);
+    }
+    $this->votersObj->deleteVoterInTurf($vanid);
+    $this->votersObj->deleteAddressInTurf($vanid);
 
     // Add voter to turf.
     $voter['address']['turfIndex'] = $turfIndex;

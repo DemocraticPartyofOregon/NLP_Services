@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpConfiguration;
+  use Drupal\nlpservices\NlpVoters;
   use Drupal\nlpservices\VanRateLimiter;
   use Drupal\Tests\UnitTestCase;
   use GuzzleHttp\ClientInterface;
@@ -450,21 +451,30 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([111, 222], $result);
     }
 
-    public function testHasApiActivistCodeBatchRejectedRequestTreatsVanidAsMissing(): void {
+    public function testHasApiActivistCodeBatchRejectedRequestIsUnreadNotMissing(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $loggerMock = $this->setContainerMocks();
+      $loggerMock->expects($this->once())->method('log')
+        ->with('warning', $this->stringContains('not counted as missing'), $this->callback(fn(array $context) =>
+          $context['@count'] === 2 && $context['@details'] === 'status 404: 111; no response: 222'));
 
       $this->clientMock->method('sendAsync')
-        ->willReturn(new RejectedPromise($this->makeGuzzleException()));
+        ->willReturnCallback(fn(RequestInterface $request) => new RejectedPromise(
+          str_contains((string) $request->getUri(), '/people/111/')
+            ? $this->makeHttpException(404, 'not found')
+            : $this->makeGuzzleException()));
 
-      $result = $this->buildService()->hasApiActivistCodeBatch([111], 'NLPVoterAC');
+      $result = $this->buildService()->hasApiActivistCodeBatch([111, 222], 'NLPVoterAC', $unread);
 
-      $this->assertSame([111], $result);
+      $this->assertSame([], $result);
+      $this->assertSame([111, 222], $unread);
     }
 
-    public function testHasApiActivistCodeBatchInvalidJsonTreatsVanidAsMissing(): void {
+    public function testHasApiActivistCodeBatchInvalidJsonIsUnreadNotMissing(): void {
       $this->stubKeyValues();
       $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->setContainerMocks();
 
       $stream = $this->createMock(StreamInterface::class);
       $stream->method('__toString')->willReturn('{bad json');
@@ -473,9 +483,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->clientMock->method('sendAsync')
         ->willReturn(new FulfilledPromise($response));
 
-      $result = $this->buildService()->hasApiActivistCodeBatch([111], 'NLPVoterAC');
+      $result = $this->buildService()->hasApiActivistCodeBatch([111], 'NLPVoterAC', $unread);
 
-      $this->assertSame([111], $result);
+      $this->assertSame([], $result);
+      $this->assertSame([111], $unread);
+    }
+
+    public function testHasApiActivistCodeBatchReadsLaterPagesBeforeCountingMissing(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse(
+          ['items' => [['activistCodeId' => 2002]], 'nextPageLink' => 'https://next'])));
+      $this->clientMock->method('request')
+        ->willReturnCallback(fn(string $method, string $url) => str_contains($url, '$skip=0')
+          ? $this->makeResponse(['items' => [['activistCodeId' => 2002]], 'nextPageLink' => 'https://next'])
+          : $this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
+
+      $result = $this->buildService()->hasApiActivistCodeBatch([111], 'NLPVoterAC', $unread);
+
+      $this->assertSame([], $result);
+      $this->assertSame([], $unread);
     }
 
     // -------------------------------------------------------------------------
@@ -709,6 +737,49 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->buildService()->verifyActivistCodeChange(
         $this->verifyItem(['action' => 'Remove', 'firstQueuedAt' => 1600000000]));
+    }
+
+    public function testVerifyActivistCodeChangeDoesNotResendRemoveToVoterNowInATurf(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $votersMock = $this->createMock(NlpVoters::class);
+      $votersMock->method('getVanidsInTurfs')
+        ->willReturnCallback(fn(array $vanids) => array_values(array_intersect($vanids, [111])));
+      \Drupal::getContainer()->set('nlpservices.voters', $votersMock);
+      // Both voters still show the code.  Voter 111 was synced into a new turf since the Remove.
+      $loggerMock->expects($this->once())->method('log')
+        ->with('warning', $this->stringContains('Sending it again'), $this->callback(fn(array $context) =>
+          $context['@vanids'] === '222'));
+      $posts = [];
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function (RequestInterface $request) use (&$posts) {
+          if ($request->getMethod() === 'POST') {
+            $posts[] = (string) $request->getUri();
+            return new FulfilledPromise($this->createMock(ResponseInterface::class));
+          }
+          return new FulfilledPromise($this->makeResponse(['items' => [['activistCodeId' => 1001]]]));
+        });
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem([
+        'vanids' => [111, 222], 'action' => 'Remove', 'source' => 'turf delete (turfIndex 7)']));
+
+      $this->assertCount(1, $posts);
+      $this->assertStringContainsString('/people/222/canvassResponses', $posts[0]);
+    }
+
+    public function testVerifyActivistCodeChangeRemoveForVotersAllNowInTurfsLogsNothing(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $votersMock = $this->createMock(NlpVoters::class);
+      $votersMock->method('getVanidsInTurfs')->willReturn([111]);
+      \Drupal::getContainer()->set('nlpservices.voters', $votersMock);
+      $loggerMock->expects($this->never())->method('log');
+      $this->clientMock->expects($this->once())->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse(['items' => [['activistCodeId' => 1001]]])));
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem(['action' => 'Remove']));
+
+      $this->assertSame([], $this->queuedItems);
     }
 
     public function testVerifyActivistCodeChangeReadsLaterPagesBeforeLogging(): void {
