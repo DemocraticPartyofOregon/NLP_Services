@@ -16,7 +16,7 @@ use Throwable;
  * (body like `{"errors":[{"code":"429","text":"Rate limit exceeded. Try
  * again in 9 ms."}]}`) once it's exceeded (vendor-stated limit: 15 requests
  * per second). sendInRateLimitedGroups() keeps batch lookups under that limit by
- * sending requests in groups paced by VanRateLimiter, and retries only the
+ * sending requests in groups paced by VanRateLimiter and retries only the
  * requests that were still rate-limited, honoring the API's own backoff
  * hint and using smaller groups on retry rounds.
  *
@@ -33,14 +33,14 @@ trait ApiRetryTrait {
   /**
    * A 429 gets more retries than other failures. VAN's per-key limit is
    * shared with every other process using the key (cron queues, other
-   * users), and while one of them keeps the key busy the "Try again in X ms"
+   * users), and while one of them keeps the key busy, the "Try again in X ms"
    * hint is too short to wait out.
    */
   private const int MAX_RATE_LIMIT_RETRIES = 6;
   private const int RETRY_GROUP_SIZE = 3;
 
   /**
-   * Guzzle options for every VAN request. Without them Drupal's http_client
+   * Guzzle options for every VAN request. Without them, Drupal's http_client
    * waits 30 seconds on a stalled request; failing sooner lets the retry
    * start sooner.
    */
@@ -71,6 +71,7 @@ trait ApiRetryTrait {
   private function sendInRateLimitedGroups(array $keys, callable $buildRequest, callable $onFulfilled, callable $onFailed): void {
     $pending = $keys;
     $groupSize = VanRateLimiter::MAX_REQUESTS;
+    $retryDelayMs = 0;
 
     for ($attempt = 0; $pending && $attempt <= self::MAX_RATE_LIMIT_RETRIES; $attempt++) {
       if ($attempt > 0) {
@@ -115,7 +116,7 @@ trait ApiRetryTrait {
    * Whether a failed request is worth sending again.
    *
    * A 429 means VAN rejected the request without acting on it, so it is
-   * always safe to resend. Timeouts, dropped connections and 502/503/504
+   * always safe to resend. Timeouts, dropped connections, and 502/503/504
    * are only resent for GET/HEAD, since VAN may have already acted on them.
    */
   private function isRetryable(Throwable $reason): bool {
@@ -144,7 +145,7 @@ trait ApiRetryTrait {
     if ($reason instanceof RequestException && !$reason->hasResponse()) {
       return TRUE;
     }
-    return in_array((int) $reason->getCode(), self::TRANSIENT_STATUS_CODES, TRUE);
+    return in_array($reason->getCode(), self::TRANSIENT_STATUS_CODES, TRUE);
   }
 
   private function isSafeToResend(Throwable $reason): bool {
@@ -200,20 +201,20 @@ trait ApiRetryTrait {
       if ($response->hasHeader('Retry-After')) {
         $retryAfter = trim($response->getHeaderLine('Retry-After'));
         if (is_numeric($retryAfter)) {
-          return max((int) $retryAfter * 1000, $backoffMs) + random_int(0, 250);
+          return max((int) $retryAfter * 1000, $backoffMs) + mt_rand(0, 250);
         }
       }
       try {
         $body = (string) $response->getBody();
         if (preg_match('/Try again in\s+(\d+)\s*ms/i', $body, $matches)) {
-          return max((int) $matches[1], $backoffMs) + random_int(0, 250);
+          return max((int) $matches[1], $backoffMs) + mt_rand(0, 250);
         }
       }
-      catch (Throwable $e) {
+      catch (Throwable) {
         // Body unavailable/unreadable; fall through to backoff below.
       }
     }
-    return $backoffMs + random_int(0, 250);
+    return $backoffMs + mt_rand(0, 250);
   }
 
   private function sleepMs(int $ms): void {

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal;
   use Drupal\Core\Database\Connection;
   use Drupal\Core\Database\Query\Delete;
   use Drupal\Core\Database\Query\Insert;
@@ -42,12 +43,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
-      \Drupal::setContainer($container);
+      Drupal::setContainer($container);
     }
 
     protected function tearDown(): void {
       parent::tearDown();
-      \Drupal::setContainer(new ContainerBuilder());
+      Drupal::setContainer(new ContainerBuilder());
     }
 
     // -------------------------------------------------------------------------

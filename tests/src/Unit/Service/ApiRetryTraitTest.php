@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use ArrayObject;
+  use Drupal;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\nlpservices\ApiRetryTrait;
@@ -17,6 +19,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use GuzzleHttp\Psr7\Response;
   use Psr\Http\Message\RequestInterface;
   use Psr\Log\LoggerInterface;
+  use RuntimeException;
   use Throwable;
 
   /**
@@ -282,7 +285,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testExceptionWithoutRequestIsNotRetryable(): void {
       $double = new ApiRetryTraitTestDouble($this->createMock(ClientInterface::class));
-      $this->assertFalse($double->retryable(new \RuntimeException('boom', 503)));
+      $this->assertFalse($double->retryable(new RuntimeException('boom', 503)));
     }
 
     // -------------------------------------------------------------------------
@@ -292,8 +295,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     /**
      * Installs a logger that counts the errors logged to nlpservices.
      */
-    private function countLoggedErrors(): \ArrayObject {
-      $logged = new \ArrayObject();
+    private function countLoggedErrors(): ArrayObject {
+      $logged = new ArrayObject();
       $logger = $this->createMock(LoggerInterface::class);
       $logger->expects($this->never())->method('warning');
       $logger->method('error')->willReturnCallback(function (string $message, array $context) use ($logged) {
@@ -303,7 +306,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $factory->method('get')->with('nlpservices')->willReturn($logger);
       $container = new ContainerBuilder();
       $container->set('logger.factory', $factory);
-      \Drupal::setContainer($container);
+      Drupal::setContainer($container);
       return $logged;
     }
 
@@ -351,14 +354,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $factory->method('get')->with('nlpservices')->willReturn($logger);
       $container = new ContainerBuilder();
       $container->set('logger.factory', $factory);
-      \Drupal::setContainer($container);
+      Drupal::setContainer($container);
 
       $double = new ApiRetryTraitTestDouble($this->createMock(ClientInterface::class));
       $double->log($this->timeout($this->request('GET')), 3034261, 4);
     }
 
     public function testRetryLogIsSkippedWithoutContainer(): void {
-      \Drupal::unsetContainer();
+      Drupal::unsetContainer();
       $double = new ApiRetryTraitTestDouble($this->createMock(ClientInterface::class));
       $double->log($this->timeout($this->request('GET')), 3034261, 0);
       $this->addToAssertionCount(1);

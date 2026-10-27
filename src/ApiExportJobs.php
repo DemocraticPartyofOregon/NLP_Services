@@ -97,7 +97,7 @@ class ApiExportJobs {
       $errorMessage = $e->getMessage();
       // Guzzle truncates the message, so check the full response body when there is one.
       if ($e instanceof RequestException && $e->hasResponse()) {
-        $errorMessage .= (string) $e->getResponse()->getBody();
+        $errorMessage .= $e->getResponse()->getBody();
       }
       $lostList = str_contains($errorMessage, "must be a valid saved list ID");
       if($lostList) {
