@@ -325,7 +325,7 @@ class ApiActivistCodes
   }
 
   /**
-   * POSTs an activist code change for each voter, and logs each POST that
+   * POSTs an activist code change for each voter and logs each POST that
    * failed. Returns the vanids VAN accepted, or may have accepted.
    */
   private function postActivistCodeBatch(array $vanids, array $committeeKey, string $codeName, int $rid,

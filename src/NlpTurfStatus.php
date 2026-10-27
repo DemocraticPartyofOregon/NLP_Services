@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Drupal\nlpservices;
 
@@ -93,8 +93,8 @@ class NlpTurfStatus
    *
    * Returns TRUE when the turf's activist-code state has settled (or the
    * status record no longer requires verification), FALSE when codes are still
-   * in flight.  When codes are confirmed the record is stamped with the
-   * appropriate validated status so future calls return immediately.
+   * in flight.  When codes are confirmed, the record is stamped with the
+   * appropriate validated status, so future calls return immediately.
    *
    * Decision tree:
    *   - No record found                            → true  (nothing to wait for)
@@ -243,6 +243,7 @@ class NlpTurfStatus
    * already passed.  Used by cron to populate the turf AC check queue.
    *
    * @return array  Flat list of status records (associative arrays).
+   * Used in .module cron hook.
    */
   public function getExpiredPendingTurfStatuses(): array
   {
