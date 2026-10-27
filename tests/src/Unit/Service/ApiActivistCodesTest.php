@@ -14,6 +14,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Queue\QueueInterface;
   use Drupal\nlpservices\ApiActivistCodes;
   use Drupal\nlpservices\ApiKeyManagement;
+  use Drupal\nlpservices\NlpAcHistory;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\nlpservices\VanRateLimiter;
@@ -88,6 +89,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('queue', $queueFactoryMock);
       \Drupal::setContainer($container);
       return $loggerMock;
+    }
+
+    /**
+     * Puts an NLPVoterAC history mock in the container. Each record() call is
+     * collected in $recorded as [vanids, event, source].
+     */
+    private function setHistoryMock(array &$recorded): NlpAcHistory&MockObject {
+      $historyMock = $this->createMock(NlpAcHistory::class);
+      $historyMock->method('record')
+        ->willReturnCallback(function (array $vanids, string $event, string $source) use (&$recorded) {
+          if ($vanids) {
+            $recorded[] = [$vanids, $event, $source];
+          }
+        });
+      $historyMock->method('describe')->willReturn('222: Remove from turf delete (turfIndex 7) at 10:02:15');
+      \Drupal::getContainer()->set('nlpservices.ac_history', $historyMock);
+      return $historyMock;
     }
 
     private function makeErrorResponse(int $status, string $body): ResponseInterface {
@@ -614,6 +632,61 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([111], $this->queuedItems[0]['vanids'], 'A refused POST is not checked again.');
     }
 
+    public function testSetApiActivistCodeBatchRecordsSentAndRefusedInHistory(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->setContainerMocks();
+      $recorded = [];
+      $historyMock = $this->setHistoryMock($recorded);
+      $historyMock->method('vanidsWithEventSince')->willReturn([]);
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(fn(RequestInterface $request) => str_contains((string) $request->getUri(), '/people/222/')
+          ? new RejectedPromise($this->makeHttpException(400, 'bad'))
+          : new FulfilledPromise($this->createMock(ResponseInterface::class)));
+
+      $this->buildService()->setApiActivistCodeBatch([111, 222], 'NLPVoterAC', 'Apply', 'turf sync of Oak Ave');
+
+      $this->assertContains([[111], NlpAcHistory::APPLY, 'turf sync of Oak Ave'], $recorded);
+      $this->assertContains([[222], NlpAcHistory::APPLY_REFUSED, 'turf sync of Oak Ave'], $recorded);
+      $this->assertCount(1, $this->queuedItems, 'No late check without a conflicting Remove.');
+    }
+
+    public function testSetApiActivistCodeBatchQueuesLateCheckForVoterRemovedRecently(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->setContainerMocks();
+      $recorded = [];
+      $historyMock = $this->setHistoryMock($recorded);
+      $historyMock->expects($this->once())->method('vanidsWithEventSince')
+        ->with([111, 222], [NlpAcHistory::REMOVE], $this->greaterThan(time() - ApiActivistCodes::CONFLICT_WINDOW_SECS - 5))
+        ->willReturn([222]);
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->createMock(ResponseInterface::class)));
+
+      $this->buildService()->setApiActivistCodeBatch([111, 222], 'NLPVoterAC', 'Apply', 'turf sync of Oak Ave');
+
+      $this->assertCount(2, $this->queuedItems);
+      $this->assertSame([222], $this->queuedItems[1]['vanids']);
+      $this->assertSame('Apply', $this->queuedItems[1]['action']);
+      $this->assertSame(ApiActivistCodes::LATE_CHECK_SECS, $this->queuedItems[1]['minAge']);
+      $this->assertTrue($this->queuedItems[1]['late']);
+    }
+
+    public function testSetApiActivistCodeBatchKeepsNoHistoryForOtherCodes(): void {
+      $this->stubKeyValues();
+      $this->configurationMock->method('getActivistCode')->willReturn(1001);
+      $this->setContainerMocks();
+      $recorded = [];
+      $historyMock = $this->setHistoryMock($recorded);
+      $historyMock->expects($this->never())->method('vanidsWithEventSince');
+      $this->clientMock->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->createMock(ResponseInterface::class)));
+
+      $this->buildService()->setApiActivistCodeBatch([111], 'NLPHostileAC', 'Apply', 'voter form');
+
+      $this->assertSame([], $recorded);
+    }
+
     // -------------------------------------------------------------------------
     // verifyActivistCodeChange
     // -------------------------------------------------------------------------
@@ -827,6 +900,99 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertCount(1, $urls);
       $this->assertStringContainsString('|1@', urldecode($urls[0]));
       $this->assertStringContainsString('/people/555/activistCodes', $urls[0]);
+    }
+
+    public function testVerifyActivistCodeChangeAppliesCodeAgainToVoterInTurfThatRemoveTookItFrom(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $votersMock = $this->createMock(NlpVoters::class);
+      $votersMock->method('getVanidsInTurfs')->willReturn([222]);
+      \Drupal::getContainer()->set('nlpservices.voters', $votersMock);
+      $recorded = [];
+      $historyMock = $this->setHistoryMock($recorded);
+      $historyMock->method('vanidsWithEventSince')->willReturn([]);
+      // Neither voter shows the code.  Voter 222 is in a turf now and needs it.
+      $loggerMock->expects($this->once())->method('log')
+        ->with('warning', $this->stringContains('Applying it again'), $this->callback(fn(array $context) =>
+          $context['@vanids'] === '222' && str_contains($context['@history'], 'turf delete (turfIndex 7)')));
+      $posts = [];
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(function (RequestInterface $request) use (&$posts) {
+          if ($request->getMethod() === 'POST') {
+            $posts[] = [(string) $request->getUri(), (string) $request->getBody()];
+            return new FulfilledPromise($this->createMock(ResponseInterface::class));
+          }
+          return new FulfilledPromise($this->makeResponse(['items' => []]));
+        });
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem([
+        'vanids' => [111, 222], 'action' => 'Remove', 'source' => 'turf delete (turfIndex 7)']));
+
+      $this->assertCount(1, $posts);
+      $this->assertStringContainsString('/people/222/canvassResponses', $posts[0][0]);
+      $this->assertSame('Apply', json_decode($posts[0][1], TRUE)['responses'][0]['action']);
+      $this->assertContains([[222], NlpAcHistory::MISSING, 'first check of Remove from turf delete (turfIndex 7)'], $recorded);
+      $this->assertCount(1, $this->queuedItems);
+      $this->assertSame('Apply', $this->queuedItems[0]['action']);
+      $this->assertSame([222], $this->queuedItems[0]['vanids']);
+    }
+
+    public function testVerifyActivistCodeChangeLeavesVoterWithApplySinceRemoveToItsLateCheck(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $votersMock = $this->createMock(NlpVoters::class);
+      $votersMock->method('getVanidsInTurfs')->willReturn([222]);
+      \Drupal::getContainer()->set('nlpservices.voters', $votersMock);
+      $recorded = [];
+      $historyMock = $this->setHistoryMock($recorded);
+      $historyMock->expects($this->once())->method('vanidsWithEventSince')
+        ->with([222], [NlpAcHistory::APPLY], 1700000000)
+        ->willReturn([222]);
+      $loggerMock->expects($this->never())->method('log');
+      $this->clientMock->expects($this->once())->method('sendAsync')
+        ->willReturn(new FulfilledPromise($this->makeResponse(['items' => []])));
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem(['action' => 'Remove', 'vanids' => [222]]));
+
+      $this->assertSame([], $recorded);
+      $this->assertSame([], $this->queuedItems);
+    }
+
+    public function testVerifyActivistCodeChangeLateCheckRecordsMissingVoterAndSendsAgain(): void {
+      $this->stubKeyValues();
+      $loggerMock = $this->setContainerMocks();
+      $recorded = [];
+      $this->setHistoryMock($recorded);
+      $loggerMock->expects($this->once())->method('log')
+        ->with('warning', $this->stringContains('Sending it again'), $this->callback(fn(array $context) =>
+          $context['@check'] === 'late check' && $context['@history'] !== ''));
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(fn(RequestInterface $request) => new FulfilledPromise($request->getMethod() === 'POST'
+          ? $this->createMock(ResponseInterface::class)
+          : $this->makeResponse(['items' => []])));
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem(
+        ['minAge' => ApiActivistCodes::LATE_CHECK_SECS, 'late' => TRUE]));
+
+      $this->assertContains([[111], NlpAcHistory::MISSING, 'late check of Apply from turf sync of Oak Ave (turfIndex 7)'],
+        $recorded);
+      $this->assertContains([[111], NlpAcHistory::APPLY, 'turf sync of Oak Ave (turfIndex 7) (sent again)'], $recorded);
+      $this->assertSame(1700000000, $this->queuedItems[0]['firstQueuedAt']);
+    }
+
+    public function testVerifyActivistCodeChangeFirstCheckDoesNotRecordApplyNotYetShownAsMissing(): void {
+      $this->stubKeyValues();
+      $this->setContainerMocks();
+      $recorded = [];
+      $this->setHistoryMock($recorded);
+      $this->clientMock->method('sendAsync')
+        ->willReturnCallback(fn(RequestInterface $request) => new FulfilledPromise($request->getMethod() === 'POST'
+          ? $this->createMock(ResponseInterface::class)
+          : $this->makeResponse(['items' => []])));
+
+      $this->buildService()->verifyActivistCodeChange($this->verifyItem());
+
+      $this->assertSame([NlpAcHistory::APPLY], array_column($recorded, 1), 'VAN may not have finished the Apply yet.');
     }
 
   }
