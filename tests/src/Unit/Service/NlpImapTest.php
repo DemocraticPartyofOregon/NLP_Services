@@ -2,9 +2,11 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpImap;
   use Drupal\Tests\UnitTestCase;
+  use stdClass;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   /**
@@ -33,7 +35,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     protected function tearDown(): void {
       parent::tearDown();
-      \Drupal::setContainer(new ContainerBuilder());
+      Drupal::setContainer(new ContainerBuilder());
     }
 
     // -------------------------------------------------------------------------
@@ -55,7 +57,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
      * large-size early-return branch is triggered when bytes > MAX_MAIL_PART_SIZE_BYTES.
      */
     private function makePart(array $props = []): object {
-      $part = new \stdClass();
+      $part = new stdClass();
       $part->type           = $props['type']           ?? 0;
       $part->ifsubtype      = $props['ifsubtype']      ?? 0;
       $part->ifdescription  = $props['ifdescription']  ?? 0;
@@ -116,6 +118,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testMoveEmailToTrashDoesNotThrowWhenConnectionIsNull(): void {
       $this->buildService()->moveEmailToTrash(1);
       $this->assertTrue(true);
+    }
+
+    // -------------------------------------------------------------------------
+    // setReadAndFlagged — null connection guard
+    // -------------------------------------------------------------------------
+
+    public function testSetReadAndFlaggedReturnsFalseWhenConnectionIsNull(): void {
+      $this->assertFalse($this->buildService()->setReadAndFlagged(1));
     }
 
     // -------------------------------------------------------------------------
