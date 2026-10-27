@@ -343,16 +343,20 @@ class NlpImap
   }
 
   /**
-   * setUnread
+   * setReadAndFlagged
    *
-   * Mark the email as unread.
+   * Marks an email that cron can't handle as read, so later cron runs skip
+   * it, and flagged, so it stands out in the mail client for a person to
+   * review.
    *
    * @param int $emailNumber
    * @return bool
+   * Used in: NlpReplies
    */
-  public function setUnread(int $emailNumber): bool
+  public function setReadAndFlagged(int $emailNumber): bool
   {
-    return imap_clearflag_full($this->connection, $emailNumber, '\\Seen');
+    if($this->connection === null) {return FALSE;}
+    return imap_setflag_full($this->connection, (string) $emailNumber, '\\Seen \\Flagged');
   }
 
   /**

@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal;
   use Drupal\Core\Config\ConfigFactoryInterface;
   use Drupal\Core\Language\LanguageManagerInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -12,6 +13,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpSendEmail;
   use Drupal\Tests\UnitTestCase;
   use Psr\Log\LoggerInterface;
+  use stdClass;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class NlpRepliesTest extends UnitTestCase {
@@ -23,6 +25,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private HtmlText $htmlTextMock;
     private NlpSendEmail $sendEmailMock;
     private object $messengerMock;
+    private LoggerInterface $loggerMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -33,23 +36,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->htmlTextMock = $this->createMock(HtmlText::class);
       $this->sendEmailMock = $this->createMock(NlpSendEmail::class);
 
-      $loggerMock = $this->createMock(LoggerInterface::class);
+      $this->loggerMock = $this->createMock(LoggerInterface::class);
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
-      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
 
-      $this->messengerMock = $this->getMockBuilder(\stdClass::class)
+      $this->messengerMock = $this->getMockBuilder(stdClass::class)
         ->addMethods(['addMessage'])
         ->getMock();
 
       $container = new ContainerBuilder();
       $container->set('logger.factory', $loggerFactoryMock);
       $container->set('messenger', $this->messengerMock);
-      \Drupal::setContainer($container);
+      Drupal::setContainer($container);
     }
 
     protected function tearDown(): void {
       parent::tearDown();
-      \Drupal::setContainer(new ContainerBuilder());
+      Drupal::setContainer(new ContainerBuilder());
     }
 
     private function buildService(): NlpReplies {
@@ -74,7 +77,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return [
         'type' => 'Text',
         'subtype' => 'plain',
-        'data' => "Email: mailto:{$email}?subject=hi",
+        'data' => "Email: mailto:$email?subject=hi",
         'description' => '',
       ];
     }
@@ -83,7 +86,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return [
         'type' => 'Plain',
         'subtype' => 'delivery-status',
-        'data' => "Original-Recipient: rfc822;{$email}\rmore data",
+        'data' => "Original-Recipient: rfc822;$email\rmore data",
         'description' => '',
       ];
     }
@@ -92,7 +95,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return [
         'type' => 'Plain',
         'subtype' => 'delivery-status',
-        'data' => "Final-Recipient: rfc822;{$email}\rmore data",
+        'data' => "Final-Recipient: rfc822;$email\rmore data",
         'description' => '',
       ];
     }
@@ -154,7 +157,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->imapMock->method('getImapConnection')->willReturn(true);
       $this->imapMock->method('getNewNotificationReplies')->willReturn([1 => []]);
       $this->imapMock->method('getMessage')->willReturn([]);
-      $this->imapMock->expects($this->never())->method('setUnread');
+      $this->imapMock->expects($this->never())->method('setReadAndFlagged');
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
 
       $this->buildService()->emailForward();
@@ -166,21 +169,29 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // emailForward() — subject matching
     // -------------------------------------------------------------------------
 
-    public function testEmailForwardMarksUnknownSubjectUnread(): void {
+    public function testEmailForwardMarksUnknownSubjectReadAndFlagged(): void {
       $this->setupImapWithMessage($this->buildMessage('Some random subject'));
-      $this->imapMock->expects($this->once())->method('setUnread')->with(1)->willReturn(true);
+      $this->imapMock->expects($this->once())->method('setReadAndFlagged')->with(1)->willReturn(true);
+      $this->loggerMock->expects($this->never())->method('warning');
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
 
       $this->buildService()->emailForward();
-
-      $this->addToAssertionCount(1);
     }
 
-    public function testEmailForwardMarksNlpNotificationReplyUnread(): void {
+    public function testEmailForwardLogsWhenEmailCannotBeFlagged(): void {
+      $this->setupImapWithMessage($this->buildMessage('Some random subject'));
+      $this->imapMock->method('setReadAndFlagged')->willReturn(false);
+      $this->loggerMock->expects($this->once())->method('warning')
+        ->with($this->anything(), ['@number' => 1]);
+
+      $this->buildService()->emailForward();
+    }
+
+    public function testEmailForwardMarksNlpNotificationReplyReadAndFlagged(): void {
       // Subject contains 'NLP Notification: ' — skips special-message search entirely,
-      // leaving targetMessage null, so the message is marked unread.
+      // leaving targetMessage null, so the message is set aside for a person to review.
       $this->setupImapWithMessage($this->buildMessage('Re: NLP Notification: please help'));
-      $this->imapMock->expects($this->once())->method('setUnread')->willReturn(true);
+      $this->imapMock->expects($this->once())->method('setReadAndFlagged')->willReturn(true);
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
 
       $this->buildService()->emailForward();
@@ -235,12 +246,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // emailForward() — sender / recipient resolution
     // -------------------------------------------------------------------------
 
-    public function testEmailForwardSetsUnreadWhenSenderEmailNotFound(): void {
+    public function testEmailForwardSetsReadAndFlaggedWhenSenderEmailNotFound(): void {
       $message = $this->buildMessage('Mail delivery failed', [
         ['type' => 'Text', 'subtype' => 'plain', 'data' => 'No email address here at all.', 'description' => ''],
       ]);
       $this->setupImapWithMessage($message);
-      $this->imapMock->expects($this->once())->method('setUnread');
+      $this->imapMock->expects($this->once())->method('setReadAndFlagged')->willReturn(true);
       $this->sendEmailMock->expects($this->never())->method('sendEmail');
 
       $this->buildService()->emailForward();

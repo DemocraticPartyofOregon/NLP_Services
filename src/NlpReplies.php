@@ -91,9 +91,7 @@ class NlpReplies
       }
       if(empty($targetMessage)) {
         $messenger->addMessage('Not a target message, Subject: '.$message['subject']);
-        if(!$this->imapObj->setUnread($emailNumber)) {
-          nlp_debug_msg('emailForward', $emailNumber);
-        }
+        $this->setAsideForReview($emailNumber);
         continue;
       }
       $email = $recipientEmail = $body = $forwardText = '';
@@ -116,7 +114,7 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
 
       if (empty($email)) {
         $messenger->addMessage('No email found. , Subject: '.$message['subject']);
-        $this->imapObj->setUnread($emailNumber);
+        $this->setAsideForReview($emailNumber);
         continue;
       }
       if(empty($recipientEmail)) {
@@ -134,6 +132,24 @@ bounced, you may need to contact the NL to get a <br>valid email or add the NLP 
       $this->sendEmailObj->sendEmail('forward_nl_reply',$to, $subject, $message);
     }
     $messenger->addMessage("All emails processed.");
+  }
+
+  /**
+   * setAsideForReview
+   *
+   * Marks an email cron can't forward as read and flagged. Read keeps later
+   * cron runs from fetching it again; the flag leaves it easy to spot in the
+   * inbox for a person to ignore or answer.
+   *
+   * @param int $emailNumber
+   * @return void
+   */
+  private function setAsideForReview(int $emailNumber): void
+  {
+    if(!$this->imapObj->setReadAndFlagged($emailNumber)) {
+      Drupal::logger('nlpservices')->warning('emailForward: Could not mark email @number as read and flagged.',
+        ['@number' => $emailNumber]);
+    }
   }
 
   /**
