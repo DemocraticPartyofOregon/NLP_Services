@@ -111,7 +111,7 @@ class EnableCronTasksForm extends FormBase {
       '#id' => 'enableVoterAcCheck',
       '#title' => $this->t('Enable nightly check for missing NLP Voter activist codes.'),
       '#default_value' => $enableVoterAcCheck,
-      '#description' => $this->t('When enabled, NLP Services will check for and apply missing NLP Voter activist codes nightly.'),
+      '#description' => $this->t('When enabled, NLP Services will check for and apply missing NLP Voter activist codes nightly. Each night checks the turfs that fit in the time left, starting where the last night stopped, so all turfs are checked over several nights.'),
     ];
 
     $form['enableTurfAcCheck'] = [

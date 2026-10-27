@@ -318,24 +318,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getSyncedCountyNames
-    // -------------------------------------------------------------------------
-
-    public function testGetSyncedCountyNamesReturnsIndexedArray(): void {
-      $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')
-        ->willReturnOnConsecutiveCalls(['county' => 'Denver'], false);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildTurfs()->getSyncedCountyNames();
-      $this->assertSame(['Denver'], $result);
-    }
-
-    public function testGetSyncedCountyNamesExceptionReturnsEmptyArray(): void {
-      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildTurfs()->getSyncedCountyNames());
-    }
-
-    // -------------------------------------------------------------------------
     // turfExists
     // -------------------------------------------------------------------------
 
@@ -474,20 +456,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getTurfIndexes
+    // getTurfIndexesAfter
     // -------------------------------------------------------------------------
 
-    public function testGetTurfIndexesReturnsIndexedArray(): void {
+    public function testGetTurfIndexesAfterReturnsNextTurfsInOrder(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
-      $stmtMock->method('fetchAssoc')
-        ->willReturnOnConsecutiveCalls(['turfIndex' => 7], ['turfIndex' => 8], false);
-      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $this->assertSame([7, 8], $this->buildTurfs()->getTurfIndexes('Denver'));
+      $stmtMock->method('fetchCol')->willReturn(['8', '9']);
+      $selectMock = $this->buildSelectMock($stmtMock);
+      $selectMock->expects($this->once())->method('condition')->with('t.turfIndex', 7, '>')->willReturnSelf();
+      $selectMock->expects($this->once())->method('range')->with(0, 2)->willReturnSelf();
+      $this->connectionMock->method('select')->willReturn($selectMock);
+
+      $this->assertSame([8, 9], $this->buildTurfs()->getTurfIndexesAfter(7, 2));
     }
 
-    public function testGetTurfIndexesExceptionReturnsEmptyArray(): void {
+    public function testGetTurfIndexesAfterExceptionReturnsEmptyArray(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildTurfs()->getTurfIndexes('Denver'));
+      $this->assertSame([], $this->buildTurfs()->getTurfIndexesAfter(0, 100));
     }
 
     // -------------------------------------------------------------------------

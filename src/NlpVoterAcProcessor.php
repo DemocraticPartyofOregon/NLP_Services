@@ -7,6 +7,24 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpVoterAcProcessor {
 
+  /**
+   * The turfs queued at a time for the nightly check.  The cron time budget
+   * sets how many are checked in a night, and the next night goes on from
+   * the last turf checked, so all turfs are checked over several nights.
+   */
+  const int TURFS_PER_SLICE = 100;
+
+  /**
+   * State of the nightly check: keys cursor (the last turf index queued),
+   * passStart, turfs, voters and missing (counts for the current pass).
+   */
+  const string CHECK_STATE = 'nlpservices.voter_ac_check';
+
+  /**
+   * How far back a missing voter's NLPVoterAC history is logged.
+   */
+  const int HISTORY_SECS = 30 * 86400;
+
   protected ApiActivistCodes $activistCodesObj;
   protected NlpCoordinators $coordinatorsObj;
   protected NlpConfiguration $nlpConfigurationObj;
@@ -93,18 +111,28 @@ class NlpVoterAcProcessor {
       return;
     }
     $missingVanids = $this->activistCodesObj->hasApiActivistCodeBatch($voters, 'NLPVoterAC');
+    $this->countCheck(count($voters), count($missingVanids));
     if (!empty($missingVanids)) {
       $turf            = $this->turfsObj->getTurf($turfIndex);
       $turfName        = $turf['turfName'] ?? (string) $turfIndex;
       $county          = $turf['county'] ?? '';
       $coordinatorName = $this->getCoordinatorName($turf);
+
+      // The history of each missing voter, to look for a pattern.
+      $historyText = '';
+      if (Drupal::hasService('nlpservices.ac_history')) {
+        $history = Drupal::service('nlpservices.ac_history');
+        $historyText = ' History: ' . $history->describe($missingVanids, time() - self::HISTORY_SECS);
+        $history->record($missingVanids, NlpAcHistory::MISSING, "voter AC check of $turfName (turfIndex $turfIndex)");
+      }
       Drupal::logger('nlpservices')->notice(
-        'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids',
+        'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids.@history',
         [
           '@county'      => $county,
           '@turf'        => $turfName,
           '@coordinator' => $coordinatorName,
           '@vanids'      => implode(', ', $missingVanids),
+          '@history'     => $historyText,
         ]
       );
 
@@ -123,6 +151,73 @@ class NlpVoterAcProcessor {
 
       $this->activistCodesObj->setApiActivistCodeBatch($missingVanids, 'NLPVoterAC', 'Apply', "voter AC check of $turfName");
     }
+  }
+
+  /**
+   * queueNextTurfs
+   *
+   * Queues the next turfs for the nightly check, after the last turf queued.
+   * After the last turf, the counts for the pass are logged and the next
+   * pass starts again from the first turf.
+   *
+   * @return int - the count of turfs queued.
+   */
+  public function queueNextTurfs(): int
+  {
+    $check = $this->getCheckState();
+    $turfIndexes = $this->turfsObj->getTurfIndexesAfter($check['cursor'], self::TURFS_PER_SLICE);
+    if (empty($turfIndexes) && $check['cursor'] > 0) {
+      Drupal::logger('nlpservices')->notice(
+        'Voter AC check finished a pass of @turfs turfs with @voters voters, started @start. '
+        . '@missing voter(s) were missing NLPVoterAC.',
+        [
+          '@turfs'   => $check['turfs'],
+          '@voters'  => $check['voters'],
+          '@missing' => $check['missing'],
+          '@start'   => date('Y-m-d', $check['passStart'] ?: time()),
+        ]
+      );
+      $check = ['cursor' => 0, 'passStart' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0];
+      $turfIndexes = $this->turfsObj->getTurfIndexesAfter(0, self::TURFS_PER_SLICE);
+    }
+    if (empty($turfIndexes)) {
+      return 0;
+    }
+    if (empty($check['passStart'])) {
+      $check['passStart'] = time();
+    }
+    $queue = Drupal::queue('nlpservices_voter_ac_queue');
+    foreach ($turfIndexes as $turfIndex) {
+      $queue->createItem(['turfIndex' => $turfIndex]);
+    }
+    $check['cursor'] = end($turfIndexes);
+    Drupal::state()->set(self::CHECK_STATE, $check);
+    return count($turfIndexes);
+  }
+
+  /**
+   * The state of the nightly check, with defaults for a first pass.
+   */
+  private function getCheckState(): array
+  {
+    return Drupal::state()->get(self::CHECK_STATE, []) + [
+      'cursor' => 0, 'passStart' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0,
+    ];
+  }
+
+  /**
+   * Adds a checked turf to the counts for the current pass of the nightly check.
+   */
+  private function countCheck(int $voters, int $missing): void
+  {
+    if (!Drupal::hasService('state')) {
+      return;
+    }
+    $check = $this->getCheckState();
+    $check['turfs']++;
+    $check['voters'] += $voters;
+    $check['missing'] += $missing;
+    Drupal::state()->set(self::CHECK_STATE, $check);
   }
 
   /**
