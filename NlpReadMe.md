@@ -120,6 +120,27 @@ Configure the editor so the NLP Admin and the NLP Coordinator have the "Full HTM
 
 Go to Configuration->User Interface->Navigation Settings.  Choose Custom logo and upload drupal_menu_logo.png.  It can be found at modules/custom/nlpservices/img/drupal_menu_logo.png.
 
+## Set up the cron job in cPanel
+
+NLP Services does its background work on Drupal cron: processing MiniVAN and matchback emails, forwarding notification replies, and the turf and activist code checks.  Each run does about 3 minutes of work, so cron must run every 15 minutes from a cron job on the server.  Drupal's automated cron runs only when someone visits a page and is not enough.  Set up the cron job before enabling any of the cron tasks.
+
+In cPanel, open Cron Jobs (in the Advanced section).  Under "Add New Cron Job", set "Common Settings" to "Once Per Fifteen Minutes (*/15 * * * *)".  In the Command box, enter the following on one line:
+
+    cd /home/myAccount/myStateName && /usr/local/bin/php vendor/drush/drush/drush.php --quiet --uri=https://www.mysite.org cron
+
+Replace `myAccount` with the cPanel account name, `myStateName` with the directory the site was installed in (the one holding `vendor` and `web`), and `https://www.mysite.org` with the site's address.  Then click Add New Cron Job.
+
+Notes on the command:
+
+- Use `/usr/local/bin/php`.  It is the host's PHP selector and picks the PHP version set for the account.  Calling a PHP version directly, such as `/opt/alt/php83/usr/bin/php`, fails from cron.
+- Use `vendor/drush/drush/drush.php`.  `vendor/bin/drush` and `vendor/drush/drush/drush` are shell scripts, so PHP prints them instead of running cron.
+- `--uri` is needed, or Drupal builds links in emails with `http://default`.
+- `--quiet` keeps cron from emailing the output of every run.  To see errors while testing, leave it off and set the Cron Email at the top of the Cron Jobs page.
+
+Once the cron job runs, turn off automated cron: from the Admin menu, select Configuration, then Cron in the SYSTEM section, set "Run cron every" to Never and click Save configuration.
+
+To check the cron job, wait 15 minutes and open the Enable Cron tasks page from the NLP configuration menu.  It shows when the cron job last ran, or a caution if no run has been seen in the last hour.
+
 ## Configuring Drupal Theme
 
 NLP Services was developed and tested with the Bartik theme.  There should be no specific dependency on theme but the Bartik standard options produce pleasing NLP displays.

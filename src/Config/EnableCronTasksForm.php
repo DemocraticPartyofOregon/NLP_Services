@@ -4,6 +4,8 @@ namespace Drupal\nlpservices\Config;
 
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\State\StateInterface;
+use Drupal\nlpservices\NlpCronRunner;
 use Drupal\nlpservices\NlpEmailConfiguration;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -13,10 +15,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class EnableCronTasksForm extends FormBase {
 
   protected NlpEmailConfiguration $emailConfigurationObj;
+  protected StateInterface $state;
 
-  public function __construct($config_factory, $nlpEmailConfigurationObj) {
+  public function __construct($config_factory, $nlpEmailConfigurationObj, $state) {
     $this->configFactory = $config_factory;
     $this->emailConfigurationObj = $nlpEmailConfigurationObj;
+    $this->state = $state;
   }
 
   /**
@@ -27,6 +31,7 @@ class EnableCronTasksForm extends FormBase {
     return new static(
       $container->get('config.factory'),
       $container->get('nlpservices.email_configuration'),
+      $container->get('state'),
     );
   }
 
@@ -55,6 +60,8 @@ class EnableCronTasksForm extends FormBase {
     $enableTurfResync    = $cronConfiguration['enableTurfResync'] ?? 0;
     $enableVoterAcCheck  = $cronConfiguration['enableVoterAcCheck'] ?? 0;
     $enableTurfAcCheck   = $cronConfiguration['enableTurfAcCheck'] ?? 0;
+
+    $form['cronJobCheck'] = $this->cronJobCheck();
 
     if ($this->emailConfigurationObj->emailCredentialsValidated('minivan')) {
       $form['enableMinivan'] = [
@@ -133,6 +140,37 @@ class EnableCronTasksForm extends FormBase {
     ];
 
     return $form;
+  }
+
+  /**
+   * cronJobCheck
+   *
+   * Tells whether the cPanel cron job is running.  nlpservices_cron() records
+   * the time of each cron run started from the command line, so a recent time
+   * means the cron job is set up and working.
+   *
+   * @return array  Markup for the form.
+   */
+  protected function cronJobCheck(): array
+  {
+    $lastRun = $this->state->get(NlpCronRunner::CRON_JOB_LAST_RUN);
+    if (empty($lastRun)) {
+      $text = $this->t('Caution: no run of the cron job has been seen.  Set up the cron job in cPanel, as described in NlpReadMe.md, before enabling any of these tasks.');
+      $class = 'messages--warning';
+    } else {
+      $when = date('M j, Y g:i a', $lastRun);
+      if (time() - $lastRun > NlpCronRunner::CRON_JOB_LATE_SECS) {
+        $text = $this->t('Caution: the cron job last ran at @when.  It should run every 15 minutes, check the cron job in cPanel.',
+          ['@when' => $when]);
+        $class = 'messages--warning';
+      } else {
+        $text = $this->t('The cron job is running, last run at @when.', ['@when' => $when]);
+        $class = 'messages--status';
+      }
+    }
+    return [
+      '#markup' => '<div class="messages ' . $class . '">' . $text . '</div>',
+    ];
   }
 
   /**

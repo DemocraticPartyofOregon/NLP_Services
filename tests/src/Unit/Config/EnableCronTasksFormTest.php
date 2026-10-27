@@ -11,7 +11,9 @@ use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Messenger\MessengerInterface;
+use Drupal\Core\State\StateInterface;
 use Drupal\nlpservices\Config\EnableCronTasksForm;
+use Drupal\nlpservices\NlpCronRunner;
 use Drupal\nlpservices\NlpEmailConfiguration;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
@@ -24,12 +26,14 @@ class EnableCronTasksFormTest extends UnitTestCase {
   private ConfigFactoryInterface $configFactoryMock;
   private NlpEmailConfiguration $emailConfigurationObjMock;
   private MessengerInterface $messengerMock;
+  private StateInterface $stateMock;
 
   protected function setUp(): void {
     parent::setUp();
     $this->configFactoryMock         = $this->createMock(ConfigFactoryInterface::class);
     $this->emailConfigurationObjMock = $this->createMock(NlpEmailConfiguration::class);
     $this->messengerMock             = $this->createMock(MessengerInterface::class);
+    $this->stateMock                 = $this->createMock(StateInterface::class);
 
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
@@ -50,6 +54,7 @@ class EnableCronTasksFormTest extends UnitTestCase {
     $form = new EnableCronTasksForm(
       $this->configFactoryMock,
       $this->emailConfigurationObjMock,
+      $this->stateMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
@@ -96,6 +101,43 @@ class EnableCronTasksFormTest extends UnitTestCase {
     $this->assertSame('checkbox', $form['enableMinivan']['#type']);
     $this->assertSame('checkbox', $form['enableMatchback']['#type']);
     $this->assertSame('checkbox', $form['enableEmailRedirect']['#type']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // buildForm — cron job check
+  // ---------------------------------------------------------------------------
+
+  private function cronJobCheckMarkup(?int $lastRun): string {
+    $this->stubCronConfiguration([]);
+    $this->stubCredentialsValidated([]);
+    $this->stateMock->method('get')
+      ->with(NlpCronRunner::CRON_JOB_LAST_RUN)
+      ->willReturn($lastRun);
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    return (string) $form['cronJobCheck']['#markup'];
+  }
+
+  public function testCronJobCheckCautionsWhenNoRunSeen(): void {
+    $markup = $this->cronJobCheckMarkup(NULL);
+
+    $this->assertStringContainsString('messages--warning', $markup);
+    $this->assertStringContainsString('no run of the cron job has been seen', $markup);
+  }
+
+  public function testCronJobCheckCautionsWhenLastRunIsLate(): void {
+    $markup = $this->cronJobCheckMarkup(time() - NlpCronRunner::CRON_JOB_LATE_SECS - 60);
+
+    $this->assertStringContainsString('messages--warning', $markup);
+    $this->assertStringContainsString('It should run every 15 minutes', $markup);
+  }
+
+  public function testCronJobCheckShowsLastRunWhenRecent(): void {
+    $lastRun = time() - 300;
+    $markup = $this->cronJobCheckMarkup($lastRun);
+
+    $this->assertStringContainsString('messages--status', $markup);
+    $this->assertStringContainsString(date('M j, Y g:i a', $lastRun), $markup);
   }
 
   public function testBuildFormShowsUnconfiguredMarkupWhenCredentialsNotValidated(): void {

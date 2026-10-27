@@ -38,6 +38,19 @@ class NlpCronRunner
    */
   const int LEASE_SECS = 3600;
 
+  /**
+   * The state key for the time of the last cron run started from the command
+   * line, as the cPanel cron job runs it.  Automated cron runs inside a page
+   * request and isn't recorded.
+   */
+  const string CRON_JOB_LAST_RUN = 'nlpservices.cron_job_last_run';
+
+  /**
+   * The cron job runs every 15 minutes.  When no run has been seen for this
+   * long, the cron job is missing or failing.
+   */
+  const int CRON_JOB_LATE_SECS = 3600;
+
   protected QueueFactory $queueFactory;
   protected QueueWorkerManagerInterface $workerManager;
   protected TimeInterface $time;

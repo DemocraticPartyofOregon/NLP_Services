@@ -4,6 +4,7 @@ use Drupal\Core\Database\DatabaseException;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
+use Drupal\nlpservices\NlpCronRunner;
 use Psr\Log\LogLevel;
 
 const NLP_MODULE = 'nlpservices';
@@ -393,6 +394,12 @@ function nlpservices_cron (): void
   $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
   $cronRunnerObj = Drupal::service('nlpservices.cron_runner');
   $cronRunnerObj->startBudget();
+
+  // Record runs of the cPanel cron job, drush runs cron from the command line.
+  // The cron tasks form checks this time to tell whether the cron job is set up.
+  if (PHP_SAPI === 'cli') {
+    Drupal::state()->set(NlpCronRunner::CRON_JOB_LAST_RUN, Drupal::time()->getRequestTime());
+  }
 
   $nlpConfigObj = Drupal::service('config.factory')->get('nlpservices.configuration');
   $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
