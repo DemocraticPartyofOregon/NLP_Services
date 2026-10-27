@@ -303,12 +303,22 @@ class NlpMatchbacks
    * records into the matchback table using INSERT IGNORE, so no per-record
    * SELECT is needed.  Deletes the file when done.
    *
+   * A large file is imported in chunks over several cron runs.  Each call
+   * starts at $offset and stops after $maxRows records.  A chunk imported
+   * twice does no harm, since INSERT IGNORE skips the records already there.
+   *
    * @param string $filePath
-   * @return array  Counts: recordCount, newRecordCount, skippedRecordCount, rejectedRecordCount
+   * @param int $offset  Byte offset of the first record to import, 0 for the
+   *                     start of the file.
+   * @param int $maxRows  Most records to import in this call, 0 for no limit.
+   * @return array  Counts: recordCount, newRecordCount, skippedRecordCount,
+   *                rejectedRecordCount, and nextOffset: the offset to continue
+   *                from, or 0 when the whole file is imported.
    */
-  public function processMatchbackFile(string $filePath): array
+  public function processMatchbackFile(string $filePath, int $offset = 0, int $maxRows = 0): array
   {
-    $counts = ['recordCount' => 0, 'newRecordCount' => 0, 'skippedRecordCount' => 0, 'rejectedRecordCount' => 0];
+    $counts = ['recordCount' => 0, 'newRecordCount' => 0, 'skippedRecordCount' => 0, 'rejectedRecordCount' => 0,
+      'nextOffset' => 0];
     if (!file_exists($filePath)) {
       Drupal::logger('nlpservices')->notice("processMatchbackFile: File not found: $filePath");
       return $counts;
@@ -329,10 +339,22 @@ class NlpMatchbacks
       return $counts;
     }
     $pos = $fieldPos['pos'];
+    if ($offset > 0) {
+      fseek($fh, $offset);
+    }
     $latestMatchbackDate = $this->getLatestMatchbackDate();
     $latestMatchbackTime = empty($latestMatchbackDate) ? 0 : strtotime($latestMatchbackDate);
     $batch = [];
-    while (($row = fgetcsv($fh, escape: '')) !== FALSE) {
+    while (true) {
+      if ($maxRows > 0 && $counts['recordCount'] >= $maxRows) {
+        $nextOffset = ftell($fh);
+        if (fgetcsv($fh, escape: '') !== FALSE) {
+          $counts['nextOffset'] = $nextOffset;
+        }
+        break;
+      }
+      $row = fgetcsv($fh, escape: '');
+      if ($row === FALSE) { break; }
       $counts['recordCount']++;
       $ballotReceived = isset($pos['ballotReceived']) ? ($row[$pos['ballotReceived']] ?? '') : '';
       if (empty($ballotReceived)) {
@@ -368,7 +390,9 @@ class NlpMatchbacks
       $counts['skippedRecordCount'] += count($batch) - $inserted;
     }
     fclose($fh);
-    unlink($filePath);
+    if (empty($counts['nextOffset'])) {
+      unlink($filePath);
+    }
     if (!empty($latestMatchbackDate)) {
       $this->setLatestMatchbackDate($latestMatchbackDate);
     }

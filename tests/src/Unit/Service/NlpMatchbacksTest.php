@@ -161,6 +161,85 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame($transaction, $this->buildService()->matchbackTransaction());
     }
 
+    /**
+     * Mock the queries processMatchbackFile() makes and collect the vanids
+     * it inserts.
+     */
+    private function mockMatchbackImport(array &$insertedVanids): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn(false);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->connectionMock->method('merge')->willReturn($this->buildMergeMock());
+
+      $insertMock = $this->createMock(StatementInterface::class);
+      $insertMock->method('execute')->willReturnCallback(function (array $args) use (&$insertedVanids): bool {
+        foreach ($args as $key => $value) {
+          if (str_starts_with($key, ':vanid')) { $insertedVanids[] = $value; }
+        }
+        return true;
+      });
+      $insertMock->method('rowCount')->willReturnCallback(fn() => 1);
+      $this->connectionMock->method('prepareStatement')->willReturn($insertMock);
+    }
+
+    private function writeMatchbackFile(int $rows): string {
+      $filePath = tempnam(sys_get_temp_dir(), 'nlp_matchback_test');
+      $lines = ['VoterFileVANID,BallotReceived'];
+      for ($vanid = 1; $vanid <= $rows; $vanid++) {
+        $lines[] = "$vanid,10/20/2026";
+      }
+      file_put_contents($filePath, implode("\n", $lines) . "\n");
+      return $filePath;
+    }
+
+    public function testProcessMatchbackFileImportsWholeFileWithoutLimit(): void {
+      $inserted = [];
+      $this->mockMatchbackImport($inserted);
+      $filePath = $this->writeMatchbackFile(5);
+
+      $counts = $this->buildService()->processMatchbackFile($filePath);
+
+      $this->assertSame(5, $counts['recordCount']);
+      $this->assertSame(0, $counts['nextOffset']);
+      $this->assertSame([1, 2, 3, 4, 5], $inserted);
+      $this->assertFileDoesNotExist($filePath);
+    }
+
+    public function testProcessMatchbackFileImportsInChunks(): void {
+      $inserted = [];
+      $this->mockMatchbackImport($inserted);
+      $filePath = $this->writeMatchbackFile(5);
+      $service = $this->buildService();
+
+      $first = $service->processMatchbackFile($filePath, 0, 2);
+      $this->assertSame(2, $first['recordCount']);
+      $this->assertGreaterThan(0, $first['nextOffset']);
+      $this->assertFileExists($filePath);
+
+      $second = $service->processMatchbackFile($filePath, $first['nextOffset'], 2);
+      $this->assertSame(2, $second['recordCount']);
+      $this->assertGreaterThan($first['nextOffset'], $second['nextOffset']);
+
+      $third = $service->processMatchbackFile($filePath, $second['nextOffset'], 2);
+      $this->assertSame(1, $third['recordCount']);
+      $this->assertSame(0, $third['nextOffset']);
+
+      $this->assertSame([1, 2, 3, 4, 5], $inserted);
+      $this->assertFileDoesNotExist($filePath);
+    }
+
+    public function testProcessMatchbackFileFinishesWhenChunkEndsAtLastRecord(): void {
+      $inserted = [];
+      $this->mockMatchbackImport($inserted);
+      $filePath = $this->writeMatchbackFile(4);
+
+      $counts = $this->buildService()->processMatchbackFile($filePath, 0, 4);
+
+      $this->assertSame(4, $counts['recordCount']);
+      $this->assertSame(0, $counts['nextOffset']);
+      $this->assertFileDoesNotExist($filePath);
+    }
+
   }
 
 }

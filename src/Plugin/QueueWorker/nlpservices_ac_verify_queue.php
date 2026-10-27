@@ -12,10 +12,12 @@ use Drupal\Core\Queue\QueueWorkerBase;
  * A queue worker that checks VAN shows the activist code changes NLP Services
  * made, and logs the voters it doesn't.
  *
+ * No cron time is set, so core cron doesn't run this queue.  It is run by
+ * nlpservices_cron() through NlpCronRunner, in priority order.
+ *
  * @QueueWorker(
  *   id = "nlpservices_ac_verify_queue",
- *   title = @Translation("NLP activist code change check."),
- *   cron = {"time" = 300}
+ *   title = @Translation("NLP activist code change check.")
  * )
  */
 class nlpservices_ac_verify_queue extends QueueWorkerBase
