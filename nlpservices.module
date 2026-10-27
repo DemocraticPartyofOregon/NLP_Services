@@ -530,37 +530,20 @@ function nlpservices_cron (): void
     Drupal::logger('nlpservices')->notice('Turf resync check time: ' . $displayTime);
   }
 
-  // Check for missing NLP Voter activist codes, run only at night between midnight and 3am.
-  $enableVoterAcCheck = !empty($cronConfiguration['enableVoterAcCheck']);
-  $hour = (int) date('G');
-  $acCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
-  if ( $enableVoterAcCheck && $acCheckTime ) {
-    $turfsObj = Drupal::service('nlpservices.turfs');
-
-    try {
-      $syncedCounties = $turfsObj->getSyncedCountyNames();
-
-      $queue = Drupal::queue('nlpservices_voter_ac_queue');
-      $queue->deleteQueue();
-      $queue->createQueue();
-      $turfCount = 0;
-      foreach ($syncedCounties as $county) {
-        $turfIndexes = $turfsObj->getTurfIndexes($county);
-        foreach ($turfIndexes as $turfIndex) {
-          $queue->createItem(['turfIndex' => $turfIndex]);
-          $turfCount++;
-        }
-      }
-      Drupal::logger('nlpservices')->notice("Voter AC check queued $turfCount turfs.");
-    } catch (Exception $e) {
-      Drupal::logger('nlpservices')->error('Voter AC check cron error: @msg', ['@msg' => $e->getMessage()]);
-    }
-  }
-
   if ($enableTurfResync) {
     $cronRunnerObj->runQueue('nlpservices_resync_turfs_queue');
   }
-  if ($enableVoterAcCheck) {
+
+  // Check turfs for voters missing NLPVoterAC, only at night between midnight
+  // and 3am.  Each cron run checks the next turfs in the time left, and the
+  // next night goes on from there, so all turfs are checked over several nights.
+  $enableVoterAcCheck = !empty($cronConfiguration['enableVoterAcCheck']);
+  $hour = (int) date('G');
+  $acCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();
+  if ($enableVoterAcCheck && $acCheckTime) {
+    if ($cronRunnerObj->queueIsEmpty('nlpservices_voter_ac_queue')) {
+      Drupal::service('nlpservices.voter_ac_processor')->queueNextTurfs();
+    }
     $cronRunnerObj->runQueue('nlpservices_voter_ac_queue');
   }
 

@@ -3,7 +3,11 @@
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Queue\QueueFactory;
+  use Drupal\Core\Queue\QueueInterface;
+  use Drupal\Core\State\StateInterface;
   use Drupal\nlpservices\ApiActivistCodes;
+  use Drupal\nlpservices\NlpAcHistory;
   use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpFileFunctions;
@@ -309,6 +313,144 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->buildService()->processBatch(['turfIndexes' => [9]], $context);
 
       $this->assertSame('Coord Jones', $context['results']['missingAcRecords'][0]['coordinator']);
+    }
+
+    // -------------------------------------------------------------------------
+    // processTurf() history and counts
+    // -------------------------------------------------------------------------
+
+    /**
+     * Puts a state mock backed by $this->state in the container.
+     */
+    private function setStateMock(): void {
+      $stateMock = $this->createMock(StateInterface::class);
+      $stateMock->method('get')
+        ->willReturnCallback(fn(string $key, $default = NULL) => $this->state[$key] ?? $default);
+      $stateMock->method('set')
+        ->willReturnCallback(function (string $key, $value) {
+          $this->state[$key] = $value;
+        });
+      \Drupal::getContainer()->set('state', $stateMock);
+    }
+
+    private array $state = [];
+
+    public function testProcessTurfRecordsMissingVotersAndLogsTheirHistory(): void {
+      $this->votersMock->method('getVotersInTurf')->willReturn([101 => 101, 102 => 102]);
+      $this->activistCodesMock->method('hasApiActivistCodeBatch')->willReturn([102]);
+      $this->turfsMock->method('getTurf')->willReturn(['turfName' => 'Elm Street', 'county' => 'King', 'mcid' => 0]);
+      $historyMock = $this->createMock(NlpAcHistory::class);
+      $historyMock->method('describe')->willReturn('102: Remove from turf delete (turfIndex 3) at 10:02:15');
+      $historyMock->expects($this->once())->method('record')
+        ->with([102], NlpAcHistory::MISSING, 'voter AC check of Elm Street (turfIndex 5)');
+      \Drupal::getContainer()->set('nlpservices.ac_history', $historyMock);
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerMock->expects($this->once())->method('notice')
+        ->with($this->anything(), $this->callback(fn(array $context) =>
+          str_contains($context['@history'], 'turf delete (turfIndex 3)')));
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      \Drupal::getContainer()->set('logger.factory', $loggerFactoryMock);
+
+      $this->buildService()->processTurf(5);
+    }
+
+    public function testProcessTurfAddsToTheCountsForThePass(): void {
+      $this->setStateMock();
+      $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 4, 'passStart' => 1700000000,
+        'turfs' => 2, 'voters' => 100, 'missing' => 1];
+      $this->votersMock->method('getVotersInTurf')->willReturn([101 => 101, 102 => 102, 103 => 103]);
+      $this->activistCodesMock->method('hasApiActivistCodeBatch')->willReturn([102]);
+      $this->turfsMock->method('getTurf')->willReturn(['turfName' => 'Elm Street', 'county' => 'King', 'mcid' => 0]);
+
+      $this->buildService()->processTurf(5);
+
+      $this->assertSame(['cursor' => 4, 'passStart' => 1700000000, 'turfs' => 3, 'voters' => 103, 'missing' => 2],
+        $this->state[NlpVoterAcProcessor::CHECK_STATE]);
+    }
+
+    // -------------------------------------------------------------------------
+    // queueNextTurfs()
+    // -------------------------------------------------------------------------
+
+    /**
+     * Puts a queue mock in the container and returns the items it is given.
+     */
+    private function setQueueMock(array &$items): void {
+      $queueMock = $this->createMock(QueueInterface::class);
+      $queueMock->method('createItem')
+        ->willReturnCallback(function ($item) use (&$items) {
+          $items[] = $item;
+          return count($items);
+        });
+      $queueFactoryMock = $this->createMock(QueueFactory::class);
+      $queueFactoryMock->method('get')->with('nlpservices_voter_ac_queue')->willReturn($queueMock);
+      \Drupal::getContainer()->set('queue', $queueFactoryMock);
+    }
+
+    public function testQueueNextTurfsStartsTheFirstPass(): void {
+      $this->setStateMock();
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->expects($this->once())->method('getTurfIndexesAfter')
+        ->with(0, NlpVoterAcProcessor::TURFS_PER_SLICE)->willReturn([3, 5]);
+
+      $this->assertSame(2, $this->buildService()->queueNextTurfs());
+
+      $this->assertSame([['turfIndex' => 3], ['turfIndex' => 5]], $items);
+      $check = $this->state[NlpVoterAcProcessor::CHECK_STATE];
+      $this->assertSame(5, $check['cursor']);
+      $this->assertEqualsWithDelta(time(), $check['passStart'], 5);
+    }
+
+    public function testQueueNextTurfsGoesOnAfterTheLastTurfQueued(): void {
+      $this->setStateMock();
+      $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 5, 'passStart' => 1700000000,
+        'turfs' => 2, 'voters' => 100, 'missing' => 0];
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->method('getTurfIndexesAfter')->with(5)->willReturn([8]);
+
+      $this->buildService()->queueNextTurfs();
+
+      $this->assertSame([['turfIndex' => 8]], $items);
+      $this->assertSame(8, $this->state[NlpVoterAcProcessor::CHECK_STATE]['cursor']);
+      $this->assertSame(1700000000, $this->state[NlpVoterAcProcessor::CHECK_STATE]['passStart']);
+    }
+
+    public function testQueueNextTurfsAfterLastTurfLogsThePassAndStartsAgain(): void {
+      $this->setStateMock();
+      $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 9, 'passStart' => 1700000000,
+        'turfs' => 3, 'voters' => 150, 'missing' => 4];
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->method('getTurfIndexesAfter')
+        ->willReturnCallback(fn(int $after) => $after === 0 ? [3, 5, 9] : []);
+      $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerMock->expects($this->once())->method('notice')
+        ->with($this->stringContains('finished a pass'), $this->callback(fn(array $context) =>
+          $context['@turfs'] === 3 && $context['@voters'] === 150 && $context['@missing'] === 4));
+      $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
+      $loggerFactoryMock->method('get')->willReturn($loggerMock);
+      \Drupal::getContainer()->set('logger.factory', $loggerFactoryMock);
+
+      $this->assertSame(3, $this->buildService()->queueNextTurfs());
+
+      $check = $this->state[NlpVoterAcProcessor::CHECK_STATE];
+      $this->assertSame(9, $check['cursor']);
+      $this->assertSame(0, $check['turfs']);
+      $this->assertSame(0, $check['missing']);
+      $this->assertGreaterThan(1700000000, $check['passStart']);
+    }
+
+    public function testQueueNextTurfsWithNoTurfsQueuesNothing(): void {
+      $this->setStateMock();
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->method('getTurfIndexesAfter')->willReturn([]);
+
+      $this->assertSame(0, $this->buildService()->queueNextTurfs());
+      $this->assertSame([], $items);
     }
 
   }

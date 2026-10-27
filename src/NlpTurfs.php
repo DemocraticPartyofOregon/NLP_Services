@@ -681,33 +681,29 @@ class NlpTurfs
   }
 
   /**
-   * getTurfIndexes
+   * getTurfIndexesAfter
    *
-   * Returns an indexed array of turf indexes for a specific county.
+   * Returns the next synced turf indexes after a turf index, in order, in all counties.
    *
-   * @param string $county - The name of the county.
-   * @return array - An indexed array of turf indexes.
-   * @noinspection PhpUnused
-   * used in VerifyTurfBatch
+   * @param int $after - the last turf index already used, or 0 to start with the first turf.
+   * @param int $limit - the most turf indexes to return.
+   * @return array - turf indexes, as ints.
    */
-  public function getTurfIndexes(string $county): array
+  public function getTurfIndexesAfter(int $after, int $limit): array
   {
     try {
       $query = $this->connection->select(self::TURF_TBL, 't');
       $query->addField('t', 'turfIndex');
-      $query->condition('t.county', $county);
+      $query->condition('t.turfIndex', $after, '>');
+      $query->isNotNull('t.syncDate');
+      $query->orderBy('t.turfIndex');
+      $query->range(0, $limit);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getTurfIndexes', $e);
+      nlp_debug_msg('getTurfIndexesAfter', $e);
       return [];
     }
-    $turfIndexes = [];
-    do {
-      $turf = $result->fetchAssoc();
-      if (empty($turf)) { break; }
-      $turfIndexes[] = $turf['turfIndex'];
-    } while (TRUE);
-    return $turfIndexes;
+    return array_map('intval', $result->fetchCol());
   }
 
   /**
@@ -726,36 +722,6 @@ class NlpTurfs
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getCountyNames', $e);
-      return [];
-    }
-
-    $countyNames = [];
-    do {
-      $countyName = $result->fetchAssoc();
-      if (empty($countyName)) { break; }
-      $countyNames[] = $countyName['county'];
-    } while (TRUE);
-    return $countyNames;
-  }
-
-  /**
-   * getSyncedCountyNames
-   *
-   * Returns an indexed array of unique county names that have at least one
-   * synced turf (syncDate is not NULL).
-   *
-   * @return array - An indexed array of county names.
-   */
-  public function getSyncedCountyNames(): array
-  {
-    try {
-      $query = $this->connection->select(self::TURF_TBL, 't');
-      $query->addField('t', 'county');
-      $query->distinct();
-      $query->isNotNull('t.syncDate');
-      $result = $query->execute();
-    } catch (Exception $e) {
-      nlp_debug_msg('getSyncedCountyNames', $e);
       return [];
     }
 
