@@ -9,6 +9,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\ApiSurveyQuestion;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\NlpCoordinators;
+  use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpImap;
   use Drupal\nlpservices\NlpMinivan;
   use Drupal\nlpservices\NlpNls;
@@ -335,7 +336,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $action = $this->buildService()->processCanvass($report, $this->baseResult(), 42, [], 7);
 
       $this->assertFalse($action['processReport']);
-      $this->assertArrayNotHasKey('counts', $action);
+      $this->assertSame([], $action['counts']);
     }
 
     public function testProcessCanvassSkipsDuplicateContactReport(): void {
@@ -478,6 +479,95 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertTrue($action['processReport']);
       $this->assertSame('attemptedContact', $action['type']);
       $this->assertArrayNotHasKey('nickname', $action['result']);
+    }
+
+    public function testProcessCanvassSkipsMovedAlreadyReported(): void {
+      $report = ['contactId' => 204, 'vanid' => 999, 'resultId' => 104, 'contactTypeId' => 1, 'noteText' => ''];
+      $allowedResponseCodes = ['Walk' => ['code' => 1, 'responses' => ['Moved' => 104]]];
+
+      $this->reportsMock->method('reportExists')->willReturn(FALSE);
+      $this->reportsMock->method('getReport')->willReturn(['reportIndex' => 77]);
+      $this->votersMock->expects($this->never())->method('setMovedStatus');
+
+      $action = $this->buildService()->processCanvass($report, $this->baseResult(), 42, $allowedResponseCodes, 7);
+
+      $this->assertFalse($action['processReport']);
+      $this->assertSame(['skippedRecordCount' => 1], $action['counts']);
+    }
+
+    public function testProcessCanvassSkipsDeceasedAlreadyReported(): void {
+      $report = ['contactId' => 205, 'vanid' => 999, 'resultId' => 105, 'contactTypeId' => 1, 'noteText' => ''];
+      $allowedResponseCodes = ['Walk' => ['code' => 1, 'responses' => ['Deceased' => 105]]];
+
+      $this->reportsMock->method('reportExists')->willReturn(FALSE);
+      $this->reportsMock->method('getReport')->willReturn(['reportIndex' => 78]);
+      $this->votersMock->expects($this->never())->method('setVoterStatus');
+
+      $action = $this->buildService()->processCanvass($report, $this->baseResult(), 42, $allowedResponseCodes, 7);
+
+      $this->assertFalse($action['processReport']);
+      $this->assertSame(['skippedRecordCount' => 1], $action['counts']);
+    }
+
+    // -------------------------------------------------------------------------
+    // processMinivanQueueReports()
+    // -------------------------------------------------------------------------
+
+    private function setUpConfigurationContainer(): void {
+      $configurationMock = $this->createMock(NlpConfiguration::class);
+      $configurationMock->method('getActivistCode')->willReturn(55);
+      $configurationMock->method('getCanvassResponseCodes')
+        ->willReturn(['Walk' => ['code' => 1, 'responses' => ['Left Message/Lit' => 101]]]);
+      $configurationMock->method('getPledgeSurveyQuestion')->willReturn([]);
+      $configurationMock->method('getCycle')->willReturn('2026');
+      $container = new ContainerBuilder();
+      $container->set('nlpservices.configuration', $configurationMock);
+      \Drupal::setContainer($container);
+    }
+
+    private function canvassReport(int $resultId): string {
+      return json_encode(['contactId' => 300, 'vanid' => 999, 'resultId' => $resultId, 'contactTypeId' => 1,
+        'noteText' => '', 'dateCanvassed' => '2026-10-20']);
+    }
+
+    public function testQueueReportsUpdatesNlAccessTimeForNewReport(): void {
+      $this->setUpConfigurationContainer();
+      $this->votersMock->method('getMcidByVanid')->willReturn(42);
+      $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
+      $this->reportsMock->method('reportExists')->willReturn(FALSE);
+      $this->drupalUserMock->method('getUserByMcid')->willReturn(['uid' => 10]);
+      $this->drupalUserMock->expects($this->once())->method('updateUser')
+        ->with($this->callback(fn(array $u) => $u['uid'] === 10 && isset($u['access'])));
+
+      $counts = $this->buildService()->processMinivanQueueReports([$this->canvassReport(101)], 'canvass');
+
+      $this->assertSame(1, $counts['newRecordCount']);
+    }
+
+    public function testQueueReportsLeavesNlAccessTimeForDuplicateReport(): void {
+      $this->setUpConfigurationContainer();
+      $this->votersMock->method('getMcidByVanid')->willReturn(42);
+      $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
+      $this->reportsMock->method('reportExists')->willReturn(TRUE);
+      $this->drupalUserMock->expects($this->never())->method('getUserByMcid');
+      $this->drupalUserMock->expects($this->never())->method('updateUser');
+
+      $counts = $this->buildService()->processMinivanQueueReports([$this->canvassReport(101)], 'canvass');
+
+      $this->assertSame(1, $counts['skippedRecordCount']);
+      $this->assertSame(0, $counts['newRecordCount']);
+    }
+
+    public function testQueueReportsCountsNothingForCanvassedResult(): void {
+      $this->setUpConfigurationContainer();
+      $this->votersMock->method('getMcidByVanid')->willReturn(42);
+      $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
+      $this->drupalUserMock->expects($this->never())->method('updateUser');
+
+      $counts = $this->buildService()->processMinivanQueueReports([$this->canvassReport(NlpMinivan::CANVASSED)], 'canvass');
+
+      $this->assertSame(1, $counts['recordCount']);
+      $this->assertSame(0, $counts['newRecordCount'] + $counts['skippedRecordCount'] + $counts['rejectedRecordCount']);
     }
 
     // -------------------------------------------------------------------------

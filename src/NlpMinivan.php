@@ -265,6 +265,7 @@ class NlpMinivan {
 
     if($report['resultId'] == self::CANVASSED) { // Remove the redundant report.
       $action['processReport'] = FALSE;
+      $action['counts'] = [];
       return $action;
     }
 
@@ -339,7 +340,7 @@ class NlpMinivan {
         $report = $this->nlpReportsObj->getReport($request);
         $existingRIndex = (!empty($report['reportIndex']))?$report['reportIndex']:NULL;  // An entry for the Moved status exists.
         if(!empty($existingRIndex)) {
-          $action['counts']['newRecordCount'] = 1;
+          $action['counts']['skippedRecordCount'] = 1;
           $action['processReport'] = FALSE;
           return $action;
         }
@@ -374,6 +375,7 @@ class NlpMinivan {
 
         $existingRIndex = (!empty($report['reportIndex']))?$report['reportIndex']:NULL;  // An entry for the Deceased status exists.
         if(!empty($existingRIndex)) {
+          $action['counts']['skippedRecordCount'] = 1;
           $action['processReport'] = FALSE;
           return $action;
         }
@@ -776,14 +778,6 @@ class NlpMinivan {
           $commonResult['firstName'] = $nl['firstName'];
           $commonResult['lastName'] = $nl['lastName'];
           $commonResult['county'] = $nl['county'];
-          $user = $this->drupalUserObj->getUserByMcid($mcid);
-          if(!empty($user)) {
-            $update = [
-              'uid' => $user['uid'],
-              'access' => time(),
-            ];
-            $this->drupalUserObj->updateUser($update);
-          }
         } else {
           // The voter's turf is assigned to an NL who is no longer in the NLs table.
           $this->notifyMissingNl($mcid);
@@ -817,8 +811,21 @@ class NlpMinivan {
           break;
       }
 
-      foreach ($action['counts'] as $countType => $value) {
+      foreach ($action['counts'] ?? [] as $countType => $value) {
         $counts[$countType] += $value;
+      }
+
+      // A new report shows the NL is active.  A report sent again in a later
+      // MiniVAN email doesn't.
+      if (!empty($action['counts']['newRecordCount']) && !empty($nl)) {
+        $user = $this->drupalUserObj->getUserByMcid($mcid);
+        if(!empty($user)) {
+          $update = [
+            'uid' => $user['uid'],
+            'access' => time(),
+          ];
+          $this->drupalUserObj->updateUser($update);
+        }
       }
 
       if ($action['processReport']) {
