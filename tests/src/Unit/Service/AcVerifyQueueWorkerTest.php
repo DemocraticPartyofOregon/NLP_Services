@@ -43,6 +43,19 @@ class AcVerifyQueueWorkerTest extends UnitTestCase {
     }
   }
 
+  public function testLateCheckWaitsForItsOwnMinAge(): void {
+    $this->activistCodesMock->expects($this->never())->method('verifyActivistCodeChange');
+
+    try {
+      $this->buildWorker()->processItem(['vanids' => [111], 'queuedAt' => time() - 600, 'minAge' => 3600]);
+      $this->fail('Expected DelayedRequeueException');
+    }
+    catch (DelayedRequeueException $e) {
+      $this->assertGreaterThan(2900, $e->getDelay());
+      $this->assertLessThanOrEqual(3000, $e->getDelay());
+    }
+  }
+
   public function testOldEnoughChangeIsChecked(): void {
     $item = ['vanids' => [111], 'queuedAt' => time() - nlpservices_ac_verify_queue::MIN_AGE_SECS];
     $this->activistCodesMock->expects($this->once())->method('verifyActivistCodeChange')->with($item);

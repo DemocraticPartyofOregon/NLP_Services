@@ -477,6 +477,7 @@ function nlpservices_cron (): void
   // Background tasks, run with the time left.
   $cronRunnerObj->runQueue('nlpservices_ac_verify_queue');
   $cronRunnerObj->runQueue('nlpservices_turf_ac_check_queue');
+  Drupal::service('nlpservices.ac_history')->purge();
 
   // Lowest priority, run only when enabled.  Items left in these queues when
   // the task is turned off wait until it is turned on again.

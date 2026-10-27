@@ -206,6 +206,10 @@ services:
 
   # Operational services
 
+  nlpservices.ac_history:
+    class: Drupal\nlpservices\NlpAcHistory
+    arguments: [ '@database' ]
+
   nlpservices.awards:
     class: Drupal\nlpservices\NlpAwards
     arguments: [ '@database', '@nlpservices.configuration', '@nlpservices.nls', '@nlpservices.database_functions' ]

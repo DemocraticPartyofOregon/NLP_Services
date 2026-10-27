@@ -24,7 +24,8 @@ class nlpservices_ac_verify_queue extends QueueWorkerBase
 {
   /**
    * VAN can take seconds to show a change it accepted. A change queued less
-   * than this long ago is put back until it is older.
+   * than this long ago is put back until it is older.  A late check sets its
+   * own minAge.
    */
   const int MIN_AGE_SECS = 120;
 
@@ -33,9 +34,10 @@ class nlpservices_ac_verify_queue extends QueueWorkerBase
    */
   public function processItem($data): void
   {
+    $minAge = (int) ($data['minAge'] ?? self::MIN_AGE_SECS);
     $age = time() - (int) ($data['queuedAt'] ?? 0);
-    if ($age < self::MIN_AGE_SECS) {
-      throw new DelayedRequeueException(self::MIN_AGE_SECS - $age);
+    if ($age < $minAge) {
+      throw new DelayedRequeueException($minAge - $age);
     }
     Drupal::service('nlpservices.activist_codes')->verifyActivistCodeChange($data);
   }

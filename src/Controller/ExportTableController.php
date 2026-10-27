@@ -42,15 +42,19 @@ class ExportTableController extends ControllerBase
   public function exportTable(): array
   {
     $tableName = $_GET['tableName'];
-    $allowedTables = ['nlp_turf', 'nlp_turf_assignment', 'nlp_awards'];
+    $allowedTables = ['nlp_turf', 'nlp_turf_assignment', 'nlp_awards', 'nlp_ac_history'];
     if (!in_array($tableName, $allowedTables, true)) {
       return ['#markup' => 'Invalid table name.'];
     }
     $source = empty($_GET['source'])? '': $_GET['source'];
-    
+
     $county = '';
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
+    // The activist code history has no county, so only an admin can export it.
+    if(!$admin && $tableName == 'nlp_ac_history') {
+      return ['#markup' => 'Invalid table name.'];
+    }
     if(!$admin) {
       $county = $currentUser['county'];
       $county = (empty($county)) ? '' : (string) $county;

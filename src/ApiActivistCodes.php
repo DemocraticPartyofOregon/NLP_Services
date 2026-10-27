@@ -37,6 +37,18 @@ class ApiActivistCodes
    */
   const string VERIFY_QUEUE = 'nlpservices_ac_verify_queue';
 
+  /**
+   * NLPVoterAC changed both ways for a voter within this many seconds is a
+   * conflict.  VAN may finish the two changes in either order.
+   */
+  const int CONFLICT_WINDOW_SECS = 3600;
+
+  /**
+   * How long after a conflicting change a voter is checked again.  The first
+   * check can pass before VAN finishes the other change.
+   */
+  const int LATE_CHECK_SECS = 3600;
+
   private array $supportedActivistCodes = [
     'NLPVoterAC' => 0,
     'NLPHostileAC' => 0,
@@ -320,8 +332,55 @@ class ApiActivistCodes
       return;
     }
 
-    $toVerify = $this->postActivistCodeBatch($vanids, $stateCommitteeKey, $codeName, $rid, $action, $database, $source);
+    $toVerify = $this->sendChange($vanids, $stateCommitteeKey, $codeName, $rid, $action, $database, $source);
     $this->queueVerification($toVerify, $codeName, $rid, $action, $database, '', $source);
+    $this->queueLateCheck($toVerify, $codeName, $rid, $action, $database, $source);
+  }
+
+  /**
+   * Sends an activist code change and records it in the NLPVoterAC history.
+   * Returns the vanids VAN accepted, or may have accepted.
+   */
+  private function sendChange(array $vanids, array $committeeKey, string $codeName, int $rid,
+                              string $action, int $database, string $source): array
+  {
+    $sent = $this->postActivistCodeBatch($vanids, $committeeKey, $codeName, $rid, $action, $database, $source);
+    $history = $this->acHistory($codeName);
+    if ($history) {
+      $history->record($sent, ($action === 'Apply') ? NlpAcHistory::APPLY : NlpAcHistory::REMOVE, $source);
+      $history->record(array_values(array_diff($vanids, $sent)),
+        ($action === 'Apply') ? NlpAcHistory::APPLY_REFUSED : NlpAcHistory::REMOVE_REFUSED, $source);
+    }
+    return $sent;
+  }
+
+  /**
+   * Queues a late check of the voters NLPVoterAC was changed the other way
+   * for within CONFLICT_WINDOW_SECS.  The first check can pass before VAN
+   * finishes the other change, and the other change can undo this one.
+   */
+  private function queueLateCheck(array $vanids, string $codeName, int $rid, string $action,
+                                  int $database, string $source): void
+  {
+    $history = $this->acHistory($codeName);
+    if (!$history || empty($vanids)) {
+      return;
+    }
+    $opposite = ($action === 'Apply') ? NlpAcHistory::REMOVE : NlpAcHistory::APPLY;
+    $conflicts = $history->vanidsWithEventSince($vanids, [$opposite], time() - self::CONFLICT_WINDOW_SECS);
+    $this->queueVerification($conflicts, $codeName, $rid, $action, $database, '', $source,
+      ['minAge' => self::LATE_CHECK_SECS, 'late' => TRUE]);
+  }
+
+  /**
+   * The NLPVoterAC history, or NULL for other codes.
+   */
+  private function acHistory(string $codeName): ?NlpAcHistory
+  {
+    if ($codeName !== 'NLPVoterAC' || !Drupal::hasService('nlpservices.ac_history')) {
+      return NULL;
+    }
+    return Drupal::service('nlpservices.ac_history');
   }
 
   /**
@@ -387,10 +446,13 @@ class ApiActivistCodes
    * Checks that VAN shows a change queued by queueVerification(). The change
    * is sent once more to voters VAN doesn't show it for, and checked again
    * on a later cron. If VAN still doesn't show it, an error names them.
-   * Called on cron by the nlpservices_ac_verify_queue worker.
+   * A Remove of NLPVoterAC that took the code from a voter now in a turf is
+   * followed by an Apply. Called on cron by the nlpservices_ac_verify_queue
+   * worker.
    *
    * @param array $item - keys vanids, codeName, rid, action, database,
-   *   committee, source, queuedAt; a retry also has firstQueuedAt.
+   *   committee, source, queuedAt; a retry also has firstQueuedAt, and a
+   *   late check has minAge and late.
    * @return void
    */
   public function verifyActivistCodeChange(array $item): void
@@ -432,18 +494,41 @@ class ApiActivistCodes
       },
     );
 
+    // NLPVoterAC is checked against the turfs the voters are in now, not just
+    // the change that was sent.  A voter can be synced into a new turf while
+    // the Remove from a deleted turf is still waiting in VAN.
+    $inTurfs = [];
+    if ($action === 'Remove' && $item['codeName'] === 'NLPVoterAC' && $hasCode
+      && Drupal::hasService('nlpservices.voters')) {
+      $inTurfs = Drupal::service('nlpservices.voters')->getVanidsInTurfs(array_keys($hasCode));
+    }
     $notShown = [];
+    $lostCode = [];
     foreach ($hasCode as $vanid => $codeIsSet) {
       if (($action === 'Apply') ? !$codeIsSet : $codeIsSet) {
-        $notShown[] = $vanid;
+        // A voter synced into a turf after the Remove was sent has the code again on purpose.
+        // Sending the Remove again would take it from a voter whose NL needs it.
+        if (!in_array($vanid, $inTurfs)) {
+          $notShown[] = $vanid;
+        }
+      } elseif (in_array($vanid, $inTurfs)) {
+        // The Remove took the code from a voter who is now in a turf.
+        $lostCode[] = $vanid;
       }
     }
-    if ($notShown && $action === 'Remove' && $item['codeName'] === 'NLPVoterAC'
-      && Drupal::hasService('nlpservices.voters')) {
-      // A voter synced into a turf after the Remove was sent has the code again on purpose.
-      // Sending the Remove again would take it from a voter whose NL needs it.
-      $inTurfs = Drupal::service('nlpservices.voters')->getVanidsInTurfs($notShown);
-      $notShown = array_values(array_diff($notShown, $inTurfs));
+
+    $history = $this->acHistory($item['codeName']);
+    $firstQueuedAt = (int) ($item['firstQueuedAt'] ?? $item['queuedAt']);
+    if ($lostCode && $history) {
+      // A voter with an Apply sent since the Remove has a late check queued for it,
+      // and VAN may not have finished that Apply yet.
+      $lostCode = array_values(array_diff($lostCode,
+        $history->vanidsWithEventSince($lostCode, [NlpAcHistory::APPLY], $firstQueuedAt)));
+    }
+    $check = !empty($item['late']) ? 'late check' : (empty($item['firstQueuedAt']) ? 'first check' : 'second check');
+    $missing = ($action === 'Apply' && $check !== 'first check') ? $notShown : [];
+    if ($history && ($missing || $lostCode)) {
+      $history->record(array_merge($missing, $lostCode), NlpAcHistory::MISSING, "$check of $action from {$item['source']}");
     }
 
     $context = [
@@ -451,24 +536,40 @@ class ApiActivistCodes
       '@rid' => $rid,
       '@action' => $action,
       '@source' => $item['source'] ?: 'unknown',
-      '@time' => date('Y-m-d H:i:s', (int) ($item['firstQueuedAt'] ?? $item['queuedAt'])),
+      '@time' => date('Y-m-d H:i:s', $firstQueuedAt),
       '@database' => $database ? 'MyCampaign' : 'VoterFile',
       '@committee' => $committee ?: 'State Committee',
+      '@check' => $check,
     ];
+    // The history of each voter around the change, to look for a pattern.
+    $describe = fn(array $vanids): string => $history
+      ? ' History: ' . $history->describe($vanids, $firstQueuedAt - self::CONFLICT_WINDOW_SECS) : '';
     if ($notShown && empty($item['firstQueuedAt'])) {
       $this->log('warning',
-        'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s): @vanids. '
-        . 'Database: @database, committee key: @committee. Sending it again.',
-        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown)]);
-      $sent = $this->postActivistCodeBatch($notShown, $committeeKey, $item['codeName'], $rid, $action, $database,
-        $item['source']);
+        'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s) at the @check: @vanids. '
+        . 'Database: @database, committee key: @committee. Sending it again.@history',
+        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown),
+          '@history' => $missing ? $describe($notShown) : '']);
+      $sent = $this->sendChange($notShown, $committeeKey, $item['codeName'], $rid, $action, $database,
+        "{$item['source']} (sent again)");
       $this->queueVerification($sent, $item['codeName'], $rid, $action, $database, $committee, $item['source'],
-        (int) $item['queuedAt']);
+        ['firstQueuedAt' => (int) $item['queuedAt']]);
     } elseif ($notShown) {
       $this->log('error',
         'Activist code @code (@rid) @action from @source at @time is not shown by VAN for @count voter(s): @vanids, '
-        . 'even after it was sent again. Database: @database, committee key: @committee.',
-        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown)]);
+        . 'even after it was sent again. Database: @database, committee key: @committee.@history',
+        $context + ['@count' => count($notShown), '@vanids' => implode(', ', $notShown),
+          '@history' => $missing ? $describe($notShown) : '']);
+    }
+    if ($lostCode) {
+      $this->log('warning',
+        'Activist code @code (@rid) is gone from @count voter(s) now in a turf, at the @check of the Remove from @source '
+        . 'at @time: @vanids. Applying it again.@history',
+        $context + ['@count' => count($lostCode), '@vanids' => implode(', ', $lostCode),
+          '@history' => $describe($lostCode)]);
+      $source = "re-apply after Remove from {$item['source']}";
+      $sent = $this->sendChange($lostCode, $committeeKey, $item['codeName'], $rid, 'Apply', $database, $source);
+      $this->queueVerification($sent, $item['codeName'], $rid, 'Apply', $database, $committee, $source);
     }
     if ($unread) {
       $this->log('warning',
@@ -481,18 +582,17 @@ class ApiActivistCodes
   /**
    * Queues a change for verifyActivistCodeChange(). The code's ID is stored,
    * not just its name, since after an election the name goes to a new code.
-   * $firstQueuedAt is set when the change is being sent again, and is when
-   * it was first queued.
+   * $extra can have firstQueuedAt, set when the change is being sent again
+   * to when it was first queued, or minAge and late for a late check.
    */
   private function queueVerification(array $vanids, string $codeName, int $rid, string $action,
                                      int $database, string $committee, string $source,
-                                     int $firstQueuedAt = 0): void
+                                     array $extra = []): void
   {
     if (empty($vanids) || !Drupal::hasService('queue')) {
       return;
     }
-    $retry = $firstQueuedAt ? ['firstQueuedAt' => $firstQueuedAt] : [];
-    Drupal::queue(self::VERIFY_QUEUE)->createItem($retry + [
+    Drupal::queue(self::VERIFY_QUEUE)->createItem($extra + [
       'vanids' => array_values($vanids),
       'codeName' => $codeName,
       'rid' => $rid,

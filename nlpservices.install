@@ -176,6 +176,22 @@ function nlpservices_schema(): array
 {
   $schema = [];
 
+  $schema['nlp_ac_history'] = [
+    'description' => 'NLPVoterAC changes sent to VAN and checks that found the code missing, to look for a pattern.',
+    'fields' => [
+      'hIndex' => [ 'type' => 'serial', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ],
+      'vanid' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, ],
+      'event' => [ 'type' => 'varchar', 'length' => 16, 'not null' => TRUE, 'description' => 'Apply, Remove, Apply refused, Remove refused or Missing.', ],
+      'source' => [ 'type' => 'varchar', 'length' => 255, 'description' => 'What made the change or check.', ],
+      'created' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'not null' => TRUE, 'description' => 'Unix time of the event.', ],
+    ],
+    'primary key' => [ 'hIndex', ],
+    'indexes' => [
+      'vanid' => [ 'vanid', 'created', ],
+      'created' => [ 'created', ],
+    ],
+  ];
+
   $schema['nlp_awards'] = [
     'description' => 'Participation award status.',
     'fields' => [
