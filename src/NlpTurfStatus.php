@@ -1,4 +1,4 @@
-<?php
+<?php /** @noinspection PhpUnused */
 
 namespace Drupal\nlpservices;
 
@@ -243,6 +243,7 @@ class NlpTurfStatus
    * already passed.  Used by cron to populate the turf AC check queue.
    *
    * @return array  Flat list of status records (associative arrays).
+   * Used in .module cron hook.
    */
   public function getExpiredPendingTurfStatuses(): array
   {
