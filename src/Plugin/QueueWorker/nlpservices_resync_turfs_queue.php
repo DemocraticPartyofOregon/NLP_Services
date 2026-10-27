@@ -12,10 +12,12 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 /**
  * A queue worker for processing matchback reports.
  *
+ * No cron time is set, so core cron doesn't run this queue.  It is run by
+ * nlpservices_cron() through NlpCronRunner, in priority order.
+ *
  * @QueueWorker(
  *   id = "nlpservices_resync_turfs_queue",
- *   title = @Translation("Turf resync."),
- *   cron = {"time" = 1800}
+ *   title = @Translation("Turf resync.")
  * )
  */
 class nlpservices_resync_turfs_queue extends QueueWorkerBase implements ContainerFactoryPluginInterface {

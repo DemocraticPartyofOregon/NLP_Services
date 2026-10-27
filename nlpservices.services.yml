@@ -90,6 +90,10 @@ services:
     arguments: [ '@config.factory', '@nlpservices.imap', '@language_manager' , '@plugin.manager.mail',
                  '@nlpservices.html_text' , '@nlpservices.send_email', '@nlpservices.drupal_user' ]
 
+  nlpservices.cron_runner:
+    class: Drupal\nlpservices\NlpCronRunner
+    arguments: [ '@queue', '@plugin.manager.queue_worker', '@datetime.time' ]
+
   nlpservices.crosstab_counts:
     class: Drupal\nlpservices\NlpCrosstabCounts
     arguments: [ '@database' ]

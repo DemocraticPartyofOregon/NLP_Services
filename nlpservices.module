@@ -381,11 +381,18 @@ function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
  * VoteBuilder.   If so, the turfs are resynced.  This is done at night so that the
  * resyncing process does not interfere with the normal operation of the system.
  *
+ * The tasks run in priority order under one time budget, see NlpCronRunner.
+ * MiniVAN reports first, then matchbacks.  The other tasks run only when the
+ * matchback import is done, and the queues stop when the budget is used, to be
+ * continued on the next cron run.
+ *
  * @return void
  */
 function nlpservices_cron (): void
 {
   $nlpConfigurationObj = Drupal::service('nlpservices.configuration');
+  $cronRunnerObj = Drupal::service('nlpservices.cron_runner');
+  $cronRunnerObj->startBudget();
 
   $nlpConfigObj = Drupal::service('config.factory')->get('nlpservices.configuration');
   $cronConfiguration = $nlpConfigObj->get('nlpservices-cron-configuration');
@@ -429,6 +436,12 @@ function nlpservices_cron (): void
       $queue->createItem(['filePath' => $filePath]);
     }
   }
+  // A large matchback file is imported in chunks over several cron runs.  The
+  // other tasks wait until it is done.
+  if (!$cronRunnerObj->runQueue('nlpservices_matchback_queue')) {
+    Drupal::logger('nlpservices')->notice('Matchback import continues on the next cron run, other cron tasks skipped.');
+    return;
+  }
 
   // Check for emails sent to notifications that should have been sent to the coordinator.
   $enableEmailRedirect = !empty($cronConfiguration['enableEmailRedirect']);
@@ -438,6 +451,35 @@ function nlpservices_cron (): void
     $notificationRepliesObj->emailForward();
   }
 
+  // Queue expired turf status records for activist code verification.
+  $enableTurfAcCheck = !empty($cronConfiguration['enableTurfAcCheck']);
+  // A record stays expired until it is validated, so queue the expired records
+  // only once the records queued before are checked.
+  if ($enableTurfAcCheck && $cronRunnerObj->queueIsEmpty('nlpservices_turf_ac_check_queue')) {
+    $turfStatusObj = Drupal::service('nlpservices.turf_status');
+    try {
+      $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
+    } catch (Exception $e) {
+      Drupal::logger('nlpservices')->error('enableTurfAcCheck cron error: @msg', ['@msg' => $e->getMessage()]);
+    }
+    if (!empty($expiredRecords)) {
+      $queue = Drupal::queue('nlpservices_turf_ac_check_queue');
+      foreach ($expiredRecords as $record) {
+        $queue->createItem($record);
+      }
+      Drupal::logger('nlpservices')->notice(
+        'Queued @count expired turf status record(s) for activist code verification.',
+        ['@count' => count($expiredRecords)]
+      );
+    }
+  }
+
+  // Background tasks, run with the time left.
+  $cronRunnerObj->runQueue('nlpservices_ac_verify_queue');
+  $cronRunnerObj->runQueue('nlpservices_turf_ac_check_queue');
+
+  // Lowest priority, run only when enabled.  Items left in these queues when
+  // the task is turned off wait until it is turned on again.
   // Check if turf resync is enabled but run the check only at night, assumes standard 3-hour cron frequency.
   $enableTurfResync = !empty($cronConfiguration['enableTurfResync']);
   $hour = (int) date('G');
@@ -514,25 +556,11 @@ function nlpservices_cron (): void
     }
   }
 
-  // Queue expired turf status records for activist code verification.
-  $enableTurfAcCheck = !empty($cronConfiguration['enableTurfAcCheck']);
-  if ($enableTurfAcCheck) {
-    $turfStatusObj = Drupal::service('nlpservices.turf_status');
-    try {
-      $expiredRecords = $turfStatusObj->getExpiredPendingTurfStatuses();
-    } catch (Exception $e) {
-      Drupal::logger('nlpservices')->error('enableTurfAcCheck cron error: @msg', ['@msg' => $e->getMessage()]);
-    }
-    if (!empty($expiredRecords)) {
-      $queue = Drupal::queue('nlpservices_turf_ac_check_queue');
-      foreach ($expiredRecords as $record) {
-        $queue->createItem($record);
-      }
-      Drupal::logger('nlpservices')->notice(
-        'Queued @count expired turf status record(s) for activist code verification.',
-        ['@count' => count($expiredRecords)]
-      );
-    }
+  if ($enableTurfResync) {
+    $cronRunnerObj->runQueue('nlpservices_resync_turfs_queue');
+  }
+  if ($enableVoterAcCheck) {
+    $cronRunnerObj->runQueue('nlpservices_voter_ac_queue');
   }
 
 }
