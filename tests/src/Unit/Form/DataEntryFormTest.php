@@ -789,8 +789,9 @@ class DataEntryFormTest extends UnitTestCase {
 
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
         $reportedDate = $report['contactDate'];
+        return TRUE;
       });
 
     $formState = new FormState();
@@ -1073,8 +1074,9 @@ class DataEntryFormTest extends UnitTestCase {
   public function testSubmitFormSaveReportsUsesChosenContactDate(): void {
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
         $reportedDate = $report['contactDate'];
+        return TRUE;
       });
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $formState->setValue('canvassDate', '2026-10-09');
@@ -1087,8 +1089,9 @@ class DataEntryFormTest extends UnitTestCase {
   public function testSubmitFormSaveReportsDefaultsContactDateToToday(): void {
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): void {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
         $reportedDate = $report['contactDate'];
+        return TRUE;
       });
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
