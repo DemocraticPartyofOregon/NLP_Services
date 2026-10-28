@@ -288,6 +288,45 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->nlsMock->expects($this->once())->method('resultsReported');
     $this->awardsMock->expects($this->once())->method('nlParticipation');
 
+    $this->assertTrue($this->service->noContactResponse(
+      $this->baseReport(),
+      $this->baseAction(['notContacted' => 2])
+    ));
+  }
+
+  /**
+   * @covers ::noContactResponse
+   */
+  public function testNoContactResponseSavesNothingWhenResponseUnknown(): void {
+    // A response id that isn't one of the SMS Text responses has no name.
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('SMS Text');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('');
+
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
+    $this->votersMock->expects($this->never())->method('updateTurfVoter');
+    $this->nlsMock->expects($this->never())->method('resultsReported');
+    $this->awardsMock->expects($this->never())->method('nlParticipation');
+
+    $this->assertFalse($this->service->noContactResponse(
+      $this->baseReport(),
+      $this->baseAction(['notContacted' => 2])
+    ));
+  }
+
+  /**
+   * @covers ::noContactResponse
+   */
+  public function testNoContactResponseSavesResponseName(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Not Home');
+    $this->votersMock->method('getVoterById')->willReturn([]);
+
+    $this->reportsMock->expects($this->once())->method('setNlReport')
+      ->with($this->callback(static fn($r) => $r['value'] === 'Not Home' && $r['contactType'] === 'Walk'))
+      ->willReturn(5);
+
     $this->service->noContactResponse(
       $this->baseReport(),
       $this->baseAction(['notContacted' => 2])

@@ -459,7 +459,11 @@ class DataEntryForm extends FormBase
             break;
           case 'notContacted':
             $action['turfIndex'] = $form_state->get('turfIndex');
-            $this->dataEntryReportsObj->noContactResponse($report,$action);
+            if (!$this->dataEntryReportsObj->noContactResponse($report,$action)) {
+              $voterName = $voterArrays[$vanid]['firstName'] . ' ' . $voterArrays[$vanid]['lastName'];
+              $messenger->addWarning('The response for ' . $voterName . ' was not saved.  Choose the'
+                . ' response again and save.');
+            }
             break;
           case 'moved':
             $action['turfIndex'] = $form_state->get('turfIndex');
