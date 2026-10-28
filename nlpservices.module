@@ -508,6 +508,7 @@ function nlpservices_cron (): void
   // Check turfs for voters missing NLPVoterAC, only at night between midnight
   // and 3am.  Each cron run checks the next turfs in the time left, and the
   // next night goes on from there, so all turfs are checked over several nights.
+  // When a pass of all turfs finishes, the next pass waits for the next night.
   $enableVoterAcCheck = !empty($cronConfiguration['enableVoterAcCheck']);
   $hour = (int) date('G');
   $acCheckTime = ($hour >= 0 && $hour < 3) || $nlpConfigurationObj->getDebug();

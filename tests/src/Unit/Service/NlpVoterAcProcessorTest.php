@@ -365,7 +365,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->buildService()->processTurf(5);
 
-      $this->assertSame(['cursor' => 4, 'passStart' => 1700000000, 'turfs' => 3, 'voters' => 103, 'missing' => 2],
+      $this->assertEquals(['cursor' => 4, 'passStart' => 1700000000, 'passEnd' => 0, 'turfs' => 3, 'voters' => 103, 'missing' => 2],
         $this->state[NlpVoterAcProcessor::CHECK_STATE]);
     }
 
@@ -418,14 +418,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(1700000000, $this->state[NlpVoterAcProcessor::CHECK_STATE]['passStart']);
     }
 
-    public function testQueueNextTurfsAfterLastTurfLogsThePassAndStartsAgain(): void {
+    public function testQueueNextTurfsAfterLastTurfLogsThePassAndQueuesNothing(): void {
       $this->setStateMock();
       $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 9, 'passStart' => 1700000000,
         'turfs' => 3, 'voters' => 150, 'missing' => 4];
       $items = [];
       $this->setQueueMock($items);
-      $this->turfsMock->method('getTurfIndexesAfter')
-        ->willReturnCallback(fn(int $after) => $after === 0 ? [3, 5, 9] : []);
+      $this->turfsMock->expects($this->once())->method('getTurfIndexesAfter')->with(9)->willReturn([]);
       $loggerMock = $this->createMock(LoggerInterface::class);
       $loggerMock->expects($this->once())->method('notice')
         ->with($this->stringContains('finished a pass'), $this->callback(fn(array $context) =>
@@ -434,13 +433,47 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
       \Drupal::getContainer()->set('logger.factory', $loggerFactoryMock);
 
-      $this->assertSame(3, $this->buildService()->queueNextTurfs());
+      $this->assertSame(0, $this->buildService()->queueNextTurfs());
 
+      $this->assertSame([], $items);
       $check = $this->state[NlpVoterAcProcessor::CHECK_STATE];
       $this->assertSame(9, $check['cursor']);
+      $this->assertSame(3, $check['turfs']);
+      $this->assertEqualsWithDelta(time(), $check['passEnd'], 5);
+    }
+
+    public function testQueueNextTurfsAfterAPassFinishedTodayQueuesNothing(): void {
+      $this->setStateMock();
+      $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 9, 'passStart' => 1700000000,
+        'passEnd' => time(), 'turfs' => 3, 'voters' => 150, 'missing' => 4];
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->expects($this->never())->method('getTurfIndexesAfter');
+
+      $this->assertSame(0, $this->buildService()->queueNextTurfs());
+
+      $this->assertSame([], $items);
+      $this->assertSame(9, $this->state[NlpVoterAcProcessor::CHECK_STATE]['cursor']);
+    }
+
+    public function testQueueNextTurfsAfterAPassFinishedOnAnEarlierDayStartsAgain(): void {
+      $this->setStateMock();
+      $this->state[NlpVoterAcProcessor::CHECK_STATE] = ['cursor' => 9, 'passStart' => 1700000000,
+        'passEnd' => time() - 86400, 'turfs' => 3, 'voters' => 150, 'missing' => 4];
+      $items = [];
+      $this->setQueueMock($items);
+      $this->turfsMock->expects($this->once())->method('getTurfIndexesAfter')
+        ->with(0, NlpVoterAcProcessor::TURFS_PER_SLICE)->willReturn([3, 5, 9]);
+
+      $this->assertSame(3, $this->buildService()->queueNextTurfs());
+
+      $this->assertSame([['turfIndex' => 3], ['turfIndex' => 5], ['turfIndex' => 9]], $items);
+      $check = $this->state[NlpVoterAcProcessor::CHECK_STATE];
+      $this->assertSame(9, $check['cursor']);
+      $this->assertSame(0, $check['passEnd']);
       $this->assertSame(0, $check['turfs']);
       $this->assertSame(0, $check['missing']);
-      $this->assertGreaterThan(1700000000, $check['passStart']);
+      $this->assertEqualsWithDelta(time(), $check['passStart'], 5);
     }
 
     public function testQueueNextTurfsWithNoTurfsQueuesNothing(): void {

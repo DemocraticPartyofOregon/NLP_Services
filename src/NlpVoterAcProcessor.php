@@ -11,12 +11,14 @@ class NlpVoterAcProcessor {
    * The turfs queued at a time for the nightly check.  The cron time budget
    * sets how many are checked in a night, and the next night goes on from
    * the last turf checked, so all turfs are checked over several nights.
+   * When a pass of all turfs finishes, the next pass waits for the next day.
    */
   const int TURFS_PER_SLICE = 100;
 
   /**
    * State of the nightly check: keys cursor (the last turf index queued),
-   * passStart, turfs, voters and missing (counts for the current pass).
+   * passStart, passEnd (when the last pass finished, 0 while a pass is under
+   * way), turfs, voters and missing (counts for the current pass).
    */
   const string CHECK_STATE = 'nlpservices.voter_ac_check';
 
@@ -157,14 +159,21 @@ class NlpVoterAcProcessor {
    * queueNextTurfs
    *
    * Queues the next turfs for the nightly check, after the last turf queued.
-   * After the last turf, the counts for the pass are logged and the next
-   * pass starts again from the first turf.
+   * After the last turf, the counts for the pass are logged and nothing more
+   * is queued that day.  The next pass starts from the first turf on a later
+   * day, so each turf is checked once a pass and the pass is logged once.
    *
    * @return int - the count of turfs queued.
    */
   public function queueNextTurfs(): int
   {
     $check = $this->getCheckState();
+    if (!empty($check['passEnd'])) {
+      if (date('Y-m-d', $check['passEnd']) === date('Y-m-d')) {
+        return 0;
+      }
+      $check = ['cursor' => 0, 'passStart' => 0, 'passEnd' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0];
+    }
     $turfIndexes = $this->turfsObj->getTurfIndexesAfter($check['cursor'], self::TURFS_PER_SLICE);
     if (empty($turfIndexes) && $check['cursor'] > 0) {
       Drupal::logger('nlpservices')->notice(
@@ -177,8 +186,9 @@ class NlpVoterAcProcessor {
           '@start'   => date('Y-m-d', $check['passStart'] ?: time()),
         ]
       );
-      $check = ['cursor' => 0, 'passStart' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0];
-      $turfIndexes = $this->turfsObj->getTurfIndexesAfter(0, self::TURFS_PER_SLICE);
+      $check['passEnd'] = time();
+      Drupal::state()->set(self::CHECK_STATE, $check);
+      return 0;
     }
     if (empty($turfIndexes)) {
       return 0;
@@ -201,7 +211,7 @@ class NlpVoterAcProcessor {
   private function getCheckState(): array
   {
     return Drupal::state()->get(self::CHECK_STATE, []) + [
-      'cursor' => 0, 'passStart' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0,
+      'cursor' => 0, 'passStart' => 0, 'passEnd' => 0, 'turfs' => 0, 'voters' => 0, 'missing' => 0,
     ];
   }
 
