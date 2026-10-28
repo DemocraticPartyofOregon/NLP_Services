@@ -157,19 +157,28 @@ class NlpDataEntryReports
    * @param array $action - The action array containing the contact method and attempt result.
    *             'contactMethod' => The contact method ID.
    *             'notContacted' => The response ID for not contacted.
+   * @return bool - FALSE if the response isn't one of the method's responses
+   *             and nothing was saved.
    */
-  public function noContactResponse( array $report, array $action): void
+  public function noContactResponse( array $report, array $action): bool
   {
     $contactMethodId = $action['contactMethod'];
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
     $responseId = $action['notContacted'];
+
+    // A response that isn't one of this method's responses has no name, and
+    // its report would show as an attempt with an empty result.  Save nothing.
+    $responseName = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
+    if (empty($responseName)) {
+      return FALSE;
+    }
 
     // Save the contact attempt in NLP Services.
     $report['type'] = 'contact';
     $report['text'] = '';
     $report['cycle'] = $this->nlpConfigurationObj->getCycle();
     $report['contactType'] = $contactMethod;
-    $report['value'] = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
+    $report['value'] = $responseName;
     $rIndex = $this->reportsObj->setNlReport($report);
 
     //  Report the canvass response code to VoteBuilder.
@@ -178,7 +187,6 @@ class NlpDataEntryReports
     $surveyResponse['rid'] = $responseId;
     $surveyResponse['ContactTypeCode'] = $contactMethodId;
     $vanid = $report['vanid'];
-    $responseName = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
     $altPhone = $this->phoneContact($vanid,$contactMethod,$responseName);
     if (!empty($altPhone['phoneNo'])) {
       $surveyResponse['phoneNumber'] = $altPhone['phoneNo'];
@@ -206,8 +214,9 @@ class NlpDataEntryReports
     // This NL has reported results.
     $this->nlsObj->resultsReported($report['mcid'], $report['county']);
     $this->awardsObj->nlParticipation($report['mcid'], 'Completed');
+    return TRUE;
   }
-  
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * badPhone
    *

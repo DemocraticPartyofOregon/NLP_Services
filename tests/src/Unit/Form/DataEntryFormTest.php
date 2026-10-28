@@ -918,7 +918,20 @@ class DataEntryFormTest extends UnitTestCase {
    * @covers ::submitForm
    */
   public function testSubmitFormNotContactedCallsNoContactResponse(): void {
-    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse');
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')->willReturn(TRUE);
+    $this->messengerMock->expects($this->never())->method('addWarning');
+    $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * @covers ::submitForm
+   */
+  public function testSubmitFormNotContactedWarnsWhenResponseNotSaved(): void {
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(FALSE);
+    $this->messengerMock->expects($this->once())->method('addWarning')
+      ->with($this->stringContains('Voter Person'));
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
     $this->form->submitForm($form, $formState);
