@@ -556,6 +556,34 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(0, $counts['newRecordCount'] + $counts['skippedRecordCount'] + $counts['rejectedRecordCount']);
     }
 
+    public function testQueueReportsSkipsReportWhenNlIsMissing(): void {
+      $this->setUpMinivanConfiguration();
+      $this->votersMock->method('getMcidByVanid')->willReturn(42);
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->stateMock->method('get')->willReturn([42 => time()]);  // Coordinator already warned today.
+      $this->reportsMock->expects($this->never())->method('reportExists');
+      $this->reportsMock->expects($this->never())->method('setNlReport');
+      $this->votersMock->expects($this->never())->method('updateTurfVoter');
+      $this->nlsMock->expects($this->never())->method('resultsReported');
+      $this->drupalUserMock->expects($this->never())->method('updateUser');
+
+      $counts = $this->buildService()->processMinivanQueueReports([$this->canvassReport(101)], 'canvass');
+
+      $this->assertSame(1, $counts['recordCount']);
+      $this->assertSame(1, $counts['missingNlCount']);
+      $this->assertSame(0, $counts['newRecordCount'] + $counts['skippedRecordCount'] + $counts['rejectedRecordCount']);
+    }
+
+    public function testQueueReportsWarnsCoordinatorWhenNlIsMissing(): void {
+      $this->setUpMinivanConfiguration();
+      $this->votersMock->method('getMcidByVanid')->willReturn(42);
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->stateMock->expects($this->once())->method('get')
+        ->with(NlpMinivan::MISSING_NL_STATE, [])->willReturn([42 => time()]);
+
+      $this->buildService()->processMinivanQueueReports([$this->canvassReport(101)], 'canvass');
+    }
+
     // -------------------------------------------------------------------------
     // notifyMissingNl()
     // -------------------------------------------------------------------------

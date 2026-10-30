@@ -421,7 +421,8 @@ function nlpservices_cron (): void
           ' New=' . $counts['newRecordCount'] .
           ' Skipped=' . $counts['skippedRecordCount'] .
           ' Rejected=' . $counts['rejectedRecordCount'] .
-          ' Not NLP=' . $counts['notNlpCount'];
+          ' Not NLP=' . $counts['notNlpCount'] .
+          ' Missing NL=' . $counts['missingNlCount'];
         Drupal::logger('nlpservices')->notice($msg);
       }
     } catch (Exception $e) {
