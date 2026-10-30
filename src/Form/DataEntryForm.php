@@ -219,9 +219,18 @@ class DataEntryForm extends FormBase
     ];
 
     $form_state->set('voterArrays', $voterArrays);
-    $form_state->setValue('dataEntry', NULL);
     $user_input = $form_state->getUserInput() ?? [];
-    unset($user_input['dataEntry']);
+    if($contactMethodRebuild AND is_array($user_input['dataEntry'] ?? NULL)) {
+      // Keep what the NL entered for the other voters, or each method change
+      // erases them and only the last voter changed is saved.  The changed
+      // voter's not contacted responses belong to the old method, so clear
+      // that choice only.
+      $changedVanid = $form_state->get('contactMethodVanid');
+      unset($user_input['dataEntry']['row_2_'.$changedVanid]['col_2_4']['line_2_4_2']);
+    } else {
+      $form_state->setValue('dataEntry', NULL);
+      unset($user_input['dataEntry']);
+    }
     $form_state->setUserInput($user_input);
 
     $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable($voterArrays);
@@ -264,6 +273,7 @@ class DataEntryForm extends FormBase
       $rowPos = strpos($elementClicked,'row_2_');
       $vanidEnd = strpos($elementClicked,']',$rowPos+6);
       $vanid = substr($elementClicked,$rowPos+6,$vanidEnd-$rowPos-6);
+      $form_state->set('contactMethodVanid',$vanid);
 
       $chosenMethodCode = $triggeringElement['#value'];
       $contactMethods = $this->nlpConfigurationObj->getContactMethods();

@@ -477,6 +477,77 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertFalse($formState->get('contactMethodRebuild'));
   }
 
+  /**
+   * Builds the voter table from two voters with each voter's entries posted.
+   *
+   * @param bool $contactMethodRebuild - TRUE for a contact method change of
+   *   voter 1.
+   * @return FormState
+   */
+  private function buildFormWithEnteredResponses(bool $contactMethodRebuild): FormState {
+    $this->configureValidSession();
+    $voters = [
+      1 => ['vanid' => 1, 'firstName' => 'Ann', 'lastName' => 'Jones'],
+      2 => ['vanid' => 2, 'firstName' => 'Bob', 'lastName' => 'Smith'],
+    ];
+    $this->dataEntryVotersMock->method('fetchVoters')->willReturn($voters);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Walk', 1 => 'SMS Text']);
+    $this->dataEntryVoterListDisplayMock->method('buildDataEntryVoterArray')
+      ->willReturnCallback(static fn($voter) => $voter);
+    $this->dataEntryVoterListDisplayMock->method('buildVoterDataEntryTable')
+      ->willReturn(['#type' => 'table']);
+
+    $formState = new FormState();
+    $formState->set('reenter', TRUE);
+    $formState->set('page', 'voters');
+    $formState->set('turfIndex', 42);
+    $formState->set('voters', $voters);
+    $formState->set('currentPage', 0);
+    $formState->set('mcid', 101);
+    $formState->set('contactMethodRebuild', $contactMethodRebuild);
+    $formState->set('contactMethodVanid', '1');
+    $row = static fn(int $method, int $response) => [
+      'col_2_2' => ['line_2_2_2' => $method],
+      'col_2_3' => ['line_2_3_3' => 0],
+      'col_2_4' => ['line_2_4_2' => $response],
+    ];
+    $formState->setUserInput(['dataEntry' => [
+      'row_2_1' => $row(1, 5),
+      'row_2_2' => $row(1, 7),
+      'row_4_2' => ['col_4_1' => ['line_4_1_2' => 'Texted twice']],
+    ]]);
+
+    $this->form->buildForm([], $formState);
+    return $formState;
+  }
+
+  /**
+   * A contact method change must not erase what the NL entered for the other
+   * voters, or only the last voter changed is saved.
+   *
+   * @covers ::buildForm
+   */
+  public function testBuildFormContactMethodRebuildKeepsOtherVotersEntries(): void {
+    $input = $this->buildFormWithEnteredResponses(TRUE)->getUserInput()['dataEntry'];
+
+    // The changed voter keeps the new method but not the old method's response.
+    $this->assertSame(1, $input['row_2_1']['col_2_2']['line_2_2_2']);
+    $this->assertArrayNotHasKey('line_2_4_2', $input['row_2_1']['col_2_4']);
+    $this->assertSame(7, $input['row_2_2']['col_2_4']['line_2_4_2']);
+    $this->assertSame('Texted twice', $input['row_4_2']['col_4_1']['line_4_1_2']);
+  }
+
+  /**
+   * After a save or a page change the table shows fresh rows.
+   *
+   * @covers ::buildForm
+   */
+  public function testBuildFormOtherRebuildClearsEntries(): void {
+    $input = $this->buildFormWithEnteredResponses(FALSE)->getUserInput();
+
+    $this->assertArrayNotHasKey('dataEntry', $input);
+  }
+
   // ---------------------------------------------------------------------------
   // validateForm
   // ---------------------------------------------------------------------------
@@ -517,6 +588,7 @@ class DataEntryFormTest extends UnitTestCase {
 
     $this->assertTrue($formState->get('reenter'));
     $this->assertTrue($formState->get('contactMethodRebuild'));
+    $this->assertSame('99999', $formState->get('contactMethodVanid'));
   }
 
   /**
