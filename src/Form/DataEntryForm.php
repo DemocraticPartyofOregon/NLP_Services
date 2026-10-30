@@ -45,6 +45,10 @@ class DataEntryForm extends FormBase
   // see lock() and savedSubmissions().
   protected ?LockBackendInterface $lock = NULL;
   protected ?KeyValueExpirableFactoryInterface $keyValueExpirable = NULL;
+  // Unused.  A form object cached when this held the store still has it, and
+  // without it declared unserializing logs a dynamic property deprecation.
+  /** @noinspection PhpUnused */
+  protected $savedSubmissions = NULL;
 
   public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
                                 $reportsObj, $drupalUserObj, $dataEntryVotersObj,
