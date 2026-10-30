@@ -47,6 +47,7 @@ class NlpMinivan {
 
   public array $minivanCountKeys = [
     'recordCount','newRecordCount','skippedRecordCount','rejectedRecordCount','notNlpCount',
+    'missingNlCount',
   ];
 
   private NlpReports $nlpReportsObj;
@@ -591,7 +592,8 @@ class NlpMinivan {
    * Fetch and process all pending MiniVAN emails directly in the cron hook without queuing.
    * Loops until no unseen emails remain.  Returns aggregated counts across all emails processed.
    *
-   * @return array  Keys: recordCount, newRecordCount, skippedRecordCount, rejectedRecordCount, notNlpCount
+   * @return array  Keys: recordCount, newRecordCount, skippedRecordCount, rejectedRecordCount, notNlpCount,
+   *   missingNlCount
    * @noinspection PhpUnused
    * Used in nlpservices.module
    */
@@ -779,8 +781,12 @@ class NlpMinivan {
           $commonResult['lastName'] = $nl['lastName'];
           $commonResult['county'] = $nl['county'];
         } else {
-          // The voter's turf is assigned to an NL who is no longer in the NLs table.
+          // The voter's turf is assigned to an NL who is no longer in the NLs table.  Skip the
+          // report.  MiniVAN sends it again each night for at least a week, so it is saved
+          // with the NL's name and county once the NL is back on the list.
           $this->notifyMissingNl($mcid);
+          $counts['missingNlCount']++;
+          continue;
         }
       } else {
         // There is no NL assigned to this voter.
@@ -817,7 +823,7 @@ class NlpMinivan {
 
       // A new report shows the NL is active.  A report sent again in a later
       // MiniVAN email doesn't.
-      if (!empty($action['counts']['newRecordCount']) && !empty($nl)) {
+      if (!empty($action['counts']['newRecordCount'])) {
         $user = $this->drupalUserObj->getUserByMcid($mcid);
         if(!empty($user)) {
           $update = [
@@ -902,8 +908,9 @@ class NlpMinivan {
     $subject = "NL missing from the list of active NLs";
     $message = "<p>$firstName,</p>";
     $message .= "<p>$nlName (MCID: $mcid) reported results with MiniVAN for a voter in their turf, but $nlName
- is missing from the list of active NLs in NLP Services.  These results can't be credited to $nlName
- until this is corrected.</p>";
+ is missing from the list of active NLs in NLP Services.  These results can't be saved for $nlName
+ until this is corrected.  MiniVAN sends results again each night for at least a week, so they will
+ be saved once $nlName is back on the list.</p>";
     $message .= "<p>To correct this, please add $nlName back to the list of active NLs in VAN and then sync
  the list of active NLs with NLP Services again.</p>";
     if(!$this->sendEmailObj->sendEmail('missing_nl_notification', $coordinator['email'], $subject, $message)) {
