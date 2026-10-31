@@ -130,7 +130,6 @@ class DataEntryForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $form['#attached']['library'][] = 'nlpservices/data-entry-table';
-    $form['#attached']['library'][] = 'nlpservices/button';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
     $form['#attached']['library'][] = 'nlpservices/table-helper';
     // Core's single-submit behavior ignores a second click of Submit.
