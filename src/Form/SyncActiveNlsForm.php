@@ -75,7 +75,6 @@ class SyncActiveNlsForm extends FormBase
   {
     $form['#attached']['library'][] = 'nlpservices/info-boxes';
     $form['#attached']['library'][] = 'nlpservices/table-helper';
-    $form['#attached']['library'][] = 'nlpservices/button';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
     // Core's single-submit guard: a double click on Synchronize otherwise sends
     // a second POST that hides the first one's redirect to the batch page.

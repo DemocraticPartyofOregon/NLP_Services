@@ -212,7 +212,9 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
       $this->assertContains('nlpservices/info-boxes', $result['#attached']['library']);
-      $this->assertContains('nlpservices/button', $result['#attached']['library']);
+      // button.css gives every submit (Drupal's .button class) a 175px blue
+      // block, which broke the data entry page's navigation bar.
+      $this->assertNotContains('nlpservices/button', $result['#attached']['library']);
     }
 
     public function testBuildFormAttachesCoreSingleSubmitGuard(): void {
