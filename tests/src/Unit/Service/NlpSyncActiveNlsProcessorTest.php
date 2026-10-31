@@ -198,6 +198,40 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // processBatch — deleting the old list of active NLs
+    // -------------------------------------------------------------------------
+
+    public function testProcessBatchFirstStepDeletesTheOldNls(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101)]);
+      $this->apiNlsMock->method('getNls')->willReturn([]);
+      $this->nlsMock->expects($this->once())->method('deleteNls')->with('Denver');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+    }
+
+    public function testProcessBatchLaterStepDoesNotDeleteTheNlsAgain(): void {
+      $uri = $this->writeTempCsv([$this->csvHeader(), $this->csvRow(101), $this->csvRow(102)]);
+      $this->apiNlsMock->method('getNls')->willReturn([]);
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+
+      // The next step runs in a new request with a fresh processor.
+      $this->nlsMock = $this->createMock(NlpNls::class);
+      $this->nlsMock->expects($this->never())->method('deleteNls');
+      $context['finished'] = 0;
+      $this->buildProcessor()->processBatch($this->baseArg($uri), $context);
+    }
+
+    public function testProcessBatchUnreadableFileKeepsTheOldNls(): void {
+      $this->nlsMock->expects($this->never())->method('deleteNls');
+
+      $context = [];
+      $this->buildProcessor()->processBatch($this->baseArg('/nonexistent/missing_file.csv'), $context);
+    }
+
+    // -------------------------------------------------------------------------
     // processBatch — NL not returned by API (unknown mcid)
     // -------------------------------------------------------------------------
 

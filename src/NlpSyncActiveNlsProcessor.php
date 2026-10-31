@@ -98,6 +98,9 @@ class NlpSyncActiveNlsProcessor {
     $context['finished'] = 0;
 
     if (empty($context['sandbox']['seek'])) {
+      // First step: replace the old list of active NLs now that the rebuild
+      // is actually running and the export file is readable.
+      $this->nlsObj->deleteNls($county);
       $context['sandbox']['recordCount'] = 0;
       $hdr      = fgetcsv($fh, escape: '');
       $fieldPos = array_flip($hdr);

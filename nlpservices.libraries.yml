@@ -77,7 +77,7 @@ turf-delivery-message:
   css:
     layout:
       css/turf-delivery-message.css: {}
-navigate-button:
+button:
   version: "1.0.0"
   css:
     layout:
