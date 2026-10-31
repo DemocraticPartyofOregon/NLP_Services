@@ -13,6 +13,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\Form\SyncActiveNlsForm;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\MockObject\MockObject;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
   class SyncActiveNlsFormTest extends UnitTestCase {
@@ -59,13 +60,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       );
     }
 
-    private function buildFormStateMock(): FormStateInterface {
+    private function buildFormStateMock(): FormStateInterface&MockObject {
       $mock = $this->createMock(FormStateInterface::class);
       $mock->method('set')->willReturnSelf();
       return $mock;
     }
 
-    private function setupContainerWithMessenger(): MessengerInterface {
+    private function setupContainerWithMessenger(): MessengerInterface&MockObject {
       $messengerMock = $this->createMock(MessengerInterface::class);
       $container = new ContainerBuilder();
       $container->set('messenger', $messengerMock);
@@ -211,6 +212,31 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
       $this->assertContains('nlpservices/info-boxes', $result['#attached']['library']);
       $this->assertContains('nlpservices/button', $result['#attached']['library']);
+    }
+
+    public function testBuildFormAttachesCoreSingleSubmitGuard(): void {
+      // core/drupal.form ignores a second submit with the same values, so a
+      // double click on Synchronize can't hide the redirect to the batch page.
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
+      $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
+      $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
+      $this->assertContains('core/drupal.form', $result['#attached']['library']);
+    }
+
+    public function testAttachedNlpLibrariesAreDefined(): void {
+      // An undefined library is skipped silently, so its CSS never loads.
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
+      $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
+      $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
+      $defined = file_get_contents(dirname(__DIR__, 4) . '/nlpservices.libraries.yml');
+      foreach ($result['#attached']['library'] as $library) {
+        if (!str_starts_with($library, 'nlpservices/')) { continue; }
+        $name = substr($library, strlen('nlpservices/'));
+        $this->assertMatchesRegularExpression('/^' . preg_quote($name, '/') . ':\s*$/m', $defined,
+          "Library $library is not defined in nlpservices.libraries.yml.");
+      }
     }
 
     // -------------------------------------------------------------------------

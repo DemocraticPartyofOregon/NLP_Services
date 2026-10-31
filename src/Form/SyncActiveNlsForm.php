@@ -5,7 +5,6 @@ namespace Drupal\nlpservices\Form;
 use Drupal;
 use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\File\FileExists;
-use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Exception;
@@ -77,6 +76,9 @@ class SyncActiveNlsForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/table-helper';
     $form['#attached']['library'][] = 'nlpservices/button';
     $form['#attached']['library'][] = 'nlpservices/hint-note';
+    // Core's single-submit guard: a double click on Synchronize otherwise sends
+    // a second POST that hides the first one's redirect to the batch page.
+    $form['#attached']['library'][] = 'core/drupal.form';
 
     $county = $this->nlpSessionObj->getCounty();
     if (empty($county)) {
@@ -168,7 +170,8 @@ the NLP Services Admin.</p>',
       $this->nls->endActiveNlsSync($county);
       return;
     }
-    $this->nls->deleteNls($county);
+    // The old list of active NLs is deleted by the first batch step, not here,
+    // so a submission that never reaches the batch page leaves it intact.
     $remoteUrl = $exportJob['downloadUrl'];
 
     // Create a temporary file with a unique name and copy the remote file to it.
