@@ -128,7 +128,7 @@ class NlpConfiguration
   public function getElectionName(): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
-    return $electionDates['nlp_cycle_name'];
+    return empty($electionDates['nlp_cycle_name'])?'':$electionDates['nlp_cycle_name'];
   }
 
   /**
@@ -146,8 +146,8 @@ class NlpConfiguration
   public function getElectionDate(bool $formatted = FALSE): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
-    $electionDate = $electionDates['nlp_election_date'];
-    if($formatted) {
+    $electionDate = empty($electionDates['nlp_election_date'])?'':$electionDates['nlp_election_date'];
+    if($formatted && $electionDate !== '') {
       $electionDate = date('F j, Y',strtotime($electionDate));
       try {
         $date = new DateTime($electionDate);
@@ -176,8 +176,8 @@ class NlpConfiguration
   public function getBallotDropDate(bool $formatted = FALSE): string
   {
     $electionDates = $this->nlpConfig->get('nlpservices-election-configuration');
-    $ballotDropDate = $electionDates['nlp_early_voting_start_date'];
-    if($formatted) {
+    $ballotDropDate = empty($electionDates['nlp_early_voting_start_date'])?'':$electionDates['nlp_early_voting_start_date'];
+    if($formatted && $ballotDropDate !== '') {
       $electionDate = date('F j, Y',strtotime($ballotDropDate));
       try {
         $date = new DateTime($electionDate);

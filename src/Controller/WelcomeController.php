@@ -28,10 +28,16 @@ class WelcomeController extends ControllerBase {
     $earlyVotingStartDate = $this->configuration->getBallotDropDate(TRUE);
 
     $body = '<h4><strong>The Neighborhood Leader Program website.&nbsp;</strong></h4>'
-      . '<p><em>By logging in, you are agreeing to keep the information secure and not to share it with any unauthorized person.&nbsp;</em></p>'
-      . '<p>The site is configured for the "' . $electionName . '."<br>'
-      . 'Election date: ' . $electionDate . '<br>'
-      . 'Start date of early voting: ' . $earlyVotingStartDate . '</p>';
+      . '<p><em>By logging in, you are agreeing to keep the information secure and not to share it with any unauthorized person.&nbsp;</em></p>';
+    if ($electionName === '') {
+      // A fresh install has no election configuration yet.
+      $body .= '<p>The election has not been configured yet.</p>';
+    }
+    else {
+      $body .= '<p>The site is configured for the "' . $electionName . '."<br>'
+        . 'Election date: ' . $electionDate . '<br>'
+        . 'Start date of early voting: ' . $earlyVotingStartDate . '</p>';
+    }
 
     return [
       '#markup' => $body,
