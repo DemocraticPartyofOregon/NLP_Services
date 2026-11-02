@@ -203,6 +203,63 @@ class ResponseCodeConfigurationForm extends FormBase {
 
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * buildPhoneRcSubTable
+   *
+   * Build a table of the alternate response codes used to report a phone or
+   * text contact when the NL can't share the phone number they used.  Each
+   * alternate that isn't in the list of response codes from the API is
+   * flagged in place of its code.
+   *
+   * @param array $apiKnownResultCodes
+   * @return array
+   */
+  function buildPhoneRcSubTable(array $apiKnownResultCodes): array
+  {
+    $form_element['phone_rc_sub_title'] = [
+      '#markup' => " \n ".'<h3>Alternate codes for phone and text contacts</h3>'
+        ." \n ".'<p>A phone or text contact has to be reported with a phone number.  '
+        .'When the NL can\'t share the number, the contact is reported with the alternate code instead.</p>',
+    ];
+
+    $rows = '';
+    foreach ($this->phoneRcSubs as $contextName => $responseRcSubs) {
+      foreach ($responseRcSubs as $responseName => $responseRcSub) {
+        $subContext = $responseRcSub['subContext'];
+        $subResponse = $responseRcSub['subResponse'];
+        $subContextId = $apiKnownResultCodes[$subContext]['code'] ?? NULL;
+        $subResponseId = $apiKnownResultCodes[$subContext]['responses'][$subResponse] ?? NULL;
+        if(empty($subContextId) || empty($subResponseId)) {
+          $codeCell = '<td class="response-code-missing">&#x26A0; Not available</td>';
+        } else {
+          $codeCell = '<td class="response-code-value">'.$subContextId.'-'.$subResponseId.'</td>';
+        }
+        $rows .= " \n ".'<tr>'
+          .'<td class="response-code-contact-type">'.$contextName.'</td>'
+          .'<td class="response-code-responses">'.$responseName.'</td>'
+          .'<td class="response-code-contact-type">'.$subContext.'</td>'
+          .'<td class="response-code-responses">'.$subResponse.'</td>'
+          .$codeCell
+          .'</tr>';
+      }
+    }
+
+    $hdrRow  = '<th class="response-code-contact-type">Contact Type</th>';
+    $hdrRow .= '<th class="response-code-responses">Response</th>';
+    $hdrRow .= '<th class="response-code-contact-type">Alternate Type</th>';
+    $hdrRow .= '<th class="response-code-responses">Alternate Response</th>';
+    $hdrRow .= '<th class="response-code-value">Code</th>';
+
+    $form_element['phone_rc_sub_table'] = [
+      '#markup' => Markup::create(" \n ".'<table class="no-white response-code-sub-table">'
+        ." \n <thead><tr>".$hdrRow.'</tr></thead>'
+        ." \n <tbody>".$rows." \n </tbody>"
+        ." \n </table> \n "),
+    ];
+
+    return $form_element;
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * warnOfMissingExpectedResultCodes
    *
    * Warn if any of the API expected response codes are not available in
@@ -278,6 +335,7 @@ class ResponseCodeConfigurationForm extends FormBase {
     $form['code_select'] = $this->buildCanvassCodeSelect(
       $apiKnownResponseCodes,$apiExpectedResultCodes,$currentResponseCodes,$codes);
     $form_state->set('codes',$codes);
+    $form['phone_rc_subs'] = $this->buildPhoneRcSubTable($apiKnownResponseCodes);
 
     $form['submit'] = [
       '#type' => 'submit',

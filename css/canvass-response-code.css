@@ -19,6 +19,9 @@ td.response-code-contact-type { width: 150px; padding:0; margin:0; text-align: l
 td.response-code-responses { width: 150px; padding:0; margin:0; text-align: left; }
 td.response-code-value { width: 40px; padding:0; margin:0; text-align: center; }
 
+table.response-code-sub-table { width: 600px; margin-bottom: 1em; }
+th.response-code-missing, td.response-code-missing { width: 100px; padding:0; margin:0; text-align: center; color: #a51b00; font-weight: bold; }
+
 .form-item {  margin-top:0; margin-bottom:0; }
 div.form-no-label { margin-top:0; margin-bottom:0; }
 div.form-item { margin-top:0; margin-bottom:0; }

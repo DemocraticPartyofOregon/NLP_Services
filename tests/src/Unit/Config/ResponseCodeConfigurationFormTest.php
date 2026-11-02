@@ -270,6 +270,50 @@ class ResponseCodeConfigurationFormTest extends UnitTestCase {
   }
 
   // ---------------------------------------------------------------------------
+  // buildForm - buildPhoneRcSubTable
+  // ---------------------------------------------------------------------------
+
+  public function testBuildFormPlacesPhoneRcSubTableAfterResponseCodeCheckboxes(): void {
+    $this->stubKnownResultCodes($this->completeKnownResultCodesForPhoneSubs());
+    $this->stubCurrentResponseCodes([]);
+
+    $keys = array_keys($this->buildForm()->buildForm([], new FormState()));
+    $this->assertSame(array_search('code_select', $keys) + 1, array_search('phone_rc_subs', $keys));
+  }
+
+  public function testBuildFormShowsAlternateCodeInPhoneRcSubTable(): void {
+    $this->stubKnownResultCodes($this->completeKnownResultCodesForPhoneSubs());
+    $this->stubCurrentResponseCodes([]);
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $table = (string) $form['phone_rc_subs']['phone_rc_sub_table']['#markup'];
+
+    $this->assertStringContainsString(
+      '<td class="response-code-contact-type">Phone</td><td class="response-code-responses">Left Message</td>'
+      . '<td class="response-code-contact-type">Web Survey</td><td class="response-code-responses">Mailed</td>'
+      . '<td class="response-code-value">3-301</td>', $table);
+    $this->assertStringContainsString(
+      '<td class="response-code-contact-type">SMS Text</td><td class="response-code-responses">Hostile</td>'
+      . '<td class="response-code-contact-type">Walk</td><td class="response-code-responses">Hostile</td>'
+      . '<td class="response-code-value">1-102</td>', $table);
+    $this->assertStringNotContainsString('Not available', $table);
+  }
+
+  public function testBuildFormFlagsMissingAlternateInPhoneRcSubTable(): void {
+    $knownResultCodes = $this->completeKnownResultCodesForPhoneSubs();
+    unset($knownResultCodes['Web Survey']['responses']['Do Not Mail']);
+    $this->stubKnownResultCodes($knownResultCodes);
+    $this->stubCurrentResponseCodes([]);
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $table = (string) $form['phone_rc_subs']['phone_rc_sub_table']['#markup'];
+
+    $this->assertStringContainsString(
+      '<td class="response-code-responses">Do Not Mail</td><td class="response-code-missing">&#x26A0; Not available</td>', $table);
+    $this->assertSame(1, substr_count($table, 'Not available'));
+  }
+
+  // ---------------------------------------------------------------------------
   // submitForm
   // ---------------------------------------------------------------------------
 
