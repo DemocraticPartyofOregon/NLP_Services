@@ -43,9 +43,10 @@ class ImportReportsBatch {
       if (!$report) { break; }
       $recordCount++;
 
-      $combined = array_combine($csvColumnNames, $report);
-      if ($combined === FALSE) { continue; }
-      $namedFields = $combined;
+      // array_combine() throws on PHP 8 when the counts differ, so skip a
+      // short or long row (such as a blank line) before combining.
+      if (count($report) != count($csvColumnNames)) { continue; }
+      $namedFields = array_combine($csvColumnNames, $report);
 
       $namedFields['text'] = trim(strip_tags(htmlentities(stripslashes($namedFields['text']),ENT_QUOTES)));
       if(strlen($namedFields['text']) >= 1023) {
@@ -97,6 +98,10 @@ class ImportReportsBatch {
   public static function finished(bool $success, array $results, array $operations): void {
     $messenger = Drupal::messenger();
     $messenger->addStatus(t('Batch finished.'));
+    // The form moved the upload into public://temp; don't leave it there.
+    if (!empty($results['uri'])) {
+      Drupal::service('file_system')->unlink($results['uri']);
+    }
     if ($success) {
       $recordCount = $results['recordCount'];
       $messenger->addStatus(t('@count records processed.', ['@count' => $recordCount]));

@@ -2,11 +2,11 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\file\Entity\File;
-use Drupal\Core\Entity\EntityStorageException;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Drupal\nlpservices\Batch\ImportReportsBatch;
 use Drupal\nlpservices\NlpReports;
 
@@ -14,13 +14,16 @@ use Drupal\nlpservices\NlpReports;
  * @noinspection PhpUnused
  */
 class ImportReportsForm extends FormBase {
-  
+
   protected NlpReports $reports;
-  
-  public function __construct( $reports) {
+  protected FileSystemInterface $fileObj;
+
+  public function __construct( $reports, $fileObj, $requestStack) {
     $this->reports = $reports;
+    $this->fileObj = $fileObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -28,9 +31,11 @@ class ImportReportsForm extends FormBase {
   {
     return new static(
       $container->get('nlpservices.reports'),
+      $container->get('file_system'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -38,61 +43,78 @@ class ImportReportsForm extends FormBase {
   {
     return 'nlpservices_import_reports_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $tempDir = 'public://temp';
+    $form['#attributes']['enctype'] = 'multipart/form-data';
 
     $form['empty'] = [
       '#type' => 'checkbox',
       '#title' => t('Empty the results table before this upload.'),
     ];
-  
+
+    // A plain file field is used, not managed_file, so no file entity is
+    // saved.  On a site with the file_entity module, saving one fails with
+    // "The referenced entity (file_type: undefined) does not exist."
     $form['nl_reports_file'] = [
-      '#type' => 'managed_file',
+      '#type' => 'file',
       '#title' => t('NL reports file name'),
       '#description' => t('Select a file of historical results reported by NLs.'),
-      '#progress_message' => 'Uploading',
-      '#upload_location' => $tempDir,
-      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv'],],
     ];
-    
+
     $form['upload_file'] = [
       '#type' => 'submit',
       '#id' => 'upload-file',
       '#value' => t('Process the uploaded reports file >>'),
     ];
-    
+
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
-   
+
     return $form;
   }
-  
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void
+  {
+    $reportsFile = $this->getUploadedFile();
+    if (empty($reportsFile) || !$reportsFile->isValid()) {
+      $form_state->setErrorByName('nl_reports_file', t('No file uploaded.'));
+      return;
+    }
+    $fileType = strtolower(pathinfo($reportsFile->getClientOriginalName(), PATHINFO_EXTENSION));
+    if ($fileType != 'csv') {
+      $form_state->setErrorByName('nl_reports_file',
+        t('The reports file must be a .csv file.'));
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $reportsFile = $form_state->getValue('nl_reports_file');
+    $reportsFile = $this->getUploadedFile();
     if (empty($reportsFile)) { return; }
-    $reportsUpload = File::load($reportsFile[0]);
-    if (!($reportsUpload instanceof File)) { return; }
 
-    try {
-      $reportsUpload->save();
-    }
-    catch (EntityStorageException $e) {
-      nlp_debug_msg('File error.', $e);
+    $fileName = basename($reportsFile->getClientOriginalName());
+    $fileUri = 'public://temp/' . $fileName;
+
+    // PHP deletes the uploaded file when this request ends, so move it where
+    // the batch can read it.  The batch deletes it when it finishes.
+    $tempDir = 'public://temp';
+    $this->fileObj->prepareDirectory($tempDir, FileSystemInterface::CREATE_DIRECTORY);
+    if (!$this->fileObj->moveUploadedFile($reportsFile->getRealPath(), $fileUri)) {
+      $this->messenger()->addError(t('Failed to save the reports file.'));
       return;
     }
-    $fileName = $reportsUpload->getFilename();
-    $fileUri = 'public://temp/' . $fileName;
-  
+
     $emptyTable = $form_state->getValue('empty');
     if(!empty($emptyTable)) {
       $this->reports->emptyNlTable();
@@ -113,5 +135,15 @@ class ImportReportsForm extends FormBase {
     ];
     batch_set($batch);
   }
-  
+
+  /**
+   * Returns the file uploaded in the nl_reports_file field, or NULL if none.
+   */
+  protected function getUploadedFile(): ?UploadedFile
+  {
+    $files = $this->getRequest()->files->get('files', []);
+    $file = $files['nl_reports_file'] ?? NULL;
+    return ($file instanceof UploadedFile) ? $file : NULL;
+  }
+
 }

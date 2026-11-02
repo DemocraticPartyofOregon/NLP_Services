@@ -6,6 +6,7 @@ namespace Drupal\Tests\nlpservices\Unit\Batch;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Batch\ImportReportsBatch;
@@ -20,6 +21,7 @@ class ImportReportsBatchTest extends UnitTestCase {
   private NlpReports $reportsMock;
   private MessengerInterface $messengerMock;
   private LoggerInterface $loggerMock;
+  private FileSystemInterface $fileSystemMock;
   private array $tempFiles = [];
 
   protected function setUp(): void {
@@ -28,6 +30,7 @@ class ImportReportsBatchTest extends UnitTestCase {
     $this->reportsMock   = $this->createMock(NlpReports::class);
     $this->messengerMock = $this->createMock(MessengerInterface::class);
     $this->loggerMock    = $this->createMock(LoggerInterface::class);
+    $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
 
     $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
     $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
@@ -37,6 +40,7 @@ class ImportReportsBatchTest extends UnitTestCase {
     $container->set('messenger',             $this->messengerMock);
     $container->set('logger.factory',        $loggerFactoryMock);
     $container->set('nlpservices.reports',   $this->reportsMock);
+    $container->set('file_system',           $this->fileSystemMock);
     Drupal::setContainer($container);
   }
 
@@ -290,6 +294,29 @@ class ImportReportsBatchTest extends UnitTestCase {
     $this->messengerMock->expects($this->never())->method('addError');
 
     ImportReportsBatch::finished(TRUE, ['recordCount' => 5, 'uri' => '/tmp/reports.csv'], []);
+  }
+
+  public function testBatchSkipsRowsWithTheWrongColumnCount(): void {
+    $path = $this->writeCsv($this->baseHeaders(), [$this->baseRow()]);
+    file_put_contents($path, "\n2,99999\n", FILE_APPEND);
+    $this->reportsMock->expects($this->once())->method('insertNlReports')->willReturn(FALSE);
+
+    $context = $this->baseContext();
+    ImportReportsBatch::process(['uri' => $path], $context);
+
+    $this->assertSame(1, $context['finished']);
+  }
+
+  public function testFinishedDeletesTheUploadedFile(): void {
+    $this->fileSystemMock->expects($this->once())->method('unlink')->with('public://temp/reports.csv');
+
+    ImportReportsBatch::finished(TRUE, ['recordCount' => 5, 'uri' => 'public://temp/reports.csv'], []);
+  }
+
+  public function testFinishedWithNoUriDeletesNothing(): void {
+    $this->fileSystemMock->expects($this->never())->method('unlink');
+
+    ImportReportsBatch::finished(FALSE, [], []);
   }
 
   // -------------------------------------------------------------------------

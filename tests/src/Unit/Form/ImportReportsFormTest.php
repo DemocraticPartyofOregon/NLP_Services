@@ -6,32 +6,37 @@ namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\Entity\EntityStorageException;
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityTypeRepositoryInterface;
-use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\file\Entity\File;
 use Drupal\nlpservices\Form\ImportReportsForm;
 use Drupal\nlpservices\NlpReports;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\RequestStack;
 
-#[CoversClass(\Drupal\nlpservices\Form\ImportReportsForm::class)]
+#[CoversClass(ImportReportsForm::class)]
 #[Group('nlpservices')]
 class ImportReportsFormTest extends UnitTestCase {
 
   private NlpReports $reportsMock;
+  private FileSystemInterface $fileObjMock;
   private MessengerInterface $messengerMock;
+  private RequestStack $requestStack;
+  private string $tempFile;
 
   protected function setUp(): void {
     parent::setUp();
 
     $this->reportsMock   = $this->createMock(NlpReports::class);
+    $this->fileObjMock   = $this->createMock(FileSystemInterface::class);
     $this->messengerMock = $this->createMock(MessengerInterface::class);
+    $this->requestStack  = new RequestStack();
+    $this->requestStack->push(new Request());
+    $this->tempFile      = tempnam(sys_get_temp_dir(), 'nlprp');
 
     $container = new ContainerBuilder();
     $container->set('messenger', $this->messengerMock);
@@ -41,6 +46,7 @@ class ImportReportsFormTest extends UnitTestCase {
 
   protected function tearDown(): void {
     parent::tearDown();
+    @unlink($this->tempFile);
     Drupal::setContainer(new ContainerBuilder());
   }
 
@@ -49,37 +55,25 @@ class ImportReportsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   private function buildFormInstance(): ImportReportsForm {
-    $form = new ImportReportsForm($this->reportsMock);
+    $form = new ImportReportsForm($this->reportsMock, $this->fileObjMock, $this->requestStack);
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
     return $form;
   }
 
   /**
-   * Register entity_type.manager and entity_type.repository mocks so that
-   * File::load() resolves without a real Drupal entity stack.
-   * $loadReturn is what storage->load() returns.
+   * Put an uploaded reports file with the given client name on the request.
    */
-  private function stubEntityTypeManager(mixed $loadReturn = NULL): void {
-    $storageMock = $this->createMock(EntityStorageInterface::class);
-    $storageMock->method('load')->willReturn($loadReturn);
-
-    $etmMock = $this->createMock(EntityTypeManagerInterface::class);
-    $etmMock->method('getStorage')->willReturn($storageMock);
-
-    $etrMock = $this->createMock(EntityTypeRepositoryInterface::class);
-    $etrMock->method('getEntityTypeFromClass')->willReturn('file');
-
-    $container = Drupal::getContainer();
-    $container->set('entity_type.manager', $etmMock);
-    $container->set('entity_type.repository', $etrMock);
+  private function uploadFile(string $fileName, int $error = UPLOAD_ERR_OK): void {
+    $file = new UploadedFile($this->tempFile, $fileName, 'text/csv', $error, TRUE);
+    $this->requestStack->getCurrentRequest()->files->set('files', ['nl_reports_file' => $file]);
   }
 
-  private function stubModuleExtensionList(): ModuleExtensionList {
-    $moduleListMock = $this->createMock(ModuleExtensionList::class);
-    $moduleListMock->method('getPath')->willReturn('modules/custom/nlpservices');
-    Drupal::getContainer()->set('extension.list.module', $moduleListMock);
-    return $moduleListMock;
+  private function validate(): FormState {
+    $formState = new FormState();
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+    return $formState;
   }
 
   // -------------------------------------------------------------------------
@@ -100,11 +94,15 @@ class ImportReportsFormTest extends UnitTestCase {
     $this->assertSame('checkbox', $form['empty']['#type']);
   }
 
-  public function testBuildFormContainsManagedFileRestrictedToCsv(): void {
+  /**
+   * A managed_file field saves a file entity, which fails on a site with the
+   * file_entity module, so the form must use a plain file field.
+   */
+  public function testBuildFormUsesPlainFileField(): void {
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-    $this->assertSame('managed_file', $form['nl_reports_file']['#type']);
-    $this->assertSame(['extensions' => 'csv'], $form['nl_reports_file']['#upload_validators']['FileExtension']);
+    $this->assertSame('file', $form['nl_reports_file']['#type']);
+    $this->assertSame('multipart/form-data', $form['#attributes']['enctype']);
   }
 
   public function testBuildFormContainsUploadSubmitButton(): void {
@@ -121,86 +119,82 @@ class ImportReportsFormTest extends UnitTestCase {
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — no file uploaded
+  // validateForm
   // -------------------------------------------------------------------------
 
-  public function testSubmitFormReturnsEarlyWhenFileValueIsEmpty(): void {
-    $this->reportsMock->expects($this->never())->method('emptyNlTable');
+  public function testValidateFailsWithNoUpload(): void {
+    $this->assertArrayHasKey('nl_reports_file', $this->validate()->getErrors());
+  }
 
-    $formState = new FormState();
-    $formState->setValue('nl_reports_file', []);
+  public function testValidateFailsOnUploadError(): void {
+    $this->uploadFile('reports.csv', UPLOAD_ERR_PARTIAL);
+    $this->assertArrayHasKey('nl_reports_file', $this->validate()->getErrors());
+  }
 
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $formState);
+  public function testValidateRejectsNonCsv(): void {
+    $this->uploadFile('reports.xlsx');
+    $this->assertArrayHasKey('nl_reports_file', $this->validate()->getErrors());
+  }
+
+  public function testValidateAcceptsCsvAnyCase(): void {
+    $this->uploadFile('voter_contact_reports_2026-11-G_date-2026-11-01-20-59-09.CSV');
+    $this->assertSame([], $this->validate()->getErrors());
   }
 
   // -------------------------------------------------------------------------
-  // submitForm — File::load returns null
+  // submitForm
   // -------------------------------------------------------------------------
 
-  public function testSubmitFormReturnsEarlyWhenFileLoadReturnsNull(): void {
-    $this->stubEntityTypeManager(NULL);
+  public function testSubmitWithNoUploadDoesNothing(): void {
+    $this->fileObjMock->expects($this->never())->method('moveUploadedFile');
+    $this->reportsMock->expects($this->never())->method('emptyNlTable');
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, new FormState());
+  }
+
+  public function testSubmitMovesUploadIntoPublicTemp(): void {
+    $this->uploadFile('../reports.csv');
+    $this->fileObjMock->expects($this->once())
+      ->method('moveUploadedFile')
+      ->with($this->tempFile, 'public://temp/reports.csv')
+      ->willReturn(TRUE);
+    $this->messengerMock->expects($this->never())->method('addError');
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, new FormState());
+  }
+
+  public function testSubmitStopsWhenMoveFails(): void {
+    $this->uploadFile('reports.csv');
+    $this->fileObjMock->method('moveUploadedFile')->willReturn(FALSE);
+    $this->messengerMock->expects($this->once())->method('addError');
     $this->reportsMock->expects($this->never())->method('emptyNlTable');
 
     $formState = new FormState();
-    $formState->setValue('nl_reports_file', [42]);
     $formState->setValue('empty', TRUE);
-
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  // -------------------------------------------------------------------------
-  // submitForm — save() throws an EntityStorageException
-  // -------------------------------------------------------------------------
-
-  public function testSubmitFormReturnsEarlyWhenSaveThrows(): void {
-    $fileMock = $this->createMock(File::class);
-    $fileMock->method('save')->willThrowException(new EntityStorageException('DB error'));
-    $fileMock->expects($this->never())->method('getFilename');
-
-    $this->stubEntityTypeManager($fileMock);
-    $this->reportsMock->expects($this->never())->method('emptyNlTable');
-
-    $formState = new FormState();
-    $formState->setValue('nl_reports_file', [42]);
-
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $formState);
-  }
-
-  // -------------------------------------------------------------------------
-  // submitForm — successful upload
-  // -------------------------------------------------------------------------
-
-  public function testSubmitFormEmptyCheckboxTrueEmptiesTableBeforeImport(): void {
-    $fileMock = $this->createMock(File::class);
-    $fileMock->method('getFilename')->willReturn('reports.csv');
-    $this->stubEntityTypeManager($fileMock);
-    $this->stubModuleExtensionList();
-
+  public function testSubmitEmptiesTableWhenChecked(): void {
+    $this->uploadFile('reports.csv');
+    $this->fileObjMock->method('moveUploadedFile')->willReturn(TRUE);
     $this->reportsMock->expects($this->once())->method('emptyNlTable');
 
     $formState = new FormState();
-    $formState->setValue('nl_reports_file', [42]);
     $formState->setValue('empty', TRUE);
-
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
-  public function testSubmitFormEmptyCheckboxFalseSkipsEmptyingTable(): void {
-    $fileMock = $this->createMock(File::class);
-    $fileMock->method('getFilename')->willReturn('reports.csv');
-    $this->stubEntityTypeManager($fileMock);
-    $this->stubModuleExtensionList();
-
+  public function testSubmitKeepsTableWhenUnchecked(): void {
+    $this->uploadFile('reports.csv');
+    $this->fileObjMock->method('moveUploadedFile')->willReturn(TRUE);
     $this->reportsMock->expects($this->never())->method('emptyNlTable');
 
     $formState = new FormState();
-    $formState->setValue('nl_reports_file', [42]);
     $formState->setValue('empty', FALSE);
-
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
   }
