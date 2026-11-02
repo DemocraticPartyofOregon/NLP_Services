@@ -2,6 +2,7 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Entity\EntityStorageInterface;
   use Drupal\Core\Entity\EntityTypeManagerInterface;
@@ -23,7 +24,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private object $entityTypeManagerMock;
     private object $fileSystemMock;
     private object $loggerMock;
-    private ContainerBuilder $container;
+    private ?string $privateDir = NULL;
 
     protected function setUp(): void {
       parent::setUp();
@@ -40,15 +41,20 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($this->loggerMock);
 
-      $this->container = new ContainerBuilder();
-      $this->container->set('logger.factory', $loggerFactoryMock);
-      \Drupal::setContainer($this->container);
+      $container = new ContainerBuilder();
+      $container->set('logger.factory', $loggerFactoryMock);
+      Drupal::setContainer($container);
     }
 
     protected function tearDown(): void {
       parent::tearDown();
+      if ($this->privateDir !== NULL) {
+        array_map('unlink', glob($this->privateDir . '/keys/*') ?: []);
+        $this->removeTempDir($this->privateDir);
+        $this->privateDir = NULL;
+      }
       new Settings([]);
-      \Drupal::setContainer(new ContainerBuilder());
+      Drupal::setContainer(new ContainerBuilder());
     }
 
     // -------------------------------------------------------------------------
@@ -77,10 +83,18 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       return $mock;
     }
 
-    private function addFileSystemToContainer(): FileSystemInterface {
+    /**
+     * Points private:// at a new folder of its own, removed in tearDown().
+     *
+     * A shared folder such as the system temp folder breaks when a run as a
+     * different user (e.g. www-data after nlpadmin) finds keys/ already there
+     * and owned by someone else.
+     */
+    private function addFileSystemToContainer(): void {
+      $this->privateDir = $this->makeTempDirPath();
+      mkdir($this->privateDir);
       $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
-      $this->fileSystemMock->method('realpath')->willReturn(sys_get_temp_dir());
-      return $this->fileSystemMock;
+      $this->fileSystemMock->method('realpath')->willReturn($this->privateDir);
     }
 
     // -------------------------------------------------------------------------
@@ -94,7 +108,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testSaveApiKeyReturnsTrueOnSuccess(): void {
-      $filePath = sys_get_temp_dir() . '/nlp_test_saveapikey.key';
+      $filePath = sys_get_temp_dir() . '/nlp_test_saveapikey_' . uniqid() . '.key';
       $keyEntity = $this->makeKeyEntity();
       $keyEntity->method('getKeyProvider')->willReturn($this->makeKeyProvider($filePath));
       $this->keyStorageMock->method('load')->willReturn($keyEntity);
@@ -192,7 +206,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testGetKeyValuesReturnsEmptyWhenKeyValueIsEmpty(): void {
-      $this->keyStorageMock->method('load')->willReturn($this->makeKeyEntity(''));
+      $this->keyStorageMock->method('load')->willReturn($this->makeKeyEntity());
 
       $this->assertSame([], $this->buildService()->getKeyValues('test_key'));
     }
