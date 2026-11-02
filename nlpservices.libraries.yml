@@ -68,7 +68,7 @@ edit-user:
     layout:
       css/edit-user.css: {}
 canvass-response-code:
-  version: "1.0.0"
+  version: "1.0.1"
   css:
     layout:
       css/canvass-response-code.css: {}
