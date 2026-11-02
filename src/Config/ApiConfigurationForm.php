@@ -70,6 +70,16 @@ class ApiConfigurationForm extends FormBase {
         'Error generating suggested iv: ' . $e->getMessage());
     }
 
+    $storageProblem = $this->apiKeyManagementObj->ensurePrivateStorage();
+    if ($storageProblem !== NULL) {
+      $form['storage_problem'] = [
+        '#type' => 'markup',
+        '#markup' => '<div class="messages messages--error">' . $storageProblem . ' '
+          . $this->t("The API configuration can't be saved until this is fixed.") . '</div>',
+        '#weight' => -100,
+      ];
+    }
+
     $form['encryption_keys'] = [
       '#type' => 'fieldset',
       '#title' => $this->t('Encryption Keys'),
@@ -128,6 +138,7 @@ class ApiConfigurationForm extends FormBase {
       '#type' => 'submit',
       '#value' => $this->t('Save configuration'),
       '#button_type' => 'primary',
+      '#disabled' => $storageProblem !== NULL,
     ];
 
     return $form;
@@ -138,6 +149,12 @@ class ApiConfigurationForm extends FormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state): void
   {
+    $storageProblem = $this->apiKeyManagementObj->ensurePrivateStorage();
+    if ($storageProblem !== NULL) {
+      $form_state->setErrorByName('api_keys', $storageProblem);
+      return;
+    }
+
     $secret_key = $form_state->getValue('secret_key');
     $secret_iv  = $form_state->getValue('secret_iv');
 
@@ -207,20 +224,29 @@ class ApiConfigurationForm extends FormBase {
     $secret_key = $form_state->getValue('secret_key');
     $secret_iv  = $form_state->getValue('secret_iv');
 
+    $failed = [];
     if (!empty($secret_key)) {
-      $existing = $this->apiKeyManagementObj->getKey('secret_key');
-      if (!empty($existing)) {
-        $this->apiKeyManagementObj->deleteKey('secret_key');
+      // Delete unconditionally: a key whose file is missing or unreadable
+      // reads back empty but still blocks createKey() with a duplicate ID.
+      $this->apiKeyManagementObj->deleteKey('secret_key');
+      if (!$this->apiKeyManagementObj->createKey('secret_key', 'AES-256-CBC Secret Key', $secret_key)) {
+        $failed[] = 'secret_key';
       }
-      $this->apiKeyManagementObj->createKey('secret_key', 'AES-256-CBC Secret Key', $secret_key);
     }
 
     if (!empty($secret_iv)) {
-      $existing = $this->apiKeyManagementObj->getKey('secret_iv');
-      if (!empty($existing)) {
-        $this->apiKeyManagementObj->deleteKey('secret_iv');
+      $this->apiKeyManagementObj->deleteKey('secret_iv');
+      if (!$this->apiKeyManagementObj->createKeyWithValues('secret_iv', 'AES-256-CBC Secret IV', ['value' => $secret_iv])) {
+        $failed[] = 'secret_iv';
       }
-      $this->apiKeyManagementObj->createKeyWithValues('secret_iv', 'AES-256-CBC Secret IV', ['value' => $secret_iv]);
+    }
+
+    // The API keys are encrypted with the secret key and IV, so don't
+    // replace them if either of those couldn't be saved.
+    if (!empty($failed)) {
+      $this->messenger()->addError($this->t('These encryption keys could not be saved: @keys. The API keys were not changed. See Recent log messages for the reason.',
+        ['@keys' => implode(', ', $failed)]));
+      return;
     }
 
     $uploadedFile = ($this->getRequest()->files->get('files') ?? [])['api_keys'] ?? NULL;
@@ -239,16 +265,11 @@ class ApiConfigurationForm extends FormBase {
       return;
     }
 
-    $apiCredentials = $this->apiKeyManagementObj->getKeyValues('State Committee', FALSE);
-    if (!empty($apiCredentials)) {
-      $this->apiKeyManagementObj->deleteKey('State Committee');
-    }
+    $this->apiKeyManagementObj->deleteKey('State Committee');
     $committees = $this->nlpConfigurationObj->getCountyNames();
     foreach ($committees as $committee) {
       // The statewide 'State' entry uses the State Committee key.
       if ($committee == 'State') { continue; }
-      $apiCredentials = $this->apiKeyManagementObj->getKeyValues($committee, FALSE);
-      if (empty($apiCredentials)) { continue; }
       $this->apiKeyManagementObj->deleteKey($committee);
     }
 
@@ -259,11 +280,15 @@ class ApiConfigurationForm extends FormBase {
       if ($committee === 'State Committee') {
         $stateName = $committeeKey['Name'] ?? '';
         $this->nlpConfigurationObj->setStateName($stateName);
-        $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
+        if (!$this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey)) {
+          $failed[] = $committee;
+        }
         continue;
       }
       $this->apiKeyManagementObj->deleteKey($committee);
-      $this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey);
+      if (!$this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey)) {
+        $failed[] = $committee;
+      }
       $countyNames[] = $committee;
     }
     sort($countyNames);
@@ -272,6 +297,11 @@ class ApiConfigurationForm extends FormBase {
 
     $this->folderSetupObj->initializeFolders($countyNames);
 
+    if (!empty($failed)) {
+      $this->messenger()->addError($this->t('These API keys could not be saved: @keys. See Recent log messages for the reason, then save the API configuration again.',
+        ['@keys' => implode(', ', $failed)]));
+      return;
+    }
     $this->messenger()->addStatus($this->t('The API configuration has been saved.'));
   }
 

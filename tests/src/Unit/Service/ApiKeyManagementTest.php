@@ -7,6 +7,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Entity\EntityTypeManagerInterface;
   use Drupal\Core\File\FileSystemInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
+  use Drupal\Core\Site\Settings;
   use Drupal\nlpservices\ApiKeyManagement;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
@@ -46,6 +47,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     protected function tearDown(): void {
       parent::tearDown();
+      new Settings([]);
       \Drupal::setContainer(new ContainerBuilder());
     }
 
@@ -55,6 +57,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     private function buildService(): ApiKeyManagement {
       return new ApiKeyManagement($this->encryptionMock, $this->entityTypeManagerMock, $this->fileSystemMock);
+    }
+
+    private function buildServiceWithTranslation(): ApiKeyManagement {
+      $service = $this->buildService();
+      $service->setStringTranslation($this->getStringTranslationStub());
+      return $service;
     }
 
     private function makeKeyEntity(string $keyValue = ''): object {
@@ -117,6 +125,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->keyStorageMock->method('load')->willReturn($this->makeKeyEntity('my-secret-value'));
 
       $this->assertSame('my-secret-value', $this->buildService()->getKey('test_key'));
+    }
+
+    public function testGetKeyReturnsEmptyStringWhenKeyFileUnreadable(): void {
+      $key = $this->createMock(NlpTestKeyEntityInterface::class);
+      $key->method('getKeyValue')->willReturn(NULL);
+      $this->keyStorageMock->method('load')->willReturn($key);
+
+      $this->assertSame('', $this->buildService()->getKey('secret_key'));
     }
 
     public function testGetKeyReturnsEmptyStringOnException(): void {
@@ -258,6 +274,108 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $result = $this->buildService()->createKeyWithValues('test_id', 'Test Label', ['Url' => 'api.example.com/v4']);
 
       $this->assertTrue($result);
+    }
+
+    /**
+     * A key file that can't be written must not leave behind a key entity,
+     * which would read back empty and look like a saved key.
+     */
+    public function testCreateKeyWithValuesReturnsFalseWhenKeyFileCannotBeWritten(): void {
+      // A regular file standing in for the private path: keys/ can't be created under it.
+      $notADir = tempnam(sys_get_temp_dir(), 'nlp_notadir');
+      $this->fileSystemMock->method('realpath')->willReturn($notADir);
+      $this->keyStorageMock->expects($this->never())->method('create');
+      $this->loggerMock->expects($this->once())->method('error');
+
+      $result = $this->buildService()->createKeyWithValues('test_id', 'Test Label', ['Url' => 'x']);
+
+      $this->assertFalse($result);
+      @unlink($notADir);
+    }
+
+    public function testCreateKeyReturnsFalseWhenPrivatePathMissing(): void {
+      $this->fileSystemMock->method('realpath')->willReturn(FALSE);
+      $this->keyStorageMock->expects($this->never())->method('create');
+      $this->loggerMock->expects($this->once())->method('error');
+
+      $this->assertFalse($this->buildService()->createKey('test_id', 'Test Label', 'key-value'));
+    }
+
+    // -------------------------------------------------------------------------
+    // ensurePrivateStorage
+    // -------------------------------------------------------------------------
+
+    private function makeTempDirPath(): string {
+      return sys_get_temp_dir() . '/nlp_private_' . uniqid();
+    }
+
+    private function removeTempDir(string $dir): void {
+      @rmdir($dir . '/keys');
+      @rmdir($dir);
+    }
+
+    /**
+     * Has the file system mock create directories for real, like Drupal's.
+     */
+    private function prepareDirectoryCreates(): void {
+      $this->fileSystemMock->method('prepareDirectory')
+        ->willReturnCallback(fn(string $dir) => is_dir($dir) || mkdir($dir, 0775, TRUE));
+    }
+
+    public function testEnsurePrivateStorageReportsMissingSetting(): void {
+      new Settings([]);
+      $this->fileSystemMock->expects($this->never())->method('prepareDirectory');
+
+      $problem = $this->buildServiceWithTranslation()->ensurePrivateStorage();
+
+      $this->assertNotNull($problem);
+      $this->assertStringContainsString('file_private_path', (string) $problem);
+    }
+
+    public function testEnsurePrivateStorageCreatesMissingDirectories(): void {
+      $dir = $this->makeTempDirPath();
+      new Settings(['file_private_path' => $dir]);
+      $this->prepareDirectoryCreates();
+      $this->loggerMock->expects($this->exactly(2))->method('notice');
+
+      $problem = $this->buildServiceWithTranslation()->ensurePrivateStorage();
+
+      $this->assertNull($problem);
+      $this->assertDirectoryExists($dir . '/keys');
+      $this->removeTempDir($dir);
+    }
+
+    public function testEnsurePrivateStorageCreatesOnlyMissingKeysDirectory(): void {
+      $dir = $this->makeTempDirPath();
+      mkdir($dir);
+      new Settings(['file_private_path' => $dir]);
+      $this->fileSystemMock->expects($this->once())->method('prepareDirectory')
+        ->with($dir . '/keys')
+        ->willReturnCallback(fn(string $path) => mkdir($path));
+
+      $this->assertNull($this->buildServiceWithTranslation()->ensurePrivateStorage());
+      $this->removeTempDir($dir);
+    }
+
+    public function testEnsurePrivateStorageReportsDirectoryThatCannotBeCreated(): void {
+      $dir = $this->makeTempDirPath();
+      new Settings(['file_private_path' => $dir]);
+      $this->fileSystemMock->method('prepareDirectory')->willReturn(FALSE);
+
+      $problem = $this->buildServiceWithTranslation()->ensurePrivateStorage();
+
+      $this->assertNotNull($problem);
+      $this->assertStringContainsString($dir, (string) $problem);
+    }
+
+    public function testEnsurePrivateStorageLeavesExistingDirectoriesAlone(): void {
+      $dir = $this->makeTempDirPath();
+      mkdir($dir . '/keys', 0775, TRUE);
+      new Settings(['file_private_path' => $dir]);
+      $this->fileSystemMock->expects($this->never())->method('prepareDirectory');
+
+      $this->assertNull($this->buildServiceWithTranslation()->ensurePrivateStorage());
+      $this->removeTempDir($dir);
     }
 
     public function testCreateKeyWithValuesReturnsFalseOnException(): void {

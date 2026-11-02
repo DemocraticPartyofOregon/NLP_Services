@@ -5,6 +5,8 @@ namespace Drupal\nlpservices;
 use Drupal;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\Site\Settings;
+use Drupal\Core\StringTranslation\TranslatableMarkup;
 use Drupal\Core\StringTranslation\StringTranslationTrait;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
@@ -74,21 +76,10 @@ class ApiKeyManagement
   public function createKey(string $id, string $label, string $value): bool
   {
     try {
-      // Get the real filesystem path for private files
-      $privatePath = $this->fileSystem->realpath('private://');
-      if (!$privatePath) {
-        nlp_debug_msg('createKey', 'Private file path is not configured; see nlpservices_requirements().');
+      $filePath = $this->writeKeyFile($id, $value);
+      if ($filePath === NULL) {
         return FALSE;
       }
-      $dir = $privatePath . '/keys';
-
-      // Ensure directory exists
-      if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
-      }
-
-      $filePath = $dir . '/' . $id . '.key';
-      file_put_contents($filePath, $value);
 
       $key = $this->entityTypeManager->getStorage('key')->create([
         'id' => $id,
@@ -124,7 +115,9 @@ class ApiKeyManagement
       if (!$key) {
         return '';
       }
-      return $key->getKeyValue();
+      // The Key module returns NULL when the entity exists but its file is
+      // missing or unreadable (e.g., www-data can't reach the private path).
+      return $key->getKeyValue() ?? '';
     } catch (Exception $e) {
       nlp_debug_msg('getKey', $e);
       return '';
@@ -180,7 +173,7 @@ class ApiKeyManagement
         }
         return [];
       }
-      $apiCredentials = json_decode($key->getKeyValue(), TRUE);
+      $apiCredentials = json_decode($key->getKeyValue() ?? '', TRUE);
       if(empty($apiCredentials)) {
         Drupal::logger('nlpservices')->error('getKeyValues: key value for id @id is empty or not valid JSON.', ['@id' => $id]);
         return [];
@@ -215,21 +208,10 @@ class ApiKeyManagement
         $values['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('encrypt', $values['API Key']);
       }
 
-      // Get the real filesystem path for private files
-      $privatePath = $this->fileSystem->realpath('private://');
-      if (!$privatePath) {
-        nlp_debug_msg('createKeyWithValues', 'Private file path is not configured; see nlpservices_requirements().');
+      $filePath = $this->writeKeyFile($id, json_encode($values));
+      if ($filePath === NULL) {
         return FALSE;
       }
-      $dir = $privatePath . '/keys';
-
-      // Ensure directory exists
-      if (!is_dir($dir)) {
-        mkdir($dir, 0755, true);
-      }
-
-      $filePath = $dir . '/' . $id . '.key';
-      file_put_contents($filePath, json_encode($values));
 
       $key = $this->entityTypeManager->getStorage('key')->create([
         'id' => $id,
@@ -246,6 +228,75 @@ class ApiKeyManagement
       nlp_debug_msg('createKeyWithValues', $e);
       return FALSE;
     }
+  }
+
+  /**
+   * ensurePrivateStorage
+   *
+   * Makes sure the key files can be written. settings.php must set
+   * $settings['file_private_path']; if the directory it names, or its keys/
+   * subdirectory, is missing, it's created. Both must end up writable by the
+   * web server. Run from a form, this works as the web server's own user, so
+   * it also catches a directory the server can't reach (e.g., under /home
+   * when the PHP service has ProtectHome set).
+   *
+   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
+   *   A description of the problem, or NULL if keys can be saved.
+   */
+  public function ensurePrivateStorage(): ?TranslatableMarkup
+  {
+    $privatePath = Settings::get('file_private_path');
+    if (empty($privatePath)) {
+      return $this->t("The private file path is not set. Add \$settings['file_private_path'] to settings.php, pointing to a directory outside the web root that the web server can write to.");
+    }
+    foreach ([$privatePath, $privatePath . '/keys'] as $dir) {
+      if (!is_dir($dir)) {
+        if (!$this->fileSystem->prepareDirectory($dir, FileSystemInterface::CREATE_DIRECTORY)) {
+          return $this->t("The directory @path does not exist, and the web server couldn't create it. Create it and make it writable by the web server, or check that the web server can reach that location.",
+            ['@path' => $dir]);
+        }
+        Drupal::logger('nlpservices')->notice('Created the private directory @path.', ['@path' => $dir]);
+      }
+      if (!is_writable($dir)) {
+        return $this->t("The web server can't write to @path.", ['@path' => $dir]);
+      }
+    }
+    return NULL;
+  }
+
+  /**
+   * writeKeyFile
+   *
+   * Writes a key's value to private://keys/<id>.key. The key entity is only
+   * created after this succeeds; an entity whose file was never written
+   * reads back empty and can't be told apart from a missing key.
+   *
+   * @param string $id - the ID of the key, used as the file name.
+   * @param string $contents - the value to write.
+   * @return string|null - the absolute file path, or NULL if it couldn't be
+   *   written (the reason is logged).
+   */
+  private function writeKeyFile(string $id, string $contents): ?string
+  {
+    $privatePath = $this->fileSystem->realpath('private://');
+    if (!$privatePath) {
+      Drupal::logger('nlpservices')->error('Key @id was not saved: the private file path is not configured or does not exist.',
+        ['@id' => $id]);
+      return NULL;
+    }
+    $dir = $privatePath . '/keys';
+    if (!is_dir($dir) && !@mkdir($dir, 0755, TRUE) && !is_dir($dir)) {
+      Drupal::logger('nlpservices')->error('Key @id was not saved: could not create @dir: @reason',
+        ['@id' => $id, '@dir' => $dir, '@reason' => error_get_last()['message'] ?? 'unknown error']);
+      return NULL;
+    }
+    $filePath = $dir . '/' . $id . '.key';
+    if (@file_put_contents($filePath, $contents) === FALSE) {
+      Drupal::logger('nlpservices')->error('Key @id was not saved: could not write @file: @reason',
+        ['@id' => $id, '@file' => $filePath, '@reason' => error_get_last()['message'] ?? 'unknown error']);
+      return NULL;
+    }
+    return $filePath;
   }
 
 }
