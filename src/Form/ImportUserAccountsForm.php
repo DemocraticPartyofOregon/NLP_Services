@@ -5,8 +5,6 @@ namespace Drupal\nlpservices\Form;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\Core\Entity\EntityStorageException;
-use Drupal\file\Entity\File;
 use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
 use Drupal\nlpservices\DrupalUser;
 
@@ -14,13 +12,17 @@ use Drupal\nlpservices\DrupalUser;
  * @noinspection PhpUnused
  */
 class ImportUserAccountsForm extends FormBase {
-  
+
+  use PlainFileUploadTrait;
+
   protected DrupalUser $drupalUser;
-  
-  public function __construct( $drupalUser) {
+
+  public function __construct( $drupalUser, $fileObj, $requestStack) {
     $this->drupalUser = $drupalUser;
+    $this->fileObj = $fileObj;
+    $this->setRequestStack($requestStack);
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -28,9 +30,11 @@ class ImportUserAccountsForm extends FormBase {
   {
     return new static(
       $container->get('nlpservices.drupal_user'),
+      $container->get('file_system'),
+      $container->get('request_stack'),
     );
   }
-  
+
   /**
    * {@inheritdoc}
    */
@@ -38,22 +42,20 @@ class ImportUserAccountsForm extends FormBase {
   {
     return 'nlpservices_import_user_accounts_form';
   }
-  
+
   /**
    * {@inheritdoc}
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $tempDir = 'public://temp';
-  
-    // Name of the user account file to upload.
+    $form['#attributes']['enctype'] = 'multipart/form-data';
+
+    // Name of the user account file to upload.  A plain file field; see
+    // PlainFileUploadTrait.
     $form['user_file'] = [
-      '#type' => 'managed_file',
+      '#type' => 'file',
       '#title' => t('User accounts file name'),
       '#description' => t('Select a user accounts file.<br>'),
-      '#progress_message' => 'Uploading',
-      '#upload_location' => $tempDir,
-      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv']],
     ];
 
     // A button for the upload of voting results.
@@ -62,33 +64,43 @@ class ImportUserAccountsForm extends FormBase {
       '#id' => 'import-file',
       '#value' => t('Process the uploaded user accounts File >>'),
     ];
-    
+
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
     ];
-    
+
     return $form;
   }
-  
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state): void
+  {
+    $userFile = $this->getUploadedFile('user_file');
+    if (empty($userFile) || !$userFile->isValid()) {
+      $form_state->setErrorByName('user_file', t('No file uploaded.'));
+      return;
+    }
+    if ($this->uploadedFileType($userFile) != 'csv') {
+      $form_state->setErrorByName('user_file',
+        t('The user accounts file must be a .csv file.'));
+    }
+  }
+
   /**
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $user_file = $form_state->getValue('user_file');
-    if (empty($user_file)) { return; }
+    $userFile = $this->getUploadedFile('user_file');
+    if (empty($userFile)) { return; }
 
-    $bg_file = File::load($user_file[0]);
-    if (!($bg_file instanceof File)) { return; }
-
-    try {
-      $bg_file->save();
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('File save error', $e);
+    $fileUri = $this->moveUploadToTemp($userFile);
+    if (empty($fileUri)) {
+      $this->messenger()->addError(t('Failed to save the user accounts file.'));
       return;
     }
-    $fileName = $bg_file->getFilename();
-    $fileUri = 'public://temp/' . $fileName;
     $args = [
       'uri' => $fileUri,
     ];
@@ -104,5 +116,5 @@ class ImportUserAccountsForm extends FormBase {
     ];
     batch_set($batch);
   }
-  
+
 }

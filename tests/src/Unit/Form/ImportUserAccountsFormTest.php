@@ -1,34 +1,46 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Drupal\Tests\nlpservices\Unit\Form {
 
   use Drupal;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
-  use Drupal\Core\Entity\EntityStorageException;
-  use Drupal\Core\Entity\EntityStorageInterface;
-  use Drupal\Core\Entity\EntityTypeManagerInterface;
-  use Drupal\Core\Entity\EntityTypeRepositoryInterface;
+  use Drupal\Core\File\FileSystemInterface;
   use Drupal\Core\Form\FormState;
-  use Drupal\file\Entity\File;
+  use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\ImportUserAccountsForm;
   use Drupal\Tests\UnitTestCase;
   use PHPUnit\Framework\Attributes\CoversClass;
   use PHPUnit\Framework\Attributes\Group;
+  use Symfony\Component\HttpFoundation\File\UploadedFile;
+  use Symfony\Component\HttpFoundation\Request;
+  use Symfony\Component\HttpFoundation\RequestStack;
 
   #[CoversClass(ImportUserAccountsForm::class)]
   #[Group('nlpservices')]
   class ImportUserAccountsFormTest extends UnitTestCase {
 
     private DrupalUser $drupalUserMock;
+    private FileSystemInterface $fileObjMock;
+    private MessengerInterface $messengerMock;
+    private RequestStack $requestStack;
+    private string $tempFile;
 
     protected function setUp(): void {
       parent::setUp();
 
       $this->drupalUserMock = $this->createMock(DrupalUser::class);
+      $this->fileObjMock    = $this->createMock(FileSystemInterface::class);
+      $this->messengerMock  = $this->createMock(MessengerInterface::class);
+      $this->requestStack   = new RequestStack();
+      $this->requestStack->push(new Request());
+      $this->tempFile       = tempnam(sys_get_temp_dir(), 'nlpua');
 
       $container = new ContainerBuilder();
+      $container->set('messenger', $this->messengerMock);
       $container->set('string_translation', $this->getStringTranslationStub());
       Drupal::setContainer($container);
 
@@ -37,6 +49,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     protected function tearDown(): void {
       parent::tearDown();
+      @unlink($this->tempFile);
       Drupal::setContainer(new ContainerBuilder());
       unset($GLOBALS['batch_set_calls']);
     }
@@ -46,48 +59,49 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     private function buildFormInstance(): ImportUserAccountsForm {
-      $form = new ImportUserAccountsForm($this->drupalUserMock);
+      $form = new ImportUserAccountsForm($this->drupalUserMock, $this->fileObjMock, $this->requestStack);
       $form->setStringTranslation($this->getStringTranslationStub());
+      $form->setMessenger($this->messengerMock);
       return $form;
     }
 
     /**
-     * Register entity_type.manager and entity_type.repository mocks so that
-     * File::load() resolves without a real Drupal entity stack.
-     * $loadReturn is what storage->load() returns.
+     * Put an uploaded user accounts file with the given name on the request.
      */
-    private function stubEntityTypeManager(mixed $loadReturn = NULL): void {
-      $storageMock = $this->createMock(EntityStorageInterface::class);
-      $storageMock->method('load')->willReturn($loadReturn);
+    private function uploadFile(string $fileName, int $error = UPLOAD_ERR_OK): void {
+      $file = new UploadedFile($this->tempFile, $fileName, 'text/csv', $error, TRUE);
+      $this->requestStack->getCurrentRequest()->files->set('files', ['user_file' => $file]);
+    }
 
-      $etmMock = $this->createMock(EntityTypeManagerInterface::class);
-      $etmMock->method('getStorage')->willReturn($storageMock);
+    private function validate(): FormState {
+      $formState = new FormState();
+      $form = [];
+      $this->buildFormInstance()->validateForm($form, $formState);
+      return $formState;
+    }
 
-      $etrMock = $this->createMock(EntityTypeRepositoryInterface::class);
-      $etrMock->method('getEntityTypeFromClass')->willReturn('file');
-
-      $container = Drupal::getContainer();
-      $container->set('entity_type.manager', $etmMock);
-      $container->set('entity_type.repository', $etrMock);
+    private function submit(): void {
+      $form = [];
+      $this->buildFormInstance()->submitForm($form, new FormState());
     }
 
     // -------------------------------------------------------------------------
-    // getFormId
+    // getFormId / buildForm
     // -------------------------------------------------------------------------
 
     public function testGetFormIdReturnsExpectedId(): void {
       $this->assertSame('nlpservices_import_user_accounts_form', $this->buildFormInstance()->getFormId());
     }
 
-    // -------------------------------------------------------------------------
-    // buildForm
-    // -------------------------------------------------------------------------
-
-    public function testBuildFormContainsManagedFileRestrictedToCsv(): void {
+    /**
+     * A managed_file field saves a file entity, which fails on a site with the
+     * file_entity module, so the form must use a plain file field.
+     */
+    public function testBuildFormUsesPlainFileField(): void {
       $form = $this->buildFormInstance()->buildForm([], new FormState());
 
-      $this->assertSame('managed_file', $form['user_file']['#type']);
-      $this->assertSame(['extensions' => 'csv'], $form['user_file']['#upload_validators']['FileExtension']);
+      $this->assertSame('file', $form['user_file']['#type']);
+      $this->assertSame('multipart/form-data', $form['#attributes']['enctype']);
     }
 
     public function testBuildFormContainsImportSubmitButton(): void {
@@ -104,106 +118,66 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // submitForm — no file uploaded
+    // validateForm
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormReturnsEarlyWhenUserFileIsEmpty(): void {
-      $formState = new FormState();
-      $formState->setValue('user_file', []);
+    public function testValidateAcceptsCsvInAnyCase(): void {
+      foreach (['accounts.csv', 'ACCOUNTS.CSV'] as $fileName) {
+        $this->uploadFile($fileName);
+        $this->assertSame([], $this->validate()->getErrors(), $fileName);
+      }
+    }
 
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
+    public function testValidateRejectsOtherFileTypes(): void {
+      $this->uploadFile('accounts.txt');
+      $this->assertArrayHasKey('user_file', $this->validate()->getErrors());
+    }
 
-      $this->assertEmpty($GLOBALS['batch_set_calls']);
+    public function testValidateRequiresAFile(): void {
+      $this->assertArrayHasKey('user_file', $this->validate()->getErrors());
+    }
+
+    public function testValidateRejectsAFailedUpload(): void {
+      $this->uploadFile('accounts.csv', UPLOAD_ERR_PARTIAL);
+      $this->assertArrayHasKey('user_file', $this->validate()->getErrors());
     }
 
     // -------------------------------------------------------------------------
-    // submitForm — File::load returns null
+    // submitForm
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormReturnsEarlyWhenFileLoadReturnsNull(): void {
-      $this->stubEntityTypeManager(NULL);
+    public function testSubmitDoesNothingWithNoUpload(): void {
+      $this->fileObjMock->expects($this->never())->method('moveUploadedFile');
 
-      $formState = new FormState();
-      $formState->setValue('user_file', [42]);
+      $this->submit();
 
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
-
-      $this->assertEmpty($GLOBALS['batch_set_calls']);
+      $this->assertSame([], $GLOBALS['batch_set_calls']);
     }
 
-    // -------------------------------------------------------------------------
-    // submitForm — save() throws an EntityStorageException
-    // -------------------------------------------------------------------------
+    public function testSubmitStopsWhenTheMoveFails(): void {
+      $this->uploadFile('accounts.csv');
+      $this->fileObjMock->method('moveUploadedFile')->willReturn(FALSE);
+      $this->messengerMock->expects($this->once())->method('addError');
 
-    public function testSubmitFormReturnsEarlyWhenSaveThrows(): void {
-      $fileMock = $this->createMock(File::class);
-      $fileMock->method('save')->willThrowException(new EntityStorageException('DB error'));
-      $fileMock->expects($this->never())->method('getFilename');
+      $this->submit();
 
-      $this->stubEntityTypeManager($fileMock);
-
-      $formState = new FormState();
-      $formState->setValue('user_file', [42]);
-
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
-
-      $this->assertEmpty($GLOBALS['batch_set_calls']);
+      $this->assertSame([], $GLOBALS['batch_set_calls']);
     }
 
-    // -------------------------------------------------------------------------
-    // submitForm — successful upload sets the batch
-    // -------------------------------------------------------------------------
+    public function testSubmitMovesTheFileAndStartsTheBatch(): void {
+      $this->uploadFile('accounts.csv');
+      $this->fileObjMock->expects($this->once())
+        ->method('moveUploadedFile')
+        ->with($this->tempFile, 'public://temp/accounts.csv')
+        ->willReturn(TRUE);
 
-    public function testSubmitFormSuccessSetsOneBatch(): void {
-      $fileMock = $this->createMock(File::class);
-      $fileMock->method('getFilename')->willReturn('accounts.csv');
-      $fileMock->expects($this->once())->method('save');
-
-      $this->stubEntityTypeManager($fileMock);
-
-      $formState = new FormState();
-      $formState->setValue('user_file', [42]);
-
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
+      $this->submit();
 
       $this->assertCount(1, $GLOBALS['batch_set_calls']);
-    }
-
-    public function testSubmitFormSuccessBatchUsesUploadedFileUri(): void {
-      $fileMock = $this->createMock(File::class);
-      $fileMock->method('getFilename')->willReturn('accounts.csv');
-
-      $this->stubEntityTypeManager($fileMock);
-
-      $formState = new FormState();
-      $formState->setValue('user_file', [42]);
-
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
-
-      $args = $GLOBALS['batch_set_calls'][0]['operations'][0][1][0];
-      $this->assertSame('public://temp/accounts.csv', $args['uri']);
-    }
-
-    public function testSubmitFormSuccessBatchReferencesImportUserAccountsBatchClass(): void {
-      $fileMock = $this->createMock(File::class);
-      $fileMock->method('getFilename')->willReturn('accounts.csv');
-
-      $this->stubEntityTypeManager($fileMock);
-
-      $formState = new FormState();
-      $formState->setValue('user_file', [42]);
-
-      $form = [];
-      $this->buildFormInstance()->submitForm($form, $formState);
-
       $batch = $GLOBALS['batch_set_calls'][0];
       $this->assertSame([ImportUserAccountsBatch::class, 'process'], $batch['operations'][0][0]);
       $this->assertSame([ImportUserAccountsBatch::class, 'finished'], $batch['finished']);
+      $this->assertSame('public://temp/accounts.csv', $batch['operations'][0][1][0]['uri']);
     }
 
   }
@@ -211,7 +185,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 }
 
 // Stub batch_set() in the form's namespace so unit tests do not require
-// a full Drupal bootstrap. Guarded because other test files (e.g.
+// a full Drupal bootstrap.  Guarded because other test files (e.g.
 // ImportMinivanFormTest) declare the same namespaced stub, and PHP fatals
 // on redeclaring a function when both files load in the same test run.
 namespace Drupal\nlpservices\Form {

@@ -2,11 +2,9 @@
 
 namespace Drupal\nlpservices\Form;
 
-use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\file\Entity\File;
 use Drupal\nlpservices\Batch\ImportStateEarlyVotingBatch;
 use Drupal\nlpservices\NlpEarlyVoting;
 
@@ -16,11 +14,15 @@ use Drupal\nlpservices\NlpEarlyVoting;
 class ImportStateEarlyVotingForm extends FormBase
 {
 
+  use PlainFileUploadTrait;
+
   protected NlpEarlyVoting $earlyVotingObj;
 
-  public function __construct($earlyVotingObj)
+  public function __construct($earlyVotingObj, $fileObj, $requestStack)
   {
     $this->earlyVotingObj = $earlyVotingObj;
+    $this->fileObj = $fileObj;
+    $this->setRequestStack($requestStack);
   }
 
   /**
@@ -30,6 +32,8 @@ class ImportStateEarlyVotingForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.early_voting'),
+      $container->get('file_system'),
+      $container->get('request_stack'),
     );
   }
 
@@ -46,15 +50,13 @@ class ImportStateEarlyVotingForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $tempDir = 'public://temp';
+    $form['#attributes']['enctype'] = 'multipart/form-data';
 
+    // A plain file field; see PlainFileUploadTrait.
     $form['state_early_voting_file'] = [
-      '#type' => 'managed_file',
+      '#type' => 'file',
       '#title' => $this->t('State early voting file name'),
       '#description' => $this->t('Select a state early voting CSV file. The first row must contain the headers "Assigned Voter ID" and "Ballot Received Date".'),
-      '#progress_message' => 'Uploading',
-      '#upload_location' => $tempDir,
-      '#upload_validators' => ['FileExtension' => ['extensions' => 'csv txt']],
       '#required' => TRUE,
     ];
 
@@ -69,42 +71,45 @@ class ImportStateEarlyVotingForm extends FormBase
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state): void
+  {
+    $uploadedFile = $this->getUploadedFile('state_early_voting_file');
+    if (empty($uploadedFile) || !$uploadedFile->isValid()) {
+      $form_state->setErrorByName('state_early_voting_file', $this->t('No file uploaded.'));
+      return;
+    }
+    if (!in_array($this->uploadedFileType($uploadedFile), ['csv', 'txt'])) {
+      $form_state->setErrorByName('state_early_voting_file',
+        $this->t('The state early voting file must be a .csv or .txt file.'));
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $messenger = $this->messenger();
 
-    $uploadedFile = $form_state->getValue('state_early_voting_file');
+    $uploadedFile = $this->getUploadedFile('state_early_voting_file');
     if (empty($uploadedFile)) {
       return;
     }
-    $fileEntity = File::load($uploadedFile[0]);
-    if (!$fileEntity instanceof File) {
-      $messenger->addError($this->t('Failed to load the uploaded file.'));
-      return;
-    }
-    try {
-      $fileEntity->save();
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('File save error', $e);
-      return;
-    }
-    $fileUri = 'public://temp/' . $fileEntity->getFilename();
 
-    $fh = fopen($fileUri, 'r');
+    // Check the header in PHP's upload copy first, so a bad file is never
+    // moved into public://temp.
+    $fh = fopen($uploadedFile->getRealPath(), 'r');
     if (!$fh) {
       $messenger->addError($this->t('Failed to open the state early voting file.'));
-      $this->deleteUploadedFile($fileEntity);
       return;
     }
 
     $headerRow = fgetcsv($fh, escape: '');
+    fclose($fh);
     if (empty($headerRow)) {
       $messenger->addError($this->t('Failed to read the state early voting file header.'));
-      fclose($fh);
-      $this->deleteUploadedFile($fileEntity);
       return;
     }
-    fclose($fh);
 
     $fieldPos = $this->earlyVotingObj->decodeStateEarlyVotingHdr($headerRow);
     if (!$fieldPos['ok']) {
@@ -112,7 +117,12 @@ class ImportStateEarlyVotingForm extends FormBase
         $messenger->addWarning($errMsg);
       }
       $messenger->addError($this->t('Fix the problem before resubmitting.'));
-      $this->deleteUploadedFile($fileEntity);
+      return;
+    }
+
+    $fileUri = $this->moveUploadToTemp($uploadedFile);
+    if (empty($fileUri)) {
+      $messenger->addError($this->t('Failed to save the state early voting file.'));
       return;
     }
 
@@ -131,21 +141,6 @@ class ImportStateEarlyVotingForm extends FormBase
       'error_message' => $this->t('Import of state early voting has encountered an error.'),
     ];
     batch_set($batch);
-  }
-
-  /**
-   * Deletes the uploaded file after a failed import.
-   *
-   * @param File $fileEntity
-   *   The uploaded file entity.
-   */
-  private function deleteUploadedFile(File $fileEntity): void
-  {
-    try {
-      $fileEntity->delete();
-    } catch (EntityStorageException $e) {
-      nlp_debug_msg('File delete error', $e);
-    }
   }
 
 }

@@ -7,10 +7,8 @@ namespace Drupal\Tests\nlpservices\Unit\Batch;
 use Drupal;
 use Drupal\Core\Database\Transaction;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\file\Entity\File;
 use Drupal\nlpservices\Batch\ImportStateEarlyVotingBatch;
 use Drupal\nlpservices\NlpMatchbacks;
 use Drupal\nlpservices\NlpVoters;
@@ -23,6 +21,7 @@ class ImportStateEarlyVotingBatchTest extends UnitTestCase {
   private NlpVoters $votersMock;
   private NlpMatchbacks $matchbacksMock;
   private MessengerInterface $messengerMock;
+  private FileSystemInterface $fileSystemMock;
   private array $tempFiles = [];
 
   protected function setUp(): void {
@@ -31,8 +30,10 @@ class ImportStateEarlyVotingBatchTest extends UnitTestCase {
     $this->votersMock     = $this->createMock(NlpVoters::class);
     $this->matchbacksMock = $this->createMock(NlpMatchbacks::class);
     $this->messengerMock  = $this->createMock(MessengerInterface::class);
+    $this->fileSystemMock = $this->createMock(FileSystemInterface::class);
 
     $container = new ContainerBuilder();
+    $container->set('file_system',            $this->fileSystemMock);
     $container->set('string_translation',    $this->getStringTranslationStub());
     $container->set('messenger',              $this->messengerMock);
     $container->set('nlpservices.voters',     $this->votersMock);
@@ -84,16 +85,6 @@ class ImportStateEarlyVotingBatchTest extends UnitTestCase {
         public function __construct() {}
         public function __destruct() {}
       });
-  }
-
-  private function stubEntityTypeManager(array $fileEntities = []): void {
-    $storageMock = $this->createMock(EntityStorageInterface::class);
-    $storageMock->method('loadByProperties')->willReturn($fileEntities);
-
-    $etmMock = $this->createMock(EntityTypeManagerInterface::class);
-    $etmMock->method('getStorage')->with('file')->willReturn($storageMock);
-
-    Drupal::getContainer()->set('entity_type.manager', $etmMock);
   }
 
   // -------------------------------------------------------------------------
@@ -375,10 +366,8 @@ class ImportStateEarlyVotingBatchTest extends UnitTestCase {
   // ImportStateEarlyVotingBatch::finished — success
   // -------------------------------------------------------------------------
 
-  public function testFinishedSuccessAddsStatusMessageAndDeletesFileEntities(): void {
-    $fileEntityMock = $this->createMock(File::class);
-    $fileEntityMock->expects($this->once())->method('delete');
-    $this->stubEntityTypeManager([$fileEntityMock]);
+  public function testFinishedSuccessAddsStatusMessageAndDeletesTheFile(): void {
+    $this->fileSystemMock->expects($this->once())->method('unlink')->with('/tmp/state_ev.csv');
 
     $this->messengerMock->expects($this->once())->method('addStatus');
     $this->messengerMock->expects($this->never())->method('addError');
@@ -390,15 +379,19 @@ class ImportStateEarlyVotingBatchTest extends UnitTestCase {
   // ImportStateEarlyVotingBatch::finished — failure
   // -------------------------------------------------------------------------
 
-  public function testFinishedFailureAddsErrorAndDeletesFileEntities(): void {
-    $fileEntityMock = $this->createMock(File::class);
-    $fileEntityMock->expects($this->once())->method('delete');
-    $this->stubEntityTypeManager([$fileEntityMock]);
+  public function testFinishedFailureAddsErrorAndDeletesTheFile(): void {
+    $this->fileSystemMock->expects($this->once())->method('unlink')->with('/tmp/state_ev.csv');
 
     $this->messengerMock->expects($this->never())->method('addStatus');
     $this->messengerMock->expects($this->once())->method('addError');
 
     ImportStateEarlyVotingBatch::finished(FALSE, ['fileUri' => '/tmp/state_ev.csv'], []);
+  }
+
+  public function testFinishedWithNoFileUriDeletesNothing(): void {
+    $this->fileSystemMock->expects($this->never())->method('unlink');
+
+    ImportStateEarlyVotingBatch::finished(FALSE, [], []);
   }
 
 }

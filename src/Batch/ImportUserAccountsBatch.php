@@ -8,7 +8,7 @@ use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 
 class ImportUserAccountsBatch {
 
-  const MAX_QUEUE_LIMIT = 100;
+  const int MAX_QUEUE_LIMIT = 100;
 
   /**
    * Read the provided file and save the Dems.
@@ -162,6 +162,10 @@ class ImportUserAccountsBatch {
    */
   public static function finished(bool $success, array $results, array $operations): void {
     $messenger = Drupal::messenger();
+    // The form moved the upload into public://temp; don't leave it there.
+    if (!empty($results['uri'])) {
+      Drupal::service('file_system')->unlink($results['uri']);
+    }
     if ($success) {
       $recordCount = $results['recordCount'];
       $messenger->addStatus(t('The user accounts successfully restored.'));

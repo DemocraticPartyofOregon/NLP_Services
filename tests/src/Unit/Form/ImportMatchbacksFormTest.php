@@ -2,247 +2,268 @@
 
 declare(strict_types=1);
 
-namespace Drupal\Tests\nlpservices\Unit\Form;
+namespace Drupal\Tests\nlpservices\Unit\Form {
 
-use Drupal;
-use Drupal\Core\DependencyInjection\ContainerBuilder;
-use Drupal\Core\Entity\EntityStorageInterface;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
-use Drupal\Core\Entity\EntityTypeRepositoryInterface;
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\Core\Form\FormState;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\nlpservices\Form\ImportMatchbacksForm;
-use Drupal\nlpservices\NlpMatchbacks;
-use Drupal\Tests\UnitTestCase;
-use Drupal\file\Entity\File;
-use PHPUnit\Framework\Attributes\CoversClass;
-use PHPUnit\Framework\Attributes\CoversMethod;
-use PHPUnit\Framework\Attributes\Group;
+  use Drupal;
+  use Drupal\Core\Config\Config;
+  use Drupal\Core\Config\ConfigFactoryInterface;
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
+  use Drupal\Core\File\FileSystemInterface;
+  use Drupal\Core\Form\FormState;
+  use Drupal\Core\Messenger\MessengerInterface;
+  use Drupal\nlpservices\Batch\ImportMatchbacksBatch;
+  use Drupal\nlpservices\Form\ImportMatchbacksForm;
+  use Drupal\nlpservices\NlpMatchbacks;
+  use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\Attributes\CoversClass;
+  use PHPUnit\Framework\Attributes\Group;
+  use Symfony\Component\HttpFoundation\File\UploadedFile;
+  use Symfony\Component\HttpFoundation\Request;
+  use Symfony\Component\HttpFoundation\RequestStack;
 
-#[CoversClass(\Drupal\nlpservices\Form\ImportMatchbacksForm::class)]
-#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'getFormId')]
-#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'buildForm')]
-#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'validateForm')]
-#[CoversMethod(\Drupal\nlpservices\Form\ImportMatchbacksForm::class, 'submitForm')]
-#[Group('nlpservices')]
-class ImportMatchbacksFormTest extends UnitTestCase {
+  #[CoversClass(ImportMatchbacksForm::class)]
+  #[Group('nlpservices')]
+  class ImportMatchbacksFormTest extends UnitTestCase {
 
-  private FileSystemInterface $fileObjMock;
-  private NlpMatchbacks $matchbacksMock;
-  private MessengerInterface $messengerMock;
+    private FileSystemInterface $fileObjMock;
+    private NlpMatchbacks $matchbacksMock;
+    private MessengerInterface $messengerMock;
+    private Config $configMock;
+    private RequestStack $requestStack;
+    private string $tempFile;
 
-  protected function setUp(): void {
-    parent::setUp();
+    protected function setUp(): void {
+      parent::setUp();
 
-    $this->fileObjMock    = $this->createMock(FileSystemInterface::class);
-    $this->matchbacksMock = $this->createMock(NlpMatchbacks::class);
-    $this->messengerMock  = $this->createMock(MessengerInterface::class);
+      $this->fileObjMock    = $this->createMock(FileSystemInterface::class);
+      $this->matchbacksMock = $this->createMock(NlpMatchbacks::class);
+      $this->messengerMock  = $this->createMock(MessengerInterface::class);
+      $this->configMock     = $this->createMock(Config::class);
+      $this->requestStack   = new RequestStack();
+      $this->requestStack->push(new Request());
+      $this->tempFile       = tempnam(sys_get_temp_dir(), 'nlpmb');
 
-    $container = new ContainerBuilder();
-    $container->set('messenger', $this->messengerMock);
-    $container->set('string_translation', $this->getStringTranslationStub());
-    Drupal::setContainer($container);
-  }
+      $configFactory = $this->createMock(ConfigFactoryInterface::class);
+      $configFactory->method('getEditable')->willReturn($this->configMock);
 
-  protected function tearDown(): void {
-    parent::tearDown();
-    Drupal::setContainer(new ContainerBuilder());
-  }
+      $container = new ContainerBuilder();
+      $container->set('messenger', $this->messengerMock);
+      $container->set('string_translation', $this->getStringTranslationStub());
+      $container->set('config.factory', $configFactory);
+      Drupal::setContainer($container);
 
-  // -------------------------------------------------------------------------
-  // Helpers
-  // -------------------------------------------------------------------------
-
-  private function buildFormInstance(): ImportMatchbacksForm {
-    $form = new ImportMatchbacksForm(
-      $this->fileObjMock,
-      $this->matchbacksMock,
-    );
-    $form->setStringTranslation($this->getStringTranslationStub());
-    $form->setMessenger($this->messengerMock);
-    return $form;
-  }
-
-  /**
-   * Register entity_type.manager and entity_type.repository mocks so that
-   * File::load() resolves without a real Drupal entity stack.
-   * $loadReturn is what storage->load() returns.
-   */
-  private function stubEntityTypeManager(mixed $loadReturn = NULL): void {
-    $storageMock = $this->createMock(EntityStorageInterface::class);
-    $storageMock->method('load')->willReturn($loadReturn);
-
-    $etmMock = $this->createMock(EntityTypeManagerInterface::class);
-    $etmMock->method('getStorage')->willReturn($storageMock);
-
-    $etrMock = $this->createMock(EntityTypeRepositoryInterface::class);
-    $etrMock->method('getEntityTypeFromClass')->willReturn('file');
-
-    $container = Drupal::getContainer();
-    $container->set('entity_type.manager', $etmMock);
-    $container->set('entity_type.repository', $etrMock);
-  }
-
-  // -------------------------------------------------------------------------
-  // getFormId
-  // -------------------------------------------------------------------------
-
-  public function testGetFormIdReturnsExpectedString(): void {
-    $this->assertSame('nlpservices_import_matchbacks_form', $this->buildFormInstance()->getFormId());
-  }
-
-  // -------------------------------------------------------------------------
-  // buildForm
-  // -------------------------------------------------------------------------
-
-  public function testBuildFormContainsHintMarkupElement(): void {
-    $form = $this->buildFormInstance()->buildForm([], new FormState());
-
-    $this->assertArrayHasKey('hint', $form);
-    $this->assertSame('markup', $form['hint']['#type']);
-  }
-
-  public function testBuildFormContainsManagedFileField(): void {
-    $form = $this->buildFormInstance()->buildForm([], new FormState());
-
-    $this->assertArrayHasKey('matchback_file', $form);
-    $this->assertSame('managed_file', $form['matchback_file']['#type']);
-  }
-
-  public function testBuildFormFileFieldAllowsAnyExtension(): void {
-    $form = $this->buildFormInstance()->buildForm([], new FormState());
-
-    // An empty FileExtension validator tells Drupal to allow any extension.
-    $this->assertSame([], $form['matchback_file']['#upload_validators']['FileExtension']);
-  }
-
-  public function testBuildFormContainsUploadSubmitButton(): void {
-    $form = $this->buildFormInstance()->buildForm([], new FormState());
-
-    $this->assertArrayHasKey('upload_file', $form);
-    $this->assertSame('submit', $form['upload_file']['#type']);
-  }
-
-  // -------------------------------------------------------------------------
-  // validateForm — file type
-  // -------------------------------------------------------------------------
-
-  private function validateUpload(?string $fileName): FormState {
-    $file = NULL;
-    if ($fileName !== NULL) {
-      $file = $this->createMock(File::class);
-      $file->method('getFilename')->willReturn($fileName);
+      $GLOBALS['batch_set_calls'] = [];
     }
-    $this->stubEntityTypeManager($file);
 
-    $formState = new FormState();
-    $formState->setTriggeringElement(['#id' => 'upload-file']);
-    $formState->setValue('matchback_file', [42]);
-    $form = [];
-    $this->buildFormInstance()->validateForm($form, $formState);
-    return $formState;
+    protected function tearDown(): void {
+      parent::tearDown();
+      @unlink($this->tempFile);
+      Drupal::setContainer(new ContainerBuilder());
+      unset($GLOBALS['batch_set_calls']);
+    }
+
+    // -------------------------------------------------------------------------
+    // Helpers
+    // -------------------------------------------------------------------------
+
+    private function buildFormInstance(): ImportMatchbacksForm {
+      $form = new ImportMatchbacksForm(
+        $this->fileObjMock,
+        $this->matchbacksMock,
+        $this->requestStack,
+      );
+      $form->setStringTranslation($this->getStringTranslationStub());
+      $form->setMessenger($this->messengerMock);
+      return $form;
+    }
+
+    /**
+     * Put an uploaded matchback file with the given name and contents on the
+     * request.
+     */
+    private function uploadFile(string $fileName, string $contents = '', int $error = UPLOAD_ERR_OK): void {
+      file_put_contents($this->tempFile, $contents);
+      $file = new UploadedFile($this->tempFile, $fileName, 'text/csv', $error, TRUE);
+      $this->requestStack->getCurrentRequest()->files->set('files', ['matchback_file' => $file]);
+    }
+
+    private function validate(): FormState {
+      $formState = new FormState();
+      $form = [];
+      $this->buildFormInstance()->validateForm($form, $formState);
+      return $formState;
+    }
+
+    private function submit(): void {
+      $form = [];
+      $this->buildFormInstance()->submitForm($form, new FormState());
+    }
+
+    private function headerOk(): void {
+      $this->matchbacksMock->method('decodeMatchbackHdr')
+        ->willReturn(['ok' => TRUE, 'pos' => ['vanid' => 0, 'date' => 1], 'err' => []]);
+    }
+
+    // -------------------------------------------------------------------------
+    // getFormId / buildForm
+    // -------------------------------------------------------------------------
+
+    public function testGetFormIdReturnsExpectedString(): void {
+      $this->assertSame('nlpservices_import_matchbacks_form', $this->buildFormInstance()->getFormId());
+    }
+
+    public function testBuildFormContainsHintMarkupElement(): void {
+      $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+      $this->assertSame('markup', $form['hint']['#type']);
+    }
+
+    /**
+     * A managed_file field saves a file entity, which fails on a site with the
+     * file_entity module, so the form must use a plain file field.
+     */
+    public function testBuildFormUsesPlainFileField(): void {
+      $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+      $this->assertSame('file', $form['matchback_file']['#type']);
+      $this->assertSame('multipart/form-data', $form['#attributes']['enctype']);
+    }
+
+    public function testBuildFormContainsUploadSubmitButton(): void {
+      $form = $this->buildFormInstance()->buildForm([], new FormState());
+
+      $this->assertSame('submit', $form['upload_file']['#type']);
+      $this->assertSame('upload-file', $form['upload_file']['#id']);
+    }
+
+    // -------------------------------------------------------------------------
+    // validateForm
+    // -------------------------------------------------------------------------
+
+    public function testValidateFormAcceptsCsvAndTxtInAnyCase(): void {
+      foreach (['ballots.csv', 'ballots.txt', 'BALLOTS.CSV', 'Ballots.Txt'] as $fileName) {
+        $this->uploadFile($fileName);
+        $this->assertSame([], $this->validate()->getErrors(), $fileName);
+      }
+    }
+
+    public function testValidateFormRejectsOtherFileTypes(): void {
+      foreach (['ballots.xlsx', 'ballots.pdf', 'ballots', 'ballots.csv.zip'] as $fileName) {
+        $this->uploadFile($fileName);
+        $this->assertArrayHasKey('matchback_file', $this->validate()->getErrors(), $fileName);
+      }
+    }
+
+    public function testValidateFormRequiresAFile(): void {
+      $this->assertArrayHasKey('matchback_file', $this->validate()->getErrors());
+    }
+
+    public function testValidateFormRejectsAFailedUpload(): void {
+      $this->uploadFile('ballots.csv', '', UPLOAD_ERR_PARTIAL);
+      $this->assertArrayHasKey('matchback_file', $this->validate()->getErrors());
+    }
+
+    // -------------------------------------------------------------------------
+    // submitForm
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormDoesNothingWithNoUpload(): void {
+      $this->matchbacksMock->expects($this->never())->method('decodeMatchbackHdr');
+      $this->fileObjMock->expects($this->never())->method('moveUploadedFile');
+
+      $this->submit();
+
+      $this->assertSame([], $GLOBALS['batch_set_calls']);
+    }
+
+    public function testSubmitFormReportsAnEmptyFile(): void {
+      $this->uploadFile('ballots.csv');
+      $this->messengerMock->expects($this->once())->method('addError');
+      $this->fileObjMock->expects($this->never())->method('moveUploadedFile');
+
+      $this->submit();
+    }
+
+    public function testSubmitFormDecodesTheCsvHeader(): void {
+      $this->uploadFile('ballots.csv', " VANID ,Ballot Received\n123,11/01/2026\n");
+      $this->matchbacksMock->expects($this->once())
+        ->method('decodeMatchbackHdr')
+        ->with(['VANID', 'Ballot Received'])
+        ->willReturn(['ok' => FALSE, 'pos' => [], 'err' => []]);
+
+      $this->submit();
+    }
+
+    public function testSubmitFormDecodesTheTabDelimitedHeader(): void {
+      $this->uploadFile('ballots.txt', "VANID\tBallot Received\r\n123\t11/01/2026\n");
+      $this->matchbacksMock->expects($this->once())
+        ->method('decodeMatchbackHdr')
+        ->with(['VANID', 'Ballot Received'])
+        ->willReturn(['ok' => FALSE, 'pos' => [], 'err' => []]);
+
+      $this->submit();
+    }
+
+    public function testSubmitFormWithBadHeaderKeepsTheFileOutOfTemp(): void {
+      $this->uploadFile('ballots.csv', "Wrong,Columns\n");
+      $this->matchbacksMock->method('decodeMatchbackHdr')
+        ->willReturn(['ok' => FALSE, 'pos' => [], 'err' => ['Missing VANID']]);
+      $this->messengerMock->expects($this->once())->method('addWarning')->with('Missing VANID');
+      $this->messengerMock->expects($this->once())->method('addError');
+      $this->fileObjMock->expects($this->never())->method('moveUploadedFile');
+      $this->configMock->expects($this->never())->method('save');
+
+      $this->submit();
+
+      $this->assertSame([], $GLOBALS['batch_set_calls']);
+    }
+
+    public function testSubmitFormStopsWhenTheMoveFails(): void {
+      $this->uploadFile('ballots.csv', "VANID,Ballot Received\n");
+      $this->headerOk();
+      $this->fileObjMock->method('moveUploadedFile')->willReturn(FALSE);
+      $this->messengerMock->expects($this->once())->method('addError');
+      $this->configMock->expects($this->never())->method('save');
+
+      $this->submit();
+
+      $this->assertSame([], $GLOBALS['batch_set_calls']);
+    }
+
+    public function testSubmitFormMovesTheFileAndStartsTheBatch(): void {
+      $this->uploadFile('ballots.txt', "VANID\tBallot Received\n");
+      $this->headerOk();
+      $this->fileObjMock->expects($this->once())
+        ->method('moveUploadedFile')
+        ->with($this->tempFile, 'public://temp/ballots.txt')
+        ->willReturn(TRUE);
+      $this->configMock->expects($this->once())->method('set')
+        ->with('nlpservices-last-matchback-time', $this->greaterThan(0));
+      $this->configMock->expects($this->once())->method('save');
+
+      $this->submit();
+
+      $this->assertCount(1, $GLOBALS['batch_set_calls']);
+      $batch = $GLOBALS['batch_set_calls'][0];
+      $this->assertSame([ImportMatchbacksBatch::class, 'process'], $batch['operations'][0][0]);
+      $this->assertSame([
+        'fileUri' => 'public://temp/ballots.txt',
+        'fileType' => 'txt',
+        'fieldPos' => ['vanid' => 0, 'date' => 1],
+      ], $batch['operations'][0][1][0]);
+    }
+
   }
 
-  public function testValidateFormAcceptsCsvAndTxtInAnyCase(): void {
-    foreach (['ballots.csv', 'ballots.txt', 'BALLOTS.CSV', 'Ballots.Txt'] as $fileName) {
-      $this->assertSame([], $this->validateUpload($fileName)->getErrors(), $fileName);
+}
+
+// Stub batch_set() in the form's namespace so unit tests do not require
+// a full Drupal bootstrap.  Guarded because other test files declare the
+// same namespaced stub.
+namespace Drupal\nlpservices\Form {
+  if (!function_exists(__NAMESPACE__ . '\batch_set')) {
+    function batch_set(array $batch_definition): void {
+      $GLOBALS['batch_set_calls'][] = $batch_definition;
     }
   }
-
-  public function testValidateFormRejectsOtherFileTypes(): void {
-    foreach (['ballots.xlsx', 'ballots.pdf', 'ballots', 'ballots.csv.zip'] as $fileName) {
-      $formState = $this->validateUpload($fileName);
-      $this->assertArrayHasKey('matchback_file', $formState->getErrors(), $fileName);
-    }
-  }
-
-  public function testValidateFormRejectsFileThatCannotBeLoaded(): void {
-    $this->assertArrayHasKey('matchback_file', $this->validateUpload(NULL)->getErrors());
-  }
-
-  public function testValidateFormRequiresAFile(): void {
-    $formState = new FormState();
-    $formState->setTriggeringElement(['#id' => 'upload-file']);
-    $formState->setValue('matchback_file', []);
-    $form = [];
-    $this->buildFormInstance()->validateForm($form, $formState);
-
-    $this->assertArrayHasKey('matchback_file', $formState->getErrors());
-  }
-
-  public function testValidateFormSkipsTheFileFieldsOwnButtons(): void {
-    // The managed_file Remove button submits with no file; that must not fail.
-    $formState = new FormState();
-    $formState->setTriggeringElement(['#id' => 'edit-matchback-file-remove-button']);
-    $formState->setValue('matchback_file', []);
-    $form = [];
-    $this->buildFormInstance()->validateForm($form, $formState);
-
-    $this->assertSame([], $formState->getErrors());
-  }
-
-  // -------------------------------------------------------------------------
-  // submitForm — empty file value returns early
-  // -------------------------------------------------------------------------
-
-  public function testSubmitFormReturnsEarlyWhenMatchbackFileIsEmptyArray(): void {
-    $this->matchbacksMock->expects($this->never())->method('decodeMatchbackHdr');
-    $this->messengerMock->expects($this->never())->method('addError');
-
-    $formState = new FormState();
-    $formState->setValue('matchback_file', []);
-
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $formState);
-  }
-
-  public function testSubmitFormReturnsEarlyWhenMatchbackFileIsNull(): void {
-    $this->matchbacksMock->expects($this->never())->method('decodeMatchbackHdr');
-    $this->messengerMock->expects($this->never())->method('addError');
-
-    $formState = new FormState();
-    $formState->setValue('matchback_file', NULL);
-
-    $form = [];
-    $this->buildFormInstance()->submitForm($form, $formState);
-  }
-
-  // -------------------------------------------------------------------------
-  // submitForm — File::load returns null → fopen on empty URI fails
-  // -------------------------------------------------------------------------
-
-  /**
-   * When File::load() returns null the filename stays empty, making
-   * $fileUri = 'public://temp/' (an unresolvable stream in a unit-test
-   * environment).  fopen() returns false so the form must add an error.
-   */
-  public function testSubmitFormAddsErrorWhenFileCannotBeOpened(): void {
-    $this->stubEntityTypeManager(NULL);
-    $this->messengerMock->expects($this->once())->method('addError');
-
-    $formState = new FormState();
-    $formState->setValue('matchback_file', [42]);
-
-    $form = [];
-    @$this->buildFormInstance()->submitForm($form, $formState);
-  }
-
-  /**
-   * Even when fopen fails, $form_state['fileUri'] must be set before the
-   * early return so that any post-submit handler can inspect the intended path.
-   */
-  public function testSubmitFormSetsFileUriOnFormStateBeforeFopenAttempt(): void {
-    $this->stubEntityTypeManager(NULL);
-
-    $formState = new FormState();
-    $formState->setValue('matchback_file', [42]);
-
-    $form = [];
-    @$this->buildFormInstance()->submitForm($form, $formState);
-
-    // File::load returned null so filename is '' → URI must be 'public://temp/'.
-    $this->assertSame('public://temp/', $formState->get('fileUri'));
-  }
-
 }

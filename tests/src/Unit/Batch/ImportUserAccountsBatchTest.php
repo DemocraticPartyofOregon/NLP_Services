@@ -9,6 +9,7 @@ use Drupal\Component\Plugin\Exception\PluginNotFoundException;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
 use Drupal\nlpservices\DrupalUser;
@@ -459,6 +460,14 @@ class ImportUserAccountsBatchTest extends UnitTestCase {
   // -------------------------------------------------------------------------
   // ImportUserAccountsBatch::finished — failure
   // -------------------------------------------------------------------------
+
+  public function testFinishedDeletesTheUploadedFile(): void {
+    $fileSystemMock = $this->createMock(FileSystemInterface::class);
+    $fileSystemMock->expects($this->once())->method('unlink')->with('public://temp/accounts.csv');
+    Drupal::getContainer()->set('file_system', $fileSystemMock);
+
+    ImportUserAccountsBatch::finished(TRUE, ['recordCount' => 5, 'uri' => 'public://temp/accounts.csv'], []);
+  }
 
   public function testFinishedFailureAddsError(): void {
     $this->messengerMock->expects($this->once())->method('addError');

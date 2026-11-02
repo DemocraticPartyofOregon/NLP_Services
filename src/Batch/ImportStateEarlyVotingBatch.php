@@ -6,7 +6,7 @@ use Drupal;
 
 class ImportStateEarlyVotingBatch {
 
-  const READ_COUNT_LIMIT = 12000;
+  const int READ_COUNT_LIMIT = 12000;
 
   /**
    * Read the state early voting file. For each row, look up the vanid for the
@@ -122,10 +122,9 @@ class ImportStateEarlyVotingBatch {
   public static function finished(bool $success, array $results, array $operations): void {
     $messenger = Drupal::messenger();
 
-    $fileUri = $results['fileUri'];
-    $fileEntities = Drupal::entityTypeManager()->getStorage('file')->loadByProperties(['uri' => $fileUri]);
-    foreach ($fileEntities as $fileEntity) {
-      $fileEntity->delete();
+    // The form moved the upload into public://temp; don't leave it there.
+    if (!empty($results['fileUri'])) {
+      Drupal::service('file_system')->unlink($results['fileUri']);
     }
     if ($success) {
       $matchedCount = $results['matchedCount'];
