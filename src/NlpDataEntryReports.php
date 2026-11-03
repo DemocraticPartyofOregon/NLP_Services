@@ -108,10 +108,11 @@ class NlpDataEntryReports
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
     
     // Deceased is not available for Social Media contact method.  Substitute Phone.
-    $cid = ($contactMethod=='Social Media')?
+    $vanMethod = ($contactMethod=='Social Media') ? 'Phone' : $contactMethod;
+    $cid = ($vanMethod != $contactMethod)?
       $this->nlpConfigurationObj->getContactId('Phone') : $contactMethodId;
-    $rid = $this->nlpConfigurationObj->getResponseId($contactMethod,'Deceased');
-    
+    $rid = $this->nlpConfigurationObj->getResponseId($vanMethod,'Deceased');
+
     // Record the voter is deceased in NLP Services.
     $report['reportIndex'] = NULL;
     $report['type'] = 'contact';
@@ -129,8 +130,11 @@ class NlpDataEntryReports
     $surveyResponse['rid'] = $rid;
     $surveyResponse['dateCanvassed'] = $canvassDate;
     $surveyResponse['ContactTypeCode'] = $cid;
+    // VoteBuilder needs a phone number for a phone or text contact; without
+    // one, use the configured substitute contact method.
+    $surveyResponse = $this->addPhoneContact($surveyResponse, $vanMethod, 'Deceased');
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
-    
+
     // Mark Contact attempt for this voter.
     $turfVoter = [];
     $turfVoter['vanid'] = $report['vanid'];
@@ -139,7 +143,7 @@ class NlpDataEntryReports
     $turfVoter['turfIndex'] = $action['turfIndex'];
     $turfVoter['attemptedContact'] = $rIndex;
     $this->votersObj->updateTurfVoter($turfVoter);
-    
+
     // Results reported by this NL.
     $this->nlsObj->resultsReported($report['mcid'], $report['county']);
     $this->awardsObj->nlParticipation($report['mcid'], 'Completed');
@@ -186,18 +190,7 @@ class NlpDataEntryReports
     $surveyResponse['type'] = 'contactAttempt';
     $surveyResponse['rid'] = $responseId;
     $surveyResponse['ContactTypeCode'] = $contactMethodId;
-    $vanid = $report['vanid'];
-    $altPhone = $this->phoneContact($vanid,$contactMethod,$responseName);
-    if (!empty($altPhone['phoneNo'])) {
-      $surveyResponse['phoneNumber'] = $altPhone['phoneNo'];
-    }
-    if (!empty($altPhone['phoneNoId'])) {
-      $surveyResponse['phoneId'] = $altPhone['phoneNoId'];
-    }
-    if (!empty($altPhone['subContext'])) {
-      $surveyResponse['ContactTypeCode'] = $altPhone['subContext'];
-      $surveyResponse['rid'] = $altPhone['subResponse'];
-    }
+    $surveyResponse = $this->addPhoneContact($surveyResponse, $contactMethod, $responseName);
     $canvassDate = date(DATE_ATOM, strtotime($report['contactDate']));
     $surveyResponse['dateCanvassed'] = $canvassDate;
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
@@ -263,7 +256,35 @@ class NlpDataEntryReports
     $surveyResponse['phoneNumber'] = $action['phoneNumber'];
     $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse);
   }
-  
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * addPhoneContact
+   *
+   * Add the voter's phone number to a phone or text contact attempt, or switch
+   * it to the substitute contact method when the voter has no usable phone.
+   * See phoneContact.
+   *
+   * @param array $surveyResponse - The canvass response, with 'vanid', 'rid' and 'ContactTypeCode'.
+   * @param string $contactMethod - The contact method name.
+   * @param string $responseName - The response name, e.g. 'Deceased'.
+   * @return array - The canvass response with the phone or substitute added.
+   */
+  private function addPhoneContact( array $surveyResponse, string $contactMethod, string $responseName): array
+  {
+    $altPhone = $this->phoneContact($surveyResponse['vanid'], $contactMethod, $responseName);
+    if (!empty($altPhone['phoneNo'])) {
+      $surveyResponse['phoneNumber'] = $altPhone['phoneNo'];
+    }
+    if (!empty($altPhone['phoneNoId'])) {
+      $surveyResponse['phoneId'] = $altPhone['phoneNoId'];
+    }
+    if (!empty($altPhone['subContext'])) {
+      $surveyResponse['ContactTypeCode'] = $altPhone['subContext'];
+      $surveyResponse['rid'] = $altPhone['subResponse'];
+    }
+    return $surveyResponse;
+  }
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * phoneContact
    *

@@ -187,13 +187,73 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   public function testDeceasedVoterSubstitutesSocialMediaWithPhone(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Social Media');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
-    $this->nlpConfigurationMock->method('getResponseId')->willReturn(3);
+    $this->nlpConfigurationMock->expects($this->once())
+      ->method('getResponseId')
+      ->with('Phone', 'Deceased')
+      ->willReturn(3);
     $this->nlpConfigurationMock->expects($this->once())
       ->method('getContactId')
       ->with('Phone')
       ->willReturn(2);
+    $this->votersMock->method('getVoterById')->willReturn([
+      'cellPhone'   => '206-555-1234',
+      'cellPhoneId' => 77,
+    ]);
     $this->reportsMock->method('setNlReport')->willReturn(10);
-    // reportSurveyResponse is void — no willReturn needed.
+
+    $this->apiSurveyQuestionMock->expects($this->once())
+      ->method('reportSurveyResponse')
+      ->with($this->callback(static fn($r) => $r['ContactTypeCode'] === 2
+        && $r['rid'] === 3
+        && ($r['phoneNumber'] ?? '') === '206-555-1234'));
+
+    $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
+  }
+
+  /**
+   * @covers ::deceasedVoter
+   */
+  public function testDeceasedVoterIncludesPhoneNumberForPhoneMethod(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->nlpConfigurationMock->method('getResponseId')->willReturn(3);
+    $this->votersMock->method('getVoterById')->willReturn([
+      'cellPhone'   => '206-555-1234',
+      'cellPhoneId' => 77,
+    ]);
+    $this->reportsMock->method('setNlReport')->willReturn(10);
+
+    $this->apiSurveyQuestionMock->expects($this->once())
+      ->method('reportSurveyResponse')
+      ->with($this->callback(static fn($r) => ($r['phoneNumber'] ?? '') === '206-555-1234'
+        && ($r['phoneId'] ?? 0) === 77
+        && $r['ContactTypeCode'] === 1
+        && $r['rid'] === 3));
+
+    $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
+  }
+
+  /**
+   * @covers ::deceasedVoter
+   */
+  public function testDeceasedVoterUsesSubstituteWhenPhoneVoterHasNoPhone(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->nlpConfigurationMock->method('getResponseId')->willReturn(3);
+    $this->nlpConfigurationMock->method('getAlternatePhoneReportCodes')->willReturn([
+      'Phone' => [
+        'Deceased' => ['subContext' => 4, 'subResponse' => 8],
+        'Other'    => ['subContext' => 5, 'subResponse' => 9],
+      ],
+    ]);
+    $this->votersMock->method('getVoterById')->willReturn([]);
+    $this->reportsMock->method('setNlReport')->willReturn(10);
+
+    $this->apiSurveyQuestionMock->expects($this->once())
+      ->method('reportSurveyResponse')
+      ->with($this->callback(static fn($r) => !isset($r['phoneNumber'])
+        && $r['ContactTypeCode'] === 4
+        && $r['rid'] === 8));
 
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
