@@ -10,6 +10,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\Core\Database\Query\Select;
   use Drupal\Core\Database\StatementInterface;
   use Drupal\nlpservices\MagicWord;
+  use ErrorException;
   use Drupal\nlpservices\NlpEncryption;
   use Drupal\Tests\UnitTestCase;
 
@@ -495,6 +496,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->connectionMock->expects($this->never())->method('merge');
       $this->buildMagicWord()->removeCoordinatorRole(42);
+    }
+
+    public function testRemoveCoordinatorRoleIsNoopWhenNoCredentialsRow(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn(FALSE);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $this->connectionMock->expects($this->never())->method('merge');
+      set_error_handler(function (int $errno, string $errstr): bool {
+        throw new ErrorException($errstr, 0, $errno);
+      });
+      try {
+        $this->buildMagicWord()->removeCoordinatorRole(42);
+      }
+      finally {
+        restore_error_handler();
+      }
     }
 
   }

@@ -497,6 +497,8 @@ class MagicWord {
   public function removeCoordinatorRole( int $mcid ): void
   {
     $credentials = $this->getCredentials($mcid,FALSE);
+    // A coordinator without a MagicWord row has no stored roles to change.
+    if(empty($credentials)) {return;}
     if(is_array($credentials['roles'])) {
       if(isset($credentials['roles'][NLP_COORDINATOR_ROLE_ID])) {
         unset($credentials['roles'][NLP_COORDINATOR_ROLE_ID]);
