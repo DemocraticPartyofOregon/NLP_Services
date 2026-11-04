@@ -18,6 +18,8 @@ class NlpNls {
   const string PHONE = 'phone';
   const string MAIL = 'mail';
   const int NOTES_MAX = 250;   // Notes max length of the note.
+  // Width of the notes columns in nlp_nls_status and nlp_awards.
+  const int NOTES_COLUMN_LENGTH = 256;
   const int NLS_ALL_MAX = 200;
   const string ACTIVE_NLS_SYNC_KEY = 'nlpservices.active_nls_sync.';
   // An active NL sync with no progress for this long is treated as abandoned.
@@ -811,5 +813,56 @@ class NlpNls {
     }
     return $result->fetchAssoc();
   }
-  
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * decodeNote
+   *
+   * Turns a stored (HTML-encoded) note back into the text the user typed.
+   * Decodes repeatedly so a note encoded more than once by earlier saves
+   * (doesn&amp;#039;t) comes back clean.
+   *
+   * @param string|null $note
+   * @return string
+   */
+  public static function decodeNote(?string $note): string
+  {
+    $text = (string) $note;
+    for ($i = 0; $i < 5; $i++) {
+      $decoded = html_entity_decode($text, ENT_QUOTES | ENT_HTML5);
+      if ($decoded === $text) {break;}
+      $text = $decoded;
+    }
+    return $text;
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * encodeNote
+   *
+   * Prepares a note typed in a form for storage: decodes anything already
+   * encoded, normalizes line endings, shortens it to NOTES_MAX characters
+   * (adding "..."), then HTML-encodes it. Encoding makes the text longer
+   * (an apostrophe becomes &#039;), so the text is shortened further until
+   * the encoded result fits the notes column.
+   *
+   * @param string|null $note
+   * @return string
+   */
+  public static function encodeNote(?string $note): string
+  {
+    $text = str_replace(["\r\n", "\r"], "\n", self::decodeNote($note));
+    $text = trim($text);
+    $keep = mb_strlen($text);
+    $suffix = '';
+    if ($keep > self::NOTES_MAX) {
+      $keep = self::NOTES_MAX;
+      $suffix = '...';
+    }
+    do {
+      $encoded = htmlentities(mb_substr($text, 0, $keep) . $suffix, ENT_QUOTES);
+      $suffix = '...';
+      $keep--;
+    } while (mb_strlen($encoded) > self::NOTES_COLUMN_LENGTH && $keep >= 0);
+    return $encoded;
+  }
+
 }

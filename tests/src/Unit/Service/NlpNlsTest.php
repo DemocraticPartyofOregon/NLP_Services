@@ -825,6 +825,40 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(3, $result['resultsReported']);
     }
 
+    public function testDecodeNoteUndoesRepeatedEncoding(): void {
+      $this->assertSame("doesn't", NlpNls::decodeNote('doesn&amp;#039;t'));
+      $this->assertSame("doesn't", NlpNls::decodeNote('doesn&#039;t'));
+      $this->assertSame('', NlpNls::decodeNote(NULL));
+    }
+
+    public function testEncodeNoteKeepsShortNoteWhole(): void {
+      $this->assertSame('Will mail &amp; call', NlpNls::encodeNote("Will mail & call"));
+    }
+
+    public function testEncodeNoteDoesNotEncodeTwice(): void {
+      $this->assertSame('doesn&#039;t', NlpNls::encodeNote('doesn&#039;t'));
+      $this->assertSame('doesn&#039;t', NlpNls::encodeNote('doesn&amp;#039;t'));
+    }
+
+    public function testEncodeNoteNormalizesLineEndings(): void {
+      $this->assertSame("line one\nline two", NlpNls::encodeNote("line one\r\nline two"));
+    }
+
+    public function testEncodeNoteFitsColumnWhenEncodingGrowsTheText(): void {
+      // 250 characters of apostrophes would encode to 1500 characters.
+      $encoded = NlpNls::encodeNote(str_repeat("'", 300));
+      $this->assertLessThanOrEqual(NlpNls::NOTES_COLUMN_LENGTH, mb_strlen($encoded));
+      $this->assertStringEndsWith('...', $encoded);
+    }
+
+    public function testEncodeNoteFitsColumnForTheReportedNote(): void {
+      $note = "11Sep26 Will mail , needs stamps. Confirmed email, prefers texts. Confirmed turf.17Oct NL doesn't live in the previous turf assigned to her. I changed it to a turf in her neighborhood GGK 2Nov text msg asking if help needed to enter contact activity, she's on it, it's done.";
+      $encoded = NlpNls::encodeNote($note);
+      $this->assertLessThanOrEqual(NlpNls::NOTES_COLUMN_LENGTH, mb_strlen($encoded));
+      $this->assertStringEndsWith('...', $encoded);
+      $this->assertStringStartsWith('11Sep26 Will mail', NlpNls::decodeNote($encoded));
+    }
+
     public function testGetCountyNlsParticipationReturnsEmptyArrayOnException(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
 
