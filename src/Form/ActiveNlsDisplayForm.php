@@ -282,7 +282,9 @@ class ActiveNlsDisplayForm extends FormBase
         foreach ($contacts as $mcid => $columns) {
           $originals = $originalValues[$mcid] ?? [];
           // phpcs:ignore -- loose == intentional: int/string mismatch from form API
-          $changed = array_filter($columns, fn($v, $k) => !isset($originals[$k]) || $v != $originals[$k], ARRAY_FILTER_USE_BOTH);
+          // Browsers send textarea line breaks as \r\n; the original has \n.
+          $changed = array_filter($columns, fn($v, $k) => !isset($originals[$k])
+            || (is_string($v) ? str_replace("\r\n", "\n", $v) : $v) != $originals[$k], ARRAY_FILTER_USE_BOTH);
           if (!empty($changed)) {
             $this->saveNlRow($mcid, $county, $changed);
           }
@@ -318,10 +320,7 @@ class ActiveNlsDisplayForm extends FormBase
           $status['turfCut'] = $value ? 'Y' : '';
           break;
         case 'notes':
-          $trunc = strlen($value) > $this->nlsObj::NOTES_MAX
-            ? substr($value, 0, $this->nlsObj::NOTES_MAX) . '...'
-            : $value;
-          $status['notes'] = htmlentities($trunc, ENT_QUOTES);
+          $status['notes'] = NlpNls::encodeNote($value);
           $awardRecord = $this->awardsObj->getAward($mcid);
           $awardRecord['notes'] = $status['notes'];
           $this->awardsObj->mergeAward($awardRecord);

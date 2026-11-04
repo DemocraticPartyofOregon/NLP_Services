@@ -104,7 +104,8 @@ class NlpNlsListDisplay
 
       if(!$brief) {
 
-        $noteText = $nlRecord['status']['notes'];
+        // Notes are stored HTML-encoded; the textarea escapes on its own.
+        $noteText = NlpNls::decodeNote($nlRecord['status']['notes']);
         $notesWrap = 150;
         $wrap = '';
         if(!empty($noteText)) {
