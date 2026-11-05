@@ -177,6 +177,64 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
+    // buildForm — nl_search_by_district: which HD / precinct narrows the NL list
+    // -------------------------------------------------------------------------
+
+    /**
+     * Builds the district search page with the given selection flags and returns
+     * the arguments getNls() was called with (NULL when it wasn't called).  The saved
+     * HD is always 3, so a 0 in the result means the stale HD was ignored.
+     */
+    private function districtSearchGetNlsArgs(bool $hdSelected, bool $precinctSelected,
+                                              int $savedPctIndex): ?array {
+      $this->sessionDataMock->method('get')->willReturnMap([
+        ['hdSelected', $hdSelected],
+        ['precinctSelected', $precinctSelected],
+      ]);
+      $this->sessionDataMock->method('getSavedHd')->willReturn(3);
+      $this->sessionDataMock->method('getPrecinctList')->willReturn(['1.1', '2.3', '4.5']);
+      $this->sessionDataMock->method('getSavedPrecinctIndex')->willReturn($savedPctIndex);
+      $getNlsArgs = NULL;
+      $this->nlsMock->method('getNls')->willReturnCallback(
+        function (...$args) use (&$getNlsArgs): array {
+          $getNlsArgs = $args;
+          return [];
+        }
+      );
+      $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);
+      $this->syncTurfBuilderMock->method('buildNlSearchByDistrict')->willReturn([]);
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['reenter', TRUE],
+        ['county',  'Denver'],
+        ['page',    'nl_search_by_district'],
+      ]);
+      $this->buildForm()->buildForm([], $formState);
+      return $getNlsArgs;
+    }
+
+    public function testDistrictSearchFirstPrecinctNarrowsToThatPrecinct(): void {
+      // Index 0 is a real precinct, not "none".  The stale saved HD is ignored.
+      $args = $this->districtSearchGetNlsArgs(FALSE, TRUE, 0);
+      $this->assertSame(['Denver', 0, '1.1'], $args);
+    }
+
+    public function testDistrictSearchPrecinctAfterHdIgnoresStaleHd(): void {
+      $args = $this->districtSearchGetNlsArgs(FALSE, TRUE, 2);
+      $this->assertSame(['Denver', 0, '4.5'], $args);
+    }
+
+    public function testDistrictSearchHdSelectedIgnoresStalePrecinct(): void {
+      $args = $this->districtSearchGetNlsArgs(TRUE, FALSE, 2);
+      $this->assertSame(['Denver', 3, ''], $args);
+    }
+
+    public function testDistrictSearchNothingSelectedDoesNotLoadNls(): void {
+      $this->assertNull($this->districtSearchGetNlsArgs(FALSE, FALSE, 2));
+    }
+
+    // -------------------------------------------------------------------------
     // buildForm — page = nl_select
     // -------------------------------------------------------------------------
 

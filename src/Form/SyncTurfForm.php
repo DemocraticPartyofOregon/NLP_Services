@@ -235,12 +235,22 @@ class SyncTurfForm extends FormBase {
           '#prefix' => " \n" . '<div class="big-ts-select-box" id="nlsFormDiv">' . " \n",
           '#suffix' => " \n" . '</div>' . " \n",
         ];
-        $selectedHd = $this->nlpSessionDataObj->getSavedHd();
-        $pctList = $this->nlpSessionDataObj->getPrecinctList();
-        $selectedPrecinctIndex = $this->nlpSessionDataObj->getSavedPrecinctIndex();
-        $selectedPrecinct = (empty($selectedPrecinctIndex))?'':$pctList[$selectedPrecinctIndex];
+        // Selecting a precinct clears the HD selection and vice versa, but the saved
+        // indexes stay behind, so the flags decide which one narrows the list.  The
+        // precinct list has no 'All' entry, so index 0 is the county's first precinct.
+        $hdSelected = (bool)$this->nlpSessionDataObj->get('hdSelected');
+        $precinctSelected = (bool)$this->nlpSessionDataObj->get('precinctSelected');
+        $selectedHd = $hdSelected ? $this->nlpSessionDataObj->getSavedHd() : 0;
+        $selectedPrecinct = '';
+        if ($precinctSelected) {
+          $pctList = $this->nlpSessionDataObj->getPrecinctList();
+          $selectedPrecinct = (string)($pctList[$this->nlpSessionDataObj->getSavedPrecinctIndex()] ?? '');
+        }
 
-        $nlList = $this->nlsObj->getNls($county,$selectedHd,$selectedPrecinct);
+        // Without an HD or precinct, no list is shown, so don't load every NL in the county.
+        $nlList = ($hdSelected || $precinctSelected)
+          ? $this->nlsObj->getNls($county, $selectedHd, $selectedPrecinct)
+          : [];
 
         $nlsTable = $this->nlsListDisplayObj->createTableArray($nlList,TRUE);
         $request = $this->requestStack->getCurrentRequest();
