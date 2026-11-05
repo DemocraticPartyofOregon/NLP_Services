@@ -777,6 +777,43 @@ class NlpVoters {
   }
 
   /**
+   * getVoterCds
+   *
+   * The CD of each voter we have an address for, in one query instead of one
+   * per voter.
+   *
+   * Used in: ExportVoterContactReportsBatch
+   * @noinspection PhpUnused
+   *
+   * @param array $vanids
+   * @return array - cd keyed by vanid; voters with no address or no cd are left out.
+   */
+  public function getVoterCds(array $vanids): array
+  {
+    $vanids = array_values(array_unique(array_map('intval', $vanids)));
+    $cds = [];
+    foreach (array_chunk($vanids, 1000) as $chunk) {
+      try {
+        $query = $this->connection->select(self::VOTER_ADDRESS_TBL, 'a');
+        $query->fields('a', ['vanid', 'cd']);
+        $query->condition('vanid', $chunk, 'IN');
+        $query->isNotNull('cd');
+        $result = $query->execute();
+      }
+      catch (Exception $e) {
+        nlp_debug_msg('getVoterCds', $e);
+        continue;
+      }
+      while ($row = $result->fetchAssoc()) {
+        if (!empty($row['cd']) && !isset($cds[(int) $row['vanid']])) {
+          $cds[(int) $row['vanid']] = (int) $row['cd'];
+        }
+      }
+    }
+    return $cds;
+  }
+
+  /**
    * getParticipatingCounties
    *
    * Get the list of counties that have turfs assigned to NLs.

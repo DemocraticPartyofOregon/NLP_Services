@@ -15,22 +15,16 @@ class ExportVoterContactReportsBatch {
 
   /**
    * Query the database and write records to a file.
+   *
+   * Each step reads the next page of reports for the working cycle, starting
+   * after the last reportIndex read, and appends them to the file.
    */
   public static function process(array $arg, array &$context): void {
-    $factory = Drupal::service('tempstore.private');
-    $store = $factory->get('nlpservices.session_data');
-    $votersExist = $store->get('votersExist');
-    if (empty($votersExist)) {
-      $votersExist = [];
-    }
-
     $reportsUri = $arg['uri'];
-    $startCycle = $arg['startCycle'];
     $endCycle = $arg['endCycle'];
     $currentCycleOnly = $arg['currentCycleOnly'];
     $cycleOptions = $arg['cycleOptions'];
     $countOfRecords = $arg['countOfRecords'];
-
     $removeInactive = $arg['removeInactive'];
 
     // Open the input file and position for writing at the end.
@@ -41,117 +35,135 @@ class ExportVoterContactReportsBatch {
       return;
     }
     $context['finished'] = 0;
+
     // The first step.  (recordCount stays 0 past the first step when the
     // first cycle has no reports, so it can't be the test.)
     if (!isset($context['sandbox']['workingCycle'])) {
-      $nextCycleRecord = $recordCount = 0;
-      $workingCycle = $startCycle;
-      $context['sandbox']['workingCycle'] = $workingCycle;
-      $votersNotFound = 0;
-    } else {
-      // Seek to where we will restart.
-      $recordCount = $context['sandbox']['recordCount'];
-      $nextCycleRecord = $context['sandbox']['nextCycleRecord'];
-      $workingCycle = $context['sandbox']['workingCycle'];
-      $votersNotFound = $context['sandbox']['votersNotFound'];
+      $context['sandbox'] = ['workingCycle' => $arg['startCycle']];
     }
+    // Defaults for anything missing, including in the sandbox of an export
+    // that was already running when this version was installed.
+    $context['sandbox'] += [
+      'lastReportIndex' => 0,
+      'recordCount' => 0,
+      'votersNotFound' => 0,
+      'votersUnchecked' => 0,
+    ];
+    $sandbox = &$context['sandbox'];
+    $workingCycle = $sandbox['workingCycle'];
+
     $reportsObj = Drupal::service('nlpservices.reports');
     $voterObj = Drupal::service('nlpservices.voters');
-    $apiVoterObj = Drupal::service('nlpservices.api_voter');
 
     // Checking voters takes VAN requests, so fewer records are read per step
     // to keep each step short.
     $limit = $removeInactive ? self::CHECK_LIMIT : $reportsObj::BATCH_LIMIT;
-    $votersUnchecked = $context['sandbox']['votersUnchecked'] ?? 0;
 
-    $selectedCycle = $cycleOptions[$workingCycle];
-    $result = $reportsObj->selectAllReports($nextCycleRecord, $selectedCycle, $limit);
-    // Read the whole step's records first, so their voters can be checked together.
+    $result = $reportsObj->selectAllReports($sandbox['lastReportIndex'], $cycleOptions[$workingCycle], $limit);
+    // Read the whole step's records first, so their voters can be looked up together.
     $rawRecords = [];
     while ($result && ($rawRecord = $result->fetchAssoc())) {
       $rawRecords[] = $rawRecord;
     }
     $cycleRecordCount = count($rawRecords);
 
-    // Check every voter not seen yet in one batch of VAN requests.
-    if ($removeInactive) {
-      $toCheck = [];
+    $votersExist = $removeInactive ? self::checkVoters($rawRecords, $sandbox) : [];
+
+    // The CD for every voter whose report doesn't have one, in one query.
+    $cds = [];
+    if ($currentCycleOnly) {
+      $missingCd = [];
       foreach ($rawRecords as $rawRecord) {
-        $vanid = (int) $rawRecord['vanid'];
-        if (!isset($votersExist[$vanid])) {
-          $toCheck[$vanid] = $vanid;
+        if (empty($rawRecord['cd'])) {
+          $missingCd[] = (int) $rawRecord['vanid'];
         }
       }
-      if (!empty($toCheck)) {
-        $votersNotFound += count($toCheck);
-        $checked = $apiVoterObj->votersExist(array_values($toCheck));
-        $votersExist = $checked + $votersExist;
-        $votersUnchecked += count($toCheck) - count($checked);
-      }
+      $cds = $missingCd ? $voterObj->getVoterCds($missingCd) : [];
     }
 
     foreach ($rawRecords as $rawRecord) {
       $record = $reportsObj->prepareExportRecord($rawRecord);
-
       $vanid = (int) $rawRecord['vanid'];
       // A voter VAN didn't answer for is kept; only a 404 removes the report.
-      $voterExists = !$removeInactive || ($votersExist[$vanid] ?? TRUE);
-
-      if ($voterExists) {
-        // Get the cd of the voter if we have it.
-        if ($currentCycleOnly && empty($record['cd'])) {
-          $record['cd'] = $voterObj->getVoterCd($vanid);
-        }
-        fputcsv($fh, $record, escape: '');
+      if ($removeInactive && !($votersExist[$vanid] ?? TRUE)) {
+        continue;
       }
-
+      if ($currentCycleOnly && empty($record['cd'])) {
+        $record['cd'] = $cds[$vanid] ?? 0;
+      }
+      fputcsv($fh, $record, escape: '');
     }
     fclose($fh);
 
-    $store->set('votersExist', $votersExist);
-    $context['sandbox']['votersUnchecked'] = $votersUnchecked;
-
-    // Finish the batch if we are done.
-    if ($cycleRecordCount != $limit) {
-      // We're done with the last record.
-      $recordCount += $cycleRecordCount;
-      $context['sandbox']['recordCount'] = $recordCount;
-
-      if ($workingCycle == $endCycle) {
-        // Done with the last cycle.
-        $context['finished'] = 1;
-        $context['results']['records'] = $context['sandbox']['recordCount'];
-        $context['results']['uri'] = $reportsUri;
-        $context['results']['votersExistCount'] = count($votersExist);
-        $context['results']['votersNotFound'] = $votersNotFound;
-        $context['results']['votersUnchecked'] = $votersUnchecked;
-
-      } else {
-        $context['sandbox']['workingCycle'] = ++$workingCycle;
-        $context['sandbox']['nextCycleRecord'] = 0;
-        $context['sandbox']['votersNotFound'] = $votersNotFound;
-        $percent = $recordCount / $countOfRecords;
-        if ($percent == 1) {
-          $percent = 0.999;
-        }
-        $context['finished'] = $percent;
-      }
-
-    } else {
-      // Not done with cycle.
-      $nextCycleRecord += $limit;
-      $context['sandbox']['nextCycleRecord'] = $nextCycleRecord;
-
-      $recordCount += $limit;
-      $context['sandbox']['recordCount'] = $recordCount;
-      $context['sandbox']['votersNotFound'] = $votersNotFound;
-
-      $percent = $recordCount / $countOfRecords;
-      if ($percent == 1) {
-        $percent = 0.999;
-      }
-      $context['finished'] = $percent;
+    $sandbox['recordCount'] += $cycleRecordCount;
+    if ($cycleRecordCount > 0) {
+      $sandbox['lastReportIndex'] = (int) end($rawRecords)['reportIndex'];
     }
+
+    if ($cycleRecordCount == $limit) {
+      // More reports in this cycle.
+      $context['finished'] = self::progress($sandbox['recordCount'], $countOfRecords);
+      return;
+    }
+    if ($workingCycle != $endCycle) {
+      // On to the next cycle.
+      $sandbox['workingCycle'] = $workingCycle + 1;
+      $sandbox['lastReportIndex'] = 0;
+      $context['finished'] = self::progress($sandbox['recordCount'], $countOfRecords);
+      return;
+    }
+
+    // Done with the last cycle.
+    $context['finished'] = 1;
+    $context['results']['records'] = $sandbox['recordCount'];
+    $context['results']['uri'] = $reportsUri;
+    $context['results']['votersExistCount'] = $sandbox['votersExistCount'] ?? 0;
+    $context['results']['votersNotFound'] = $sandbox['votersNotFound'];
+    $context['results']['votersUnchecked'] = $sandbox['votersUnchecked'];
+  }
+
+  /**
+   * Checks in VoteBuilder every voter in these records not already checked.
+   *
+   * The answers are kept in the user's private tempstore, so a later export
+   * doesn't ask again.  It is read and written only here: the cache grows
+   * with every export, and handling it on every step of an export that
+   * doesn't check voters cost time and memory for nothing.
+   *
+   * @param array $rawRecords - the step's report records.
+   * @param array $sandbox - the batch sandbox; the lookup counts are updated.
+   * @return array - TRUE/FALSE keyed by vanid for every voter VAN answered for.
+   */
+  private static function checkVoters(array $rawRecords, array &$sandbox): array {
+    $store = Drupal::service('tempstore.private')->get('nlpservices.session_data');
+    $votersExist = $store->get('votersExist') ?: [];
+
+    $toCheck = [];
+    foreach ($rawRecords as $rawRecord) {
+      $vanid = (int) $rawRecord['vanid'];
+      if (!isset($votersExist[$vanid])) {
+        $toCheck[$vanid] = $vanid;
+      }
+    }
+    if (!empty($toCheck)) {
+      $sandbox['votersNotFound'] += count($toCheck);
+      $checked = Drupal::service('nlpservices.api_voter')->votersExist(array_values($toCheck));
+      $votersExist = $checked + $votersExist;
+      $sandbox['votersUnchecked'] += count($toCheck) - count($checked);
+      $store->set('votersExist', $votersExist);
+    }
+    $sandbox['votersExistCount'] = count($votersExist);
+    return $votersExist;
+  }
+
+  /**
+   * The share of the reports read, kept under 1 so the batch isn't finished early.
+   */
+  private static function progress(int $recordCount, int $countOfRecords): float {
+    if ($countOfRecords <= 0) {
+      return 0.999;
+    }
+    return min($recordCount / $countOfRecords, 0.999);
   }
 
   /**

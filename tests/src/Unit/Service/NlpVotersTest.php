@@ -347,6 +347,38 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ], $conditions);
     }
 
+    // -------------------------------------------------------------------------
+    // getVoterCds
+    // -------------------------------------------------------------------------
+
+    public function testGetVoterCdsKeysCdByVanidAndKeepsTheFirstAddress(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls(
+        ['vanid' => '111', 'cd' => '5'],
+        ['vanid' => '111', 'cd' => '6'],
+        ['vanid' => '222', 'cd' => '0'],
+        ['vanid' => '333', 'cd' => '2'],
+        FALSE,
+      );
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+
+      $this->assertSame([111 => 5, 333 => 2], $this->buildVoters()->getVoterCds([111, 222, 333]));
+    }
+
+    public function testGetVoterCdsQueriesInChunksOf1000(): void {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturn(FALSE);
+      $this->connectionMock->expects($this->exactly(2))->method('select')
+        ->willReturn($this->buildSelectMock($stmtMock));
+
+      $this->buildVoters()->getVoterCds(range(1, 1500));
+    }
+
+    public function testGetVoterCdsEmptyListQueriesNothing(): void {
+      $this->connectionMock->expects($this->never())->method('select');
+      $this->assertSame([], $this->buildVoters()->getVoterCds([]));
+    }
+
   }
 
 }

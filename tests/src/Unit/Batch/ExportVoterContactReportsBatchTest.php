@@ -36,9 +36,11 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->apiVoterMock = $this->createMock(ApiVoter::class);
     $this->messengerMock = $this->createMock(MessengerInterface::class);
 
-    // Identity mapping keeps the raw record and the "prepared" record identical
-    // so tests can assert on the CSV output directly.
-    $this->reportsMock->method('prepareExportRecord')->willReturnArgument(0);
+    // The "prepared" record is the raw record without the reportIndex the
+    // helpers add, so tests can assert on the CSV output directly.
+    $this->reportsMock->method('prepareExportRecord')->willReturnCallback(
+      static fn(array $record) => array_diff_key($record, ['reportIndex' => TRUE])
+    );
 
     $this->tempStoreMock = $this->createMock(PrivateTempStore::class);
     $this->tempStoreFactoryMock = $this->createMock(PrivateTempStoreFactory::class);
@@ -100,9 +102,16 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     return ['sandbox' => [], 'finished' => 0, 'results' => []];
   }
 
+  /**
+   * A query result returning $rows, each given a reportIndex (1, 2, ...) if it
+   * doesn't have one, as every nlp_results row does.
+   */
   private function makeResultMock(array $rows): StatementInterface {
     $mock = $this->createMock(StatementInterface::class);
-    $queue = $rows;
+    $queue = [];
+    foreach (array_values($rows) as $i => $row) {
+      $queue[] = $row + ['reportIndex' => $i + 1];
+    }
     $mock->method('fetchAssoc')->willReturnCallback(static function () use (&$queue) {
       return $queue ? array_shift($queue) : FALSE;
     });
@@ -117,7 +126,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       if ($counter > $rowCount) {
         return FALSE;
       }
-      return ['vanid' => (string) $counter, 'other' => 'x'];
+      return ['vanid' => (string) $counter, 'other' => 'x', 'reportIndex' => $counter];
     });
     return $mock;
   }
@@ -262,7 +271,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE, 'countOfRecords' => 2000]), $context);
 
     $this->assertLessThan(1, $context['finished']);
-    $this->assertSame($limit, $context['sandbox']['nextCycleRecord']);
+    $this->assertSame($limit, $context['sandbox']['lastReportIndex']);
   }
 
   // -------------------------------------------------------------------------
@@ -274,9 +283,9 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $rows = [['vanid' => '11111', 'cd' => '', 'other' => 'a']];
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
     $this->votersMock->expects($this->once())
-      ->method('getVoterCd')
-      ->with(11111)
-      ->willReturn(7);
+      ->method('getVoterCds')
+      ->with([11111])
+      ->willReturn([11111 => 7]);
 
     $context = $this->baseContext();
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
@@ -288,7 +297,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $path = $this->createReportsFile('vanid,cd,other');
     $rows = [['vanid' => '11111', 'cd' => '3', 'other' => 'a']];
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
-    $this->votersMock->expects($this->never())->method('getVoterCd');
+    $this->votersMock->expects($this->never())->method('getVoterCds');
 
     $context = $this->baseContext();
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
@@ -330,7 +339,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->assertGreaterThan(0, $context['finished']);
     $this->assertLessThan(1, $context['finished']);
     $this->assertSame(2, $context['sandbox']['workingCycle']);
-    $this->assertSame(0, $context['sandbox']['nextCycleRecord']);
+    $this->assertSame(0, $context['sandbox']['lastReportIndex']);
     $this->assertSame(3, $context['sandbox']['recordCount']);
     $this->assertSame([], $context['results']);
   }
@@ -365,9 +374,67 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
 
     $this->assertGreaterThan(0, $context['finished']);
     $this->assertLessThan(1, $context['finished']);
-    $this->assertSame(NlpReports::BATCH_LIMIT, $context['sandbox']['nextCycleRecord']);
+    $this->assertSame(NlpReports::BATCH_LIMIT, $context['sandbox']['lastReportIndex']);
     $this->assertSame(NlpReports::BATCH_LIMIT, $context['sandbox']['recordCount']);
     $this->assertSame([], $context['results']);
+  }
+
+  public function testBatchStartsEachPageAfterTheLastReportRead(): void {
+    // Paging by row offset made MySQL read every earlier row on each page.
+    $path = $this->createReportsFile();
+    $pageOne = [];
+    for ($i = 1; $i <= NlpReports::BATCH_LIMIT; $i++) {
+      $pageOne[] = ['vanid' => (string) $i, 'other' => 'x', 'reportIndex' => 1000 + $i];
+    }
+    $afterIndexes = [];
+    $this->reportsMock->method('selectAllReports')->willReturnCallback(
+      function (int $afterIndex) use (&$afterIndexes, $pageOne) {
+        $afterIndexes[] = $afterIndex;
+        return $this->makeResultMock($afterIndex === 0 ? $pageOne : []);
+      }
+    );
+    $arg = $this->baseArg(['uri' => $path, 'countOfRecords' => 2000]);
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($arg, $context);
+    ExportVoterContactReportsBatch::process($arg, $context);
+
+    $this->assertSame([0, 1000 + NlpReports::BATCH_LIMIT], $afterIndexes);
+    $this->assertSame(1, $context['finished']);
+  }
+
+  public function testBatchLooksUpMissingCdsTogether(): void {
+    $path = $this->createReportsFile('vanid,cd,other');
+    $rows = [
+      ['vanid' => '11111', 'cd' => '', 'other' => 'a'],
+      ['vanid' => '22222', 'cd' => '4', 'other' => 'b'],
+      ['vanid' => '33333', 'cd' => '', 'other' => 'c'],
+    ];
+    $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
+    $this->votersMock->expects($this->never())->method('getVoterCd');
+    $this->votersMock->expects($this->once())->method('getVoterCds')
+      ->with([11111, 33333])
+      ->willReturn([11111 => 5]);
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'currentCycleOnly' => TRUE]), $context);
+
+    $this->assertSame(['11111,5,a', '22222,4,b', '33333,0,c'], $this->readDataLines($path));
+  }
+
+  public function testBatchLeavesVoterCacheAloneWhenNotCheckingVoters(): void {
+    // The cache grows with every export; reading and rewriting it on every
+    // step of an export that doesn't use it was slow.
+    $path = $this->createReportsFile();
+    $this->reportsMock->method('selectAllReports')
+      ->willReturn($this->makeResultMock([['vanid' => '11111', 'other' => 'a']]));
+    $this->tempStoreMock->expects($this->never())->method('get');
+    $this->tempStoreMock->expects($this->never())->method('set');
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path]), $context);
+
+    $this->assertSame(['11111,a'], $this->readDataLines($path));
   }
 
   public function testBatchResumesFromSavedSandboxState(): void {
@@ -376,13 +443,13 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
 
     $this->reportsMock->expects($this->once())
       ->method('selectAllReports')
-      ->with(500, '2022-11-G')
+      ->with(8500, '2022-11-G')
       ->willReturn($this->makeResultMock($rows));
 
     $context = $this->baseContext();
     $context['sandbox'] = [
       'recordCount'     => 750,
-      'nextCycleRecord' => 500,
+      'lastReportIndex' => 8500,
       'workingCycle'    => 2,
       'votersNotFound'  => 3,
     ];
