@@ -559,7 +559,7 @@ nlpservices.manage_nlp_users_accounts_menu:
   path: '/nlpservices-manage-nlp-users-accounts'
   defaults:
     _controller: Drupal\nlpservices\Controller\ConfigurationController::manage_nlp_users
-    _title: 'Manage Drupal accounts'
+    _title: 'Manage Site User Accounts'
   requirements:
     _permission: 'nlp tools access'
 

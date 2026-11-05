@@ -238,7 +238,7 @@ class LoginCredentialsReminderForm extends FormBase
             // Drupal keeps only a hash of the password, so without a saved
             // copy we don't know it and have nothing to remind the NL of.
             $messenger->addError($user['firstName'].' '.$user['lastName'].
-              ' has no saved password, so no reminder was sent.  Set a new password for them in Manage Drupal accounts.');
+              ' has no saved password, so no reminder was sent.  Set a new password for them in Manage Site User Accounts.');
             continue;
           }
 
