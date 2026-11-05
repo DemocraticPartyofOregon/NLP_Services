@@ -761,16 +761,20 @@ class NlpReports {
   /**
    * selectAllReports
    *
-   * Select a batch of report records from the database.
+   * Select a batch of report records from the database, in reportIndex order.
    *
-   * @param int $nextRecord - The record number to start at.
+   * The page starts after the last reportIndex already read rather than at a
+   * row offset: MySQL reads and throws away every row before an offset, so
+   * offset pages get slower the further into the table they are.
+   *
+   * @param int $afterIndex - The last reportIndex already read; 0 for the first page.
    * @param string $cycle - The election cycle to get reports for.
    * @param int $limit - The most records to return.
    * @return Database\StatementInterface|null - A query result for later access.
    * @noinspection PhpUnused
    * Used in ExportVoterContactReportsBatch
    */
-  public function selectAllReports(int $nextRecord,string $cycle,int $limit=self::BATCH_LIMIT): ?Database\StatementInterface
+  public function selectAllReports(int $afterIndex,string $cycle,int $limit=self::BATCH_LIMIT): ?Database\StatementInterface
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
@@ -778,9 +782,9 @@ class NlpReports {
       if(!empty($cycle)) {
         $query->condition('cycle',$cycle);
       }
-      // A fixed order, so each page starts where the last one ended.
+      $query->condition('reportIndex', $afterIndex, '>');
       $query->orderBy('reportIndex');
-      $query->range($nextRecord, $limit);
+      $query->range(0, $limit);
       $result = $query->execute();
     }
     catch (Exception $e) {
