@@ -131,9 +131,6 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame('never', $result[42]['lastAccess']);
     }
 
-    /**
-     * @dataProvider highlightProvider
-     */
     #[DataProvider('highlightProvider')]
     public function testCreateTableArrayHighlightsByNlStatus(string $asked, string $turfCut, int $attempts, string $expected): void {
       $record = $this->baseNlRecord([

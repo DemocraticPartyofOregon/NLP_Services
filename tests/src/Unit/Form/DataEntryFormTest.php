@@ -1068,9 +1068,6 @@ class DataEntryFormTest extends UnitTestCase {
     $this->form->submitForm($form, $formState);
   }
 
-  /**
-   * @covers ::submitForm
-   */
   public function testSubmitFormNotContactedWarnsWhenResponseNotSaved(): void {
     $this->dataEntryReportsMock->method('noContactResponse')->willReturn(FALSE);
     $this->messengerMock->expects($this->once())->method('addWarning')

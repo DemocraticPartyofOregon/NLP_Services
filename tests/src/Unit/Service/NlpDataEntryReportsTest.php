@@ -197,9 +197,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterIncludesPhoneNumberForPhoneMethod(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -220,9 +217,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->service->deceasedVoter($this->baseReport(), $this->baseAction());
   }
 
-  /**
-   * @covers ::deceasedVoter
-   */
   public function testDeceasedVoterUsesSubstituteWhenPhoneVoterHasNoPhone(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -354,9 +348,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     ));
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseSavesNothingWhenResponseUnknown(): void {
     // A response id that isn't one of the SMS Text responses has no name.
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('SMS Text');
@@ -374,9 +365,6 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     ));
   }
 
-  /**
-   * @covers ::noContactResponse
-   */
   public function testNoContactResponseSavesResponseName(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
