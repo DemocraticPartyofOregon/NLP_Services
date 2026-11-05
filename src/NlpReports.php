@@ -765,11 +765,12 @@ class NlpReports {
    *
    * @param int $nextRecord - The record number to start at.
    * @param string $cycle - The election cycle to get reports for.
+   * @param int $limit - The most records to return.
    * @return Database\StatementInterface|null - A query result for later access.
    * @noinspection PhpUnused
    * Used in ExportVoterContactReportsBatch
    */
-  public function selectAllReports(int $nextRecord,string $cycle): ?Database\StatementInterface
+  public function selectAllReports(int $nextRecord,string $cycle,int $limit=self::BATCH_LIMIT): ?Database\StatementInterface
   {
     try {
       $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
@@ -777,7 +778,9 @@ class NlpReports {
       if(!empty($cycle)) {
         $query->condition('cycle',$cycle);
       }
-      $query->range($nextRecord, self::BATCH_LIMIT);
+      // A fixed order, so each page starts where the last one ended.
+      $query->orderBy('reportIndex');
+      $query->range($nextRecord, $limit);
       $result = $query->execute();
     }
     catch (Exception $e) {

@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
+use Drupal\nlpservices\Batch\ExportVoterContactReportsBatch;
 use Drupal\nlpservices\DatabaseFunctions;
 use Drupal\nlpservices\NlpReports;
 
@@ -237,7 +238,6 @@ class ExportVoterContactReportsForm extends FormBase
     if(empty($countOfRecords)) {
       return [];
     }
-    $modulePath = Drupal::service('extension.list.module')->getPath(NLP_MODULE);
     $args = [
       'uri' => $tempUri,
       'columnNames' => $columnNames,
@@ -250,10 +250,9 @@ class ExportVoterContactReportsForm extends FormBase
     ];
     $batch = [
       'operations' => [
-        ['exportVoterContactReportsBatch', [$args]]
+        [[ExportVoterContactReportsBatch::class, 'process'], [$args]]
       ],
-      'file' => $modulePath.'/src/Form/ExportVoterContactReportsBatch.php',
-      'finished' => 'exportVoterContactReportsBatchFinished',
+      'finished' => [ExportVoterContactReportsBatch::class, 'finished'],
       'title' => $this->t('Processing export reports.'),
       'init_message' => $this->t('Reports export is starting.'),
       'progress_message' => $this->t('Processed @percentage % of @range reports', ['@range' => $rangeName]),

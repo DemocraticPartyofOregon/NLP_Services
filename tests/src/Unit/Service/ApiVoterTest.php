@@ -335,33 +335,115 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // voterExists
+    // votersExist — Pool-based concurrent requests (mocks sendAsync)
     // -------------------------------------------------------------------------
 
-    public function testVoterExistsReturnsTrueOnSuccess(): void {
-      $this->stubKeyValues();
-      $this->clientMock->method('request')
-        ->willReturn($this->createMock(ResponseInterface::class));
-
-      $this->assertTrue($this->buildApiVoter()->voterExists(100123));
-    }
-
-    public function testVoterExistsReturnsFalseOn404(): void {
-      $this->stubKeyValues();
+    private function rejectWithStatus(RequestInterface $request, int $status): RejectedPromise {
       $response = $this->createMock(ResponseInterface::class);
-      $response->method('getStatusCode')->willReturn(404);
-      $guzzleException = new RequestException('Not Found', $this->createMock(RequestInterface::class), $response);
-      $this->clientMock->method('request')->willThrowException($guzzleException);
-
-      $this->assertFalse($this->buildApiVoter()->voterExists(100123));
+      $response->method('getStatusCode')->willReturn($status);
+      return new RejectedPromise(new RequestException('error', $request, $response));
     }
 
-    public function testVoterExistsReturnsFalseOnOtherException(): void {
-      $this->stubKeyValues();
-      $this->clientMock->method('request')
-        ->willThrowException($this->makeGuzzleException(500));
+    private function vanidOf(RequestInterface $request): int {
+      return (int) basename($request->getUri()->getPath());
+    }
 
-      $this->assertFalse($this->buildApiVoter()->voterExists(100123));
+    public function testVotersExistMarksFoundAndMissingVoters(): void {
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')->willReturnCallback(
+        fn(RequestInterface $request) => $this->vanidOf($request) === 100124
+          ? $this->rejectWithStatus($request, 404)
+          : new FulfilledPromise($this->createMock(ResponseInterface::class))
+      );
+
+      $result = $this->buildApiVoter()->votersExist([100123, 100124, 100125]);
+
+      $this->assertSame([100123 => TRUE, 100124 => FALSE, 100125 => TRUE], $this->sortedByKey($result));
+    }
+
+    public function testVotersExistLeavesOutVotersWithNoAnswer(): void {
+      // A 500 isn't "not found": the voter must not be dropped from the export.
+      $this->stubKeyValues();
+      $this->clientMock->method('sendAsync')->willReturnCallback(
+        fn(RequestInterface $request) => $this->vanidOf($request) === 100124
+          ? $this->rejectWithStatus($request, 500)
+          : new FulfilledPromise($this->createMock(ResponseInterface::class))
+      );
+
+      $result = $this->buildApiVoter()->votersExist([100123, 100124]);
+
+      $this->assertSame([100123 => TRUE], $result);
+    }
+
+    public function testVotersExistSendsEachVoterOnce(): void {
+      $this->stubKeyValues();
+      $sent = [];
+      $this->clientMock->method('sendAsync')->willReturnCallback(
+        function (RequestInterface $request) use (&$sent) {
+          $sent[] = $this->vanidOf($request);
+          return new FulfilledPromise($this->createMock(ResponseInterface::class));
+        }
+      );
+
+      $this->buildApiVoter()->votersExist([100123, '100123', 100124]);
+
+      sort($sent);
+      $this->assertSame([100123, 100124], $sent);
+    }
+
+    public function testVotersExistRetriesRateLimitedVoter(): void {
+      $this->stubKeyValues();
+      $calls = 0;
+      $this->clientMock->method('sendAsync')->willReturnCallback(
+        function (RequestInterface $request) use (&$calls) {
+          if ($calls++ === 0) {
+            return $this->rejectWithStatus($request, 429);
+          }
+          return new FulfilledPromise($this->createMock(ResponseInterface::class));
+        }
+      );
+
+      $result = $this->buildApiVoter()->votersExist([100123]);
+
+      $this->assertSame([100123 => TRUE], $result);
+      $this->assertSame(2, $calls);
+    }
+
+    public function testVotersExistEmptyListSendsNothing(): void {
+      $this->clientMock->expects($this->never())->method('sendAsync');
+      $this->assertSame([], $this->buildApiVoter()->votersExist([]));
+    }
+
+    private function sortedByKey(array $values): array {
+      ksort($values);
+      return $values;
+    }
+
+    /**
+     * Fakes VAN timing out on the first request and answering the second with
+     * $response.  Returns the options each request was sent with, filled in
+     * as requests are made.  (Asserting inside the callback wouldn't work:
+     * the methods under test catch every Exception, assertion failures too.)
+     */
+    private function timeoutThenRespond(ResponseInterface $response): \ArrayObject {
+      $sentOptions = new \ArrayObject();
+      $this->clientMock->method('request')
+        ->willReturnCallback(function (string $method, string $url, array $options = []) use ($sentOptions, $response) {
+          $sentOptions[] = $options;
+          if (count($sentOptions) === 1) {
+            throw new ConnectException('cURL error 28', new GuzzleRequest($method, $url));
+          }
+          return $response;
+        });
+      return $sentOptions;
+    }
+
+    private function assertRetriedWithTimeouts(\ArrayObject $sentOptions): void {
+      $this->assertCount(2, $sentOptions, 'The timed-out request should be sent a second time.');
+      foreach ($sentOptions as $options) {
+        $this->assertSame(10, $options['connect_timeout'] ?? NULL, 'Every request should set a 10s connect timeout.');
+        $this->assertSame(20, $options['timeout'] ?? NULL, 'Every request should set a 20s total timeout.');
+      }
     }
 
     // -------------------------------------------------------------------------

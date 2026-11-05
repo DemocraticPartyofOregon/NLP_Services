@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal;
 use GuzzleHttp\ClientInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use GuzzleHttp\Psr7\Request as GuzzleRequest;
@@ -462,35 +463,49 @@ class ApiVoter
   }
 
   /**
-   * voterExists
+   * votersExist
    *
-   * @param $vanid - The VANID of the voter to check.
-   * @return bool - TRUE if the voter exists, FALSE otherwise.
+   * Checks many voters at once.  The requests go out in groups paced to
+   * stay under VAN's rate limit, with rate-limited and timed-out requests
+   * retried, instead of one request waiting for the last.
    *
-   * This function checks if a voter exists in the VoterFile by their VANID.
-   * It returns TRUE if the voter exists, FALSE otherwise.
+   * @param array $vanids - the VANIDs to check.
+   * @return array - keyed by vanid: TRUE if VAN has the voter, FALSE if it
+   *   answered 404.  A voter whose check failed for any other reason is left
+   *   out, since there is no answer for it.
+   *
+   * Used in: ExportVoterContactReportsBatch
    * @noinspection PhpUnused
    */
-  public function voterExists(int $vanid): bool
+  public function votersExist(array $vanids): array
   {
+    $vanids = array_values(array_unique(array_map('intval', $vanids)));
+    if (empty($vanids)) {return [];}
+
     $committeeKey = $this->apiKeyManagementObj->getKeyValues('');
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
 
-    $url = 'https://'.$user.':'.$apiKey.'|0@'.$apiURL.'/people/'.$vanid;
-    try {
-      $this->client->request('GET',$url);
-    } catch (GuzzleException $e) {
-      $code = $e->getCode();
-      if ($code == 404) {return FALSE;}
-      nlp_debug_msg('voterExists', $e);
-      return FALSE;
-    } catch (Exception $e) {
-      nlp_debug_msg('voterExists', $e);
-      return FALSE;
-    }
-    return TRUE;
+    $exists = [];
+    $this->sendInRateLimitedGroups(
+      $vanids,
+      fn($vanid) => new GuzzleRequest('GET', "https://$user:$apiKey|0@$apiURL/people/$vanid"),
+      function($response, $vanid) use (&$exists) {
+        $exists[$vanid] = TRUE;
+      },
+      function($reason, $vanid) use (&$exists) {
+        if ($reason->getCode() == 404) {
+          $exists[$vanid] = FALSE;
+          return;
+        }
+        // Log the status, not the message: Guzzle's message has the URL and key.
+        if (!Drupal::hasContainer()) {return;}
+        Drupal::logger('nlpservices')->warning('votersExist: no answer for VANID @vanid (status @code).',
+          ['@vanid' => $vanid, '@code' => $reason->getCode()]);
+      },
+    );
+    return $exists;
   }
 
   public function getVotersByAddress(array $address, string $committee=''): array
