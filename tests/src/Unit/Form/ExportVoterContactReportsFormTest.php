@@ -85,6 +85,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
       $result = $this->buildForm()->buildForm([], $formState);
       $this->assertSame('The current cycle has no reports.', (string) $result['empty']['#markup']);
+      $this->assertStringContainsString('/admin/config/nlp_menu/nlp_conf', $result['button_link']['#markup']);
     }
 
     // -------------------------------------------------------------------------
@@ -108,6 +109,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $result = $this->buildForm()->buildForm([], $formState);
       $this->assertStringContainsString('42', $result['count']['#markup']);
       $this->assertStringContainsString('https://example.org/temp/reports.csv', $result['file']['#markup']);
+      $this->assertStringContainsString('/admin/config/nlp_menu/nlp_conf', $result['button_link']['#markup']);
     }
 
     // -------------------------------------------------------------------------

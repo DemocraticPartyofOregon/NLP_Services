@@ -68,6 +68,10 @@ class ExportVoterContactReportsForm extends FormBase
         ];
       }
 
+      $form['button_link'] = [
+        '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
+      ];
+
     } else {
 
       $cycleStartOptions = $this->reports->getKnownCycles();
