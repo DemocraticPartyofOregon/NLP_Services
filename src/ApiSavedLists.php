@@ -8,7 +8,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 class ApiSavedLists {
-  
+
   protected ClientInterface $client;
   protected NlpTurfs $turfsObj;
   protected NlpNls $nlsObj;
@@ -23,7 +23,7 @@ class ApiSavedLists {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
   }
-  
+
   public static function create(ContainerInterface $container): ApiSavedLists
   {
     return new static(
@@ -34,7 +34,7 @@ class ApiSavedLists {
       $container->get('nlpservices.api_key_management'),
     );
   }
-  
+
   /**
    * getTurfLists
    *
@@ -58,7 +58,7 @@ class ApiSavedLists {
     $apiKey = $committeeKey['API Key'];
     $apiURL = $committeeKey['Url'];
     $user = $committeeKey['App Name'];
-    
+
     $listsURL = "https://$user:$apiKey|0@$apiURL/savedLists?folderId=$folderId";
     $count = 0;
     $totalList = [];
@@ -74,10 +74,7 @@ class ApiSavedLists {
         if (json_last_error() !== JSON_ERROR_NONE) {
           return [];
         }
-      } catch (GuzzleException $e) {
-        nlp_debug_msg('getTurfLists', $e);
-        return [];
-      } catch (Exception $e) {
+      } catch (GuzzleException|Exception $e) {
         nlp_debug_msg('getTurfLists', $e);
         return [];
       }
@@ -92,10 +89,10 @@ class ApiSavedLists {
       }
       if($count >= $totalCount) {break;}
     } while (TRUE);
-    
+
     return $totalList;
   }
-  
+
   /**
    * getSavedLists
    *
@@ -175,28 +172,25 @@ class ApiSavedLists {
           if (json_last_error() !== JSON_ERROR_NONE) {
             return [];
           }
-        } catch (GuzzleException $e) {
-          nlp_debug_msg('getSavedLists', $e);
-          return [];
-        } catch (Exception $e) {
+        } catch (GuzzleException|Exception $e) {
           nlp_debug_msg('getSavedLists', $e);
           return [];
         }
         if(empty($results['items'])) {return [];}
         $fragmentCount = count($results['items']);
-        
+
         $count += $fragmentCount;
         $totalCount = $results['count'];
         foreach ($results['items'] as $item) {
           $totalList[$item['savedListId']] = $item;
         }
         if($count >= $totalCount) {break;}
-    
+
       } while (TRUE);
     }
     return $totalList;
   }
-  
+
   /**
    * savedListOptions
    *
@@ -228,7 +222,7 @@ class ApiSavedLists {
     }
     return $turfOptions;
   }
-  
+
   /**
    * recoverTurfId
    *
@@ -247,14 +241,14 @@ class ApiSavedLists {
   {
     $newTurfId = 0;
     $savedLists = $this->getSavedLists($committee, 0, $folderId);
-    
+
     foreach ($savedLists as $savedList) {
       if (str_contains($savedList['name'], $turfName)) {
         $newTurfId = $savedList['savedListId'];
         break;
       }
     }
-    
+
     if (empty($newTurfId)) {
       return [
         'result' => 'error',
