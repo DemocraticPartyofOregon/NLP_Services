@@ -29,7 +29,7 @@ class NlpExportCredentials
 
   public function createNlCredentialsFile(): string
   {
-    $result = $this->fileFunctionsObj->createTempCsvFile('nl_user_credentials');
+    $result = $this->fileFunctionsObj->createTempCsvFile('nlp_user_credentials');
     if ($result === false) {
       return 'Oops!';
     }

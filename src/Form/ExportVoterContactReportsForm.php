@@ -18,7 +18,7 @@ use Drupal\nlpservices\NlpReports;
 class ExportVoterContactReportsForm extends FormBase
 {
 
-  const string NR_NLS_REPORTS = 'voter_contact_reports';
+  const string NR_NLS_REPORTS = 'nlp_voter_contact_reports';
 
   protected NlpReports $reports;
   protected DatabaseFunctions $dbFunctionsObj;
