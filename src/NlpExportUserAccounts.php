@@ -43,7 +43,7 @@ class NlpExportUserAccounts
 
   public function getUserAccountsFile(): string
   {
-    $result = $this->fileFunctionsObj->createTempCsvFile('drupal_users');
+    $result = $this->fileFunctionsObj->createTempCsvFile('nlp_drupal_users');
     if ($result === false) {
       return 'Oops!';
     }
