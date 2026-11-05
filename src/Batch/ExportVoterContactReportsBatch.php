@@ -7,6 +7,13 @@ use Drupal;
 class ExportVoterContactReportsBatch {
 
   /**
+   * Reports read per step when voters are checked in VoteBuilder.  At VAN's
+   * 15 requests a second, a step that checks a new voter for every report
+   * still finishes in about 20 seconds.
+   */
+  public const int CHECK_LIMIT = 300;
+
+  /**
    * Query the database and write records to a file.
    */
   public static function process(array $arg, array &$context): void {
@@ -34,7 +41,9 @@ class ExportVoterContactReportsBatch {
       return;
     }
     $context['finished'] = 0;
-    if (empty($context['sandbox']['recordCount'])) {
+    // The first step.  (recordCount stays 0 past the first step when the
+    // first cycle has no reports, so it can't be the test.)
+    if (!isset($context['sandbox']['workingCycle'])) {
       $nextCycleRecord = $recordCount = 0;
       $workingCycle = $startCycle;
       $context['sandbox']['workingCycle'] = $workingCycle;
@@ -50,29 +59,43 @@ class ExportVoterContactReportsBatch {
     $voterObj = Drupal::service('nlpservices.voters');
     $apiVoterObj = Drupal::service('nlpservices.api_voter');
 
-    $selectedCycle = $cycleOptions[$workingCycle];
-    $result = $reportsObj->selectAllReports($nextCycleRecord, $selectedCycle);
-    // Get record one at a time.
-    $cycleRecordCount = 0;
-    do {
-      $rawRecord = $result->fetchAssoc();
-      if (!$rawRecord) {
-        break;
-      }  // The last record processed.
-      $cycleRecordCount++;
-      $record = $reportsObj->prepareExportRecord($rawRecord);
+    // Checking voters takes VAN requests, so fewer records are read per step
+    // to keep each step short.
+    $limit = $removeInactive ? self::CHECK_LIMIT : $reportsObj::BATCH_LIMIT;
+    $votersUnchecked = $context['sandbox']['votersUnchecked'] ?? 0;
 
-      $vanid = $rawRecord['vanid'];
-      $voterExists = TRUE;
-      if ($removeInactive) {
-        if (isset($votersExist[$vanid])) {
-          $voterExists = $votersExist[$vanid];
-        } else {
-          $votersNotFound++;
-          $voterExists = $apiVoterObj->voterExists($vanid);
-          $votersExist[$vanid] = $voterExists;
+    $selectedCycle = $cycleOptions[$workingCycle];
+    $result = $reportsObj->selectAllReports($nextCycleRecord, $selectedCycle, $limit);
+    // Read the whole step's records first, so their voters can be checked together.
+    $rawRecords = [];
+    while ($result && ($rawRecord = $result->fetchAssoc())) {
+      $rawRecords[] = $rawRecord;
+    }
+    $cycleRecordCount = count($rawRecords);
+
+    // Check every voter not seen yet in one batch of VAN requests.
+    if ($removeInactive) {
+      $toCheck = [];
+      foreach ($rawRecords as $rawRecord) {
+        $vanid = (int) $rawRecord['vanid'];
+        if (!isset($votersExist[$vanid])) {
+          $toCheck[$vanid] = $vanid;
         }
       }
+      if (!empty($toCheck)) {
+        $votersNotFound += count($toCheck);
+        $checked = $apiVoterObj->votersExist(array_values($toCheck));
+        $votersExist = $checked + $votersExist;
+        $votersUnchecked += count($toCheck) - count($checked);
+      }
+    }
+
+    foreach ($rawRecords as $rawRecord) {
+      $record = $reportsObj->prepareExportRecord($rawRecord);
+
+      $vanid = (int) $rawRecord['vanid'];
+      // A voter VAN didn't answer for is kept; only a 404 removes the report.
+      $voterExists = !$removeInactive || ($votersExist[$vanid] ?? TRUE);
 
       if ($voterExists) {
         // Get the cd of the voter if we have it.
@@ -82,13 +105,14 @@ class ExportVoterContactReportsBatch {
         fputcsv($fh, $record, escape: '');
       }
 
-    } while (TRUE);
+    }
     fclose($fh);
 
     $store->set('votersExist', $votersExist);
+    $context['sandbox']['votersUnchecked'] = $votersUnchecked;
 
     // Finish the batch if we are done.
-    if ($cycleRecordCount != $reportsObj::BATCH_LIMIT) {
+    if ($cycleRecordCount != $limit) {
       // We're done with the last record.
       $recordCount += $cycleRecordCount;
       $context['sandbox']['recordCount'] = $recordCount;
@@ -100,6 +124,7 @@ class ExportVoterContactReportsBatch {
         $context['results']['uri'] = $reportsUri;
         $context['results']['votersExistCount'] = count($votersExist);
         $context['results']['votersNotFound'] = $votersNotFound;
+        $context['results']['votersUnchecked'] = $votersUnchecked;
 
       } else {
         $context['sandbox']['workingCycle'] = ++$workingCycle;
@@ -114,10 +139,10 @@ class ExportVoterContactReportsBatch {
 
     } else {
       // Not done with cycle.
-      $nextCycleRecord += $reportsObj::BATCH_LIMIT;
+      $nextCycleRecord += $limit;
       $context['sandbox']['nextCycleRecord'] = $nextCycleRecord;
 
-      $recordCount += $reportsObj::BATCH_LIMIT;
+      $recordCount += $limit;
       $context['sandbox']['recordCount'] = $recordCount;
       $context['sandbox']['votersNotFound'] = $votersNotFound;
 
@@ -143,6 +168,10 @@ class ExportVoterContactReportsBatch {
       $messenger->addStatus(t('@count reports exported.', ['@count' => $records]));
       $messenger->addStatus(t('VotersExist count: @count', ['@count' => $votersExistCount]));
       $messenger->addStatus(t('New lookups: @count', ['@count' => $votersNotFound]));
+      $votersUnchecked = $results['votersUnchecked'] ?? 0;
+      if ($votersUnchecked > 0) {
+        $messenger->addWarning(t('VoteBuilder did not answer for @count voters. Their reports were kept in the export.', ['@count' => $votersUnchecked]));
+      }
       $messenger->addStatus(t('NL reports successfully exported.'));
     } else {
       $messenger->addStatus(t('An error occurred.'));

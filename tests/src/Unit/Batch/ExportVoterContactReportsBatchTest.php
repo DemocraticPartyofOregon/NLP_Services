@@ -147,7 +147,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       ['vanid' => '22222', 'other' => 'b'],
     ];
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
-    $this->apiVoterMock->expects($this->never())->method('voterExists');
+    $this->apiVoterMock->expects($this->never())->method('votersExist');
 
     $context = $this->baseContext();
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path]), $context);
@@ -167,10 +167,9 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
       ['vanid' => '22222', 'other' => 'inactive'],
     ];
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
-    $this->apiVoterMock->method('voterExists')->willReturnMap([
-      [11111, TRUE],
-      [22222, FALSE],
-    ]);
+    $this->apiVoterMock->expects($this->once())->method('votersExist')
+      ->with([11111, 22222])
+      ->willReturn([11111 => TRUE, 22222 => FALSE]);
 
     $capturedVotersExist = NULL;
     $this->tempStoreMock->expects($this->once())
@@ -184,7 +183,7 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
 
     $this->assertSame(['11111,active'], $this->readDataLines($path));
-    $this->assertSame(['11111' => TRUE, '22222' => FALSE], $capturedVotersExist);
+    $this->assertSame([11111 => TRUE, 22222 => FALSE], $capturedVotersExist);
   }
 
   // -------------------------------------------------------------------------
@@ -196,12 +195,74 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $rows = [['vanid' => '11111', 'other' => 'a']];
     $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
     $this->tempStoreMock->method('get')->with('votersExist')->willReturn(['11111' => TRUE]);
-    $this->apiVoterMock->expects($this->never())->method('voterExists');
+    $this->apiVoterMock->expects($this->never())->method('votersExist');
 
     $context = $this->baseContext();
     ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
 
     $this->assertSame(['11111,a'], $this->readDataLines($path));
+  }
+
+  public function testBatchChecksOnlyUncachedVotersOnceEach(): void {
+    $path = $this->createReportsFile();
+    $rows = [
+      ['vanid' => '11111', 'other' => 'a'],
+      ['vanid' => '22222', 'other' => 'b'],
+      ['vanid' => '22222', 'other' => 'c'],
+      ['vanid' => '33333', 'other' => 'd'],
+    ];
+    $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
+    $this->tempStoreMock->method('get')->with('votersExist')->willReturn([11111 => TRUE]);
+    $this->apiVoterMock->expects($this->once())->method('votersExist')
+      ->with([22222, 33333])
+      ->willReturn([22222 => TRUE, 33333 => TRUE]);
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
+
+    $this->assertSame(['11111,a', '22222,b', '22222,c', '33333,d'], $this->readDataLines($path));
+    $this->assertSame(2, $context['results']['votersNotFound']);
+  }
+
+  public function testBatchKeepsVoterVoteBuilderDidNotAnswerFor(): void {
+    // An unanswered check isn't "not found": the report stays, and the voter
+    // isn't cached, so a later export checks it again.
+    $path = $this->createReportsFile();
+    $rows = [
+      ['vanid' => '11111', 'other' => 'a'],
+      ['vanid' => '22222', 'other' => 'b'],
+    ];
+    $this->reportsMock->method('selectAllReports')->willReturn($this->makeResultMock($rows));
+    $this->apiVoterMock->method('votersExist')->willReturn([11111 => TRUE]);
+    $capturedVotersExist = NULL;
+    $this->tempStoreMock->method('set')
+      ->with('votersExist', $this->callback(function (array $v) use (&$capturedVotersExist): bool {
+        $capturedVotersExist = $v;
+        return TRUE;
+      }));
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE]), $context);
+
+    $this->assertSame(['11111,a', '22222,b'], $this->readDataLines($path));
+    $this->assertSame([11111 => TRUE], $capturedVotersExist);
+    $this->assertSame(1, $context['results']['votersUnchecked']);
+  }
+
+  public function testBatchReadsFewerRecordsPerStepWhenCheckingVoters(): void {
+    $path = $this->createReportsFile();
+    $limit = ExportVoterContactReportsBatch::CHECK_LIMIT;
+    $this->reportsMock->expects($this->once())->method('selectAllReports')
+      ->with(0, '2024-11-G', $limit)
+      ->willReturn($this->makeCountingResultMock($limit));
+    $this->apiVoterMock->method('votersExist')
+      ->willReturnCallback(fn(array $vanids) => array_fill_keys($vanids, TRUE));
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($this->baseArg(['uri' => $path, 'removeInactive' => TRUE, 'countOfRecords' => 2000]), $context);
+
+    $this->assertLessThan(1, $context['finished']);
+    $this->assertSame($limit, $context['sandbox']['nextCycleRecord']);
   }
 
   // -------------------------------------------------------------------------
@@ -274,6 +335,26 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     $this->assertSame([], $context['results']);
   }
 
+  public function testBatchMovesPastAnEmptyFirstCycle(): void {
+    // An empty first cycle left recordCount at 0, and the next step started
+    // over at the first cycle, so the batch never finished.
+    $path = $this->createReportsFile();
+    $this->reportsMock->method('selectAllReports')->willReturnCallback(
+      fn(int $next, string $cycle) => $this->makeResultMock(
+        $cycle === '2022-11-G' ? [['vanid' => '11111', 'other' => 'a']] : []
+      )
+    );
+    $arg = $this->baseArg(['uri' => $path, 'startCycle' => 1, 'endCycle' => 2]);
+
+    $context = $this->baseContext();
+    ExportVoterContactReportsBatch::process($arg, $context);
+    $this->assertSame(2, $context['sandbox']['workingCycle']);
+
+    ExportVoterContactReportsBatch::process($arg, $context);
+    $this->assertSame(1, $context['finished']);
+    $this->assertSame(['11111,a'], $this->readDataLines($path));
+  }
+
   public function testBatchPausesMidCycleWhenBatchLimitReached(): void {
     $path = $this->createReportsFile();
     $this->reportsMock->method('selectAllReports')
@@ -322,6 +403,17 @@ class ExportVoterContactReportsBatchTest extends UnitTestCase {
     ExportVoterContactReportsBatch::finished(
       TRUE,
       ['records' => 10, 'votersExistCount' => 5, 'votersNotFound' => 2, 'uri' => '/tmp/x.csv'],
+      [],
+    );
+  }
+
+  public function testFinishedWarnsAboutVotersNotChecked(): void {
+    $this->messengerMock->expects($this->exactly(4))->method('addStatus');
+    $this->messengerMock->expects($this->once())->method('addWarning');
+
+    ExportVoterContactReportsBatch::finished(
+      TRUE,
+      ['records' => 10, 'votersExistCount' => 5, 'votersNotFound' => 2, 'votersUnchecked' => 1, 'uri' => '/tmp/x.csv'],
       [],
     );
   }
