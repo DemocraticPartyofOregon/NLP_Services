@@ -380,7 +380,8 @@ class ApiActivistCodes
     if ($codeName !== 'NLPVoterAC' || !Drupal::hasService('nlpservices.ac_history')) {
       return NULL;
     }
-    return Drupal::service('nlpservices.ac_history');
+    $history = Drupal::service('nlpservices.ac_history');
+    return ($history instanceof NlpAcHistory) ? $history : NULL;
   }
 
   /**

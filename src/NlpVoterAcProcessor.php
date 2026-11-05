@@ -122,8 +122,8 @@ class NlpVoterAcProcessor {
 
       // The history of each missing voter, to look for a pattern.
       $historyText = '';
-      if (Drupal::hasService('nlpservices.ac_history')) {
-        $history = Drupal::service('nlpservices.ac_history');
+      $history = Drupal::hasService('nlpservices.ac_history') ? Drupal::service('nlpservices.ac_history') : NULL;
+      if ($history instanceof NlpAcHistory) {
         $historyText = ' History: ' . $history->describe($missingVanids, time() - self::HISTORY_SECS);
         $history->record($missingVanids, NlpAcHistory::MISSING, "voter AC check of $turfName (turfIndex $turfIndex)");
       }
