@@ -1071,7 +1071,7 @@ class NlpTurfs
       ];
     } elseif(!empty($turf)) {
       $turfInUse = [
-        'nl' => $turf['nlFirstName'] . ' ' . $turf['nlLastName'],
+        'nl' => $turf['nlLastName'] . ', ' . $turf['nlFirstName'],
         'mcid' => $turf['mcid'],
         'turfAssigned' => 'X',
       ];
@@ -1094,7 +1094,7 @@ class NlpTurfs
         $footnote = (!empty($nls)) ? '*' : '**';
         $footnote = '<span class="nlp-footnote-warning">' . $footnote . '</span>';
         $turfInUse = [
-          'nl' => $previousTurfAssignment['firstName'] . ' ' . $previousTurfAssignment['lastName'] . $footnote,
+          'nl' => $previousTurfAssignment['lastName'] . ', ' . $previousTurfAssignment['firstName'] . $footnote,
           'mcid' => $previousTurfAssignment['mcid'],
           'hintPrevious' => $previousTurfAssignment['mcid'],
           'turfAssigned' => '',
