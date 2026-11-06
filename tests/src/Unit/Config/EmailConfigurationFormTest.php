@@ -17,6 +17,7 @@ use Drupal\nlpservices\NlpImap;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\Constraint\Callback;
 
 #[CoversClass(EmailConfigurationForm::class)]
 #[Group('nlpservices')]
@@ -88,10 +89,20 @@ class EmailConfigurationFormTest extends UnitTestCase {
 
   /**
    * TranslatableMarkup doesn't stringify through the mocked translation
-   * service, so match on the untranslated source string instead.
+   * service, so match on the untranslated source string instead, and
+   * optionally on one placeholder's substituted value.
    */
-  private function messageContaining(string $needle): \PHPUnit\Framework\Constraint\Callback {
-    return $this->callback(fn($markup) => str_contains($markup->getUntranslatedString(), $needle));
+  private function messageContaining(string $needle, string $placeholder = '', string $argNeedle = ''): Callback {
+    return $this->callback(function ($markup) use ($needle, $placeholder, $argNeedle) {
+      if (!str_contains($markup->getUntranslatedString(), $needle)) {
+        return FALSE;
+      }
+      if ($placeholder === '') {
+        return TRUE;
+      }
+      $arg = (string) ($markup->getArguments()[$placeholder] ?? '');
+      return str_contains($arg, $argNeedle) && !str_contains($arg, '<br>');
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -249,7 +260,12 @@ class EmailConfigurationFormTest extends UnitTestCase {
 
   public function testSubmitFormAddsErrorWhenCredentialTestFails(): void {
     $this->emailConfigurationObjMock->method('verifyConfiguration')->willReturn('');
-    $this->emailConfigurationObjMock->method('testEmailCredentials')->willReturn([]);
+    // The real failure shape from NlpEmailConfiguration::testEmailCredentials():
+    // a non-empty (truthy) array whose 'result' is FALSE.
+    $this->emailConfigurationObjMock->method('testEmailCredentials')->willReturn([
+      'result' => FALSE,
+      'message' => 'Connection attempted failed.<br>[AUTHENTICATIONFAILED] Invalid credentials',
+    ]);
     $this->stubCronConfiguration([]);
 
     $editableConfigMock = $this->createMock(Config::class);
@@ -259,7 +275,7 @@ class EmailConfigurationFormTest extends UnitTestCase {
     $this->emailConfigurationObjMock->expects($this->never())->method('saveEmailConfiguration');
     $this->messengerMock->expects($this->once())
       ->method('addError')
-      ->with($this->messageContaining('Credential failure'));
+      ->with($this->messageContaining('Credential failure', '@message', 'Invalid credentials'));
 
     $formState = new FormState();
     $formState->setValues($this->notificationsValues());

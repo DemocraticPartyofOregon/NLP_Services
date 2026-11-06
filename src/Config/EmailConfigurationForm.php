@@ -139,14 +139,17 @@ voting starts.'
       }
       if (empty($configuration['server'])) { continue; }
 
-      $success = $this->emailConfigurationObj->testEmailCredentials(
+      $test = $this->emailConfigurationObj->testEmailCredentials(
         $configuration['email'],
         $configuration['password'],
         (int) $configuration['port'],
         $configuration['server']
       );
-      if (!$success) {
-        $this->messenger()->addError($this->t('Credential failure'));
+      if (empty($test['result'])) {
+        $this->messenger()->addError($this->t('Credential failure for @type: @message', [
+          '@type' => $type,
+          '@message' => strip_tags(str_replace('<br>', ' ', $test['message'] ?? '')),
+        ]));
         continue;
       }
       $configuration['validated'] = TRUE;
