@@ -77,14 +77,25 @@ class EmailConfigurationFormTest extends UnitTestCase {
       ->willReturnCallback(fn($type) => $byType[$type] ?? $this->defaultEmailConfiguration());
   }
 
-  private function stubCronConfiguration(array $cronConfiguration): void {
+  /**
+   * Stubs config.factory get() for both the module's cron configuration and
+   * system.site.  The site email defaults to the address the notificationsValues()
+   * fixture submits, so tests that aren't about the site email see no warning.
+   */
+  private function stubCronConfiguration(array $cronConfiguration, string $siteMail = 'notify@example.com'): void {
     $configMock = $this->createMock(ImmutableConfig::class);
     $configMock->method('get')
       ->with('nlpservices-cron-configuration')
       ->willReturn($cronConfiguration);
+    $siteConfigMock = $this->createMock(ImmutableConfig::class);
+    $siteConfigMock->method('get')
+      ->with('mail')
+      ->willReturn($siteMail);
     $this->configFactoryMock->method('get')
-      ->with('nlpservices.configuration')
-      ->willReturn($configMock);
+      ->willReturnCallback(fn(string $name) => match ($name) {
+        'nlpservices.configuration' => $configMock,
+        'system.site' => $siteConfigMock,
+      });
   }
 
   /**
@@ -125,14 +136,88 @@ class EmailConfigurationFormTest extends UnitTestCase {
     $this->assertStringContainsString('good idea to test them', $form['testFirst']['#markup']);
   }
 
-  public function testBuildFormContainsSectionHeadingsForEachEmailType(): void {
+  public function testBuildFormIsConstrainedTo600PixelBox(): void {
     $this->stubEmailConfigurations([]);
     $this->stubCronConfiguration([]);
 
     $form = $this->buildForm()->buildForm([], new FormState());
-    $this->assertStringContainsString('Notifications email', $form['notificationsPurpose']['#markup']);
-    $this->assertStringContainsString('MiniVAN email', $form['minivanPurpose']['#markup']);
-    $this->assertStringContainsString('matchbacks email', $form['matchbackPurpose']['#markup']);
+    $this->assertStringContainsString('width:600px', $form['#attributes']['style']);
+  }
+
+  public function testBuildFormDefaultsEmptyNotificationsEmailToSiteMail(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([], 'site@example.com');
+    $this->messengerMock->expects($this->never())->method('addWarning');
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $this->assertSame('site@example.com', $form['notifications']['info_notifications_email']['#default_value']);
+    // Only notifications defaults to the site email.
+    $this->assertSame('', $form['minivan']['info_minivan_email']['#default_value']);
+  }
+
+  public function testBuildFormKeepsStoredNotificationsEmailAndWarnsWhenItDiffersFromSiteMail(): void {
+    $this->stubEmailConfigurations([
+      'notifications' => $this->defaultEmailConfiguration(['email' => 'other@example.com']),
+    ]);
+    $this->stubCronConfiguration([], 'site@example.com');
+    $this->messengerMock->expects($this->once())
+      ->method('addWarning')
+      ->with($this->messageContaining('is not the same as the site email', '@email', 'other@example.com'));
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $this->assertSame('other@example.com', $form['notifications']['info_notifications_email']['#default_value']);
+  }
+
+  public function testBuildFormTreatsSiteMailMatchAsCaseInsensitive(): void {
+    $this->stubEmailConfigurations([
+      'notifications' => $this->defaultEmailConfiguration(['email' => 'Site@Example.com']),
+    ]);
+    $this->stubCronConfiguration([], 'site@example.com');
+    $this->messengerMock->expects($this->never())->method('addWarning');
+
+    $this->buildForm()->buildForm([], new FormState());
+  }
+
+  public function testBuildFormWarnsWhenSiteMailNotSetUp(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([], '');
+    $this->messengerMock->expects($this->once())
+      ->method('addWarning')
+      ->with($this->messageContaining('site email has not been set up'));
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $this->assertSame('', $form['notifications']['info_notifications_email']['#default_value']);
+  }
+
+  public function testBuildFormRendersFieldHelpAsMarkupNotDescriptions(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([]);
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    foreach (['notifications', 'minivan', 'matchback'] as $type) {
+      foreach (['server', 'port', 'email', 'password', 'enable'] as $field) {
+        $this->assertArrayNotHasKey('#description', $form[$type]['info_' . $type . '_' . $field]);
+        $this->assertArrayHasKey('#markup', $form[$type]['desc_' . $type . '_' . $field]);
+      }
+    }
+  }
+
+  public function testBuildFormWrapsEachEmailTypeInTitledFieldset(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([]);
+
+    $form = $this->buildForm()->buildForm([], new FormState());
+    $expected = [
+      'notifications' => 'Notifications email',
+      'minivan' => 'MiniVAN email',
+      'matchback' => 'matchbacks email',
+    ];
+    foreach ($expected as $type => $title) {
+      $this->assertSame('fieldset', $form[$type]['#type']);
+      $this->assertStringContainsString($title, (string) $form[$type]['#title']);
+      $this->assertArrayHasKey('purpose', $form[$type]);
+      $this->assertArrayHasKey('info_' . $type . '_server', $form[$type]);
+    }
   }
 
   public function testBuildFormPopulatesFieldDefaultsFromStoredConfiguration(): void {
@@ -215,6 +300,48 @@ class EmailConfigurationFormTest extends UnitTestCase {
       'info_notifications_password' => 'secret',
       'info_notifications_enable' => TRUE,
     ], $overrides);
+  }
+
+  public function testSubmitFormWarnsWhenNotificationsEmailChangedAwayFromSiteMail(): void {
+    $this->emailConfigurationObjMock->method('verifyConfiguration')->willReturn('');
+    $this->emailConfigurationObjMock->method('testEmailCredentials')
+      ->willReturn(['result' => TRUE, 'message' => 'ok']);
+    $this->stubCronConfiguration([], 'site@example.com');
+
+    $editableConfigMock = $this->createMock(Config::class);
+    $editableConfigMock->method('set')->willReturnSelf();
+    $this->configFactoryMock->method('getEditable')->willReturn($editableConfigMock);
+
+    // The warning doesn't block the save.
+    $this->emailConfigurationObjMock->expects($this->once())->method('saveEmailConfiguration');
+    $this->messengerMock->expects($this->once())
+      ->method('addWarning')
+      ->with($this->messageContaining('is not the same as the site email', '@site', 'site@example.com'));
+
+    $formState = new FormState();
+    $formState->setValues($this->notificationsValues());
+
+    $form = [];
+    $this->buildForm()->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormDoesNotWarnWhenNotificationsEmailMatchesSiteMail(): void {
+    $this->emailConfigurationObjMock->method('verifyConfiguration')->willReturn('');
+    $this->emailConfigurationObjMock->method('testEmailCredentials')
+      ->willReturn(['result' => TRUE, 'message' => 'ok']);
+    $this->stubCronConfiguration([]);
+
+    $editableConfigMock = $this->createMock(Config::class);
+    $editableConfigMock->method('set')->willReturnSelf();
+    $this->configFactoryMock->method('getEditable')->willReturn($editableConfigMock);
+
+    $this->messengerMock->expects($this->never())->method('addWarning');
+
+    $formState = new FormState();
+    $formState->setValues($this->notificationsValues());
+
+    $form = [];
+    $this->buildForm()->submitForm($form, $formState);
   }
 
   public function testSubmitFormAddsErrorAndSkipsAccountWhenConfigurationInvalid(): void {

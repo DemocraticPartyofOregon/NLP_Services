@@ -47,46 +47,66 @@ class EmailConfigurationForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
+    $form['#attributes']['style'] = 'width:600px;';
+
     $form['testFirst'] = [
       '#markup' => "<p>
-Whenever you set up an email for the first time or change any of the credentials, it is <br/>
-a good idea to test them to be sure NLP Services can read the email account."
+Whenever you set up an email for the first time or change any of the credentials, it is
+a good idea to test them to be sure NLP Services can read the email account.</p>"
     ];
 
-    $form['notificationsPurpose'] = [
-      '#markup' => "<hr><h2>Setup for the Notifications email.</h2><p>
-NLP Services uses emails to communicate with NLs, and the credentials for sending emails are </br>
-set up here.  This notification email is required.  In addition, you can enable NLP Services </br>
-to read the email account for messages from NLs that are intended for their coordinator.   Enabling </br>
-this feature permits NLP Services to periodically look for emails that should be forwarded to </br>
-the coordinator of the sending NL.  Hopefully, the need for and use of this feature will be rare."
+    $form['notifications'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Setup for the Notifications email'),
+      'purpose' => [
+        '#markup' => "<p>
+This email account is required.  NLP Services both sends from it and reads it.</p>
+<p><b>Sending.</b>  Every email NLP Services sends, whether started by a user or sent automatically
+to warn of a correctable error, goes out from this address through the SMTP module.  The SMTP
+server, port, username and password are not entered here.  They are configured on the
+<a href=\"/admin/config/system/smtp\">SMTP Authentication Support</a> page, which must use this same
+account.  The site email in Basic site settings should also be this address.</p>
+<p><b>Reading.</b>  The settings below are the account's incoming IMAP settings, not its SMTP settings.
+NLP Services uses them to read the inbox and forward messages from NLs to their coordinator.
+For Gmail, use imap.gmail.com and port 993, not smtp.gmail.com and port 587.</p>",
+      ],
     ];
-
+    $siteMail = $this->getSiteMail();
     $emailConfiguration = $this->emailConfigurationObj->getEmailConfiguration('notifications');
-    $form['notifications'] = $this->buildEmailInfo('notifications', $emailConfiguration);
+    if (empty($emailConfiguration['email'])) {
+      $emailConfiguration['email'] = $siteMail;
+    }
+    $this->warnIfNotSiteMail($emailConfiguration['email'], $siteMail);
+    $form['notifications'] += $this->buildEmailInfo('notifications', $emailConfiguration);
 
-    $form['minivanPurpose'] = [
-      '#markup' => "<hr><h2>Setup for the MiniVAN email.</h2><p>
-MiniVAN users report their voter contacts directly to VoteBuilder, and these reports are not visible to </br>
-NLP Services.  To make voter contacts visible to the NLs with the display of the turf by NLP Services, </br>
-the state party has a script that sends voter contact reports to an email address.   NLP Services can </br>
-read emails in the miniVAN account and update NLP voter contacts for the NL.  The script sends an email </br>
-during the night.   When this email account is set up and enabled, NLP Services will periodically look for </br>
-emails and update the NLP Services database."
+    $form['minivan'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Setup for the MiniVAN email'),
+      'purpose' => [
+        '#markup' => "<p>
+MiniVAN users report their voter contacts directly to VoteBuilder, and these reports are not visible to
+NLP Services.  To make voter contacts visible to the NLs with the display of the turf by NLP Services,
+the state party has a script that sends voter contact reports to an email address.   NLP Services can
+read emails in the miniVAN account and update NLP voter contacts for the NL.  The script sends an email
+during the night.   When this email account is set up and enabled, NLP Services will periodically look for
+emails and update the NLP Services database.</p>",
+      ],
     ];
-
     $emailConfiguration = $this->emailConfigurationObj->getEmailConfiguration('minivan');
-    $form['minivan'] = $this->buildEmailInfo('minivan', $emailConfiguration);
+    $form['minivan'] += $this->buildEmailInfo('minivan', $emailConfiguration);
 
-    $form['matchbackPurpose'] = [
-      '#markup' => '<hr><h2>Setup for the matchbacks email.</h2><p>
-The state party also sends email with information about voting results.   When enabled, NLP Services will look </br>
-for these emails and update the database.  Since voting is at the very end, this function needs not be enabled until </br>
-voting starts.'
+    $form['matchback'] = [
+      '#type' => 'fieldset',
+      '#title' => $this->t('Setup for the matchbacks email'),
+      'purpose' => [
+        '#markup' => '<p>
+The state party also sends email with information about voting results.   When enabled, NLP Services will look
+for these emails and update the database.  Since voting is at the very end, this function needs not be enabled until
+voting starts.</p>',
+      ],
     ];
-
     $emailConfiguration = $this->emailConfigurationObj->getEmailConfiguration('matchback');
-    $form['matchback'] = $this->buildEmailInfo('matchback', $emailConfiguration);
+    $form['matchback'] += $this->buildEmailInfo('matchback', $emailConfiguration);
 
     $form['button_link'] = [
       '#markup' => '<a href="/admin/config/nlp_menu/nlp_conf" class="button">Go back</a>',
@@ -129,6 +149,10 @@ voting starts.'
       }
     }
     unset($configuration);
+
+    if (isset($emailInfo['notifications'])) {
+      $this->warnIfNotSiteMail((string) ($emailInfo['notifications']['email'] ?? ''), $this->getSiteMail());
+    }
 
     $emailConfiguration = $form_state->get('emailConfiguration') ?? [];
     foreach ($emailInfo as $type => $configuration) {
@@ -173,6 +197,53 @@ voting starts.'
     $this->messenger()->addStatus($this->t('The configuration options have been saved.'));
   }
 
+  /**
+   * getSiteMail
+   *
+   * The site email from Basic site settings.  Drupal core puts it in the
+   * Sender and Return-Path headers of every email, so it must be the same
+   * account the SMTP module sends from.
+   *
+   * @return string
+   */
+  private function getSiteMail(): string
+  {
+    return trim((string) $this->config('system.site')->get('mail'));
+  }
+
+  /**
+   * warnIfNotSiteMail
+   *
+   * Warn when the site email isn't set up, or when the notifications email
+   * isn't the site email.  Called from both build and submit with the same
+   * messages; the messenger drops repeats, so a warning shows only once.
+   *
+   * @param string $notificationEmail
+   * @param string $siteMail
+   * @return void
+   */
+  private function warnIfNotSiteMail(string $notificationEmail, string $siteMail): void
+  {
+    if ($siteMail === '') {
+      $this->messenger()->addWarning($this->t('The site email has not been set up. Set it in <a href="/admin/config/system/site-information">Basic site settings</a> to the notifications email address.'));
+      return;
+    }
+    $notificationEmail = trim($notificationEmail);
+    if ($notificationEmail !== '' && strcasecmp($notificationEmail, $siteMail) !== 0) {
+      $this->messenger()->addWarning($this->t('The notifications email (@email) is not the same as the site email (@site). Emails sent by NLP Services may be rejected unless both are the account configured in the SMTP module.', [
+        '@email' => $notificationEmail,
+        '@site' => $siteMail,
+      ]));
+    }
+  }
+
+  /**
+   * buildEmailInfo
+   *
+   * @param string $type
+   * @param array $emailConfiguration
+   * @return array
+   */
   private function buildEmailInfo(string $type, array $emailConfiguration): array
   {
     $form_element['info_' . $type . '_server'] = [
@@ -182,7 +253,9 @@ voting starts.'
       '#default_value' => $emailConfiguration['server'],
       '#size' => 40,
       '#maxlength' => 120,
-      '#description' => $this->t('Incoming server for reading @type emails.', ['@type' => $type]),
+    ];
+    $form_element['desc_' . $type . '_server'] = [
+      '#markup' => '<p><small>' . $this->t('Incoming server for reading @type emails.', ['@type' => $type]) . '</small></p>',
     ];
 
     $form_element['info_' . $type . '_port'] = [
@@ -192,7 +265,9 @@ voting starts.'
       '#default_value' => $emailConfiguration['port'],
       '#size' => 40,
       '#maxlength' => 120,
-      '#description' => $this->t('Port (typically 993).'),
+    ];
+    $form_element['desc_' . $type . '_port'] = [
+      '#markup' => '<p><small>' . $this->t('IMAP port (typically 993). Not the SMTP port used for sending.') . '</small></p>',
     ];
 
     $form_element['info_' . $type . '_email'] = [
@@ -202,7 +277,12 @@ voting starts.'
       '#default_value' => $emailConfiguration['email'],
       '#size' => 40,
       '#maxlength' => 60,
-      '#description' => $this->t('Email address to read.'),
+    ];
+    $emailHelp = ($type == 'notifications')
+      ? $this->t('Email address to read. Also the From address for every email NLP Services sends, so it must be the account configured in the SMTP module.')
+      : $this->t('Email address to read.');
+    $form_element['desc_' . $type . '_email'] = [
+      '#markup' => '<p><small>' . $emailHelp . '</small></p>',
     ];
 
     $form_element['info_' . $type . '_password'] = [
@@ -211,7 +291,9 @@ voting starts.'
       '#title' => $this->t('Password for the email'),
       '#size' => 20,
       '#maxlength' => 20,
-      '#description' => $this->t('Password for accessing the mail address. Leave blank to keep the existing password.'),
+    ];
+    $form_element['desc_' . $type . '_password'] = [
+      '#markup' => '<p><small>' . $this->t('Password for accessing the mail address (for Gmail, an app password). Leave blank to keep the existing password.') . '</small></p>',
     ];
 
     if (!empty($emailConfiguration['validated'])) {
@@ -230,7 +312,9 @@ voting starts.'
       '#id' => 'info_' . $type . '_enable',
       '#title' => $this->t('Enable @type for this election.', ['@type' => $type]),
       '#default_value' => $enableDefault,
-      '#description' => $this->t('When enabled, NLP Services will process @type emails.', ['@type' => $type]),
+    ];
+    $form_element['desc_' . $type . '_enable'] = [
+      '#markup' => '<p><small>' . $this->t('When enabled, NLP Services will process @type emails.', ['@type' => $type]) . '</small></p>',
     ];
 
     return $form_element;
