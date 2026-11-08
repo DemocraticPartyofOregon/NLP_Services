@@ -3,12 +3,25 @@
     "description": "Neighborhood Leader organizing module for Drupal 10",
     "type": "drupal-custom-module",
     "license": "GPL-2.0-or-later",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        }
+    ],
     "require": {
         "ext-json": "*",
         "ext-mbstring": "*",
         "ext-imap": "*",
         "ext-openssl": "*",
+        "drupal/autologout": "^1.4",
+        "drupal/encrypt": "^3.2",
+        "drupal/key": "^1.22",
+        "drupal/real_aes": "^2.6",
+        "drupal/smtp": "^1.4",
+        "drupal/token": "^1.17",
         "guzzlehttp/guzzle": "^7.0",
+        "mpdf/mpdf": "^8.3",
         "smalot/pdfparser": "^2.0"
     },
     "require-dev": {
