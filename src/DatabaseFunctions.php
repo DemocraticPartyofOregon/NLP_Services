@@ -246,7 +246,7 @@ class DatabaseFunctions
 
     $expectedType = $this->drupalTypeToMysql($spec);
     if ($actualType !== $expectedType) {
-      $errors[] = "Type mismatch for $prefix: from database $expectedType, from schema $actualType";
+      $errors[] = "Type mismatch for $prefix: from schema $expectedType, from database $actualType";
     }
 
     $specType = $spec['type'] ?? '';

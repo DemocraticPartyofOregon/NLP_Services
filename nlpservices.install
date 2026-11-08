@@ -136,6 +136,28 @@ function nlpservices_update_10003(): void
 }
 
 /**
+ * Adds cd to the nlp_ballot_count primary key.
+ *
+ * V7_2_1 keyed the table on (county, party); V7_3 keys it on
+ * (cd, county, party). Widening the key can't create duplicates, so the
+ * existing rows are kept. The key is rebuilt unconditionally, which gives
+ * the same result on a site whose key is already correct.
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10004(): string
+{
+  $table = 'nlp_ballot_count';
+  $dbSchema = Drupal::database()->schema();
+  if (!$dbSchema->tableExists($table)) {
+    return "Table $table does not exist; nothing to update.";
+  }
+  $dbSchema->dropPrimaryKey($table);
+  $dbSchema->addPrimaryKey($table, ['cd', 'county', 'party']);
+  return "Changed the $table primary key to (cd, county, party).";
+}
+
+/**
  * Implements hook_uninstall().
  * @noinspection PhpUnused
  * @noinspection PhpUnusedParameterInspection
