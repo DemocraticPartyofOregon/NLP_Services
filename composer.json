@@ -15,6 +15,7 @@
         "ext-imap": "*",
         "ext-openssl": "*",
         "drupal/autologout": "^1.4",
+        "drupal/bartik": "^1.1",
         "drupal/encrypt": "^3.2",
         "drupal/key": "^1.22",
         "drupal/real_aes": "^2.6",
