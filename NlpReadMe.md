@@ -143,6 +143,18 @@ Once the cron job runs, turn off automated cron: from the Admin menu, select Con
 
 To check the cron job, wait 15 minutes and open the Enable Cron tasks page from the NLP configuration menu.  It shows when the cron job last ran, or a caution if no run has been seen in the last hour.
 
+## Add a drush alias for the SSH shell
+
+On cPanel hosts, running `drush` at the SSH prompt prints a page of `sh: error importing function definition` lines before its real output.  These come from helper functions (`which`, `module`, `scl`) that the cPanel login shell exports and that drush's subshell can't read.  They are harmless, but running drush through PHP directly, the same way the cron job does, avoids them.  To make that the default, add an alias to the account's `~/.bashrc`:
+
+    echo "alias drush='/usr/local/bin/php /home/myAccount/myStateName/vendor/drush/drush/drush.php'" >> ~/.bashrc
+    source ~/.bashrc
+
+Replace `myAccount` and `myStateName` as in the cron command.  After this, `drush cr`, `drush uli`, and so on work quietly from any directory and always act on this site.
+
+- If the alias isn't there after logging in again, the account's `~/.bash_profile` doesn't read `~/.bashrc`.  Add the same line to `~/.bash_profile` instead.
+- The alias only applies at the SSH prompt.  Cron jobs and scripts don't see it, so they still need the full command.
+
 ## Configuring Drupal Theme
 
 NLP Services was developed and tested with the Bartik theme.  There should be no specific dependency on theme but the Bartik standard options produce pleasing NLP displays.
