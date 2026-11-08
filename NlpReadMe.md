@@ -86,13 +86,9 @@ Do this before installing NLP Services — the module won't install without it. 
 
 Then clear all caches (Configuration > Performance > Clear all caches, or `drush cr`). Drupal only registers the `private://` file system when it rebuilds its caches, so until then API keys can't be saved even though the setting is in place.
 
-## Install and enable nlpservices module
+## Install the support modules
 
-Use the Extend tab to install the NLP Services module.
-
-## Now install the support modules
-
-This version of NLP Services uses three additional modules: "SMTP Authentication Support", "Automated Logout" and "User Redirect".  These modules should be installed using composer.
+This version of NLP Services requires six additional modules: "Automated Logout" (autologout), "Encrypt" (encrypt), "Key" (key), "Real AES" (real_aes), "SMTP Authentication Support" (smtp) and "Token" (token).  It also uses the mPDF library and the Bartik theme.  These should all be installed using composer.
 
     composer require 'drupal/autologout:^1.4'
     composer install
@@ -103,6 +99,12 @@ This version of NLP Services uses three additional modules: "SMTP Authentication
     composer require 'drupal/real_aes:^2.6'
     composer require 'drupal/key:^1.22'
     composer require 'drupal/encrypt:^3.2'
+
+## Install and enable nlpservices module
+
+Use the Extend tab to install the NLP Services module.  Drupal will not enable it until the support modules above have been downloaded, and it enables the six required modules along with it.
+
+## Configure the support modules
 
 The SMTP module must be configured to permit the nlpservices module to send emails.   You will have to get the SMTP information from the email vendor. To use the SMTP module you will have to set an email account.  This account is for sending emails and can be named <notifications@nlpservices.org>.  The email name is configurable and includes the actual name of the site, i.e. <notifications@mysite.com>. Your vendor hosting the site will provide an adequate service, and you should use it. When you create the email account, you will need to get the following from your vendor:
 
