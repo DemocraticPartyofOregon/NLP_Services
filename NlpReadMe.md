@@ -43,7 +43,6 @@ Use your TTY app to redefine the public HTML directory (In the commands below, c
 
 Create a directory for the private files for saving API keys and set the permissions:
 
-
     mkdir -p private_files/keys
     chmod 755 private_files private_files/keys
 
