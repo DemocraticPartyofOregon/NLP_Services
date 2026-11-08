@@ -3,6 +3,9 @@
 namespace Drupal\Tests\nlpservices\Unit\Config {
 
   use Drupal;
+  use Drupal\Core\Config\Config;
+  use Drupal\Core\Config\ConfigFactoryInterface;
+  use Drupal\Core\Config\ImmutableConfig;
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Form\FormStateInterface;
   use Drupal\nlpservices\ApiKeyVerification;
@@ -12,6 +15,12 @@ namespace Drupal\Tests\nlpservices\Unit\Config {
   class KeyValidateFormTest extends UnitTestCase {
 
     private ApiKeyVerification $verifyApiKeysMock;
+
+    /** The VANID currently saved in nlpservices.configuration (NULL = none). */
+    private ?int $savedMcid = NULL;
+
+    /** Every VANID written back to nlpservices.configuration. */
+    private array $writtenMcids = [];
 
     protected function setUp(): void {
       parent::setUp();
@@ -31,16 +40,32 @@ namespace Drupal\Tests\nlpservices\Unit\Config {
     // Helpers
     // -------------------------------------------------------------------------
 
-    private function buildForm(): KeyValidateForm {
-      $form = new KeyValidateForm($this->verifyApiKeysMock);
-      $form->setStringTranslation($this->getStringTranslationStub());
-      return $form;
+    private function configFactoryMock(): ConfigFactoryInterface {
+      $immutable = $this->createMock(ImmutableConfig::class);
+      $immutable->method('get')
+        ->with(KeyValidateForm::MCID_CONFIG_KEY)
+        ->willReturnCallback(fn() => $this->savedMcid);
+
+      $editable = $this->createMock(Config::class);
+      $editable->method('set')
+        ->willReturnCallback(function ($key, $value) use ($editable) {
+          $this->assertSame(KeyValidateForm::MCID_CONFIG_KEY, $key);
+          $this->writtenMcids[] = $value;
+          $this->savedMcid = $value;
+          return $editable;
+        });
+      $editable->method('save')->willReturnSelf();
+
+      $factory = $this->createMock(ConfigFactoryInterface::class);
+      $factory->method('get')->with('nlpservices.configuration')->willReturn($immutable);
+      $factory->method('getEditable')->with('nlpservices.configuration')->willReturn($editable);
+      return $factory;
     }
 
-    private function freshFormState(): FormStateInterface {
-      $formState = $this->createMock(FormStateInterface::class);
-      $formState->method('get')->with('renter')->willReturn(NULL);
-      return $formState;
+    private function buildForm(): KeyValidateForm {
+      $form = new KeyValidateForm($this->verifyApiKeysMock, $this->configFactoryMock());
+      $form->setStringTranslation($this->getStringTranslationStub());
+      return $form;
     }
 
     // -------------------------------------------------------------------------
@@ -199,6 +224,75 @@ namespace Drupal\Tests\nlpservices\Unit\Config {
 
       $form = [];
       $this->buildForm()->submitForm($form, $formState);
+    }
+
+    // -------------------------------------------------------------------------
+    // Saved VANID — default, reuse, and persistence
+    // -------------------------------------------------------------------------
+
+    private function selectMcidFormState(): FormStateInterface {
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['renter', TRUE],
+        ['page',   'selectMcid'],
+      ]);
+      return $formState;
+    }
+
+    private function submitVanid(string $vanid): void {
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->with('page')->willReturn('selectMcid');
+      $formState->method('getValue')->with('vanid')->willReturn($vanid);
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    public function testBuildFormOffersDefaultMcidWhenNoneSaved(): void {
+      $result = $this->buildForm()->buildForm([], $this->selectMcidFormState());
+
+      $this->assertSame(KeyValidateForm::DEFAULT_MCID, $result['vanid']['#default_value']);
+    }
+
+    public function testBuildFormOffersSavedMcid(): void {
+      $this->savedMcid = 555123;
+
+      $result = $this->buildForm()->buildForm([], $this->selectMcidFormState());
+
+      $this->assertSame(555123, $result['vanid']['#default_value']);
+    }
+
+    public function testSubmitFormSavesAlternateMcid(): void {
+      $this->submitVanid('555123');
+
+      $this->assertSame([555123], $this->writtenMcids);
+    }
+
+    public function testSubmittedMcidIsOfferedOnNextRun(): void {
+      $this->submitVanid('555123');
+
+      $result = $this->buildForm()->buildForm([], $this->selectMcidFormState());
+
+      $this->assertSame(555123, $result['vanid']['#default_value']);
+    }
+
+    public function testSubmitFormDoesNotRewriteUnchangedMcid(): void {
+      $this->savedMcid = 555123;
+
+      $this->submitVanid('555123');
+
+      $this->assertSame([], $this->writtenMcids);
+    }
+
+    public function testSubmitFormDoesNotSaveDefaultMcidWhenNoneSaved(): void {
+      $this->submitVanid((string) KeyValidateForm::DEFAULT_MCID);
+
+      $this->assertSame([], $this->writtenMcids);
+    }
+
+    public function testSubmitFormDoesNotSaveNonPositiveMcid(): void {
+      $this->submitVanid('0');
+
+      $this->assertSame([], $this->writtenMcids);
     }
 
   }
