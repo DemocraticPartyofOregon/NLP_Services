@@ -98,12 +98,10 @@ This version of NLP Services uses three additional modules: "SMTP Authentication
     composer install
     composer require mpdf/mpdf
     composer require 'drupal/bartik:^1.1'
-    composer require 'drupal/views_bulk_operations:^4.4'
     composer require 'drupal/token:^1.17'
     composer require 'drupal/smtp:^1.4'
     composer require 'drupal/real_aes:^2.6'
     composer require 'drupal/key:^1.22'
-    composer require 'drupal/file_entity:^2.4'
     composer require 'drupal/encrypt:^3.2'
 
 The SMTP module must be configured to permit the nlpservices module to send emails.   You will have to get the SMTP information from the email vendor. To use the SMTP module you will have to set an email account.  This account is for sending emails and can be named <notifications@nlpservices.org>.  The email name is configurable and includes the actual name of the site, i.e. <notifications@mysite.com>. Your vendor hosting the site will provide an adequate service, and you should use it. When you create the email account, you will need to get the following from your vendor:

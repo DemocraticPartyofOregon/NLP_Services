@@ -15,7 +15,7 @@ Five NLP sites are configured for FTP deploys (per `.idea/webServers.xml` / `.id
 
 The only crossover between the branches is cherry-picking bug fixes **from V7_2_1 into V7_3**. This app can't handle the FTP passwords (password-based auth, credentials live in PhpStorm's own store). If asked to help deploy, hand over ready-to-run `curl --ftp-ssl-reqd --ftp-pasv -u <user> -T <file> ftp://<host>:21/modules/custom/nlpservices/<path>` commands for the user to run themselves, or point them to PhpStorm's Deployment menu.
 
-`NlpReadMe.md` documents full from-scratch site setup (SSL, database, private file path, required contrib modules — autologout, mpdf, bartik, views_bulk_operations, token, smtp, real_aes, key, file_entity, encrypt — SMTP config, theme setup). `readme.md` is just Drupal core's stock README (not NLP-specific) — ignore it.
+`NlpReadMe.md` documents full from-scratch site setup (SSL, database, private file path, required contrib modules — autologout, mpdf, bartik, token, smtp, real_aes, key, encrypt — SMTP config, theme setup). `readme.md` is just Drupal core's stock README (not NLP-specific) — ignore it.
 
 ## Local dev environment
 
