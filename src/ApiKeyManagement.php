@@ -238,9 +238,11 @@ class ApiKeyManagement
    * subdirectory, is missing, it's created. Both must end up writable by the
    * web server. Run from a form, this works as the web server's own user, so
    * it also catches a directory the server can't reach (e.g., under /home
-   * when the PHP service has ProtectHome set).
+   * when the PHP service has ProtectHome set). Last, it checks that
+   * private:// resolves, which needs a cache rebuild after the setting is
+   * first added.
    *
-   * @return \Drupal\Core\StringTranslation\TranslatableMarkup|null
+   * @return TranslatableMarkup|null
    *   A description of the problem, or NULL if keys can be saved.
    */
   public function ensurePrivateStorage(): ?TranslatableMarkup
@@ -260,6 +262,12 @@ class ApiKeyManagement
       if (!is_writable($dir)) {
         return $this->t("The web server can't write to @path.", ['@path' => $dir]);
       }
+    }
+    // Drupal registers the private:// stream wrapper only when it builds its
+    // service container, so a file_private_path added to settings.php after
+    // that is visible to Settings but private:// still doesn't resolve.
+    if (!$this->fileSystem->realpath('private://')) {
+      return $this->t("The private file path is set in settings.php, but Drupal hasn't picked it up yet. Clear all caches (Configuration > Performance, or drush cr) and reload this page.");
     }
     return NULL;
   }

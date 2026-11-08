@@ -350,6 +350,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $dir = $this->makeTempDirPath();
       new Settings(['file_private_path' => $dir]);
       $this->prepareDirectoryCreates();
+      $this->fileSystemMock->method('realpath')->willReturn($dir);
       $this->loggerMock->expects($this->exactly(2))->method('notice');
 
       $problem = $this->buildServiceWithTranslation()->ensurePrivateStorage();
@@ -366,6 +367,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->fileSystemMock->expects($this->once())->method('prepareDirectory')
         ->with($dir . '/keys')
         ->willReturnCallback(fn(string $path) => mkdir($path));
+      $this->fileSystemMock->method('realpath')->willReturn($dir);
 
       $this->assertNull($this->buildServiceWithTranslation()->ensurePrivateStorage());
       $this->removeTempDir($dir);
@@ -387,8 +389,26 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       mkdir($dir . '/keys', 0775, TRUE);
       new Settings(['file_private_path' => $dir]);
       $this->fileSystemMock->expects($this->never())->method('prepareDirectory');
+      $this->fileSystemMock->method('realpath')->willReturn($dir);
 
       $this->assertNull($this->buildServiceWithTranslation()->ensurePrivateStorage());
+      $this->removeTempDir($dir);
+    }
+
+    /**
+     * The setting and directories are fine, but private:// isn't registered
+     * because the container was built before the setting was added.
+     */
+    public function testEnsurePrivateStorageReportsUnregisteredStreamWrapper(): void {
+      $dir = $this->makeTempDirPath();
+      mkdir($dir . '/keys', 0775, TRUE);
+      new Settings(['file_private_path' => $dir]);
+      $this->fileSystemMock->method('realpath')->with('private://')->willReturn(FALSE);
+
+      $problem = $this->buildServiceWithTranslation()->ensurePrivateStorage();
+
+      $this->assertNotNull($problem);
+      $this->assertStringContainsString('Clear all caches', (string) $problem);
       $this->removeTempDir($dir);
     }
 

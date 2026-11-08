@@ -78,15 +78,17 @@ To avoid this, when the FTP account is created, add it to the group that owns th
 
 Replace `sjpacker` and `ftpuser` with the actual install user and FTP user for the site. The FTP client (PhpStorm) needs a fresh login after this to pick up the new group membership.
 
+## Add the private file path to the settings.php file
+
+Do this before installing NLP Services — the module won't install without it. Edit the `settings.php` file located in `myStateName/web/sites/default/` and add the following line:
+
+    $settings['file_private_path'] = '/home/myStateName/private_files';
+
+Then clear all caches (Configuration > Performance > Clear all caches, or `drush cr`). Drupal only registers the `private://` file system when it rebuilds its caches, so until then API keys can't be saved even though the setting is in place.
+
 ## Install and enable nlpservices module
 
 Use the Extend tab to install the NLP Services module.
-
-## Add the private file path to the settings.php file
-
-Edit the `settings.php` file located in `myStateName/web/sites/default/` and add the following line:
-
-    $settings['file_private_path'] = '/home/myStateName/private_files';
 
 ## Now install the support modules
 
