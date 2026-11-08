@@ -1,6 +1,6 @@
 # NLP Services
 
-Drupal 11 custom module ("NLP Services") supporting the Neighborhood Leader Program — voter turf management, data entry, reporting, and coordinator/NL communication tooling for state-level organizing sites. GitHub: https://github.com/sjpacker21355/NLP_Services (this directory is that repo's clone — commit/push from here directly).
+Drupal 11 custom module ("NLP Services") supporting the Neighborhood Leader Program — voter turf management, data entry, reporting, and coordinator/NL communication tooling for state-level organizing sites. GitHub: https://github.com/DemocraticPartyofOregon/NLP_Services (this directory is that repo's clone — commit/push from here directly).
 
 ## Branch strategy
 
