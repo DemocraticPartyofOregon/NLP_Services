@@ -274,6 +274,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame($counties, $this->buildConfiguration()->getCountyNames());
     }
 
+    /**
+     * A site carried over from V7_2_1 can still have the old map until
+     * nlpservices_update_10005() runs.
+     */
+    public function testGetCountyNamesReturnsKeysOfV721Map(): void {
+      $this->setupNlpConfigGet([
+        ['nlpservices_canvass_response_codes', null],
+        ['nlpservices-county-names', [
+          'State' => 'Special',
+          'Multnomah' => ['HD 33', 'HD 36'],
+          'Washington' => ['HD 26'],
+        ]],
+      ]);
+      $this->assertSame(['Multnomah', 'Washington'], $this->buildConfiguration()->getCountyNames());
+    }
+
     // -------------------------------------------------------------------------
     // getPledgeSurveyQuestion
     // -------------------------------------------------------------------------

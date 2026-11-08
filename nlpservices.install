@@ -158,6 +158,36 @@ function nlpservices_update_10004(): string
 }
 
 /**
+ * Converts the V7_2_1 county names config to the V7_3 format.
+ *
+ * V7_2_1 stored nlpservices-county-names as a map of 'State' => state name
+ * and county => list of HD names. V7_3 stores a sorted list of county names
+ * and keeps the state name in nlpservices-state-name. Code that expects a
+ * list gets the HD arrays instead of names (e.g., the API configuration
+ * form's key cleanup).
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10005(): string
+{
+  $config = Drupal::configFactory()->getEditable('nlpservices.configuration');
+  $counties = $config->get('nlpservices-county-names');
+  if (empty($counties) || array_is_list($counties)) {
+    return 'The county names are already in the V7_3 format.';
+  }
+  $stateName = $counties['State'] ?? '';
+  unset($counties['State']);
+  $countyNames = array_map('strval', array_keys($counties));
+  sort($countyNames);
+  $config->set('nlpservices-county-names', $countyNames);
+  if (is_string($stateName) && $stateName !== '' && empty($config->get('nlpservices-state-name'))) {
+    $config->set('nlpservices-state-name', $stateName);
+  }
+  $config->save();
+  return 'Converted the county names to a list of ' . count($countyNames) . ' counties.';
+}
+
+/**
  * Implements hook_uninstall().
  * @noinspection PhpUnused
  * @noinspection PhpUnusedParameterInspection

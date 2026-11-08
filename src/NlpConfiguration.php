@@ -252,7 +252,16 @@ class NlpConfiguration
   public function getCountyNames(): array
   {
     $counties = $this->nlpConfig->get('nlpservices-county-names');
-    return empty($counties) ? [] : $counties;
+    if (empty($counties)) {
+      return [];
+    }
+    // V7_2_1 stored a map of 'State' => state name and county => HD list.
+    // nlpservices_update_10005() converts it; until then, use the keys.
+    if (!array_is_list($counties)) {
+      unset($counties['State']);
+      return array_map('strval', array_keys($counties));
+    }
+    return $counties;
   }
 
   /**
