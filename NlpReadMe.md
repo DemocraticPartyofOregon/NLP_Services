@@ -67,6 +67,42 @@ From the admin menu, select Configuration.  In the PEOPLE section, select Accoun
 
 NLP Services is distributed as a compressed file.   Using FTP or File Manager, upload the NLP Compressed file to the directory oregon/web/modules/custom.   Then decompress the uploaded file in that directory to create the nlpservices directory.  When completed, you can delete the compressed file.
 
+## Or install NLP Services with composer
+
+Instead of uploading a compressed file, NLP Services can be installed with composer straight from its GitHub repository.  Composer then also installs the support modules, the mPDF library and the Bartik theme, so the composer commands under "Install the support modules" below are not needed.
+
+First tell composer where to find NLP Services.  Edit the `composer.json` file in the site's root directory (`myStateName/composer.json`, the one created by `composer create-project`) and add the NLP Services repository to the `repositories` section, keeping the Drupal entry that is already there:
+
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://packages.drupal.org/8"
+        },
+        {
+            "type": "vcs",
+            "url": "https://github.com/DemocraticPartyofOregon/NLP_Services"
+        }
+    ],
+
+Or let composer make the same change:
+
+    cd myStateName
+    composer config repositories.nlpservices vcs https://github.com/DemocraticPartyofOregon/NLP_Services
+
+Then install NLP Services from the branch for this version:
+
+    composer require 'drupal/nlpservices:dev-NLP_Services_V7_3'
+
+Composer puts the module in `web/modules/custom/nlpservices`, using the `installer-paths` entry for `type:drupal-custom-module` that `drupal/recommended-project` already has in `composer.json`.  Later changes on the branch are picked up with:
+
+    composer update drupal/nlpservices
+
+A few things to check:
+
+- The command-line PHP must have the imap extension, or composer will refuse to install NLP Services.
+- If the module was already uploaded to `web/modules/custom/nlpservices`, rename or remove that directory before running `composer require`.
+- A `composer update` replaces any files uploaded by FTP since, so use one method or the other for each site.
+
 ## FTP deploy account permissions
 
 If ongoing deploys (e.g., from PhpStorm's Deployment feature, as used for ORDems' own live sites) will use a dedicated FTP account rather than the SSH/install account, that FTP account needs write access into the tree the site was installed under, not just into new files. The Drupal install itself (composer, git, drush) is normally run over SSH as your own login (e.g., `sjpacker`), which leaves every file owned by that user. A separate FTP-only account created later for automated uploads (e.g., via vsftpd, running as e.g., `ftpuser`) is a different Linux user and, unless explicitly granted access, can only create new files inside directories it has write permission on — it cannot overwrite files it doesn't own or share a group with. This is easy to miss because the very first full-tree deploy succeeds (it's all new files); it's only a later deploy that re-uploads an existing file that fails, with something like `553 Could not create file`.
