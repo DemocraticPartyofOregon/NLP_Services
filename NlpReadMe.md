@@ -50,7 +50,7 @@ Create a directory for the private files for saving API keys and set the permiss
     chown -R www-data:www-data /home/myStateName/private_files
     chmod 755 /home/myStateName/private_files /home/myStateName/private_files/keys
 
-Drupal has to be told where this directory is, by setting `file_private_path` in the site's `settings.php` file.  That file only exists once the Drupal installation below has finished, so come back to this step then (it is repeated under "Add the private file path to the settings.php file").  Drupal makes `settings.php` read-only during installation, so make it writable, append the setting, and make it read-only again:
+Drupal has to be told where this directory is, by setting `file_private_path` in the site's `settings.php` file.  That file only exists once the Drupal installation below has finished, so come back to this step then.  It must be done before installing NLP Services, which won't install without it.  Drupal makes `settings.php` read-only during installation, so make it writable, append the setting, and make it read-only again:
 
     chmod u+w ~/myStateName/web/sites/default/settings.php
     echo "\$settings['file_private_path'] = '/home/myStateName/private_files';" >> ~/myStateName/web/sites/default/settings.php
@@ -65,6 +65,8 @@ Use the full path to the directory created above, starting with `/`.  PHP does n
 Check the result with:
 
     tail -n 2 ~/myStateName/web/sites/default/settings.php
+
+Then clear all caches (Configuration > Performance > Clear all caches, or `drush cr`). Drupal only registers the `private://` file system when it rebuilds its caches, so until then API keys can't be saved even though the setting is in place.
 
 Then use composer to get the core:
 
@@ -128,14 +130,6 @@ To avoid this, when the FTP account is created, add it to the group that owns th
     sudo chmod -R g+w /home/myStateName/myStateName
 
 Replace `sjpacker` and `ftpuser` with the actual install user and FTP user for the site. The FTP client (PhpStorm) needs a fresh login after this to pick up the new group membership.
-
-## Add the private file path to the settings.php file
-
-Do this before installing NLP Services — the module won't install without it. Edit the `settings.php` file located in `myStateName/web/sites/default/` and add the following line:
-
-    $settings['file_private_path'] = '/home/myStateName/private_files';
-
-Then clear all caches (Configuration > Performance > Clear all caches, or `drush cr`). Drupal only registers the `private://` file system when it rebuilds its caches, so until then API keys can't be saved even though the setting is in place.
 
 ## Install the support modules
 
