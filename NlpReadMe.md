@@ -1,6 +1,6 @@
 # Setting up a new site
 
-*Rev 7.4 (18 Aug 2026)*
+*Rev 7.3 (8 Nov 2026)*
 
 If you are to have a secure site, purchase and install an SSL certificate. This will permit the use of the https scheme.   If you want users who attempt to access the site using http to be automatically switched to https. Find the .htaccess file in the public_html directory.   Edit this file and find the line RewriteEngine on.  Immediately after that line, add the following three lines.
 
