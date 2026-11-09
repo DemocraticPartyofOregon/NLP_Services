@@ -34,7 +34,7 @@ Before installing the Drupal core, set up a database for your site.   Follow the
     Username:       dbadmin
     Password:       something secure
 
-Now install the core Drupal:
+## Prepare to install the core Drupal:
 
 Use your TTY app to redefine the public HTML directory (In the commands below, change Oregon to your state):
 
@@ -43,12 +43,12 @@ Use your TTY app to redefine the public HTML directory (In the commands below, c
 
 Create a directory for the private files for saving API keys and set the permissions:
 
-    mkdir -p private_files/keys
-    chmod 755 private_files private_files/keys
+    mkdir -p private_files
+    chmod 755 private_files private_files
 
     mkdir -p /home/myStateName/private_files/keys
-    chown -R www-data:www-data /home/myStateName/private_files
-    chmod 755 /home/myStateName/private_files /home/myStateName/private_files/keys
+    ?? chown -R www-data:www-data /home/myStateName/private_files
+    chmod 755 /home/myStateName/private_files/keys
 
 Drupal has to be told where this directory is, by setting `file_private_path` in the site's `settings.php` file.  That file only exists once the Drupal installation below has finished, so come back to this step then.  It must be done before installing NLP Services, which won't install without it.  Drupal makes `settings.php` read-only during installation, so make it writable, append the setting, and make it read-only again:
 
@@ -80,13 +80,9 @@ There you will complete the installation of Drupal.   You will need the informat
 
 From the admin menu, select Configuration.  In the PEOPLE section, select Account settings.  In the "Registration and cancellation" section, use the "Who can register accounts" to select "Administrators only".  This removes the option to request a new account on the user login block.  And, it removes the most common way that trolls attempt to get access to the site.
 
-## Upload the NLP Services module
+## Install NLP Services with composer
 
-NLP Services is distributed as a compressed file.   Using FTP or File Manager, upload the NLP Compressed file to the directory oregon/web/modules/custom.   Then decompress the uploaded file in that directory to create the nlpservices directory.  When completed, you can delete the compressed file.
-
-## Or install NLP Services with composer
-
-Instead of uploading a compressed file, NLP Services can be installed with composer straight from its GitHub repository.  Composer then also installs the support modules, the mPDF library and the Bartik theme, so the composer commands under "Install the support modules" below are not needed.
+NLP Services can be installed with composer straight from its GitHub repository.  Composer then also installs the support modules, the mPDF library and the Bartik theme, so the composer commands under "Install the support modules" below are not needed.
 
 First tell composer where to find NLP Services.  Edit the `composer.json` file in the site's root directory (`myStateName/composer.json`, the one created by `composer create-project`) and add the NLP Services repository to the `repositories` section, keeping the Drupal entry that is already there:
 
@@ -114,7 +110,7 @@ Composer puts the module in `web/modules/custom/nlpservices`, using the `install
 
     composer update drupal/nlpservices
 
-A few things to check:
+### A few things to check:
 
 - The command-line PHP must have the imap extension, or composer will refuse to install NLP Services.
 - If the module was already uploaded to `web/modules/custom/nlpservices`, rename or remove that directory before running `composer require`.
@@ -122,14 +118,14 @@ A few things to check:
 
 ## FTP deploy account permissions
 
-If ongoing deploys (e.g., from PhpStorm's Deployment feature, as used for ORDems' own live sites) will use a dedicated FTP account rather than the SSH/install account, that FTP account needs write access into the tree the site was installed under, not just into new files. The Drupal install itself (composer, git, drush) is normally run over SSH as your own login (e.g., `sjpacker`), which leaves every file owned by that user. A separate FTP-only account created later for automated uploads (e.g., via vsftpd, running as e.g., `ftpuser`) is a different Linux user and, unless explicitly granted access, can only create new files inside directories it has write permission on — it cannot overwrite files it doesn't own or share a group with. This is easy to miss because the very first full-tree deploy succeeds (it's all new files); it's only a later deploy that re-uploads an existing file that fails, with something like `553 Could not create file`.
+If ongoing deploys (e.g., from PhpStorm's Deployment feature, as used for ORDems' own live sites) will use a dedicated FTP account rather than the SSH/install account, that FTP account needs write access into the tree the site was installed under, not just into new files. The Drupal install itself (composer, git, drush) is normally run over SSH as your own login (e.g., `nlpadmin`), which leaves every file owned by that user. A separate FTP-only account created later for automated uploads (e.g., via vsftpd, running as e.g., `nlpadmin`) is a different Linux user and, unless explicitly granted access, can only create new files inside directories it has write permission on — it cannot overwrite files it doesn't own or share a group with. This is easy to miss because the very first full-tree deploy succeeds (it's all new files); it's only a later deploy that re-uploads an existing file that fails, with something like `553 Could not create file`.
 
 To avoid this, when the FTP account is created, add it to the group that owns the installed site files and make that tree group-writable:
 
-    sudo usermod -aG sjpacker ftpuser
+    sudo usermod -aG nlpadmin ftpuser
     sudo chmod -R g+w /home/myStateName/myStateName
 
-Replace `sjpacker` and `ftpuser` with the actual install user and FTP user for the site. The FTP client (PhpStorm) needs a fresh login after this to pick up the new group membership.
+Replace `nlpadmin` and `ftpuser` with the actual install user and FTP user for the site. The FTP client (PhpStorm) needs a fresh login after this to pick up the new group membership.
 
 ## Install the support modules
 
@@ -153,7 +149,7 @@ Use the Extend tab to install the NLP Services module.  Drupal will not enable i
 
 The SMTP module must be configured to permit the nlpservices module to send emails.   You will have to get the SMTP information from the email vendor. To use the SMTP module you will have to set an email account.  This account is for sending emails and can be named <notifications@nlpservices.org>.  The email name is configurable and includes the actual name of the site, i.e. <notifications@mysite.com>. Your vendor hosting the site will provide an adequate service, and you should use it. When you create the email account, you will need to get the following from your vendor:
 
-    SMTP server -  typically mail.mysite.sfx
+    SMTP server -  typically mail.mysite.sfx or smtp.mysite.sfx
     SMTP port - typically 25
     email address - <notifications@mtsite.sfx>
     password - to log into the email account.
