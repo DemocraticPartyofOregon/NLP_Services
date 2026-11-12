@@ -2,9 +2,12 @@
   <dictionary name="project">
     <words>
       <w>Hd</w>
+      <w>drush</w>
       <w>hd</w>
       <w>hdSelected</w>
+      <w>imap</w>
       <w>vanid</w>
+      <w>vsftpd</w>
     </words>
   </dictionary>
 </component>
