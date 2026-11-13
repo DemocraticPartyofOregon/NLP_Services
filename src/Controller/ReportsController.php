@@ -8,7 +8,6 @@ use Drupal\Core\File\FileExists;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpExportTurfStatus;
 use Symfony\Component\DependencyInjection\ContainerInterface;
-use Drupal\nlpservices\NlpResultsSummary;
 use Exception;
 
 /**
@@ -17,12 +16,10 @@ use Exception;
  */
 class ReportsController extends ControllerBase
 {
-  protected NlpResultsSummary $resultsSummaryObj;
   protected NlpExportTurfStatus $exportTurfStatusObj;
   protected DrupalUser $drupalUser;
 
-  public function __construct($resultsSummaryObj, $exportTurfStatusObj, $drupalUser) {
-    $this->resultsSummaryObj = $resultsSummaryObj;
+  public function __construct($exportTurfStatusObj, $drupalUser) {
     $this->exportTurfStatusObj = $exportTurfStatusObj;
     $this->drupalUser = $drupalUser;
   }
@@ -33,7 +30,6 @@ class ReportsController extends ControllerBase
   public static function create(ContainerInterface $container): ReportsController
   {
     return new static(
-      $container->get('nlpservices.results_summary'),
       $container->get('nlpservices.export_turf_status'),
       $container->get('nlpservices.drupal_user'),
     );
@@ -64,40 +60,6 @@ class ReportsController extends ControllerBase
           '#attached' => ['library' => ['nlpservices/menu-page']],
         ],
       ];
-  }
-
-  /**
-   * countyResultsSummary
-   *
-   * Displays the county results summary.
-   *
-   * @noinspection PhpUnused
-   * used in route.
-   * @return array
-   */
-  public function countyResultsSummary(): array
-  {
-    Drupal::service("page_cache_kill_switch")->trigger();
-    $output = $this->resultsSummaryObj->displayCountyResultsSummary();
-    $output['table-start']['#attached']['library'][] = 'nlpservices/info-boxes';
-    return $output;
-  }
-
-  /**
-   * cdResultsSummary
-   *
-   * Displays the result summary for the participating CDs.
-   *
-   * @noinspection PhpUnused
-   * used in route.
-   * @return array
-   */
-  public function cdResultsSummary(): array
-  {
-    Drupal::service("page_cache_kill_switch")->trigger();
-    $output = $this->resultsSummaryObj->displayCdResultsSummary();
-    $output['table-start']['#attached']['library'][] = 'nlpservices/info-boxes';
-    return $output;
   }
 
   /**

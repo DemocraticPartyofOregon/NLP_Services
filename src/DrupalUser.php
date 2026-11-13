@@ -151,6 +151,7 @@ class DrupalUser {
    *   AddDrupalAccountForm.php
    *   DeleteDrupalAccountsForm.php
    *   DocumentsForm.php
+   *   ElectionSummaryForm.php
    *   ExportNlsStatusForm.php
    *   ManageDrupalAccountsForm.php
    *   TurfDeliveryMessageForm.php

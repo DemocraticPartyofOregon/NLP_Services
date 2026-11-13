@@ -25,6 +25,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     protected function setUp(): void {
       parent::setUp();
       $this->crosstabsMock = $this->createMock(NlpCrosstabCounts::class);
+      $this->crosstabsMock->method('deleteAllCrosstabCounts')->willReturn(TRUE);
       $this->messengerMock = $this->createMock(MessengerInterface::class);
 
       $container = new ContainerBuilder();
@@ -410,6 +411,73 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
     // submitForm — no valid rows means no config save or status message
     // -------------------------------------------------------------------------
+
+    // -------------------------------------------------------------------------
+    // submitForm — HD column
+    // -------------------------------------------------------------------------
+
+    private function submitFormWithHdRows(array $dataRows): void {
+      $rows = array_merge([['h1'], ['h2']], $dataRows);
+      $path = $this->writeCsv($rows);
+      $fieldPos = $this->fieldPos() + ['hd' => 5];
+
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('get')->willReturnMap([
+        ['crosstabs_name', $path],
+        ['field_pos',      $fieldPos],
+        ['createTime',     1700000000],
+      ]);
+      $form = [];
+      $this->buildForm()->submitForm($form, $formState);
+    }
+
+    public function testSubmitFormWithHdColumnSavesCountsPerHd(): void {
+      $this->addConfigFactoryToContainer();
+
+      $seen = [];
+      $this->crosstabsMock->method('updateCrosstabCounts')
+        ->willReturnCallback(function (array $counts) use (&$seen): bool {
+          $seen[$counts['hd'] . '-' . $counts['party']] = $counts;
+          return TRUE;
+        });
+
+      $this->submitFormWithHdRows([
+        ['Lane', '4', 'Democrats', '10', '20', '007'],
+        ['Lane', '4', 'Republicans', '5', '15', '007'],
+        ['Lane', '4', 'Democrats', '30', '40', 'HD 8'],
+      ]);
+
+      $this->assertCount(5, $seen);
+      $this->assertSame(7, $seen['7-Democrats']['hd']);
+      $this->assertSame('Lane', $seen['7-Democrats']['county']);
+      $this->assertSame(15, $seen['7-ALL']['regVoted']);
+      $this->assertSame(35, $seen['7-ALL']['regVoters']);
+      $this->assertSame(30, $seen['8-ALL']['regVoted']);
+    }
+
+    public function testSubmitFormWithoutHdColumnSavesHdZero(): void {
+      $this->addConfigFactoryToContainer();
+
+      $this->crosstabsMock->expects($this->atLeastOnce())
+        ->method('updateCrosstabCounts')
+        ->with($this->callback(fn(array $c): bool => $c['hd'] === 0));
+
+      $this->submitFormWithDataRows([
+        ['Multnomah', '1', 'Democrats', '100', '200'],
+      ]);
+    }
+
+    public function testSubmitFormDeleteFailureSavesNothing(): void {
+      $this->crosstabsMock = $this->createMock(NlpCrosstabCounts::class);
+      $this->crosstabsMock->method('deleteAllCrosstabCounts')->willReturn(FALSE);
+      $this->crosstabsMock->expects($this->never())->method('updateCrosstabCounts');
+      $this->messengerMock->expects($this->once())->method('addError');
+      $this->messengerMock->expects($this->never())->method('addStatus');
+
+      $this->submitFormWithDataRows([
+        ['Multnomah', '1', 'Democrats', '100', '200'],
+      ]);
+    }
 
     public function testSubmitFormNoDataRowsSkipsConfigSaveAndStatus(): void {
       $this->messengerMock->expects($this->never())->method('addStatus');

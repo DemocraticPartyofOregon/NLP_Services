@@ -188,6 +188,32 @@ function nlpservices_update_10005(): string
 }
 
 /**
+ * Adds hd to nlp_ballot_count and to its primary key.
+ *
+ * A crosstab file with an HD column has a row per HD in each county.  The
+ * existing rows get HD 0, which is what an import without an HD column
+ * saves.  Widening the key can't create duplicates, so the rows are kept.
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10006(): string
+{
+  $table = 'nlp_ballot_count';
+  $dbSchema = Drupal::database()->schema();
+  if (!$dbSchema->tableExists($table)) {
+    return "Table $table does not exist; nothing to update.";
+  }
+  $message = '';
+  if (!$dbSchema->fieldExists($table, 'hd')) {
+    $dbSchema->addField($table, 'hd', nlpservices_schema()[$table]['fields']['hd']);
+    $message = "Added $table.hd. ";
+  }
+  $dbSchema->dropPrimaryKey($table);
+  $dbSchema->addPrimaryKey($table, ['cd', 'county', 'hd', 'party']);
+  return $message . "Changed the $table primary key to (cd, county, hd, party).";
+}
+
+/**
  * Implements hook_uninstall().
  * @noinspection PhpUnused
  * @noinspection PhpUnusedParameterInspection
@@ -265,11 +291,13 @@ function nlpservices_schema(): array
     'fields' => [
       'cd' => [ 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, ],
       'county' => [ 'type' => 'varchar', 'length' => 32, 'not null' => TRUE, ],
+      'hd' => [ 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE, 'not null' => TRUE, 'default' => 0,
+        'description' => 'House district; 0 when the crosstab file has no HD column.', ],
       'party' => [ 'type' => 'varchar', 'length' => 64, 'not null' => TRUE, ],
       'registeredVoters' => [ 'type' => 'int', ],
       'registeredVoted' => [ 'type' => 'int',  ],
     ],
-    'primary key' => [ 'cd', 'county', 'party', ],
+    'primary key' => [ 'cd', 'county', 'hd', 'party', ],
     'indexes' => [
       'county' => [ 'cd', 'county', ],
     ],

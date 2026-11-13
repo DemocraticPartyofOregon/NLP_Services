@@ -44,8 +44,11 @@ class PdfGenerator {
   {
     // Both mPDF (MpdfException) and the file save (EntityStorageException) can throw.
     try {
+      // mPDF's default scratch directory is inside vendor/, which the web
+      // server user can't write to on a hardened site.  Use the system temp.
       $mpdf = new Mpdf(
         [
+          'tempDir' => self::mpdfTempDir(),
           'orientation' => $orientation,
           'margin_left'   => 6.5,
           'margin_right'  => 6.5,
@@ -66,6 +69,19 @@ class PdfGenerator {
     }
     // Return a URL for a hyperlink to the PDF file.
     return $this->fileUrlGenerator->generateAbsoluteString($file_uri);
+  }
+
+  /**
+   * mpdfTempDir
+   *
+   * The scratch directory for mPDF, in the system temp directory.  mPDF
+   * creates it if it doesn't exist.
+   *
+   * @return string
+   */
+  public static function mpdfTempDir(): string
+  {
+    return rtrim(sys_get_temp_dir(), '/\\') . DIRECTORY_SEPARATOR . 'mpdf';
   }
   
 }

@@ -51,6 +51,9 @@ class ImportCrosstabsForm extends FormBase
 each party by county. The list of voters used to create the crosstab report
 should be of just active registered voters, and the crosstab file is for the
 entire state.</p>
+<p>The file can also have an HD column, giving the counts for each house
+district in a county.  Without it, the summaries by HD show only the NLP counts.
+Each import replaces all the counts from the previous file.</p>
 <p>If you create the crosstab file using a formated report, the file name will
 have a date.  This date is separated from the rest of the file name by blanks.
 The date will be in the form mm_dd_yyyy.  If the date is missing, the current time is used.</p>',
@@ -136,6 +139,8 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
     fgetcsv($fh, escape: '');
     fgetcsv($fh, escape: '');
 
+    // The HD column is optional; without it every row is HD 0.
+    $hdPos = $fieldPos['hd'] ?? NULL;
     $crossTabCounts = [];
     do {
       $rawCount = fgetcsv($fh, escape: '');
@@ -147,39 +152,48 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
       $rawCounty = $countsInfo[$fieldPos['county']] ?? '';
       $county    = ($rawCounty === 'Hood River') ? 'Hood_River' : $rawCounty;
       $cd        = (int) ($countsInfo[$fieldPos['cd']] ?? 0);
+      $hd        = ($hdPos === NULL) ? 0 : $this->hdNumber($countsInfo[$hdPos] ?? '');
       if ($county !== 'Total People') {
         $party            = $countsInfo[$fieldPos['party']]   ?? '';
         $ballotsReceived  = str_replace(',', '', $countsInfo[$fieldPos['balRet']] ?? '');
         $registeredVoters = str_replace(',', '', $countsInfo[$fieldPos['total']]  ?? '');
         if ($party === 'Democrats' || $party === 'Republicans' || $party === 'Non-Affiliated') {
-          $crossTabCounts[$cd][$county][$party]['br']  = $ballotsReceived;
-          $crossTabCounts[$cd][$county][$party]['reg'] = $registeredVoters;
+          $crossTabCounts[$cd][$county][$hd][$party]['br']  = $ballotsReceived;
+          $crossTabCounts[$cd][$county][$hd][$party]['reg'] = $registeredVoters;
         }
-        if (!isset($crossTabCounts[$cd][$county]['ALL'])) {
-          $crossTabCounts[$cd][$county]['ALL']['br'] =
-          $crossTabCounts[$cd][$county]['ALL']['reg'] = 0;
+        if (!isset($crossTabCounts[$cd][$county][$hd]['ALL'])) {
+          $crossTabCounts[$cd][$county][$hd]['ALL']['br'] =
+          $crossTabCounts[$cd][$county][$hd]['ALL']['reg'] = 0;
         }
-        $crossTabCounts[$cd][$county]['ALL']['br']  += $ballotsReceived;
-        $crossTabCounts[$cd][$county]['ALL']['reg'] += $registeredVoters;
+        $crossTabCounts[$cd][$county][$hd]['ALL']['br']  += (int) $ballotsReceived;
+        $crossTabCounts[$cd][$county][$hd]['ALL']['reg'] += (int) $registeredVoters;
       }
     } while (TRUE);
+    fclose($fh);
 
-    $counts = [];
+    if (empty($crossTabCounts)) { return; }
+    // Replace the previous file's counts so none are added in twice.
+    if (!$this->crosstabsObj->deleteAllCrosstabCounts()) {
+      $messenger->addError(t('Failed to remove the previous ballot counts.'));
+      return;
+    }
     foreach ($crossTabCounts as $cd => $cdCounts) {
       foreach ($cdCounts as $county => $countyCounts) {
-        foreach ($countyCounts as $party => $partyCounts) {
-          $counts = [
-            'cd'        => $cd,
-            'county'    => $county,
-            'party'     => $party,
-            'regVoters' => $partyCounts['reg'],
-            'regVoted'  => $partyCounts['br'],
-          ];
-          $this->crosstabsObj->updateCrosstabCounts($counts);
+        foreach ($countyCounts as $hd => $hdCounts) {
+          foreach ($hdCounts as $party => $partyCounts) {
+            $counts = [
+              'cd'        => $cd,
+              'county'    => $county,
+              'hd'        => $hd,
+              'party'     => $party,
+              'regVoters' => $partyCounts['reg'],
+              'regVoted'  => $partyCounts['br'],
+            ];
+            $this->crosstabsObj->updateCrosstabCounts($counts);
+          }
         }
       }
     }
-    if (empty($counts)) { return; }
 
     $createTime = $form_state->get('createTime');
     Drupal::configFactory()->getEditable('nlpservices.configuration')
@@ -187,6 +201,15 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
       ->save();
 
     $messenger->addStatus(t('The ballot count file has been successfully uploaded.'));
+  }
+
+  /**
+   * The HD number from the HD column, which may be padded ("007") or have a
+   * prefix ("HD 7").  0 if there is no number.
+   */
+  private function hdNumber(string $rawHd): int
+  {
+    return preg_match('/\d+/', $rawHd, $matches) ? (int) $matches[0] : 0;
   }
 
   private function getHeaderRecord($fh): array

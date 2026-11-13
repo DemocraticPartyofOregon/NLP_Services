@@ -155,18 +155,12 @@ nlpservices.remove_coordinator_role_form:
 nlpservices.display_results_summary:
   path: '/nlpservices-display-results-summary'
   defaults:
-    _controller: Drupal\nlpservices\Controller\ReportsController::countyResultsSummary
+    _form: Drupal\nlpservices\Form\ElectionSummaryForm
     _title: 'Display election results summary.'
   requirements:
     _permission: 'nlp tools access'
-
-nlpservices.display_cd_results_summary:
-  path: '/nlpservices-display-cd-results-summary'
-  defaults:
-    _controller: Drupal\nlpservices\Controller\ReportsController::cdResultsSummary
-    _title: 'Display election results summary by CD.'
-  requirements:
-    _permission: 'nlp tools access'
+  options:
+    no_cache: TRUE
 
 nlpservices.target_voting_summary:
   path: '/nlpservices-target-voting-summary'

@@ -15,6 +15,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpSessionData;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
+  use Drupal\nlpservices\PdfGenerator;
   use Drupal\Tests\UnitTestCase;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
 
@@ -32,6 +33,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private HtmlText $htmlTextMock;
     private FileUrlGeneratorInterface $fileUrlGeneratorMock;
     private FileRepositoryInterface $fileRepositoryMock;
+    private PdfGenerator $pdfGeneratorMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -47,6 +49,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->htmlTextMock = $this->createMock(HtmlText::class);
       $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
       $this->fileRepositoryMock = $this->createMock(FileRepositoryInterface::class);
+      $this->pdfGeneratorMock = $this->createMock(PdfGenerator::class);
     }
 
     private function buildService(): NlpResultsSummary {
@@ -63,6 +66,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->htmlTextMock,
         $this->fileUrlGeneratorMock,
         $this->fileRepositoryMock,
+        $this->pdfGeneratorMock,
       );
     }
 
@@ -101,6 +105,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.html_text', $this->htmlTextMock);
       $container->set('file_url_generator', $this->fileUrlGeneratorMock);
       $container->set('file.repository', $this->fileRepositoryMock);
+      $container->set('nlpservices.pdf_generator', $this->pdfGeneratorMock);
 
       $service = NlpResultsSummary::create($container);
 
@@ -166,13 +171,198 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(5, $rows['all']['voted']);
     }
 
-    public function testDisplayCdResultsSummaryReturnsWarningWhenNoCds(): void {
+    public function testCreateElectionSummaryReturnsErrorWhenNoCds(): void {
       $this->crosstabsMock->method('getCds')->willReturn([]);
 
-      $result = $this->buildService()->displayCdResultsSummary();
+      $result = $this->buildService()->createElectionSummary(NlpResultsSummary::LEVEL_CD);
 
-      $this->assertArrayHasKey('no_cds', $result);
-      $this->assertStringContainsString('crosstab file needs to be loaded', $result['no_cds']['#markup']);
+      $this->assertStringContainsString('crosstab file needs to be loaded', $result['error']);
+    }
+
+    public function testGetCdOptionsSortsNumerically(): void {
+      $this->crosstabsMock->method('getCds')->willReturn(['5', '1', '10']);
+
+      $this->assertSame([1, 5, 10], $this->buildService()->getCdOptions());
+    }
+
+    public function testGetCountyOptionsLimitsNonAdminToSessionCounty(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->votersMock->expects($this->never())->method('getParticipatingCounties');
+
+      $this->assertSame(['Lane'], $this->buildService()->getCountyOptions());
+    }
+
+    public function testAllCdsAddsStateSummaryAndDisplaysIt(): void {
+      $this->crosstabsMock->method('getCds')->willReturn([2, 1]);
+      $this->crosstabsMock->method('getCountsByCd')->willReturn([
+        'ALL' => ['regVoters' => 100, 'regVoted' => 40],
+      ]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(10);
+      $this->turfsMock->method('countOfNlsWithTurfsInCd')->willReturn(3);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_CD);
+
+      $this->assertCount(3, $result['sections']);
+      $this->assertSame('Congressional District 1', $result['sections'][0]['title']);
+      $this->assertSame(2, $result['displayIndex']);
+      $state = $result['sections'][2];
+      $this->assertSame('NLP', $state['type']);
+      $this->assertSame(200, $state['rows']['ALL']['registered']);
+      $this->assertSame(20, $state['rows']['allNLP']['registered']);
+      $this->assertStringContainsString('6', $state['participation']['participatingNls']);
+    }
+
+    public function testOneCdHasOnlyThatCd(): void {
+      $this->crosstabsMock->method('getCds')->willReturn([1, 2]);
+      $this->crosstabsMock->method('getCountsByCd')->willReturn([]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_CD, '2');
+
+      $this->assertCount(1, $result['sections']);
+      $this->assertSame(2, $result['sections'][0]['value']);
+      $this->assertSame(0, $result['displayIndex']);
+    }
+
+    public function testUnknownCdReturnsError(): void {
+      $this->crosstabsMock->method('getCds')->willReturn([1, 2]);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_CD, '7');
+
+      $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testStateSummaryIsSumOfCountiesOnly(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+      $this->votersMock->method('getParticipatingCounties')->willReturn(['Benton', 'Lane']);
+      $this->crosstabsMock->method('getCountsByCounty')->willReturn([
+        'ALL' => ['regVoters' => 50, 'regVoted' => 25],
+      ]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(4);
+      $this->nlsMock->method('getCountyNlsParticipation')
+        ->willReturn(['participatingNls' => 2, 'resultsReported' => 1]);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_STATE);
+
+      $this->assertCount(1, $result['sections']);
+      $this->assertSame(100, $result['sections'][0]['rows']['ALL']['registered']);
+      $this->assertStringContainsString('4', $result['sections'][0]['participation']['participatingNls']);
+    }
+
+    public function testStateSummaryRequiresAdmin(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_STATE);
+
+      $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testAllCountiesRequiresAdmin(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY);
+
+      $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testAllCountiesAddsStateSummaryAndDisplaysIt(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
+      $this->votersMock->method('getParticipatingCounties')->willReturn(['Benton', 'Lane']);
+      $this->crosstabsMock->method('getCountsByCounty')->willReturn([]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY);
+
+      $this->assertCount(3, $result['sections']);
+      $this->assertSame(2, $result['displayIndex']);
+      $this->assertSame('State summary of the participating counties', $result['sections'][2]['title']);
+    }
+
+    public function testOneCountyAllHdsHasCountyThenEachHd(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->turfsMock->method('getTurfHdNames')->with('Lane')->willReturn([7 => 7, 8 => 8]);
+      $this->crosstabsMock->method('getCountsByCounty')->willReturn([
+        'ALL' => ['regVoters' => 50, 'regVoted' => 25],
+      ]);
+      $this->crosstabsMock->expects($this->never())->method('getCountsByCd');
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane',
+        NlpResultsSummary::ALL);
+
+      $this->assertCount(3, $result['sections']);
+      $this->assertSame(0, $result['displayIndex']);
+      $this->assertSame('Lane County', $result['sections'][0]['title']);
+      $this->assertSame('Lane County, House District 8', $result['sections'][2]['title']);
+      // No VoteBuilder counts by HD, so only the NLP rows.
+      $this->assertArrayNotHasKey('all', $result['sections'][1]['rows']);
+      $this->assertArrayHasKey('nlp', $result['sections'][1]['rows']);
+    }
+
+    public function testOneHdHasOnlyThatHd(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->turfsMock->method('getTurfHdNames')->willReturn([7 => 7, 8 => 8]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+      $this->turfsMock->expects($this->once())->method('countOfNlsWithTurfsInHd')->with('Lane', 7)->willReturn(2);
+      $this->crosstabsMock->expects($this->never())->method('getCountsByCounty');
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane', '7');
+
+      $this->assertCount(1, $result['sections']);
+      $this->assertSame('HD', $result['sections'][0]['type']);
+    }
+
+    public function testOtherCountyIsRejectedForNonAdmin(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Benton');
+
+      $this->assertArrayHasKey('error', $result);
+    }
+
+    public function testHdSectionUsesHdCountsWhenImported(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->turfsMock->method('getTurfHdNames')->willReturn([7 => 7]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+      $this->crosstabsMock->expects($this->once())->method('getCountsByHd')->with('Lane', 7)->willReturn([
+        'ALL' => ['regVoters' => 30, 'regVoted' => 12],
+      ]);
+
+      $service = $this->buildService();
+      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane', '7');
+      $section = $result['sections'][0];
+      $display = $service->buildDistrictDisplay('HD', $section['value'], $section['rows'], $section['participation']);
+
+      $this->assertSame(30, $section['rows']['all']['registered']);
+      $this->assertStringNotContainsString(NlpResultsSummary::HD_NOTE, $display['participation']['#markup']);
+    }
+
+    public function testBuildDistrictDisplayHdAddsNote(): void {
+      $result = $this->buildService()->buildDistrictDisplay('HD', ['county' => 'Lane', 'hd' => 7], [], ['line a']);
+
+      $this->assertStringContainsString('Lane County, House District 7', $result['cdName']['#markup']);
+      $this->assertStringContainsString(NlpResultsSummary::HD_NOTE, $result['participation']['#markup']);
+    }
+
+    public function testBuildPdfHtmlIncludesEverySectionEscaped(): void {
+      $this->configurationMock->method('getElectionName')->willReturn('General');
+      $sections = [
+        ['type' => 'County', 'title' => 'A&B County', 'participation' => ['x' => 'NLs: 1'],
+          'rows' => [['name' => 'NLP Voters', 'registered' => 5, 'voted' => 2, 'pct' => '40%']]],
+        ['type' => 'NLP', 'title' => 'State summary', 'participation' => [], 'rows' => []],
+      ];
+
+      $html = $this->buildService()->buildPdfHtml('Request', $sections);
+
+      $this->assertStringContainsString('A&amp;B County', $html);
+      $this->assertStringContainsString('State summary', $html);
+      $this->assertStringContainsString('40%', $html);
     }
 
   }

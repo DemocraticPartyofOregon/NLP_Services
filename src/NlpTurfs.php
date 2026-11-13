@@ -1190,8 +1190,9 @@ class NlpTurfs
    *
    * Get a count of voters with the filters for type, scope, and having voted.
    *
-   * @param string $type - Possible keys: CD, County, NL, Turf.
-   * @param mixed $value - the value of the type.
+   * @param string $type - Possible keys: CD, County, HD, NL, Turf.
+   * @param mixed $value - the value of the type.  For HD, an array with the
+   *   keys 'county' and 'hd'.
    * @param string $scope - Possible keys: All, Attempted, Contacted, Postcard.
    * @param bool $voted - If TRUE, only return the count of voters who have turned in a ballot.
    * @return int - A count of the voters meeting the criteria.
@@ -1200,7 +1201,7 @@ class NlpTurfs
   {
     try {
       $query = $this->connection->select($this->votersObj::VOTER_TURF_TBL, 'g');
-      if($type == 'CD') {
+      if($type == 'CD' || $type == 'HD') {
         $query->leftJoin($this->votersObj::VOTER_ADDRESS_TBL, 'a', 'a.vanid = g.vanid');
       }
       if($voted) {
@@ -1241,6 +1242,11 @@ class NlpTurfs
           break;
         case 'County':
           $query->condition('g.county', (string) $value);
+          break;
+        case 'HD':
+          $query->condition('g.county', (string) $value['county']);
+          $query->condition('a.hd', (int) $value['hd']);
+          $query->distinct();
           break;
         case 'NL':
           $query->condition('g.mcid', (int) $value);
@@ -1404,6 +1410,60 @@ class NlpTurfs
       $count = $query->countQuery()->execute()->fetchField();
     } catch (Exception $e) {
       nlp_debug_msg('countOfNlsInCdThatReportedResults', $e);
+      return 0;
+    }
+    return (int) $count;
+  }
+
+  /**
+   * countOfNlsWithTurfsInHd
+   *
+   * Get the number of NLs with turfs in a house district of a county.
+   *
+   * @param string $county - The county of the HD.
+   * @param int $hd - The HD to check.
+   * @return int - The number of NLs in the HD that have turfs.
+   */
+  public function countOfNlsWithTurfsInHd(string $county, int $hd): int
+  {
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 't');
+      $query->join($this->nlsObj::NLS_TBL, 'n', 'n.mcid = t.mcid');
+      $query->addField('n', 'mcid');
+      $query->condition('t.county', $county);
+      $query->condition('t.turfHd', $hd);
+      $query->distinct();
+      $count = $query->countQuery()->execute()->fetchField();
+    } catch (Exception $e) {
+      nlp_debug_msg('countOfNlsWithTurfsInHd', $e);
+      return 0;
+    }
+    return (int) $count;
+  }
+
+  /**
+   * countOfNlsInHdThatReportedResults
+   *
+   * Get the number of NLs with turfs in a house district of a county that
+   * have reported results.
+   *
+   * @param string $county - The county of the HD.
+   * @param int $hd - The HD to check.
+   * @return int - The number of NLs in the HD that have reported results.
+   */
+  public function countOfNlsInHdThatReportedResults(string $county, int $hd): int
+  {
+    try {
+      $query = $this->connection->select(self::TURF_TBL, 't');
+      $query->join($this->nlsObj::NLS_STATUS_TBL, 'n', 'n.mcid = t.mcid AND n.county = t.county');
+      $query->addField('n', 'mcid');
+      $query->condition('t.county', $county);
+      $query->condition('t.turfHd', $hd);
+      $query->condition('n.resultsReported', 'Y');
+      $query->distinct();
+      $count = $query->countQuery()->execute()->fetchField();
+    } catch (Exception $e) {
+      nlp_debug_msg('countOfNlsInHdThatReportedResults', $e);
       return 0;
     }
     return (int) $count;

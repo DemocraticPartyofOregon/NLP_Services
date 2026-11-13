@@ -34,7 +34,12 @@ class NlpCrosstabCounts
   private array $crosstabCountVanHdr2 = [
     'balRet' => 'Bal Ret',
     ];
-  
+
+  // Optional first-header columns.  A file without them still imports.
+  private array $crosstabCountVanHdrOptional = [
+    'hd' => 'HD',
+  ];
+
   /**
    * decodeCrosstabsHeader
    *
@@ -45,12 +50,14 @@ class NlpCrosstabCounts
    * @return array - array of column indexes for the ballot returned counts.
    *
    * The header is represented by the first two rows.  Also, it verifies we have the right file.
+   * The HD column is optional; 'hd' is in the positions only when the file has it.
    */
   public function decodeCrosstabsHeader( array $fileHdr, array $fileHdr2 ): array
   {
     ['pos' => $pos1, 'err' => $err1] = $this->matchHeaderColumns($this->crosstabCountVanHdr1, $fileHdr);
     ['pos' => $pos2, 'err' => $err2] = $this->matchHeaderColumns($this->crosstabCountVanHdr2, $fileHdr2);
-    $hdrPos = array_merge($pos1, $pos2);
+    ['pos' => $posOptional] = $this->matchHeaderColumns($this->crosstabCountVanHdrOptional, $fileHdr);
+    $hdrPos = array_merge($pos1, $pos2, $posOptional);
     $hdrErr = array_merge($err1, $err2);
     return ['pos' => $hdrPos, 'err' => $hdrErr, 'ok' => empty($hdrErr)];
   }
@@ -81,7 +88,8 @@ class NlpCrosstabCounts
    * Updates the crosstab counts table.
    * 1. If the row already exists, it updates the registered voters and registered voted counts.
    * 2. If the row does not exist, it inserts a new row.
-   * @param array $counts
+   * @param array $counts - cd, county, party, regVoters, regVoted, and an
+   *   optional hd (0 when the file has no HD column).
    * @return bool
    */
   public function updateCrosstabCounts( array $counts ): bool
@@ -91,6 +99,7 @@ class NlpCrosstabCounts
         ->keys([
           'cd' => $counts['cd'],
           'county' => $counts['county'],
+          'hd' => (int) ($counts['hd'] ?? 0),
           'party' => $counts['party']])
         ->fields([
           'registeredVoters' => $counts['regVoters'],
@@ -102,7 +111,27 @@ class NlpCrosstabCounts
     }
     return TRUE;
   }
-  
+
+  /**
+   * deleteAllCrosstabCounts
+   *
+   * Removes all the counts before a new crosstab file is saved.  The file is
+   * for the whole state, and rows left from an earlier file (with or without
+   * HDs) would be added twice into the county and CD totals.
+   *
+   * @return bool
+   */
+  public function deleteAllCrosstabCounts(): bool
+  {
+    try {
+      $this->connection->delete(self::CROSSTAB_COUNTS_TBL)->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('deleteAllCrosstabCounts', $e);
+      return FALSE;
+    }
+    return TRUE;
+  }
+
   /**
    * fetchCrosstabCounts
    *
@@ -127,8 +156,11 @@ class NlpCrosstabCounts
     do {
       $count = $result->fetchAssoc();
       if(empty($count)) {break;}
-      $counts[$count['cd']][$count['county']][$count['party']]['regVoted'] = $count['registeredVoted'];
-      $counts[$count['cd']][$count['county']][$count['party']]['regVoters'] = $count['registeredVoters'];
+      // A file with HDs has a row per HD; sum them for the county.
+      $partyCounts = &$counts[$count['cd']][$count['county']][$count['party']];
+      $partyCounts['regVoted'] = ($partyCounts['regVoted'] ?? 0) + $count['registeredVoted'];
+      $partyCounts['regVoters'] = ($partyCounts['regVoters'] ?? 0) + $count['registeredVoters'];
+      unset($partyCounts);
     } while (TRUE);
     return $counts;
   }
@@ -172,6 +204,31 @@ class NlpCrosstabCounts
       $result = $query->execute();
     } catch (Exception $e) {
       nlp_debug_msg('getCdCountsByCounty', $e);
+      return [];
+    }
+    return $this->aggregateCountsByParty($result);
+  }
+
+  /**
+   * getCountsByHd
+   *
+   * Gets the counts for a house district in a county.  Empty if the crosstab
+   * file had no HD column.
+   *
+   * @param string $county
+   * @param int $hd
+   * @return array - array of counts by party for the HD.
+   */
+  public function getCountsByHd( string $county, int $hd ): array
+  {
+    $query = $this->connection->select(self::CROSSTAB_COUNTS_TBL, 'c');
+    $query->fields('c');
+    $query->condition('county', $county);
+    $query->condition('hd', $hd);
+    try {
+      $result = $query->execute();
+    } catch (Exception $e) {
+      nlp_debug_msg('getCountsByHd', $e);
       return [];
     }
     return $this->aggregateCountsByParty($result);

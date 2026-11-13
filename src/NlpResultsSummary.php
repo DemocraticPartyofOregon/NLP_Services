@@ -10,10 +10,22 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 /**
+ * Builds the election results summary for the state, a CD, a county or an HD.
+ *
+ * Used in:
+ *   ElectionSummaryForm.php
+ *
  * @noinspection PhpUnused
  */
 class NlpResultsSummary
 {
+  public const string LEVEL_STATE = 'state';
+  public const string LEVEL_CD = 'cd';
+  public const string LEVEL_COUNTY = 'county';
+  public const string ALL = 'all';
+  public const string COUNTY_SUMMARY = 'summary';
+  public const string HD_NOTE = 'VoteBuilder counts by HD are not available; the crosstab file had no HD column.';
+
   protected NlpVoters $votersObj;
   protected NlpMatchbacks $matchbacksObj;
   protected NlpNls $nlsObj;
@@ -29,7 +41,8 @@ class NlpResultsSummary
                               $crosstabsObj,$reportsObj,$turfsObj, $configurationObj,
                               $sessionObj, $htmlTextObj,
                               private readonly FileUrlGeneratorInterface $fileUrlGenerator,
-                              private readonly FileRepositoryInterface $fileRepository ) {
+                              private readonly FileRepositoryInterface $fileRepository,
+                              private readonly PdfGenerator $pdfGenerator ) {
     $this->votersObj = $votersObj;
     $this->matchbacksObj = $matchbacksObj;
     $this->nlsObj = $nlsObj;
@@ -57,6 +70,7 @@ class NlpResultsSummary
       $container->get('nlpservices.html_text'),
       $container->get('file_url_generator'),
       $container->get('file.repository'),
+      $container->get('nlpservices.pdf_generator'),
     );
   }
 
@@ -82,127 +96,409 @@ class NlpResultsSummary
     ];
   }
 
-  /**
-   * Display the voter turnout for the NL program for each of the known Counties.
-   *
-   * @return array - render array for display.
-   */
-  public function displayCountyResultsSummary(): array
+  private function initParticipation(): array
   {
-    $userCounty = $this->sessionObj->getCounty();
-    $admin = $this->drupalUser->isNlpAdminUser();
-    if ($admin) {
-      $counties = $this->votersObj->getParticipatingCounties();
-    } else {
-      $counties = [$userCounty];
-    }
-
-    $tempUri = $this->createTempFile('nlp_county_summary_report');
-    if (empty($tempUri)) {
-      return [];
-    }
-    $fh = fopen($tempUri, "w");
-    if (!$fh) {
-      return [];
-    }
-
-    // Start with a legend for the CSV file and the render array.
-    $legendLines = $this->buildLegend(FALSE);
-    $this->writeToTempFile($fh,$legendLines);
-    $output = [];
-    $legend = $this->buildLegend();
-    $output['legend'] = [
-      '#markup' => $legend,
-    ];
-    // Counts to be assembled for the summary of all NLP counties.
-    $nlpParticipation = [
+    return [
       'participatingNls' => 0,
       'resultsReported' => 0,
       'numberOfTurfs' => 0
     ];
-    $nlpCounts = $this->initNlpCounts();
-
-    // Build the tables.
-    foreach ($counties as $county) {
-      // A header to identify each county in the CSV file.
-      $header = [["$county County", 'Registered', 'Voted', 'Participation']];
-      $this->writeToTempFile($fh,  $header);
-
-      $countyParticipation = $this->gatherCountyParticipationData('County', $county, $nlpParticipation );
-      $rows = $this->buildResultsTableArray('County',$county, $nlpCounts);
-      $output[$county] = $this->buildDistrictDisplay('County',$county, $rows, $countyParticipation);
-      $this->writeToTempFile($fh,  $rows);
-    }
-
-    // Create a summary table for all participating counties.
-    $allCountyParticipation = $this->gatherCountyParticipationData('NLP', '', $nlpParticipation );
-    $rows = $this->buildSummaryTableArray( $nlpCounts );
-    $output['nlp'] = $this->buildDistrictDisplay('NLP','', $rows, $allCountyParticipation);
-
-    fclose($fh);
-
-    // A link to allow the user to download the CSV file.
-    $url = Html::escape($this->fileUrlGenerator->generateAbsoluteString($tempUri));
-    $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
-    $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
-    $output['result_file'] = [
-      '#markup' => $link,
-    ];
-
-    return $output;
   }
 
   /**
-   * Display the voter turnout for the NL program for each of the known CDs.
+   * getCdOptions
    *
-   * @return array - render array for display.
+   * The CDs with VoteBuilder counts, in numerical order.
+   *
+   * @return array - indexed array of CD numbers.
    */
-  public function displayCdResultsSummary(): array
+  public function getCdOptions(): array
   {
-    $cds = $this->crosstabsObj->getCds();
-    $output = [];
+    $cds = array_map('intval', $this->crosstabsObj->getCds());
+    sort($cds);
+    return $cds;
+  }
 
-    if(empty($cds)) {
-      $output['no_cds'] = [
-        '#markup' => "<h2>The crosstab file needs to be loaded prior to this report.</h2>",
-      ];
-      return $output;
+  /**
+   * getCountyOptions
+   *
+   * An NLP admin can choose any county with voters assigned to turfs.  Anyone
+   * else gets only the county they are managing.
+   *
+   * @return array - indexed array of county names.
+   */
+  public function getCountyOptions(): array
+  {
+    if ($this->drupalUser->isNlpAdminUser()) {
+      return $this->votersObj->getParticipatingCounties();
+    }
+    $county = $this->sessionObj->getCounty();
+    return empty($county) ? [] : [$county];
+  }
+
+  /**
+   * getHdOptions
+   *
+   * The house districts in a county that have turfs.
+   *
+   * @param string $county
+   * @return array - indexed array of HD numbers.
+   */
+  public function getHdOptions(string $county): array
+  {
+    return array_values($this->turfsObj->getTurfHdNames($county));
+  }
+
+  /**
+   * createElectionSummary
+   *
+   * Creates the election results summary for the request, writes every section
+   * of it to a PDF and a CSV file, and builds the display.  The display shows
+   * only the top-level summary: the state for all CDs or all counties, the
+   * county for all of its HDs, otherwise the one district requested.
+   *
+   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COUNTY.
+   * @param string $district - ALL, a CD number, or a county name.
+   * @param string $hd - for one county: COUNTY_SUMMARY, ALL, or an HD number.
+   * @return array - 'display' => render array, or 'error' => message.
+   */
+  public function createElectionSummary(string $level, string $district = self::ALL,
+                                        string $hd = self::COUNTY_SUMMARY): array
+  {
+    $summary = $this->buildSummarySections($level, $district, $hd);
+    if (!empty($summary['error'])) {
+      return ['error' => $summary['error']];
+    }
+    $sections = $summary['sections'];
+
+    $fileTag = $this->fileTag($level, $district, $hd);
+    $csvUrl = $this->writeCsvFile($fileTag, $sections);
+    $pdfUri = 'public://temp/' . $fileTag . '-' . date('Y-m-d-H-i-s') . '.pdf';
+    $pdfUrl = $this->pdfGenerator->generatePdf($this->buildPdfHtml($summary['title'], $sections), $pdfUri, 'P');
+
+    $output = [];
+    $output['links'] = [
+      '#markup' => $this->buildFileLinks($summary['title'], count($sections), $pdfUrl, $csvUrl),
+    ];
+    $output['legend'] = [
+      '#markup' => $this->buildLegend(),
+    ];
+    $displayed = $sections[$summary['displayIndex']];
+    $output['summary'] = $this->buildDistrictDisplay($displayed['type'], $displayed['value'],
+      $displayed['rows'], $displayed['participation']);
+    $output['summary']['table-start']['#attached']['library'][] = 'nlpservices/info-boxes';
+    return ['display' => $output];
+  }
+
+  /**
+   * buildSummarySections
+   *
+   * Gathers the counts for each district in the request.
+   *
+   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COUNTY.
+   * @param string $district - ALL, a CD number, or a county name.
+   * @param string $hd - for one county: COUNTY_SUMMARY, ALL, or an HD number.
+   * @return array - 'title' => description of the request, 'sections' => list of
+   *   sections (type, value, title, participation, rows), and 'displayIndex' =>
+   *   the section to display; or 'error' => message.
+   */
+  public function buildSummarySections(string $level, string $district = self::ALL,
+                                       string $hd = self::COUNTY_SUMMARY): array
+  {
+    return match ($level) {
+      self::LEVEL_STATE => $this->buildStateSections(),
+      self::LEVEL_CD => $this->buildCdSections($district),
+      self::LEVEL_COUNTY => $this->buildCountySections($district, $hd),
+      default => ['error' => 'Unknown request.'],
+    };
+  }
+
+  /**
+   * The state summary is the sum of the participating counties.
+   */
+  private function buildStateSections(): array
+  {
+    if (!$this->drupalUser->isNlpAdminUser()) {
+      return ['error' => 'Only an NLP admin can display the state summary.'];
+    }
+    $counties = $this->votersObj->getParticipatingCounties();
+    if (empty($counties)) {
+      return ['error' => 'No county has voters assigned to turfs.'];
+    }
+    $nlpCounts = $this->initNlpCounts();
+    $nlpParticipation = $this->initParticipation();
+    foreach ($counties as $county) {
+      $this->buildDistrictSection('County', $county, $nlpCounts, $nlpParticipation);
+    }
+    $sections = [$this->buildStateSection('State summary of the participating counties',
+      $nlpCounts, $nlpParticipation)];
+    return ['title' => 'State summary', 'sections' => $sections, 'displayIndex' => 0];
+  }
+
+  /**
+   * One CD, or every CD followed by the state summary of the CDs.
+   */
+  private function buildCdSections(string $district): array
+  {
+    $cds = $this->getCdOptions();
+    if (empty($cds)) {
+      return ['error' => 'The crosstab file needs to be loaded prior to this report.'];
+    }
+    if ($district !== self::ALL) {
+      if (!in_array((int) $district, $cds, TRUE)) {
+        return ['error' => 'There are no counts for CD ' . $district . '.'];
+      }
+      $cds = [(int) $district];
+    }
+    $nlpCounts = $this->initNlpCounts();
+    $nlpParticipation = $this->initParticipation();
+    $sections = [];
+    foreach ($cds as $cd) {
+      $sections[] = $this->buildDistrictSection('CD', $cd, $nlpCounts, $nlpParticipation);
+    }
+    if ($district !== self::ALL) {
+      return ['title' => 'Congressional District ' . $district, 'sections' => $sections, 'displayIndex' => 0];
+    }
+    $sections[] = $this->buildStateSection('State summary of the participating CDs',
+      $nlpCounts, $nlpParticipation);
+    return ['title' => 'All congressional districts', 'sections' => $sections,
+      'displayIndex' => count($sections) - 1];
+  }
+
+  /**
+   * Every county followed by the state summary, one county, the county
+   * followed by each of its HDs, or one HD.
+   */
+  private function buildCountySections(string $district, string $hd): array
+  {
+    $counties = $this->getCountyOptions();
+    if (empty($counties)) {
+      return ['error' => 'No county has voters assigned to turfs.'];
+    }
+    $nlpCounts = $this->initNlpCounts();
+    $nlpParticipation = $this->initParticipation();
+    $sections = [];
+
+    if ($district === self::ALL) {
+      if (!$this->drupalUser->isNlpAdminUser()) {
+        return ['error' => 'Only an NLP admin can display all the counties.'];
+      }
+      foreach ($counties as $county) {
+        $sections[] = $this->buildDistrictSection('County', $county, $nlpCounts, $nlpParticipation);
+      }
+      $sections[] = $this->buildStateSection('State summary of the participating counties',
+        $nlpCounts, $nlpParticipation);
+      return ['title' => 'All participating counties', 'sections' => $sections,
+        'displayIndex' => count($sections) - 1];
     }
 
-    $tempUri = $this->createTempFile('nlp_cd_summary_report');
+    if (!in_array($district, $counties, TRUE)) {
+      return ['error' => 'There are no voters assigned to turfs in ' . $district . ' County.'];
+    }
+    if ($hd === self::COUNTY_SUMMARY || $hd === self::ALL) {
+      $sections[] = $this->buildDistrictSection('County', $district, $nlpCounts, $nlpParticipation);
+    }
+    if ($hd === self::COUNTY_SUMMARY) {
+      return ['title' => $district . ' County', 'sections' => $sections, 'displayIndex' => 0];
+    }
+
+    $hdOptions = array_map('intval', $this->getHdOptions($district));
+    if ($hd !== self::ALL) {
+      if (!in_array((int) $hd, $hdOptions, TRUE)) {
+        return ['error' => 'There are no turfs in HD ' . $hd . ' of ' . $district . ' County.'];
+      }
+      $hdOptions = [(int) $hd];
+    }
+    // The county section already has the totals, so the HD sums are discarded.
+    $hdCounts = $this->initNlpCounts();
+    $hdParticipation = $this->initParticipation();
+    foreach ($hdOptions as $hdNumber) {
+      $sections[] = $this->buildDistrictSection('HD', ['county' => $district, 'hd' => $hdNumber],
+        $hdCounts, $hdParticipation);
+    }
+    $title = ($hd === self::ALL)
+      ? $district . ' County, all house districts'
+      : $district . ' County, House District ' . $hd;
+    return ['title' => $title, 'sections' => $sections, 'displayIndex' => 0];
+  }
+
+  /**
+   * Builds the section for one CD, County, or HD, and adds its counts to the
+   * totals.
+   *
+   * @param string $type - 'CD', 'County', or 'HD'.
+   * @param mixed $value - the CD number, county name, or ['county', 'hd'].
+   * @param array $nlpCounts - accumulator for the vote counts.
+   * @param array $nlpParticipation - accumulator for the participation counts.
+   * @return array - the section.
+   */
+  private function buildDistrictSection(string $type, mixed $value, array &$nlpCounts,
+                                        array &$nlpParticipation): array
+  {
+    $participation = $this->gatherCountyParticipationData($type, $value, $nlpParticipation);
+    $rows = $this->buildResultsTableArray($type, $value, $nlpCounts);
+    return [
+      'type' => $type,
+      'value' => $value,
+      'title' => $this->sectionTitle($type, $value),
+      'participation' => $participation,
+      'rows' => $rows,
+    ];
+  }
+
+  /**
+   * Builds the section for the sum of the districts.
+   *
+   * @param string $title
+   * @param array $nlpCounts - the summed vote counts.
+   * @param array $nlpParticipation - the summed participation counts.
+   * @return array - the section.
+   */
+  private function buildStateSection(string $title, array $nlpCounts, array $nlpParticipation): array
+  {
+    return [
+      'type' => 'NLP',
+      'value' => $title,
+      'title' => $title,
+      'participation' => $this->gatherCountyParticipationData('NLP', '', $nlpParticipation),
+      'rows' => $this->buildSummaryTableArray($nlpCounts),
+    ];
+  }
+
+  /**
+   * The title of a section.
+   *
+   * @param string $type - 'CD', 'County', 'HD', or 'NLP'.
+   * @param mixed $value - the CD number, county name, ['county', 'hd'], or for
+   *   NLP an optional title.
+   * @return string
+   */
+  private function sectionTitle(string $type, mixed $value): string
+  {
+    return match ($type) {
+      'CD' => 'Congressional District ' . $value,
+      'County' => $value . ' County',
+      'HD' => $value['county'] . ' County, House District ' . $value['hd'],
+      default => empty($value) ? 'NLP Results Summary' : (string) $value,
+    };
+  }
+
+  /**
+   * An HD section without VoteBuilder rows gets a note saying why.
+   */
+  private function needsHdNote(string $type, array $rows): bool
+  {
+    return $type === 'HD' && !isset($rows['all']);
+  }
+
+  /**
+   * A tag for the file names of the request, safe for a file name.
+   */
+  private function fileTag(string $level, string $district, string $hd): string
+  {
+    $parts = ['nlp-summary', $level];
+    if ($level !== self::LEVEL_STATE) {
+      $parts[] = $district;
+      if ($level === self::LEVEL_COUNTY && $district !== self::ALL && $hd !== self::COUNTY_SUMMARY) {
+        $parts[] = 'hd-' . $hd;
+      }
+    }
+    $tag = strtolower(implode('-', $parts));
+    return trim(preg_replace('/[^a-z0-9-]+/', '-', $tag), '-');
+  }
+
+  /**
+   * Writes the legend and every section to a CSV file.
+   *
+   * @param string $fileTag
+   * @param array $sections
+   * @return string - the URL of the file, or '' if it couldn't be written.
+   */
+  private function writeCsvFile(string $fileTag, array $sections): string
+  {
+    $tempUri = $this->createTempFile($fileTag);
     if (empty($tempUri)) {
-      return [];
+      return '';
     }
     $fh = fopen($tempUri, "w");
     if (!$fh) {
-      return [];
+      return '';
     }
-
-    $nlpParticipation = [
-      'participatingNls' => 0,
-      'resultsReported' => 0,
-      'numberOfTurfs' => 0
-    ];
-    $nlpCounts = $this->initNlpCounts();
-
-    // Build the table for each CD with participating activity.
-    foreach ($cds as $cd) {
-      $cdParticipation = $this->gatherCountyParticipationData('CD', $cd, $nlpParticipation);
-      $rows = $this->buildResultsTableArray('CD', $cd, $nlpCounts);
-      $output[$cd] = $this->buildDistrictDisplay('CD', $cd, $rows, $cdParticipation);
-      $this->writeToTempFile($fh, $rows);
+    $this->writeToTempFile($fh, $this->buildLegend(FALSE));
+    foreach ($sections as $section) {
+      $this->writeToTempFile($fh, [['']]);
+      $this->writeToTempFile($fh, [[$section['title'], 'Registered', 'Voted', 'Participation']]);
+      $this->writeToTempFile($fh, array_values($section['participation']));
+      if ($this->needsHdNote($section['type'], $section['rows'])) {
+        $this->writeToTempFile($fh, [self::HD_NOTE]);
+      }
+      $this->writeToTempFile($fh, array_map('array_values', array_values($section['rows'])));
     }
     fclose($fh);
+    return $this->fileUrlGenerator->generateAbsoluteString($tempUri);
+  }
 
-    // A link to allow the user to download the CSV file.
-    $url = Html::escape($this->fileUrlGenerator->generateAbsoluteString($tempUri));
-    $link = "<h2>Link to a file in the CSV format of the summary report.</h2>";
-    $link .= '<a href="'.$url.'">Right-click to download the summary file.  </a>';
-    $output['result_file'] = [
-      '#markup' => $link,
-    ];
+  /**
+   * Builds the HTML for the PDF with the legend and every section.
+   *
+   * @param string $title - description of the request.
+   * @param array $sections
+   * @return string
+   */
+  public function buildPdfHtml(string $title, array $sections): string
+  {
+    $electionName = Html::escape($this->configurationObj->getElectionName());
+    $html = '<style>
+      body { font-family: sans-serif; font-size: 10pt; }
+      h1 { font-size: 16pt; }
+      h2 { font-size: 13pt; margin: 4mm 0 1mm 0; }
+      table.summary { border-collapse: collapse; width: 120mm; margin-bottom: 4mm; }
+      table.summary th, table.summary td { border: 1px solid #555; padding: 1mm 2mm; }
+      table.summary td.num { text-align: right; }
+      table.summary caption { text-align: left; font-style: italic; }
+      </style>';
+    $html .= '<h1>Election results summary: ' . Html::escape($title) . '</h1>';
+    $html .= $this->buildLegend();
+    foreach ($sections as $section) {
+      $html .= '<div style="page-break-inside: avoid;">';
+      $html .= '<h2>' . Html::escape($section['title']) . '</h2>';
+      $lines = array_map([Html::class, 'escape'], array_values($section['participation']));
+      if ($this->needsHdNote($section['type'], $section['rows'])) {
+        $lines[] = '<i>' . Html::escape(self::HD_NOTE) . '</i>';
+      }
+      $html .= '<p>' . implode('<br>', $lines) . '</p>';
+      $html .= '<table class="summary" autosize="1"><caption>Summary of results for the '
+        . $electionName . '</caption>';
+      $html .= '<thead><tr><th></th><th>Registered</th><th>Voted</th><th>Participation</th></tr></thead><tbody>';
+      foreach ($section['rows'] as $row) {
+        $html .= '<tr><td>' . Html::escape((string) $row['name']) . '</td>'
+          . '<td class="num">' . Html::escape((string) $row['registered']) . '</td>'
+          . '<td class="num">' . Html::escape((string) $row['voted']) . '</td>'
+          . '<td class="num">' . Html::escape((string) $row['pct']) . '</td></tr>';
+      }
+      $html .= '</tbody></table></div>';
+    }
+    return $html;
+  }
 
-    return $output;
+  /**
+   * Builds the links to the PDF and CSV files.
+   */
+  private function buildFileLinks(string $title, int $sectionCount, string $pdfUrl, string $csvUrl): string
+  {
+    $contents = ($sectionCount == 1)
+      ? 'the summary shown below'
+      : "$sectionCount summaries, including the one shown below";
+    $links = '<h2>' . Html::escape($title) . '</h2>';
+    $links .= '<p>The files contain ' . $contents . '.</p><ul>';
+    $links .= empty($pdfUrl)
+      ? '<li>The PDF file could not be created.</li>'
+      : '<li><a href="' . Html::escape($pdfUrl) . '" target="_blank">PDF of the summary report.</a></li>';
+    $links .= empty($csvUrl)
+      ? '<li>The CSV file could not be created.</li>'
+      : '<li><a href="' . Html::escape($csvUrl) . '">CSV of the summary report (right-click to download).</a></li>';
+    $links .= '</ul>';
+    return $links;
   }
 
   /**
@@ -300,25 +596,24 @@ class NlpResultsSummary
   }
 
   /**
-   * Build the form elements for the display of the results for a county, CD, or NLP total.
+   * Build the form elements for the display of the results for a county, CD, HD, or NLP total.
    *
-   * @param string $type - the type of display, either 'County', 'CD', or 'NLP'.
-   * @param mixed $value - the value of the County or CD.
+   * @param string $type - the type of display: 'County', 'CD', 'HD', or 'NLP'.
+   * @param mixed $value - the County, CD, ['county', 'hd'], or for NLP an optional title.
    * @param array $rows - the rows of data to display.
    * @param array $countyParticipation - optional participation summary lines.
    * @return array - renderable array for Drupal.
    */
   public function buildDistrictDisplay( string $type,  mixed $value, array $rows, array $countyParticipation=[] ): array
   {
-    $title = match ($type) {
-      'CD' => 'Congressional District ' . $value,
-      'County' => $value . ' County',
-      default => 'NLP Results Summary',
-    };
+    $title = Html::escape($this->sectionTitle($type, $value));
     $output['cdName'] = [
       '#markup' => "<h1>$title</h1>",
     ];
 
+    if($this->needsHdNote($type, $rows)) {
+      $countyParticipation[] = '<i>' . self::HD_NOTE . '</i>';
+    }
     if(!empty($countyParticipation)) {
       $participation = '<p>'.implode('<br>', $countyParticipation).'</p>';
       $output['participation'] = [
@@ -349,18 +644,22 @@ class NlpResultsSummary
   }
 
   /**
-   * Build the result table array for a county or CD.
+   * Build the result table array for a county, CD, or HD.
    *
-   * @param string $type - the County or CD.
-   * @param mixed $value - the value of the County or CD.
+   * @param string $type - 'County', 'CD', or 'HD'.
+   * @param mixed $value - the County, CD, or ['county', 'hd'].
    * @param array $nlpCounts - accumulator for totals across districts.
    * @return array - the rows of data for the result table.
    */
   public function buildResultsTableArray(string $type, mixed $value, array &$nlpCounts): array
   {
-    $counts = ($type=='County')?
-      $this->crosstabsObj->getCountsByCounty($value):
-      $this->crosstabsObj->getCountsByCd($value);
+    // HD counts exist only if the crosstab file had an HD column.
+    $counts = match ($type) {
+      'County' => $this->crosstabsObj->getCountsByCounty($value),
+      'CD' => $this->crosstabsObj->getCountsByCd($value),
+      'HD' => $this->crosstabsObj->getCountsByHd($value['county'], (int) $value['hd']),
+      default => [],
+    };
     $rows = $this->buildBallotCounts($counts, $nlpCounts);
 
     $row = [];
@@ -549,14 +848,14 @@ class NlpResultsSummary
   }
 
   /**
-   * Gather the participation data for a County, CD, or the total NLP program.
+   * Gather the participation data for a County, CD, HD, or the total NLP program.
    *
-   * @param string $type - the type of participation, either 'CD', 'County', or 'NLP'.
-   * @param string $value - the value of the County or CD.
+   * @param string $type - the type of participation: 'CD', 'County', 'HD', or 'NLP'.
+   * @param mixed $value - the County, CD, or ['county', 'hd'].
    * @param array $nlpParticipation - the array to accumulate the participation data.
    * @return array - an array with the participation data for display.
    */
-  private function gatherCountyParticipationData(string $type, string $value, array &$nlpParticipation): array
+  private function gatherCountyParticipationData(string $type, mixed $value, array &$nlpParticipation): array
   {
     // Get the counts for NLs, NLs reporting results and turfs.
     switch ($type) {
@@ -571,7 +870,12 @@ class NlpResultsSummary
         $resultsReported = $nlsParticipation['resultsReported'] ?? 0;
         $numberOfTurfs = $this->turfsObj->getCountyTurfCount($value);
         break;
-      default:  // All NLP counties, the sums are already complete.
+      case 'HD':
+        $participatingNls = $this->turfsObj->countOfNlsWithTurfsInHd($value['county'], (int) $value['hd']);
+        $resultsReported = $this->turfsObj->countOfNlsInHdThatReportedResults($value['county'], (int) $value['hd']);
+        $numberOfTurfs = $this->turfsObj->getCountyTurfCount($value['county'], (int) $value['hd']);
+        break;
+      default:  // All NLP districts, the sums are already complete.
         $participatingNls = $nlpParticipation['participatingNls'];
         $resultsReported = $nlpParticipation['resultsReported'];
         $numberOfTurfs = $nlpParticipation['numberOfTurfs'];

@@ -197,7 +197,8 @@ services:
                  '@nlpservices.nls', '@nlpservices.drupal_user',
                  '@nlpservices.crosstab_counts', '@nlpservices.reports',
                  '@nlpservices.turfs', '@nlpservices.configuration', '@nlpservices.session_data',
-                 '@nlpservices.html_text', '@file_url_generator', '@file.repository']
+                 '@nlpservices.html_text', '@file_url_generator', '@file.repository',
+                 '@nlpservices.pdf_generator']
 
   nlpservices.turf_delivery_message:
     class: Drupal\nlpservices\NlpTurfDeliveryMessage

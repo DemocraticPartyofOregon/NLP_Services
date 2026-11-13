@@ -1068,6 +1068,37 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(0, $this->buildTurfs()->countOfNlsInCdThatReportedResults(3));
     }
 
+    // -------------------------------------------------------------------------
+    // HD counts
+    // -------------------------------------------------------------------------
+
+    public function testGetVoterCountsHdTypeReturnsCount(): void {
+      $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(12));
+      $this->configurationMock->method('getCycle')->willReturn('2024');
+      $result = $this->buildTurfs()->getVoterCounts('HD', ['county' => 'Denver', 'hd' => 7], 'Contacted', TRUE);
+      $this->assertSame(12, $result);
+    }
+
+    public function testCountOfNlsWithTurfsInHdReturnsCount(): void {
+      $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(4));
+      $this->assertSame(4, $this->buildTurfs()->countOfNlsWithTurfsInHd('Denver', 7));
+    }
+
+    public function testCountOfNlsWithTurfsInHdExceptionReturnsZero(): void {
+      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
+      $this->assertSame(0, $this->buildTurfs()->countOfNlsWithTurfsInHd('Denver', 7));
+    }
+
+    public function testCountOfNlsInHdThatReportedResultsReturnsCount(): void {
+      $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(2));
+      $this->assertSame(2, $this->buildTurfs()->countOfNlsInHdThatReportedResults('Denver', 7));
+    }
+
+    public function testCountOfNlsInHdThatReportedResultsExceptionReturnsZero(): void {
+      $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
+      $this->assertSame(0, $this->buildTurfs()->countOfNlsInHdThatReportedResults('Denver', 7));
+    }
+
   }
 
 }

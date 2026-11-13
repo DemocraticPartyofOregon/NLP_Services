@@ -263,6 +263,70 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
+    // HD column and counts
+    // -------------------------------------------------------------------------
+
+    public function testDecodeCrosstabsHeaderWithoutHdHasNoHdPosition(): void {
+      $result = $this->buildCrosstab()->decodeCrosstabsHeader($this->validHdr1(), $this->validHdr2());
+      $this->assertTrue($result['ok']);
+      $this->assertArrayNotHasKey('hd', $result['pos']);
+    }
+
+    public function testDecodeCrosstabsHeaderWithHdMapsPosition(): void {
+      $hdr1 = $this->validHdr1();
+      $hdr1[5] = 'HD';
+      $result = $this->buildCrosstab()->decodeCrosstabsHeader($hdr1, $this->validHdr2());
+      $this->assertTrue($result['ok']);
+      $this->assertSame(5, $result['pos']['hd']);
+    }
+
+    public function testGetCountsByHdSumsParty(): void {
+      $row1 = array_merge($this->baseCount(), ['hd' => 7]);
+      $row2 = array_merge($this->baseCount(), ['hd' => 7, 'cd' => 2, 'registeredVoters' => 40, 'registeredVoted' => 10]);
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($row1, $row2, false);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $result = $this->buildCrosstab()->getCountsByHd('Denver', 7);
+      $this->assertSame(70, $result['D']['regVoted']);
+      $this->assertSame(140, $result['D']['regVoters']);
+    }
+
+    public function testGetCountsByHdExceptionReturnsEmptyArray(): void {
+      $selectMock = $this->createMock(Select::class);
+      $selectMock->method('fields')->willReturnSelf();
+      $selectMock->method('condition')->willReturnSelf();
+      $selectMock->method('execute')->willThrowException(new \Exception('DB error'));
+      $this->connectionMock->method('select')->willReturn($selectMock);
+      $this->assertSame([], $this->buildCrosstab()->getCountsByHd('Denver', 7));
+    }
+
+    public function testUpdateCrosstabCountsKeysIncludeHd(): void {
+      $mergeMock = $this->createMock(Merge::class);
+      $mergeMock->expects($this->once())->method('keys')
+        ->with(['cd' => 1, 'county' => 'Denver', 'hd' => 7, 'party' => 'D'])
+        ->willReturnSelf();
+      $mergeMock->method('fields')->willReturnSelf();
+      $this->connectionMock->method('merge')->willReturn($mergeMock);
+      $counts = ['cd' => 1, 'county' => 'Denver', 'hd' => 7, 'party' => 'D', 'regVoters' => 100, 'regVoted' => 60];
+      $this->assertTrue($this->buildCrosstab()->updateCrosstabCounts($counts));
+    }
+
+    public function testFetchCrosstabCountsSumsHdRows(): void {
+      $row1 = array_merge($this->baseCount(), ['hd' => 7]);
+      $row2 = array_merge($this->baseCount(), ['hd' => 8]);
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($row1, $row2, false);
+      $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
+      $result = $this->buildCrosstab()->fetchCrosstabCounts();
+      $this->assertSame(120, $result[1]['Denver']['D']['regVoted']);
+    }
+
+    public function testDeleteAllCrosstabCountsReturnsFalseOnException(): void {
+      $this->connectionMock->method('delete')->willThrowException(new \Exception('DB error'));
+      $this->assertFalse($this->buildCrosstab()->deleteAllCrosstabCounts());
+    }
+
+    // -------------------------------------------------------------------------
     // getCds
     // -------------------------------------------------------------------------
 
