@@ -497,6 +497,45 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
   }
 
+  public function testSubmitFormEditSubmitRedirectsWhenOwnPasswordChanged(): void {
+    // Core regenerates the session (and CSRF seed) when the current user's
+    // password changes; rebuilding would re-check the now-stale form token.
+    $this->drupalUserMock->method('updateUser')->willReturn([]);
+    $this->drupalUserMock->method('getCurrentUser')->willReturn(['uid' => 5]);
+    $this->messengerMock->expects($this->once())->method('addStatus');
+
+    $formState = new FormState();
+    $formState->set('changed', ['magic-word' => 'newpass']);
+    $formState->set('currentValue', ['uid' => 5]);
+    $formState->set('currentEditIndex', 2);
+    $formState->set('mcid', 42);
+    $formState->setTriggeringElement(['#name' => 'edit_submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertFalse($formState->isRebuilding());
+    $this->assertSame('nlpservices.manage_drupal_accounts_form', $formState->getRedirect()->getRouteName());
+  }
+
+  public function testSubmitFormEditSubmitRebuildsWhenOtherUsersPasswordChanged(): void {
+    $this->drupalUserMock->method('updateUser')->willReturn([]);
+    $this->drupalUserMock->method('getCurrentUser')->willReturn(['uid' => 9]);
+
+    $formState = new FormState();
+    $formState->set('changed', ['magic-word' => 'newpass']);
+    $formState->set('currentValue', ['uid' => 5]);
+    $formState->set('currentEditIndex', 2);
+    $formState->set('mcid', 42);
+    $formState->setTriggeringElement(['#name' => 'edit_submit']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertTrue($formState->isRebuilding());
+    $this->assertSame(1, $formState->get('currentEditIndex'));
+  }
+
   public function testSubmitFormEditSubmitSkipsMagicWordWhenMcidIsEmpty(): void {
     $this->magicWordMock->expects($this->never())->method('setMagicWord');
     $this->drupalUserMock->method('updateUser')->willReturn([]);

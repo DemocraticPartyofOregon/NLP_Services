@@ -26,8 +26,9 @@ class ManageDrupalAccountsForm extends FormBase
   protected NlpUserDisplay $userDisplayObj;
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
-  public function __construct( $drupalUserObj, $nlsObj, $magicWordObj,
-                              $searchBarObj, $userDisplayObj, $sessionDataObj, $nlpConfigurationObj)
+  public function __construct(DrupalUser $drupalUserObj, NlpNls $nlsObj, MagicWord $magicWordObj,
+                              NlpSearchBar $searchBarObj, NlpUserDisplay $userDisplayObj,
+                              NlpSessionData $sessionDataObj, NlpConfiguration $nlpConfigurationObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->nlsObj = $nlsObj;
@@ -409,8 +410,21 @@ class ManageDrupalAccountsForm extends FormBase
           if(!empty($mcid)) {
             $this->magicWordObj->setMagicWord($mcid,$editUpdate['magicWord']);
           }
+          // Changing your own password makes core regenerate the session
+          // (User::postSave() -> session migrate), which also issues a new
+          // CSRF token seed.  The form token in this POST is then stale, and
+          // rebuilding the form re-checks it, throwing "Form errors cannot be
+          // set after form validation has finished."  Redirect to a fresh
+          // GET instead of rebuilding; the remaining edit queue is dropped.
+          $currentUser = $this->drupalUserObj->getCurrentUser();
+          if(!empty($currentUser['uid']) AND (int)$currentUser['uid'] === (int)$editUpdate['uid']) {
+            $form_state->setRebuild(FALSE);
+            $form_state->setRedirect('nlpservices.manage_drupal_accounts_form');
+            $this->messenger()->addStatus(t('Your own password was changed, so your login session was renewed. Select any remaining accounts to edit again.'));
+            return;
+          }
         }
-        
+
         $currentEditIndex = $form_state->get('currentEditIndex')-1;
         if($currentEditIndex > 0) {
           $form_state->set('currentEditIndex',$currentEditIndex);
