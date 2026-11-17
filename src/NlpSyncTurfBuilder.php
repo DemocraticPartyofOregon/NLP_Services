@@ -19,8 +19,8 @@ class NlpSyncTurfBuilder
     'dt' => '_deliverTurf',
   ];
 
-  public function __construct( $turfListDisplayVoteBuilderObj,
-                               $nlsListDisplayObj, $nlpSessionDataObj ) {
+  public function __construct(NlpTurfListDisplayVoteBuilder $turfListDisplayVoteBuilderObj,
+                              NlpNlsListDisplay $nlsListDisplayObj, NlpSessionData $nlpSessionDataObj) {
     $this->turfListDisplayVoteBuilderObj = $turfListDisplayVoteBuilderObj;
     $this->nlsListDisplayObj = $nlsListDisplayObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
@@ -139,7 +139,7 @@ house district or a precinct.  Specifying the precinct will likely yield the bes
   public function buildNlSearchByName(string $needle, array $nlsTable): array
   {
     $form['nl_search_title'] = [
-      '#markup' => '<div class="big-ts-select-box" id="nlsFormDiv"><hr>
+      '#markup' => '<div class="big-ts-select-box"><hr>
       <h2>Search for an NL by Name</h2></div>',
     ];
 

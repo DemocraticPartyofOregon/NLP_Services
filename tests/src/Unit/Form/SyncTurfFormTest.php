@@ -1058,17 +1058,12 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testFolderSelectedCallbackReturnsTurfSelectPageElement(): void {
       $form = ['turf_select_page' => ['#type' => 'fieldset']];
-      $this->assertSame($form['turf_select_page'], $this->buildForm()->folderSelectedCallback($form, NULL));
-    }
-
-    public function testDistrictCallbackReturnsNlDistrictSelectElement(): void {
-      $form = ['nl_district' => ['nl_select_district' => ['#type' => 'table']]];
-      $this->assertSame($form['nl_district']['nl_select_district'], $this->buildForm()->districtCallback($form, NULL));
+      $this->assertSame($form['turf_select_page'], $this->buildForm()->folderSelectedCallback($form, $this->createMock(FormStateInterface::class)));
     }
 
     public function testSelectboxCallbackReturnsNlSelectElement(): void {
       $form = ['nl_select' => ['#type' => 'fieldset']];
-      $this->assertSame($form['nl_select'], $this->buildForm()->selectboxCallback($form, NULL));
+      $this->assertSame($form['nl_select'], $this->buildForm()->selectboxCallback($form, $this->createMock(FormStateInterface::class)));
     }
 
   }

@@ -10,6 +10,7 @@ use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Render\Markup;
 use Drupal\nlpservices\NlpNlsListDisplay;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\nlpservices\ApiSavedLists;
 use Drupal\nlpservices\ApiFolders;
 use Drupal\nlpservices\NlpNls;
@@ -35,10 +36,11 @@ class SyncTurfForm extends FormBase {
   protected ApiMapRegions $mapRegionsObj;
   protected NlpTurfStatus $turfStatusObj;
 
-  public function __construct(  $savedListsObj, $foldersObj, $nlsObj, $turfsObj,
-                                $syncTurfBuilderObj, $nlsListDisplayObj,
-                                $nlpSessionDataObj, $turfListDisplayObj,
-                                $mapRegionsObj, $requestStack, $turfStatusObj ) {
+  public function __construct(ApiSavedLists $savedListsObj, ApiFolders $foldersObj, NlpNls $nlsObj,
+                              NlpTurfs $turfsObj, NlpSyncTurfBuilder $syncTurfBuilderObj,
+                              NlpNlsListDisplay $nlsListDisplayObj, NlpSessionData $nlpSessionDataObj,
+                              NlpTurfListDisplayVoteBuilder $turfListDisplayObj, ApiMapRegions $mapRegionsObj,
+                              RequestStack $requestStack, NlpTurfStatus $turfStatusObj) {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;
@@ -877,41 +879,27 @@ find an NL when working on a specific Precinct. </div>',
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * folderSelectedCallback
    *
-   * @param $form
-   * @param $unused
+   * @param array $form
+   * @param FormStateInterface $unused
    * @return array
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  public function folderSelectedCallback ($form,$unused): array
+  public function folderSelectedCallback(array $form, FormStateInterface $unused): array
   {
     return $form['turf_select_page'];
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * districtCallback
-   *
-   * @param $form
-   * @param $unused
-   * @return array
-   * @noinspection PhpUnused
-   * @noinspection PhpUnusedParameterInspection
-   */
-  public function districtCallback($form, $unused): array
-  {
-    return $form['nl_district']['nl_select_district'];
-  }
-
-  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * selectboxCallback
    *
-   * @param $form
-   * @param $unused
+   * @param array $form
+   * @param FormStateInterface $unused
    * @return array
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  public function selectboxCallback ($form,$unused): array
+  public function selectboxCallback(array $form, FormStateInterface $unused): array
   {
     return $form['nl_select'];
   }
