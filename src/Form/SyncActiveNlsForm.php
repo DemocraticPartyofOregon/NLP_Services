@@ -35,7 +35,8 @@ class SyncActiveNlsForm extends FormBase
   protected NlpSessionData $nlpSessionObj;
   
   
-  public function __construct($exportJobs, $savedLists, $folders, $nls, $nlpEncrypt, $nlpSessionObj)
+  public function __construct(ApiExportJobs $exportJobs, ApiSavedLists $savedLists, ApiFolders $folders,
+                              NlpNls $nls, NlpEncryption $nlpEncrypt, NlpSessionData $nlpSessionObj)
   {
     $this->exportJobs = $exportJobs;
     $this->savedLists = $savedLists;
