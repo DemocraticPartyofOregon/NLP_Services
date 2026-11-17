@@ -51,20 +51,20 @@ class DataEntryForm extends FormBase
   protected $savedSubmissions = NULL;
 
   public function __construct(
-    NlpNls $nlsObj, 
-    NlpVoters $votersObj, 
+    NlpNls $nlsObj,
+    NlpVoters $votersObj,
     NlpTurfs $turfsObj,
-    NlpSessionData $sessionDataObj, 
+    NlpSessionData $sessionDataObj,
     NlpReports $reportsObj,
-    DrupalUser $drupalUserObj, 
+    DrupalUser $drupalUserObj,
     NlpDataEntryVoters $dataEntryVotersObj,
     NlpDataEntryDateBar $dataEntryDateBarObj,
     NlpConfiguration $nlpConfigurationObj,
     NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj,
     NlpDataEntryReports $dataEntryReportsObj,
-    ApiMapRegions $mapRegionsObj, 
+    ApiMapRegions $mapRegionsObj,
     LockBackendInterface $lock,
-    KeyValueExpirableFactoryInterface $keyValueExpirable) 
+    KeyValueExpirableFactoryInterface $keyValueExpirable)
   {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
