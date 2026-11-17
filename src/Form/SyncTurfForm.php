@@ -36,11 +36,19 @@ class SyncTurfForm extends FormBase {
   protected ApiMapRegions $mapRegionsObj;
   protected NlpTurfStatus $turfStatusObj;
 
-  public function __construct(ApiSavedLists $savedListsObj, ApiFolders $foldersObj, NlpNls $nlsObj,
-                              NlpTurfs $turfsObj, NlpSyncTurfBuilder $syncTurfBuilderObj,
-                              NlpNlsListDisplay $nlsListDisplayObj, NlpSessionData $nlpSessionDataObj,
-                              NlpTurfListDisplayVoteBuilder $turfListDisplayObj, ApiMapRegions $mapRegionsObj,
-                              RequestStack $requestStack, NlpTurfStatus $turfStatusObj) {
+  public function __construct(
+    ApiSavedLists $savedListsObj, 
+    ApiFolders $foldersObj, 
+    NlpNls $nlsObj,
+    NlpTurfs $turfsObj, 
+    NlpSyncTurfBuilder $syncTurfBuilderObj,
+    NlpNlsListDisplay $nlsListDisplayObj, 
+    NlpSessionData $nlpSessionDataObj,
+    NlpTurfListDisplayVoteBuilder $turfListDisplayObj, 
+    ApiMapRegions $mapRegionsObj,
+    RequestStack $requestStack, 
+    NlpTurfStatus $turfStatusObj) 
+  {
     $this->savedListsObj = $savedListsObj;
     $this->foldersObj = $foldersObj;
     $this->nlsObj = $nlsObj;

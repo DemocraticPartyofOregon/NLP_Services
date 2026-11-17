@@ -19,8 +19,11 @@ class NlpSyncTurfBuilder
     'dt' => '_deliverTurf',
   ];
 
-  public function __construct(NlpTurfListDisplayVoteBuilder $turfListDisplayVoteBuilderObj,
-                              NlpNlsListDisplay $nlsListDisplayObj, NlpSessionData $nlpSessionDataObj) {
+  public function __construct(
+    NlpTurfListDisplayVoteBuilder $turfListDisplayVoteBuilderObj,
+    NlpNlsListDisplay $nlsListDisplayObj, 
+    NlpSessionData $nlpSessionDataObj) 
+  {
     $this->turfListDisplayVoteBuilderObj = $turfListDisplayVoteBuilderObj;
     $this->nlsListDisplayObj = $nlsListDisplayObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
@@ -130,6 +133,8 @@ house district or a precinct.  Specifying the precinct will likely yield the bes
   }
 
   /**
+   * buildNlSearchByName
+   * 
    * Builds the Drupal form elements to search for an NL by name.
    *
    * @param string $needle - the search value for the NL name.
@@ -225,6 +230,8 @@ case-insensitive.
   }
 
   /**
+   * buildNlSelect
+   * 
    * Builds the Drupal form elements to display a table of NLs to select for assignment to a turf.
    *
    * @param array $nlList - the list of NLs to display in the table.
@@ -257,6 +264,8 @@ case-insensitive.
   }
 
   /**
+   * walksheet
+   * 
    * Builds a walksheet file upload form element for the turf select table.  There
    * can be up to three walksheet file uploads displayed in the turf select table.  The displays
    * are associated with the select type:
@@ -314,6 +323,8 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
   }
 
   /**
+   * legendBar
+   * 
    * Builds the Drupal form element for the turf select table legend and footnotes.
    *
    * @return array
@@ -347,6 +358,8 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
   }
 
   /**
+   * footnotes
+   * 
    * Builds the footnote hover over for the turf select table.
    *
    * @return array - of Drupal form elements
@@ -369,6 +382,8 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
   }
 
   /**
+   * legends
+   * 
    * Builds the Drupal form element for the table legend hover over.
    *
    * @return array - of Drupal form elements.
@@ -398,6 +413,8 @@ needed for NLs that send postcards or use a phone or social media. </i>' . '</sp
   }
 
   /**
+   * buildTurfSelect
+   * 
    * Build the Drupal forms elements to display a table of turfs or saved lists to
    * select for assignment to an NL.
    *
