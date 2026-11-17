@@ -8,6 +8,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use GuzzleHttp\Exception\GuzzleException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\Batch\AwakeBatch;
@@ -19,7 +20,7 @@ class AwakeForm extends FormBase {
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
 
-  public function __construct(  $nlpConfigurationObj, $nlpSessionDataObj, $requestStack ) {
+  public function __construct(NlpConfiguration $nlpConfigurationObj, NlpSessionData $nlpSessionDataObj, RequestStack $requestStack) {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->nlpSessionDataObj = $nlpSessionDataObj;
     $this->setRequestStack($requestStack);
@@ -42,7 +43,7 @@ class AwakeForm extends FormBase {
    */
   public function getFormId(): string
   {
-    return 'nlpservices_sync_turf_form';
+    return 'nlpservices_awake_form';
   }
 
   /**
