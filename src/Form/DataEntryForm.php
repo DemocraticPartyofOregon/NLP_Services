@@ -50,20 +50,29 @@ class DataEntryForm extends FormBase
   /** @noinspection PhpUnused */
   protected $savedSubmissions = NULL;
 
-  public function __construct(  $nlsObj, $votersObj, $turfsObj, $sessionDataObj ,
-                                $reportsObj, $drupalUserObj, $dataEntryVotersObj,
-                                $dataEntryDateBarObj, $nlpConfigurationObj,
-                                $dataEntryVoterListDisplayObj, $dataEntryReportsObj,
-                                $mapRegionsObj, $lock, $keyValueExpirable ) {
+  public function __construct(
+    NlpNls $nlsObj, 
+    NlpVoters $votersObj, 
+    NlpTurfs $turfsObj,
+    NlpSessionData $sessionDataObj, 
+    NlpReports $reportsObj,
+    DrupalUser $drupalUserObj, 
+    NlpDataEntryVoters $dataEntryVotersObj,
+    NlpDataEntryDateBar $dataEntryDateBarObj,
+    NlpConfiguration $nlpConfigurationObj,
+    NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj,
+    NlpDataEntryReports $dataEntryReportsObj,
+    ApiMapRegions $mapRegionsObj, 
+    LockBackendInterface $lock,
+    KeyValueExpirableFactoryInterface $keyValueExpirable) 
+  {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;
     $this->sessionDataObj = $sessionDataObj;
-
     $this->reportsObj = $reportsObj;
     $this->drupalUserObj = $drupalUserObj;
     $this->dataEntryVotersObj = $dataEntryVotersObj;
-
     $this->dataEntryDateBarObj = $dataEntryDateBarObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->dataEntryVoterListDisplayObj = $dataEntryVoterListDisplayObj;
@@ -83,11 +92,9 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.turfs'),
       $container->get('nlpservices.session_data'),
-
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.drupal_user'),
       $container->get('nlpservices.data_entry_voters'),
-
       $container->get('nlpservices.data_entry_date_bar'),
       $container->get('nlpservices.configuration'),
       $container->get('nlpservices.data_entry_voter_list_display'),
@@ -1058,17 +1065,17 @@ not checked have already received a postcard for this election.</p></div>',
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  function formCallback($form, FormStateInterface $form_state) {
+  function formCallback(array $form, FormStateInterface $form_state): array {
     return $form['dataEntryTable'];
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * formCallback
+   * selectionCallback
    *
    * @noinspection PhpUnused
    * @noinspection PhpUnusedParameterInspection
    */
-  function selectionCallback($form, FormStateInterface $form_state) {
+  function selectionCallback(array $form, FormStateInterface $form_state): array {
     return $form['dataEntryTable'];
   }
 
