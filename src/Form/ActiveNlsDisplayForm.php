@@ -6,6 +6,7 @@ use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpTurfs;
@@ -30,10 +31,11 @@ class ActiveNlsDisplayForm extends FormBase
   protected NlpSessionData $sessionDataObj;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
   protected ApiActivistCodes $apiActivistCodesObj;
-  public function __construct( $reportsObj, $nlsObj, $turfsObj,
-                               $searchBarObj, $nlsListDisplayObj, $awardsObj, $sessionDataObj,
-                               $apiSurveyQuestionObj, $apiActivistCodesObj,
-                               $requestStack) {
+  public function __construct(NlpReports $reportsObj, NlpNls $nlsObj, NlpTurfs $turfsObj,
+                              NlpSearchBar $searchBarObj, NlpNlsListDisplay $nlsListDisplayObj,
+                              NlpAwards $awardsObj, NlpSessionData $sessionDataObj,
+                              ApiSurveyQuestion $apiSurveyQuestionObj, ApiActivistCodes $apiActivistCodesObj,
+                              RequestStack $requestStack) {
     $this->reportsObj = $reportsObj;
     $this->nlsObj = $nlsObj;
     $this->turfsObj = $turfsObj;
@@ -300,11 +302,11 @@ class ActiveNlsDisplayForm extends FormBase
    * Save all editable column values for a single NL row.
    * Called from submitForm when the user clicks "Save Changes".
    *
-   * @param $mcid
+   * @param int $mcid
    * @param string $county
    * @param array $columns  Keyed by "{column}-{mcid}", values are form element values.
    */
-  private function saveNlRow($mcid, string $county, array $columns): void
+  private function saveNlRow(int $mcid, string $county, array $columns): void
   {
     $status = $this->nlsObj->getNlsStatus($mcid, $county);
     foreach ($columns as $columnKey => $value) {
@@ -347,11 +349,11 @@ class ActiveNlsDisplayForm extends FormBase
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * processAsk
    *
-   * @param $mcid
-   * @param $askStatus
+   * @param int $mcid
+   * @param string $askStatus
    * @return void
    */
-  function processAsk($mcid,$askStatus): void
+  function processAsk(int $mcid, string $askStatus): void
   {
     $currentStatus = $this->nlsObj->getNlsStatus($mcid);
     $status = $currentStatus;
@@ -393,12 +395,12 @@ class ActiveNlsDisplayForm extends FormBase
    * the voters on the turf, the progress on making face-to-face contact, and
    * the number of doors.
    *
-   * @param $mcid
+   * @param int $mcid
    * @param array $progress - voter counts keyed by mcid, from getNlsProgress.
    * @param array $doorCounts - door counts keyed by mcid, from getDoorCounts.
    * @return array
    */
-  function getProgress($mcid, array $progress, array $doorCounts): array
+  function getProgress(int $mcid, array $progress, array $doorCounts): array
   {
     if(empty($progress[$mcid]['voterCount'])) {
       return ['attempts' => 0, 'contacts' => 0, 'voterCount' => 0];
