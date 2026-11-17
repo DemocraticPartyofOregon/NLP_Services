@@ -41,14 +41,8 @@ class DataEntryForm extends FormBase
   protected NlpDataEntryVoterListDisplay $dataEntryVoterListDisplayObj;
   protected NlpDataEntryReports $dataEntryReportsObj;
   protected ApiMapRegions $mapRegionsObj;
-  // Nullable so a form object cached before these were added still unserializes;
-  // see lock() and savedSubmissions().
-  protected ?LockBackendInterface $lock = NULL;
-  protected ?KeyValueExpirableFactoryInterface $keyValueExpirable = NULL;
-  // Unused.  A form object cached when this held the store still has it, and
-  // without it declared unserializing logs a dynamic property deprecation.
-  /** @noinspection PhpUnused */
-  protected $savedSubmissions = NULL;
+  protected LockBackendInterface $lock;
+  protected KeyValueExpirableFactoryInterface $keyValueExpirable;
 
   public function __construct(
     NlpNls $nlsObj,
@@ -662,15 +656,15 @@ class DataEntryForm extends FormBase
       return TRUE;
     }
     $lockName = self::SAVED_SUBMISSIONS . ':' . $submissionKey;
-    if (!$this->lock()->acquire($lockName, self::SAVE_LOCK_SECS)) {
-      $this->lock()->wait($lockName, self::SAVE_LOCK_SECS);
-      if (!$this->lock()->acquire($lockName, self::SAVE_LOCK_SECS)) {
+    if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
+      $this->lock->wait($lockName, self::SAVE_LOCK_SECS);
+      if (!$this->lock->acquire($lockName, self::SAVE_LOCK_SECS)) {
         Drupal::messenger()->addWarning(self::SAVE_IN_PROGRESS_MSG);
         return FALSE;
       }
     }
     if ($this->savedSubmissions()->get($submissionKey)) {
-      $this->lock()->release($lockName);
+      $this->lock->release($lockName);
       Drupal::messenger()->addStatus(self::ALREADY_SAVED_MSG);
       return FALSE;
     }
@@ -692,33 +686,18 @@ class DataEntryForm extends FormBase
       return;
     }
     $this->savedSubmissions()->setWithExpire($submissionKey, TRUE, self::SAVED_SUBMISSION_SECS);
-    $this->lock()->release(self::SAVED_SUBMISSIONS . ':' . $submissionKey);
-  }
-
-  /**
-   * lock
-   *
-   * The save lock service.  A form object cached by a version of this form
-   * without the lock unserializes with it NULL, so get it from the container.
-   *
-   * @return LockBackendInterface
-   */
-  private function lock(): LockBackendInterface
-  {
-    return $this->lock ??= Drupal::lock();
+    $this->lock->release(self::SAVED_SUBMISSIONS . ':' . $submissionKey);
   }
 
   /**
    * savedSubmissions
    *
-   * The store that remembers which submissions have been saved.  See lock()
-   * for why the factory can be NULL.
+   * The store that remembers which submissions have been saved.
    *
    * @return KeyValueStoreExpirableInterface
    */
   private function savedSubmissions(): KeyValueStoreExpirableInterface
   {
-    $this->keyValueExpirable ??= Drupal::service('keyvalue.expirable');
     return $this->keyValueExpirable->get(self::SAVED_SUBMISSIONS);
   }
 
