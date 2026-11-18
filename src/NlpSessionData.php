@@ -279,8 +279,6 @@ class NlpSessionData
    * - voterContactMethods - see setVoterContactMethod above
    * - folderId - The ID of the current folder being worked on.
    * - mapRegionId - The ID of the current map region being worked on.
-   * - helpSeen - A boolean indicating if the help was displayed for the first
-   *              access to a turf.  It is cleared by the expiration of the temp data.
    *
    * @param mixed $key - The key identifying the value to be set.
    * @param mixed $value - The value to be stored in the session.

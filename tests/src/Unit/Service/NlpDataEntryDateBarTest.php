@@ -156,47 +156,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // newNl
+    // reportsNote
     // -------------------------------------------------------------------------
 
-    public function testNewNlReturnsFormElementWithMarkup(): void {
-      $result = $this->buildService()->newNl();
-      $this->assertArrayHasKey('new_nl_info', $result);
-      $this->assertArrayHasKey('#markup', $result['new_nl_info']);
-    }
-
-    public function testNewNlMarkupContainsArrowImage(): void {
-      $result = $this->buildService()->newNl();
-      $this->assertStringContainsString('nlp_up_arrow_yellow_40.gif', $result['new_nl_info']['#markup']);
-    }
-
-    public function testNewNlMarkupContainsHelpTabText(): void {
-      $result = $this->buildService()->newNl();
-      $this->assertStringContainsString('help tab', $result['new_nl_info']['#markup']);
+    public function testReportsNoteIsAnOutlinedBoxWithTheText(): void {
+      $markup = $this->buildService()->reportsNote()['reports_note_info']['#markup'];
+      $this->assertStringContainsString('class="reports-note-box"', $markup);
+      $this->assertStringContainsString('This form is for data entry and is reset with each save. '
+        . 'If you suspect a report was lost, click the button to Show Contacts. '
+        . 'It will have your latest reports.', $markup);
     }
 
     // -------------------------------------------------------------------------
     // createDateBar
     // -------------------------------------------------------------------------
 
-    public function testCreateDateBarHelpNotSeenIncludesNewNlBox(): void {
-      $this->setupDateBarMocks(FALSE);
-      $result = $this->buildService()->createDateBar('2024-10-15', 7, 42, 0, 3);
-      $this->assertArrayHasKey('new_nl_box', $result);
-      $this->assertArrayHasKey('new_nl', $result);
-    }
-
-    public function testCreateDateBarHelpSeenExcludesNewNlBox(): void {
+    public function testCreateDateBarAlwaysIncludesTheReportsNote(): void {
+      // Shown on every page, not once per session like the old help-tab arrow.
       $this->setupDateBarMocks(TRUE);
       $result = $this->buildService()->createDateBar('2024-10-15', 7, 42, 0, 3);
-      $this->assertArrayNotHasKey('new_nl_box', $result);
+      $this->assertArrayHasKey('reports_note', $result);
       $this->assertArrayNotHasKey('new_nl', $result);
-    }
-
-    public function testCreateDateBarSetsHelpSeenWhenNotSeenBefore(): void {
-      $this->setupDateBarMocks(FALSE);
-      $this->sessionDataMock->expects($this->once())->method('set')->with('helpSeen', TRUE);
-      $this->buildService()->createDateBar('2024-10-15', 7, 42, 0, 3);
     }
 
     public function testCreateDateBarAlwaysContainsAwardBar(): void {

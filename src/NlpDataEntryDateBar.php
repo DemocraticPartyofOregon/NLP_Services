@@ -83,20 +83,16 @@ class NlpDataEntryDateBar
       '#markup' => '</div>',
     ];
     
-    // The help icon is displayed only once per session.   However, the sessions do expire, and
-    // the NL will see this icon again if they are inactive for 3 or more days.  The icon points
-    // upward and suggests the NL read the information in the help tab.
-    $helpSeen = $this->sessionDataObj->get('helpSeen');
-    if(!$helpSeen) {
-      $this->sessionDataObj->set('helpSeen',TRUE);
-      $form_element['new_nl_box'] = [
-        '#markup' => "\n"."<!-- New NL Box -->"."\n".'<div class="new-nl-box-right">',
-      ];
-      $form_element['new_nl'] = $this->newNl();
-      $form_element['new_nl_end'] = [
-        '#markup' => "\n".'</div>',
-      ];
-    }
+    // A reminder that the form is reset by each save, and where to look for a
+    // report that seems to be lost.  Shown on every page, since the page is
+    // rebuilt after each save.
+    $form_element['reports_note_box'] = [
+      '#markup' => '<div class="reports-note-right">',
+    ];
+    $form_element['reports_note'] = $this->reportsNote();
+    $form_element['reports_note_end'] = [
+      '#markup' => '</div>',
+    ];
     
     $form_element['award_bar_end'] = [
       '#markup' => '</div><div class="end-big-box"></div>',
@@ -444,25 +440,21 @@ class NlpDataEntryDateBar
   }
   
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
-   * newNl
+   * reportsNote
    *
-   * Build the icon to suggest a new NL look at the help tab.  The icon is an arrow and is
-   * animated to draw attention to the help tab.
+   * Build an outlined box explaining that the form is for data entry and is
+   * reset by each save, and that a voter's "Show Contacts" button lists the
+   * latest reports, including ones that seem to be lost.
    *
-   * @return array - a form element with a GIF to suggest a new NL look at the help tab.
+   * @return array - a form element with the note.
    */
-  public function newNl(): array
+  public function reportsNote(): array
   {
-    $modulePath = $this->moduleExtensionList->getPath(NLP_MODULE);
-    $upArrow = $modulePath."/img/nlp_up_arrow_yellow_40.gif";
-    $form_element['new_nl_info'] = [
-      '#markup' =>
-        " \n".'<section class="new-nl-box">'." \n".
-        " \n".'<div class="new_nl_div">'." \n".
-        " \n".'<div class="arrow-img"><img alt="" src="'.$upArrow.'" width="26" height="40" ></div>'." \n".
-        " \n".'<div class="arrow-text">'."Check out the help tab above.".'</div>'.
-        " \n".'</div>'." \n".
-        " \n".'</section>'." \n",
+    $form_element['reports_note_info'] = [
+      '#markup' => '<section class="reports-note-box">'
+        . 'This form is for data entry and is reset with each save. If you suspect a report '
+        . 'was lost, click the button to Show Contacts. It will have your latest reports.'
+        . '</section>',
     ];
     return $form_element;
   }

@@ -37,11 +37,9 @@ div.methods-box-left {float: left; font-size:x-small; width: 140px; margin:0; pa
 
 div.inner-box-left {float: left; font-size:x-small;  margin:0; padding:4px 0 0 0;}
 
-.new-nl-box-right { float: right; width: 147px;  padding:0; margin: 0 5px 0 0; }
-section.new-nl-box {width: 147px; margin:0; font-size:small;}
-div.new_nl_div { width: 145px; padding:0; margin: 0 5px 0 0;  }
-div.arrow-img { float: left; width: 26px; height:40px; margin:0; padding:0; }
-div.arrow-text { float: left; width: 110px; margin:1px; padding:0 0 0 5px; font-size:small; font-weight: bold; color: #00007f; }
+div.reports-note-right { float: right; width: 300px; margin: 0 5px 0 0; padding: 4px 0 0 0; }
+section.reports-note-box { margin: 0; padding: 5px; border: 1px solid blue; border-radius: 5px;
+    font-size: xx-small; line-height: 1.15; color: maroon; }
 
 div.turf-name-right {float: right; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
 section.turf-name-box {width: 361px; margin:0; padding:5px; border: 1px solid blue; border-radius: 5px; font-size:small;}
