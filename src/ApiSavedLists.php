@@ -15,8 +15,13 @@ class ApiSavedLists {
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
 
-  public function __construct($client, $turfsObj, $nlsObj, $nlpConfigurationObj,
-                              $apiKeyManagementObj ) {
+  public function __construct(
+    ClientInterface $client,
+    NlpTurfs $turfsObj,
+    NlpNls $nlsObj,
+    NlpConfiguration $nlpConfigurationObj,
+    ApiKeyManagement $apiKeyManagementObj,
+  ) {
     $this->client = $client;
     $this->turfsObj = $turfsObj;
     $this->nlsObj = $nlsObj;
