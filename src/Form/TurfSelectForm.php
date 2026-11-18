@@ -20,7 +20,8 @@ class TurfSelectForm extends FormBase
   protected NlpTurfs $turfObj;
   protected NlpSessionData $sessionDataObj;
   protected DrupalUser $drupalUserObj;
-  public function __construct($userSession,$turfObj,$sessionData,$drupalUserObj)
+  public function __construct(PrivateTempStoreFactory $userSession, NlpTurfs $turfObj,
+                              NlpSessionData $sessionData, DrupalUser $drupalUserObj)
   {
     $this->userSession = $userSession;
     $this->turfObj = $turfObj;
@@ -108,16 +109,19 @@ class TurfSelectForm extends FormBase
 
   /**
    * {@inheritdoc}
+   *
+   * Saves the selected turf and goes straight back to the data entry page,
+   * which then shows that turf.
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $turfIndex = $form_state->getValue('turf-select');
     $this->sessionDataObj->set('turfIndex',$turfIndex);
-    $messenger = Drupal::messenger();
     $turfNames = $form_state->get('$turfNames');
     $selectedTurfName = $turfNames[$turfIndex];
-    $messenger->addStatus("You have successfully selected turf: ".$selectedTurfName);
-    $messenger->addStatus(t("Be sure to click the <b>My turf</b> tab to view your turf selection."));
+    Drupal::messenger()->addStatus($this->t('You are now reporting results for turf: @name',
+      ['@name' => $selectedTurfName]));
+    $form_state->setRedirect('nlpservices.data_entry_form');
   }
 
 }

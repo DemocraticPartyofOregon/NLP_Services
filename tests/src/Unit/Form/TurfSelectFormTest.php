@@ -279,7 +279,8 @@ class TurfSelectFormTest extends UnitTestCase {
 
   public function testSubmitFormAddsStatusWithSelectedTurfName(): void {
     $this->sessionDataMock->method('set');
-    $this->messengerMock->expects($this->atLeastOnce())->method('addStatus');
+    $this->messengerMock->expects($this->once())->method('addStatus')
+      ->with($this->callback(fn($message) => $message->getArguments()['@name'] === 'Turf Alpha'));
 
     $formState = new FormState();
     $formState->setValue('turf-select', 10);
@@ -287,6 +288,19 @@ class TurfSelectFormTest extends UnitTestCase {
 
     $form = [];
     $this->buildFormInstance()->submitForm($form, $formState);
+  }
+
+  public function testSubmitFormGoesBackToTheDataEntryPage(): void {
+    $this->sessionDataMock->method('set');
+
+    $formState = new FormState();
+    $formState->setValue('turf-select', 20);
+    $formState->set('$turfNames', [10 => 'Turf Alpha', 20 => 'Turf Beta']);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertSame('nlpservices.data_entry_form', $formState->getRedirect()->getRouteName());
   }
 
 }
