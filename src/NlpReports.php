@@ -344,7 +344,7 @@ class NlpReports {
           $nickname = trim((string)($report['nickname'] ?? ''));
           $lastName = trim((string)($report['lastName'] ?? ''));
           if ($nickname !== '' && $lastName !== '') {
-            $newReport .= ' By '.Html::escape($nickname.' '.$lastName);
+            $newReport .= ' (By '.Html::escape($nickname.' '.$lastName).')';
           }
           $voterReportsDisplay['display'] .= $newReport;
           $lines = ceil(strlen($newReport)/60);

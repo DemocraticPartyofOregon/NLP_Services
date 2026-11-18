@@ -323,7 +323,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           'nickname' => 'Jane', 'lastName' => 'Doe'],
       ]];
       $result = $this->buildService()->displayNlReports($input);
-      $this->assertSame('2026-01-01[Walk] Spoke with voter By Jane Doe', $result['display']);
+      $this->assertSame('2026-01-01[Walk] Spoke with voter (By Jane Doe)', $result['display']);
     }
 
     public function testDisplayNlReportsLeavesOutTheNlWithoutTheFirstName(): void {
@@ -359,7 +359,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           'nickname' => '<b>Jane</b>', 'lastName' => 'Doe'],
       ]];
       $result = $this->buildService()->displayNlReports($input);
-      $this->assertStringContainsString('By &lt;b&gt;Jane&lt;/b&gt; Doe', $result['display']);
+      $this->assertStringContainsString('(By &lt;b&gt;Jane&lt;/b&gt; Doe)', $result['display']);
     }
 
     // -------------------------------------------------------------------------
