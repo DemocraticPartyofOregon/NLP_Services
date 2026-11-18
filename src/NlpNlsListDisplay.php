@@ -19,9 +19,9 @@ class NlpNlsListDisplay
   private array $header = [];
 
   public function __construct(
-    $drupalUserObj,
-    $coordinatorsObj,
-    $nlsObj,
+    DrupalUser $drupalUserObj,
+    NlpCoordinators $coordinatorsObj,
+    NlpNls $nlsObj,
     private readonly RequestStack $requestStack,
   ) {
     $this->drupalUserObj = $drupalUserObj;
