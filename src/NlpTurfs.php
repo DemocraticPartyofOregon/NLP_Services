@@ -26,10 +26,20 @@ class NlpTurfs
   protected ApiMapRegions $apiMapRegionsObj;
   protected NlpTurfAssignments $turfAssignmentsObj;
 
-  public function __construct( $connection, $fileSystem, $nlsObj, $pathsObj,
-                               $votersObj, $apiActivistCodesObj, $nlpConfigurationObj, $nlpReportsObj,
-                               $nlpMatchbacksObj, $apiFoldersObj, $apiMapRegionsObj, $turfAssignmentsObj )
-  {
+  public function __construct(
+    Connection $connection,
+    FileSystemInterface $fileSystem,
+    NlpNls $nlsObj,
+    NlpPaths $pathsObj,
+    NlpVoters $votersObj,
+    ApiActivistCodes $apiActivistCodesObj,
+    NlpConfiguration $nlpConfigurationObj,
+    NlpReports $nlpReportsObj,
+    NlpMatchbacks $nlpMatchbacksObj,
+    ApiFolders $apiFoldersObj,
+    ApiMapRegions $apiMapRegionsObj,
+    NlpTurfAssignments $turfAssignmentsObj,
+  ) {
     $this->connection = $connection;
     $this->fileSystem = $fileSystem;
     $this->nlsObj = $nlsObj;
@@ -1018,6 +1028,8 @@ class NlpTurfs
   }
 
   /**
+   * checkTurfIdChange
+   * 
    * Checks if the turfId has changed for a given turf and updates the assignment if necessary.
    *
    * @param int $folderId - The folder ID where the turf is assigned.
@@ -1043,6 +1055,8 @@ class NlpTurfs
   }
 
   /**
+   * turfInUse
+   * 
    * Checks if a turf is currently assigned to an NL or has been previously assigned.
    *
    * @param int $folderId - The folder ID where the turf is assigned.
