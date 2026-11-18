@@ -49,9 +49,11 @@ class NlpDataEntryVoterListDisplay
    * The information is used to build the various cells in the data entry table.
    *
    * @param array $voter
+   * @param int $mcid - the NL whose data entry page this is.
+   * @param bool $impersonating - a coordinator or admin is acting as the NL.
    * @return array
    */
-  public function buildDataEntryVoterArray( array $voter ):array
+  public function buildDataEntryVoterArray( array $voter, int $mcid = 0, bool $impersonating = FALSE ):array
   {
     $voterArray = [];
     // Basic voter information.
@@ -137,6 +139,7 @@ class NlpDataEntryVoterListDisplay
     // Historical contact information.
     $voterArray['historical'] = $voter['historic']['display'];
     $voterArray['historicalLines'] = $voter['historic']['displayLines'];
+    $voterArray['editableReports'] = $this->editableReports($voter['contacts'] ?? [], $mcid, $impersonating);
     // Voting history.
     $yes = '<span class="yes">Y</span> ';
     $no = '<span class="no">N</span> ';
@@ -243,6 +246,156 @@ class NlpDataEntryVoterListDisplay
 
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * editableReports
+   *
+   * The reports in the voter's historical contacts that the user may change
+   * or delete (NlpReports::canEditReport()), keyed by reportIndex.  Each has:
+   *   'display' - the report's line in the historical contacts.
+   *   'textEditable' - whether its text can be changed, or only deleted.
+   *   'text' - the text to start the edit box with.
+   *   'isNote' - a note, edited in a box of several lines.
+   *   'maxLength' - the longest text that's kept.
+   *
+   * @param array $voterContacts - reports keyed by vanid, as from NlpReports::getNlpReports().
+   * @param int $mcid
+   * @param bool $impersonating
+   * @return array
+   */
+  private function editableReports(array $voterContacts, int $mcid, bool $impersonating): array
+  {
+    $editable = [];
+    foreach ($voterContacts as $reports) {
+      foreach ($reports as $report) {
+        $reportIndex = (int)($report['reportIndex'] ?? 0);
+        if ($reportIndex <= 0) {continue;}
+        if (!$this->reportsObj->canEditReport($report, $mcid, $impersonating)) {continue;}
+        $display = $this->reportsObj->formatNlReport($report);
+        if ($display === '') {continue;}  // Not in the historical contacts.
+        $isNote = strtolower((string)($report['type'] ?? '')) === 'comment';
+        // A note is saved with <br> for line breaks and its characters as HTML entities.
+        $text = str_ireplace(['<br>', '<br/>', '<br />'], "\n", (string)($report['text'] ?? ''));
+        $editable[$reportIndex] = [
+          'display' => $display,
+          'textEditable' => $this->reportsObj->isTextEditable($report),
+          'text' => html_entity_decode($text, ENT_QUOTES),
+          'isNote' => $isNote,
+          'maxLength' => $isNote ? NlpReports::MAX_COMMENT : NlpDataEntryReports::MAX_CONTACT_TEXT,
+        ];
+      }
+    }
+    return $editable;
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * buildReportEditList
+   *
+   * The popup the "Edit" button beside "Show Contacts" opens: each report the
+   * user may change, with a Delete button (mostly to remove a report entered
+   * twice) and, for a note, phone number or email, an Edit button that opens a
+   * box to correct the typing and its Save button.
+   * Delete and Save submit the form (DataEntryForm::changeVoterReport()).
+   *
+   * @param array $editableReports - from editableReports().
+   * @return array - a render array.
+   */
+  private function buildReportEditList(array $editableReports): array
+  {
+    $list = [
+      '#type' => 'container',
+      '#attributes' => ['class' => ['report-edit-list'], 'hidden' => 'hidden'],
+      'title' => [
+        '#markup' => '<div class="historical-report-title">Edit or delete a report</div>',
+      ],
+    ];
+    foreach ($editableReports as $reportIndex => $editable) {
+      $item = [
+        '#type' => 'container',
+        '#attributes' => ['class' => ['report-edit-item']],
+        'display' => [
+          '#markup' => '<div class="report-edit-display">' . $editable['display'] . '</div>',
+        ],
+        'buttons' => [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['report-edit-buttons']],
+        ],
+      ];
+      if ($editable['textEditable']) {
+        $item['buttons']['edit'] = [
+          '#type' => 'html_tag',
+          '#tag' => 'button',
+          '#value' => 'Edit',
+          '#attributes' => ['type' => 'button', 'class' => ['button', 'report-text-toggle']],
+        ];
+      }
+      $item['buttons']['delete'] = [
+        '#type' => 'submit',
+        '#name' => 'report_delete-' . $reportIndex,
+        '#value' => 'Delete',
+        '#attributes' => ['class' => ['report-delete']],
+      ];
+      if ($editable['textEditable']) {
+        $item['textArea'] = [
+          '#type' => 'container',
+          '#attributes' => ['class' => ['report-text-area'], 'hidden' => 'hidden'],
+          // A note can have several lines; a phone number or email has one.
+          'text' => ($editable['isNote'] ? ['#type' => 'textarea', '#rows' => 2]
+              : ['#type' => 'textfield', '#size' => 30]) + [
+            '#title' => 'Report text',
+            '#title_display' => 'invisible',
+            '#default_value' => $editable['text'],
+            '#maxlength' => $editable['maxLength'],
+            // Saved by its own Save button, not the page's Save reports (unsaved-changes.js).
+            '#attributes' => ['class' => ['nlp-not-an-edit']],
+          ],
+          'save' => [
+            '#type' => 'submit',
+            '#name' => 'report_save-' . $reportIndex,
+            '#value' => 'Save',
+          ],
+          'cancel' => [
+            '#type' => 'html_tag',
+            '#tag' => 'button',
+            '#value' => 'Cancel',
+            '#attributes' => ['type' => 'button', 'class' => ['button', 'report-text-cancel']],
+          ],
+        ];
+      }
+      $list['report_' . $reportIndex] = $item;
+    }
+    return $list;
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * formatSaveResults
+   *
+   * One line for each of the voter's reports in the last save, so the
+   * volunteer sees each one was saved (or why it wasn't).
+   *
+   * @param array $results - the voter's list of ['status' => ..., 'text' => ...].
+   * @return string - HTML, or '' when nothing was saved for the voter.
+   */
+  private function formatSaveResults(array $results): string
+  {
+    if (empty($results)) {
+      return '';
+    }
+    $html = '<div class="voter-save-results" role="status">';
+    foreach ($results as $result) {
+      [$class, $label] = match ($result['status']) {
+        NlpDataEntryReports::SAVED => ['voter-save-saved', '&#10004; Saved: '],
+        NlpDataEntryReports::DUPLICATE => ['voter-save-duplicate',
+          'Already saved for this date, so not saved again: '],
+        NlpDataEntryReports::ALREADY_MAILED => ['voter-save-duplicate',
+          'A postcard was already reported this election, so not saved again: '],
+        'changed' => ['voter-save-saved', '&#10004; '],
+        default => ['voter-save-not-saved', 'Not saved: '],
+      };
+      $html .= '<div class="' . $class . '">' . $label . Html::escape($result['text']) . '</div>';
+    }
+    return $html . '</div>';
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * formatTelephone
    *
    * Convert the phone number into a standard form.
@@ -265,9 +418,11 @@ class NlpDataEntryVoterListDisplay
    * Creates the Drupal form elements for the voter data entry page.
    *
    * @param array $voterArrays - An array of voter data arrays created above.
+   * @param array $saveResults - What became of each voter's reports in the
+   *   last save, keyed by vanid (DataEntryForm::noteResult()).
    * @return array
    */
-  public function buildVoterDataEntryTable( array $voterArrays ):array
+  public function buildVoterDataEntryTable( array $voterArrays, array $saveResults = [] ):array
   {
 
     $form['dataEntry'] = [
@@ -394,6 +549,23 @@ class NlpDataEntryVoterListDisplay
             'contacts' => ['#markup' => $historical],
           ],
         ];
+        // The reports the user may change or delete, in a popup the "Edit"
+        // button opens and closes.
+        $editableReports = $voterArray['editableReports'] ?? [];
+        if (!empty($editableReports)) {
+          $form['dataEntry']['row_2_' . $vanid]['col_2_4']['line_2_4_3']['editButton'] = [
+            '#type' => 'html_tag',
+            '#tag' => 'button',
+            '#value' => 'Edit',
+            '#attributes' => [
+              'type' => 'button',
+              'class' => ['button', 'report-edit-toggle'],
+              'aria-expanded' => 'false',
+            ],
+          ];
+          $form['dataEntry']['row_2_' . $vanid]['col_2_4']['line_2_4_3']['edit'] =
+            $this->buildReportEditList($editableReports);
+        }
       }
       // The checkbox to indicate the reason that the voter was not contacted.
       $form['dataEntry']['row_2_' . $vanid]['col_2_5'] = [
@@ -453,10 +625,12 @@ class NlpDataEntryVoterListDisplay
         '#cols' => 13,
         '#default_value' => $note,
       ];
-      // Voter contact status message.
-      $contactStatusMsg = $voterArray['contactStatusMsg'];
+      // What became of the reports just saved for this voter, above the
+      // voter contact status message.
+      $contactStatusMsg = $this->formatSaveResults($saveResults[$vanid] ?? [])
+        . $voterArray['contactStatusMsg'];
       $form['dataEntry']['row_5_' . $vanid]['col_5_1'] = [
-        '#markup' => $contactStatusMsg,
+        '#markup' => Markup::create($contactStatusMsg),
         '#wrapper_attributes' => ['colspan' => 4, 'class' => ['det-background',],]
       ];
 

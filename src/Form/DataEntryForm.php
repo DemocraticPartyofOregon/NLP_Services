@@ -23,6 +23,8 @@ use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpDataEntryReports;
 use Drupal\nlpservices\ApiMapRegions;
+use Drupal\nlpservices\NlpImpersonation;
+use Drupal\nlpservices\NlpContactDate;
 
 /**
  * @noinspection PhpUnused
@@ -58,7 +60,12 @@ class DataEntryForm extends FormBase
     NlpDataEntryReports $dataEntryReportsObj,
     ApiMapRegions $mapRegionsObj,
     LockBackendInterface $lock,
-    KeyValueExpirableFactoryInterface $keyValueExpirable)
+    KeyValueExpirableFactoryInterface $keyValueExpirable,
+    // Not private or readonly: Drupal caches the form, and its
+    // DependencySerializationTrait::__wakeup() (in FormBase's scope) must be
+    // able to put the service back when the form is unserialized.
+    protected NlpImpersonation $impersonationObj,
+  )
   {
     $this->nlsObj = $nlsObj;
     $this->votersObj = $votersObj;
@@ -95,7 +102,8 @@ class DataEntryForm extends FormBase
       $container->get('nlpservices.data_entry_reports'),
       $container->get('nlpservices.api_map_regions'),
       $container->get('lock'),
-      $container->get('keyvalue.expirable')
+      $container->get('keyvalue.expirable'),
+      $container->get('nlpservices.impersonation'),
     );
   }
 
@@ -116,6 +124,10 @@ class DataEntryForm extends FormBase
     submitted twice, so the second copy was ignored.';
   const string SAVE_IN_PROGRESS_MSG = 'Your reports are still being saved.
     Wait a minute, then check your turf before entering them again.';
+
+  // A save result for a report deleted or corrected in the Edit list (the
+  // others are NlpDataEntryReports::SAVED, DUPLICATE and NOT_SAVED).
+  const string CHANGED = 'changed';
 
   // Key-value collection that remembers which submissions have been saved.
   const string SAVED_SUBMISSIONS = 'nlpservices.data_entry_saved';
@@ -230,9 +242,11 @@ class DataEntryForm extends FormBase
       $shownVanids = array_slice($vanidKeys, $start, $end - $start);
     }
     $voterArrays = [];
+    $impersonating = $this->impersonationObj->isImpersonating();
     foreach ($shownVanids as $vanid) {
       $voter = $voters[$vanid];
-      $voterArray = $this->dataEntryVoterListDisplayObj->buildDataEntryVoterArray($voter);
+      $voterArray = $this->dataEntryVoterListDisplayObj->buildDataEntryVoterArray(
+        $voter, (int) $mcid, $impersonating);
       $voterArrays[$voter['vanid']] = $voterArray;
     }
 
@@ -257,7 +271,8 @@ class DataEntryForm extends FormBase
     }
     $form_state->setUserInput($user_input);
 
-    $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable($voterArrays);
+    $form['dataEntryTable']['voters'] = $this->dataEntryVoterListDisplayObj->buildVoterDataEntryTable(
+      $voterArrays, $form_state->get('saveResults') ?? []);
 
     $form['navigate'] = $this->dataEntryDateBarObj->navigate($pageCount,$currentPage);
 
@@ -302,9 +317,20 @@ class DataEntryForm extends FormBase
       return;
     }
 
+    // The date of the voter contact can't be in the future.  With the error,
+    // nothing is saved and the page shows again with what was entered.
+    // (A contact method change saves nothing, so it isn't held up.)
+    $dateProblem = NlpContactDate::problem((string)($form_state->getValue('canvassDate') ?? ''));
+    if ($dateProblem !== '' && $this->contactMethodChangeVanid($form_state) === NULL) {
+      $form_state->setErrorByName('canvassDate', $dateProblem . '  Your reports were not saved; fix the date and save again.');
+      return;
+    }
+
     $vanid = $this->contactMethodChangeVanid($form_state);
     if($vanid !== NULL) {
 
+      // Nothing is saved; don't show the last save's results again.
+      $form_state->set('saveResults', []);
       $form_state->setRebuild();
       $form_state->set('reenter',TRUE);
       $form_state->set('contactMethodRebuild',TRUE);
@@ -331,6 +357,115 @@ class DataEntryForm extends FormBase
     if($form_state->get('formExpired')) {
       return;
     }
+    // What became of each voter's reports, shown on the voter when the page is
+    // rebuilt so volunteers can see their reports were saved.
+    $this->saveResults = [];
+    $this->voterNames = [];
+    $this->saveSubmission($form_state);
+    $form_state->set('saveResults', $this->saveResults);
+    $this->summarizeSaveResults($form_state->get('voterArrays') ?? []);
+  }
+
+  /**
+   * What became of each voter's reports in this submission, keyed by vanid:
+   * a list of ['status' => NlpDataEntryReports::SAVED|DUPLICATE|NOT_SAVED,
+   * 'text' => what was reported].
+   */
+  private array $saveResults = [];
+
+  /**
+   * noteResult
+   *
+   * Remember what became of one of a voter's reports.
+   *
+   * @param int|string $vanid
+   * @param string $status - NlpDataEntryReports::SAVED, DUPLICATE or NOT_SAVED.
+   * @param string $text - what was reported, e.g. "Phone: Left message".
+   * @return void
+   */
+  private function noteResult(int|string $vanid, string $status, string $text): void
+  {
+    $this->saveResults[$vanid][] = ['status' => $status, 'text' => $text];
+  }
+
+  /**
+   * The names of the voters with save results, keyed by vanid, for voters
+   * who aren't among the page's voterArrays (e.g. the postcard list).
+   */
+  private array $voterNames = [];
+
+  /**
+   * summarizeSaveResults
+   *
+   * Messages at the top of the page naming the voters whose reports were
+   * saved, and, separately, the voters whose reports were skipped as already
+   * reported (the same report for the same date, or a second postcard this
+   * cycle), with what was skipped.  The page can show up to 10 voters, and
+   * after Next page the voters saved for aren't on the page at all, so the
+   * names say whose reports these were.
+   *
+   * @param array $voterArrays - the voters the page showed, keyed by vanid.
+   * @return void
+   */
+  private function summarizeSaveResults(array $voterArrays): void
+  {
+    $saved = $skipped = [];
+    foreach ($this->saveResults as $vanid => $results) {
+      $name = $this->voterNames[$vanid] ?? trim(($voterArrays[$vanid]['firstName'] ?? '')
+        . ' ' . ($voterArrays[$vanid]['lastName'] ?? ''));
+      if ($name === '') {
+        $name = 'Voter ' . $vanid;
+      }
+      foreach ($results as $result) {
+        if ($result['status'] === NlpDataEntryReports::SAVED) {
+          $saved[$vanid] = $name;
+        } elseif ($result['status'] === NlpDataEntryReports::DUPLICATE) {
+          $skipped[$vanid][] = $result['text'] . ', already saved for that date';
+        } elseif ($result['status'] === NlpDataEntryReports::ALREADY_MAILED) {
+          $skipped[$vanid][] = 'a postcard was already reported this election';
+        }
+      }
+      if (isset($skipped[$vanid])) {
+        $skipped[$vanid] = $name . ' (' . implode('; ', $skipped[$vanid]) . ')';
+      }
+    }
+    $messenger = Drupal::messenger();
+    if (!empty($saved)) {
+      $messenger->addStatus($this->t('Your reports were saved for @names.  Thank you!',
+        ['@names' => $this->listNames($saved)]));
+    }
+    if (!empty($skipped)) {
+      $messenger->addStatus($this->t('Already reported, so not saved again: @names.',
+        ['@names' => implode(', ', $skipped)]));
+    }
+    // A reminder to report right after the contact, for reports saved late.
+    if (!empty($saved)
+      && NlpContactDate::isLate((string)($this->sessionDataObj->get('canvassDate') ?? ''))) {
+      $messenger->addWarning(NlpContactDate::LATE_MSG);
+    }
+  }
+
+  /**
+   * "Ann Lee", "Ann Lee and Bob Smith", or "Ann Lee, Bob Smith and Carl Diaz".
+   */
+  private function listNames(array $names): string
+  {
+    $names = array_values($names);
+    $last = array_pop($names);
+    return empty($names) ? $last : implode(', ', $names) . ' and ' . $last;
+  }
+
+  /**
+   * saveSubmission
+   *
+   * Act on the button that was clicked and save the reports entered on the
+   * page, noting each voter's results (noteResult()).
+   *
+   * @param FormStateInterface $form_state
+   * @return void
+   */
+  private function saveSubmission(FormStateInterface $form_state): void
+  {
     $form_state->setRebuild();
     $form_state->set('reenter',TRUE);
     $messenger = Drupal::messenger();
@@ -376,6 +511,12 @@ class DataEntryForm extends FormBase
     switch ($navButtonParts[0]) {
 
       case 'save_reports':
+        break;
+      // A report's Delete or Save button in the Edit list.  Anything else
+      // entered on the page is saved below as well.
+      case 'report_delete':
+      case 'report_save':
+        $this->changeVoterReport($form_state, $navButtonParts[0], (int)($navButtonParts[1] ?? 0));
         break;
       case 'pageSelect':
         $NewPage = $navButtonParts[1]-1;
@@ -427,6 +568,8 @@ class DataEntryForm extends FormBase
       $canvassDate = date('Y-m-d');
     }
     $voterArrays = $form_state->get('voterArrays');
+    $saved = NlpDataEntryReports::SAVED;
+    $notSaved = NlpDataEntryReports::NOT_SAVED;
 
     foreach ($actions as $vanid => $actionSet) {
       foreach ($actionSet as $action) {
@@ -451,34 +594,46 @@ class DataEntryForm extends FormBase
             $contactMethodId = $action['contactMethod'];
             $contactMethod = $contactMethods[$contactMethodId];
             $report['contactMethod'] = $contactMethod;
+            $pledgeText = 'Pledge to vote: ' . $this->pledgeResponseName($action['surveyResponse'] ?? 0,
+                $voterArrays[$vanid]['nickname'] ?? $voterArrays[$vanid]['firstName']);
             if ($contactMethod == 'Postcard') {
               $voterName = $voterArrays[$vanid]['firstName'] . ' ' . $voterArrays[$vanid]['lastName'];
               $messenger->addWarning('If you received an answer from ' . $voterName
                 . ' please change the contact method to something other than postcard.');
+              $this->noteResult($vanid, $notSaved, $pledgeText . ' (the contact method can\'t be Postcard)');
               break;
             }
             $action['turfIndex'] = $form_state->get('turfIndex');
             $action['firstName'] = $voterArrays[$vanid]['firstName'];
-            $this->dataEntryReportsObj->pledgeToVote($report, $action);
+            $this->noteResult($vanid, $this->dataEntryReportsObj->pledgeToVote($report, $action),
+              "[$contactMethod] $pledgeText");
             break;
           case 'notContacted':
             $action['turfIndex'] = $form_state->get('turfIndex');
-            if (!$this->dataEntryReportsObj->noContactResponse($report,$action)) {
+            $method = $this->nlpConfigurationObj->getContactMethod((int)($action['contactMethod'] ?? 0));
+            $attemptText = "[$method] "
+              . $this->nlpConfigurationObj->getContactResponse((string)$method, (int)($action['notContacted'] ?? 0));
+            $result = $this->dataEntryReportsObj->noContactResponse($report,$action);
+            if ($result === $notSaved) {
               $voterName = $voterArrays[$vanid]['firstName'] . ' ' . $voterArrays[$vanid]['lastName'];
               $messenger->addWarning('The response for ' . $voterName . ' was not saved.  Choose the'
                 . ' response again and save.');
             }
+            $this->noteResult($vanid, $result, $attemptText);
             break;
           case 'moved':
             $action['turfIndex'] = $form_state->get('turfIndex');
             $this->dataEntryReportsObj->voterMoved($report,$action);
+            $this->noteResult($vanid, $saved, empty($action['moved']) ? 'Moved box unchecked' : 'Moved');
             break;
           case 'hostile':
             $this->dataEntryReportsObj->hostileVoter($report, $action);
+            $this->noteResult($vanid, $saved, empty($action['hostile']) ? 'No longer hostile' : 'Hostile');
             break;
           case 'deceased':
             $action['turfIndex'] = $form_state->get('turfIndex');
             $this->dataEntryReportsObj->deceasedVoter($report, $action);
+            $this->noteResult($vanid, $saved, empty($action['deceased']) ? 'Deceased box unchecked' : 'Deceased');
             break;
           case 'updateContact':
             $action['firstName'] = $voterArrays[$vanid]['firstName'];
@@ -491,26 +646,27 @@ class DataEntryForm extends FormBase
                 $action['phoneNumber'] = $voterArrays[$vanid]['cellPhone'];
                 $action['vanid'] = $vanid;
                 $this->dataEntryReportsObj->badPhone('cellPhone',$report,$action);
+                $this->noteResult($vanid, $saved, 'Wrong number: ' . $action['phoneNumber']);
                 break;
               case 'BH': // Bad home number.
                 $action['phoneId'] = $voterArrays[$vanid]['homePhoneId'];
                 $action['phoneNumber'] = $voterArrays[$vanid]['homePhone'];
                 $action['vanid'] = $vanid;
                 $this->dataEntryReportsObj->badPhone('homePhone',$report,$action);
+                $this->noteResult($vanid, $saved, 'Wrong number: ' . $action['phoneNumber']);
                 break;
               case 'OO':  // Opt out of texting
                 if(empty($voterArrays[$vanid]['cellPhone'])) {
                   $msg = var_export($action, true);
                   Drupal::logger('nlpservices')->notice('Cell phone number is missing: '.$msg);
+                  $this->noteResult($vanid, $notSaved, 'Opt out of texting (there is no cell phone)');
                   break;
                 }
                 $cellPhone = $voterArrays[$vanid]['cellPhone'];
                 $report['contactType'] = 'Phone';
                 $report['text'] = $cellPhone;
                 $report['value'] = 'Opt out of texting: ';
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
+                $this->noteResult($vanid, $this->saveChangeReport($report), 'Opt out of texting: ' . $cellPhone);
                 break;
               case 'NC': // New cell number.
                 $messenger = Drupal::messenger();
@@ -518,23 +674,25 @@ class DataEntryForm extends FormBase
                 $cellPhone = $action['updateContact']['newContact'];
                 if(empty($cellPhone))  {
                   $messenger->addWarning('You must enter a new cell phone, Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New cell number (enter the number)');
                   break;
                 }
                 if(!$this->validatePhoneNumber($cellPhone)) {
                   $messenger->addWarning('You must enter a valid cell phone number , Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New cell number ' . $cellPhone . ' (not a valid phone number)');
                   break;
                 }
                 $report['value'] = 'New cell number';
                 $report['text'] = $cellPhone;
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
-
-                $newPhoneNumber = [
-                  'cellPhone' => $cellPhone,
-                  'cellPhoneId' => NULL
-                ];
-                $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
+                $result = $this->saveChangeReport($report);
+                if ($result === $saved) {
+                  $newPhoneNumber = [
+                    'cellPhone' => $cellPhone,
+                    'cellPhoneId' => NULL
+                  ];
+                  $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
+                }
+                $this->noteResult($vanid, $result, 'New cell number ' . $cellPhone);
                 break;
               case 'NH': // New home number.
                 $messenger = Drupal::messenger();
@@ -542,45 +700,47 @@ class DataEntryForm extends FormBase
                 $homePhone = $action['updateContact']['newContact'];
                 if(empty($homePhone))  {
                   $messenger->addWarning('You must enter a new home phone, Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New home number (enter the number)');
                   break;
                 }
                 if(!$this->validatePhoneNumber($homePhone)) {
                   $messenger->addWarning('You must enter a valid home phone number , Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New home number ' . $homePhone . ' (not a valid phone number)');
                   break;
                 }
                 $report['value'] = 'New home number';
                 $report['text'] = $homePhone;
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
-
-                $newPhoneNumber = [
-                  'homePhone' => $homePhone,
-                  'homePhoneId' => NULL
-                ];
-                $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
-
+                $result = $this->saveChangeReport($report);
+                if ($result === $saved) {
+                  $newPhoneNumber = [
+                    'homePhone' => $homePhone,
+                    'homePhoneId' => NULL
+                  ];
+                  $this->votersObj->updateVoterPhone($vanid,$newPhoneNumber);
+                }
+                $this->noteResult($vanid, $result, 'New home number ' . $homePhone);
                 break;
 
               case 'NE': // New email.
                 $messenger = Drupal::messenger();
-                $email = $action['updateContact']['newContact'];                $voterName = $action['firstName'] . ' ' . $action['lastName'];
+                $email = $action['updateContact']['newContact'];
+                $voterName = $action['firstName'] . ' ' . $action['lastName'];
 
                 if(empty($email))  {
                   $messenger->addWarning('You must enter a new email, Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New email (enter the email)');
                   break;
                 }
                 if(!filter_var($email, FILTER_VALIDATE_EMAIL)) {
                   $messenger->addWarning('You must enter a valid email address , Voter is '.$voterName);
+                  $this->noteResult($vanid, $notSaved, 'New email ' . $email . ' (not a valid email address)');
                   break;
                 }
 
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'New email';
                 $report['text'] = $email;
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
+                $this->noteResult($vanid, $this->saveChangeReport($report), 'New email ' . $email);
                 break;
 
               case 'LS': // Wants lawn sign.
@@ -589,34 +749,139 @@ class DataEntryForm extends FormBase
                 $candidates = $action['updateContact']['newContact'];
                 if(empty($candidates)) {
                   $messenger->addWarning(t('You must enter candidate name(s) for the lawn sign request, Voter is :name', [':name' => $voterName]));
+                  $this->noteResult($vanid, $notSaved, 'Wants lawn sign (enter the candidates)');
                   break;
                 }
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'Wants lawn sign';
                 $report['text'] = $candidates;
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
+                $this->noteResult($vanid, $this->saveChangeReport($report), 'Wants lawn sign: ' . $candidates);
                 break;
 
               case 'RTP': // Needs a ride to polls.
                 $report['contactType'] = 'Walk';
                 $report['value'] = 'Needs ride to polls';
                 $report['text'] = '';
-                $report['cycle'] = $this->nlpConfigurationObj->getCycle();
-                $report['type'] = 'Change';
-                $this->reportsObj->setNlReport($report);
+                $this->noteResult($vanid, $this->saveChangeReport($report), 'Needs ride to polls');
                 break;
             }
             break;
           case 'note':
             $action['reportIndex'] = $voterArrays[$vanid]['reportIndex'];
             $this->dataEntryReportsObj->addNote($report, $action);
+            $this->noteResult($vanid, $saved, trim((string)($action['note'] ?? '')) === '' ? 'Note cleared' : 'Note');
             break;
         }
       }
     }
     $this->finishSubmission($submissionKey);
+  }
+
+  /**
+   * saveChangeReport
+   *
+   * Save a report of a change to a voter's contact information or a request
+   * (new phone or email, opt out, lawn sign, ride), unless the NL already
+   * reported the same thing for this date.
+   *
+   * @param array $report - the report, with its contactType, value and text.
+   * @return string - NlpDataEntryReports::SAVED or DUPLICATE.
+   */
+  private function saveChangeReport(array $report): string
+  {
+    $report['cycle'] = $this->nlpConfigurationObj->getCycle();
+    $report['type'] = 'Change';
+    if ($this->reportsObj->isDuplicateReport($report)) {
+      return NlpDataEntryReports::DUPLICATE;
+    }
+    $this->reportsObj->setNlReport($report);
+    return NlpDataEntryReports::SAVED;
+  }
+
+  /**
+   * pledgeResponseName
+   *
+   * The name of a response to the pledge to vote question, with the voter's
+   * name in it, e.g. "Yes, Bob will vote".
+   *
+   * @param int|string $responseId
+   * @param string $firstName
+   * @return string
+   */
+  private function pledgeResponseName(int|string $responseId, string $firstName): string
+  {
+    $responses = $this->nlpConfigurationObj->getPledgeSurveyQuestion()['responses'] ?? [];
+    return str_replace(':fn', $firstName, (string)($responses[$responseId]['name'] ?? ''));
+  }
+
+  /**
+   * changeVoterReport
+   *
+   * Delete a report, or save its new text, for a Delete or Save button in a
+   * voter's Edit list.  The page only lists reports the user may change, but
+   * the button's report index comes from the browser, so check again: the
+   * report must be for a voter on this page, and an NL may change only their
+   * own reports from this election cycle (NlpReports::canEditReport()).
+   *
+   * @param FormStateInterface $form_state
+   * @param string $change - 'report_delete' or 'report_save'.
+   * @param int $reportIndex
+   * @return void
+   */
+  private function changeVoterReport(FormStateInterface $form_state, string $change, int $reportIndex): void
+  {
+    $messenger = Drupal::messenger();
+    $report = ($reportIndex > 0) ? $this->reportsObj->getNlpReport($reportIndex) : [];
+    if (empty($report)) {
+      $messenger->addWarning('That report is no longer there.  It may have been deleted already.');
+      return;
+    }
+    $mcid = (int) $form_state->get('mcid');
+    $impersonating = $this->impersonationObj->isImpersonating();
+    $voterArrays = $form_state->get('voterArrays') ?? [];
+    $mayChange = isset($voterArrays[$report['vanid']])
+      && $this->reportsObj->canEditReport($report, $mcid, $impersonating);
+    if ($mayChange && $change === 'report_save') {
+      $mayChange = $this->reportsObj->isTextEditable($report);
+    }
+    if (!$mayChange) {
+      Drupal::logger('nlpservices')->warning('MCID @mcid was refused a change (@change) to report @index.', [
+        '@mcid' => $mcid, '@change' => $change, '@index' => $reportIndex]);
+      $messenger->addError('You cannot change that report.');
+      return;
+    }
+
+    $logContext = [
+      '@index' => $reportIndex,
+      '@vanid' => $report['vanid'],
+      '@report' => trim($report['type'] . ' ' . $report['value'] . ' ' . $report['text']),
+      '@mcid' => $mcid,
+      '@who' => $impersonating ? ' (impersonated by a coordinator or admin)' : '',
+    ];
+    if ($change === 'report_delete') {
+      $this->dataEntryReportsObj->deleteVoterReport($report);
+      Drupal::logger('nlpservices')->notice(
+        'Report @index for voter @vanid (@report) was deleted by MCID @mcid@who.', $logContext);
+      $messenger->addStatus('The report was deleted.');
+      $this->noteResult($report['vanid'], self::CHANGED, 'Deleted: ' . $this->reportsObj->formatNlReport($report));
+      return;
+    }
+
+    // The new text is in the box beside the Save button.
+    $parents = $form_state->getTriggeringElement()['#parents'] ?? [];
+    array_pop($parents);
+    $parents[] = 'text';
+    $text = (string) $form_state->getValue($parents, '');
+    $problem = $this->dataEntryReportsObj->reportTextProblem($report, $text);
+    if ($problem !== '') {
+      $messenger->addWarning($problem);
+      return;
+    }
+    $this->dataEntryReportsObj->editReportText($report, $text);
+    Drupal::logger('nlpservices')->notice(
+      'Report @index for voter @vanid (@report) was edited by MCID @mcid@who.', $logContext);
+    $messenger->addStatus('The report was changed.');
+    $this->noteResult($report['vanid'], self::CHANGED, 'Corrected: ' . trim($text));
   }
 
   /**
@@ -793,12 +1058,12 @@ not checked have already received a postcard for this election.</p></div>',
     ];
     // The same date entry as the data entry page's date bar, so the NL can set
     // the mailing date here without going back.
-    $form['canvassDate'] = [
+    $form['canvassDate'] = NlpContactDate::dateElement([
       '#type' => 'date',
       '#title' => t('Date cards were mailed'),
       '#prefix' => '<div class="canvass_date">',
       '#suffix' => '</div>',
-    ];
+    ]);
     if(!empty($canvassDate)) {
       $form['canvassDate']['#default_value'] = $canvassDate;
     }
@@ -871,7 +1136,12 @@ not checked have already received a postcard for this election.</p></div>',
       if(empty($selected)) {continue;}  // Card already reported as sent.
       $report['vanid'] = $vanid;
       $report['cd'] = $this->votersObj->getVoterCd($vanid);
-      $this->dataEntryReportsObj->noContactResponse($report,$action);
+      $this->noteResult($vanid, $this->dataEntryReportsObj->noContactResponse($report,$action),
+        '[Postcard] Mailed');
+      // The postcard list has the whole turf, not just the page's voters.
+      $voter = $this->votersObj->getVoterById((int) $vanid);
+      $this->voterNames[$vanid] = trim(($voter['firstName'] ?? '') . ' ' . ($voter['lastName'] ?? ''))
+        ?: 'Voter ' . $vanid;
     }
     $this->finishSubmission($submissionKey);
   }
@@ -949,7 +1219,7 @@ not checked have already received a postcard for this election.</p></div>',
   function validatePhoneNumber(string $phone): false|int
   {
     // Comprehensive phone number validation
-    return preg_match('/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/', $phone);
+    return preg_match(NlpDataEntryReports::PHONE_PATTERN, $phone);
   }
 
   /**

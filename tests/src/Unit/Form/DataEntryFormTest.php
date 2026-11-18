@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal\Core\DependencyInjection\ContainerBuilder;
+use Drupal\Component\DependencyInjection\ReverseContainer;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\KeyValueStore\KeyValueExpirableFactoryInterface;
 use Drupal\Core\KeyValueStore\KeyValueStoreExpirableInterface;
@@ -18,6 +19,8 @@ use Drupal\nlpservices\NlpDataEntryDateBar;
 use Drupal\nlpservices\NlpDataEntryReports;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpDataEntryVoters;
+use Drupal\nlpservices\NlpImpersonation;
+use Drupal\nlpservices\NlpContactDate;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpSessionData;
@@ -56,6 +59,7 @@ class DataEntryFormTest extends UnitTestCase {
   protected $dataEntryVoterListDisplayMock;
   protected $dataEntryReportsMock;
   protected $mapRegionsMock;
+  protected $impersonationMock;
   protected $messengerMock;
   protected $lockMock;
   protected $savedSubmissionsMock;
@@ -78,6 +82,7 @@ class DataEntryFormTest extends UnitTestCase {
     $this->dataEntryVoterListDisplayMock = $this->createMock(NlpDataEntryVoterListDisplay::class);
     $this->dataEntryReportsMock          = $this->createMock(NlpDataEntryReports::class);
     $this->mapRegionsMock                = $this->createMock(ApiMapRegions::class);
+    $this->impersonationMock             = $this->createMock(NlpImpersonation::class);
 
     $this->messengerMock  = $this->createMock(MessengerInterface::class);
     $loggerMock           = $this->createMock(LoggerInterface::class);
@@ -117,6 +122,7 @@ class DataEntryFormTest extends UnitTestCase {
       $this->mapRegionsMock,
       $lock,
       $keyValueFactory,
+      $this->impersonationMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
@@ -726,6 +732,162 @@ class DataEntryFormTest extends UnitTestCase {
     $this->assertTrue($formState->get('reenter'));
   }
 
+  // ---------------------------------------------------------------------------
+  // submitForm — a report's Delete or Save button in the Edit list
+  // ---------------------------------------------------------------------------
+
+  /**
+   * A report of NL 101 for voter 99999, who is on the page.
+   */
+  protected function editableReport(): array {
+    return ['reportIndex' => 77, 'vanid' => 99999, 'mcid' => 101, 'cycle' => '2026',
+      'type' => 'Comment', 'value' => '', 'text' => 'Old note'];
+  }
+
+  /**
+   * A FormState whose Delete or Save button for report 77 was clicked, with
+   * the given text in the report's edit box.
+   */
+  protected function reportButtonFormState(string $button, string $text = ''): FormState {
+    $formState = new FormState();
+    $this->configureSubmitBase($formState);
+    $formState->set('voterArrays', [99999 => ['vanid' => 99999]]);
+    $this->reportsMock->method('getNlpReport')->with(77)->willReturn($this->editableReport());
+    $item = ['dataEntry', 'row_2_99999', 'col_2_4', 'line_2_4_3', 'edit', 'report_77'];
+    $formState->setValue([...$item, 'textArea', 'text'], $text);
+    $formState->setTriggeringElement([
+      '#name' => $button . '-77',
+      '#value' => $button === 'report_delete' ? 'Delete' : 'Save',
+      '#parents' => $button === 'report_delete'
+        ? [...$item, 'buttons', 'delete'] : [...$item, 'textArea', 'save'],
+    ]);
+    return $formState;
+  }
+
+  public function testReportDeleteDeletesTheNlsOwnReport(): void {
+    $formState = $this->reportButtonFormState('report_delete');
+    $this->reportsMock->expects($this->once())->method('canEditReport')
+      ->with($this->editableReport(), 101, FALSE)->willReturn(TRUE);
+    $this->dataEntryReportsMock->expects($this->once())->method('deleteVoterReport')
+      ->with($this->editableReport());
+    $this->messengerMock->expects($this->once())->method('addStatus')->with('The report was deleted.');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportDeleteByAnImpersonatorAsksWithTheImpersonatingFlag(): void {
+    $formState = $this->reportButtonFormState('report_delete');
+    $this->impersonationMock->method('isImpersonating')->willReturn(TRUE);
+    $this->reportsMock->expects($this->once())->method('canEditReport')
+      ->with($this->editableReport(), 101, TRUE)->willReturn(TRUE);
+    $this->dataEntryReportsMock->expects($this->once())->method('deleteVoterReport');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportDeleteRefusedForAReportTheUserMayNotChange(): void {
+    $formState = $this->reportButtonFormState('report_delete');
+    $this->reportsMock->method('canEditReport')->willReturn(FALSE);
+    $this->dataEntryReportsMock->expects($this->never())->method('deleteVoterReport');
+    $this->messengerMock->expects($this->once())->method('addError');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportDeleteRefusedForAVoterNotOnThePage(): void {
+    $formState = $this->reportButtonFormState('report_delete');
+    $formState->set('voterArrays', [12345 => ['vanid' => 12345]]);
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->dataEntryReportsMock->expects($this->never())->method('deleteVoterReport');
+    $this->messengerMock->expects($this->once())->method('addError');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportDeleteWarnsWhenTheReportIsGone(): void {
+    $formState = new FormState();
+    $this->configureSubmitBase($formState);
+    $this->reportsMock->method('getNlpReport')->willReturn([]);
+    $formState->setTriggeringElement(['#name' => 'report_delete-77', '#value' => 'Delete']);
+    $this->dataEntryReportsMock->expects($this->never())->method('deleteVoterReport');
+    $this->messengerMock->expects($this->once())->method('addWarning');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportSaveSavesTheTextInTheReportsEditBox(): void {
+    $formState = $this->reportButtonFormState('report_save', 'New note');
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->reportsMock->method('isTextEditable')->willReturn(TRUE);
+    $this->dataEntryReportsMock->expects($this->once())->method('editReportText')
+      ->with($this->editableReport(), 'New note');
+    $this->messengerMock->expects($this->once())->method('addStatus')->with('The report was changed.');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportSaveWarnsAndSavesNothingForAnInvalidCorrection(): void {
+    $formState = $this->reportButtonFormState('report_save', '503-555');
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->reportsMock->method('isTextEditable')->willReturn(TRUE);
+    $this->dataEntryReportsMock->method('reportTextProblem')->willReturn('Enter a valid phone number.');
+    $this->dataEntryReportsMock->expects($this->never())->method('editReportText');
+    $this->messengerMock->expects($this->once())->method('addWarning')->with('Enter a valid phone number.');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportSaveRefusedWhenTheTextCantChange(): void {
+    $formState = $this->reportButtonFormState('report_save', 'New note');
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->reportsMock->method('isTextEditable')->willReturn(FALSE);
+    $this->dataEntryReportsMock->expects($this->never())->method('editReportText');
+    $this->messengerMock->expects($this->once())->method('addError');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  /**
+   * Drupal caches the form between requests.  Every service must come back
+   * when the cached form is unserialized, or a later submit (e.g. a report's
+   * Delete button) fails with "must not be accessed before initialization".
+   */
+  public function testEveryServiceIsRestoredWhenTheCachedFormIsUnserialized(): void {
+    // Every object the form holds is a service, as in Drupal, so the form
+    // serializes each one as its service ID.  (The mocks can't be serialized.)
+    $container = \Drupal::getContainer();
+    $services = [];
+    foreach ((new \ReflectionObject($this->form))->getProperties() as $property) {
+      if (!$property->isInitialized($this->form) || !is_object($property->getValue($this->form))) {
+        continue;
+      }
+      $container->set('test.' . $property->getName(), $property->getValue($this->form));
+      $services[] = $property;
+    }
+    $container->set(ReverseContainer::class, new ReverseContainer($container));
+    // The constructor's services are the ones this test is about.
+    $constructorServices = array_map(static fn(\ReflectionParameter $p) => $p->getName(),
+      (new \ReflectionMethod(DataEntryForm::class, '__construct'))->getParameters());
+    $this->assertNotEmpty(array_intersect($constructorServices,
+      array_map(static fn(\ReflectionProperty $p) => $p->getName(), $services)));
+
+    $copy = unserialize(serialize($this->form));
+
+    foreach ($services as $property) {
+      $name = $property->getName();
+      $this->assertTrue($property->isInitialized($copy), "$name was not restored.");
+      $this->assertSame($property->getValue($this->form), $property->getValue($copy), "$name was not restored.");
+    }
+  }
+
   public function testSubmitFormAcknowledgeUnreportedChangesUpdatesTurf(): void {
     $this->turfsMock->expects($this->once())
       ->method('updateTurfFields')
@@ -789,9 +951,9 @@ class DataEntryFormTest extends UnitTestCase {
 
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): string {
         $reportedDate = $report['contactDate'];
-        return TRUE;
+        return NlpDataEntryReports::SAVED;
       });
 
     $formState = new FormState();
@@ -1026,7 +1188,7 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testSubmitFormNotContactedCallsNoContactResponse(): void {
-    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')->willReturn(TRUE);
+    $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')->willReturn(NlpDataEntryReports::SAVED);
     $this->messengerMock->expects($this->never())->method('addWarning');
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
@@ -1034,12 +1196,221 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testSubmitFormNotContactedWarnsWhenResponseNotSaved(): void {
-    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(FALSE);
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::NOT_SAVED);
     $this->messengerMock->expects($this->once())->method('addWarning')
       ->with($this->stringContains('Voter Person'));
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];
     $this->form->submitForm($form, $formState);
+  }
+
+  // ---------------------------------------------------------------------------
+  // submitForm — each voter's save results and the summary
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The messages addStatus() was given, as strings.
+   */
+  protected function captureStatusMessages(): \ArrayObject {
+    $messages = new \ArrayObject();
+    $this->messengerMock->method('addStatus')->willReturnCallback(
+      function ($message) use ($messages) {
+        $messages[] = (string) $message;
+        return $this->messengerMock;
+      });
+    return $messages;
+  }
+
+  public function testSaveShowsTheVoterTheAttemptWasSaved(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::SAVED);
+    $messages = $this->captureStatusMessages();
+    $formState = $this->buildActionFormState(99999,
+      ['type' => 'notContacted', 'contactMethod' => 1, 'notContacted' => 2]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame([99999 => [['status' => NlpDataEntryReports::SAVED, 'text' => '[Phone] Left message']]],
+      $formState->get('saveResults'));
+    $this->assertSame(['Your reports were saved for Voter Person.  Thank you!'], $messages->getArrayCopy());
+  }
+
+  public function testSaveShowsTheVoterADuplicateWasNotSavedAgain(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::DUPLICATE);
+    $messages = $this->captureStatusMessages();
+    $formState = $this->buildActionFormState(99999,
+      ['type' => 'notContacted', 'contactMethod' => 1, 'notContacted' => 2]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame(NlpDataEntryReports::DUPLICATE, $formState->get('saveResults')[99999][0]['status']);
+    $this->assertSame(['Already reported, so not saved again: Voter Person ([Phone] Left message, already saved for that date).'],
+      $messages->getArrayCopy());
+  }
+
+  public function testSaveShowsTheVoterASecondPostcardWasNotSaved(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Postcard');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Mailed');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::ALREADY_MAILED);
+    $messages = $this->captureStatusMessages();
+    $formState = $this->buildActionFormState(99999,
+      ['type' => 'notContacted', 'contactMethod' => 2, 'notContacted' => 9]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame(NlpDataEntryReports::ALREADY_MAILED, $formState->get('saveResults')[99999][0]['status']);
+    $this->assertSame(['Already reported, so not saved again: Voter Person (a postcard was already reported this election).'],
+      $messages->getArrayCopy());
+  }
+
+  public function testTheSummaryNamesEachVoterSavedAndEachVoterSkipped(): void {
+    $voter = static fn(int $vanid, string $first, string $last) => [
+      'vanid' => $vanid, 'cd' => 'CD1', 'firstName' => $first, 'lastName' => $last, 'reportIndex' => 0];
+    $formState = new FormState();
+    $this->configureSubmitBase($formState);
+    $formState->set('voterArrays', [
+      1 => $voter(1, 'Ann', 'Lee'), 2 => $voter(2, 'Bob', 'Smith'),
+      3 => $voter(3, 'Carl', 'Diaz'), 4 => $voter(4, 'Dee', 'Fox'),
+    ]);
+    $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => 'Save reports']);
+    $attempt = ['type' => 'notContacted', 'contactMethod' => 1, 'notContacted' => 2];
+    $note = ['type' => 'note', 'note' => 'Call back', 'contactMethod' => 1];
+    // Ann: an attempt and a note (named once); Bob: a duplicate attempt;
+    // Carl: an attempt; Dee: a duplicate attempt and a saved note.
+    $this->dataEntryVoterListDisplayMock = $this->createMock(NlpDataEntryVoterListDisplay::class);
+    $this->dataEntryVoterListDisplayMock->method('validateDataEntrySelection')->willReturn([]);
+    $this->dataEntryVoterListDisplayMock->method('whatChanged')->willReturn([
+      1 => [$attempt, $note], 2 => [$attempt], 3 => [$attempt], 4 => [$attempt, $note]]);
+    $this->form = $this->newForm($this->lockMock, $this->savedSubmissionsMock);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([1 => 'Phone']);
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturnCallback(
+      static fn(array $report) => in_array($report['vanid'], [2, 4], TRUE)
+        ? NlpDataEntryReports::DUPLICATE : NlpDataEntryReports::SAVED);
+    $messages = $this->captureStatusMessages();
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame([
+      'Your reports were saved for Ann Lee, Carl Diaz and Dee Fox.  Thank you!',
+      'Already reported, so not saved again: Bob Smith ([Phone] Left message, already saved for that date), '
+        . 'Dee Fox ([Phone] Left message, already saved for that date).',
+    ], $messages->getArrayCopy());
+  }
+
+  public function testAFutureContactDateIsRejectedBeforeAnythingIsSaved(): void {
+    $formState = new FormState();
+    $formState->setValue('canvassDate', date('Y-m-d', strtotime('+2 days')));
+    $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => 'Save reports']);
+
+    $form = [];
+    $this->form->validateForm($form, $formState);
+
+    $this->assertStringContainsString(NlpContactDate::FUTURE_MSG,
+      (string) $formState->getErrors()['canvassDate']);
+  }
+
+  public function testTodayAsTheContactDateIsAccepted(): void {
+    $formState = new FormState();
+    $formState->setValue('canvassDate', date('Y-m-d'));
+    $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => 'Save reports']);
+
+    $form = [];
+    $this->form->validateForm($form, $formState);
+
+    $this->assertSame([], $formState->getErrors());
+  }
+
+  public function testReportsSavedForAnOldContactDateGetTheReminder(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::SAVED);
+    $oldDate = date('Y-m-d', strtotime('-5 days'));
+    $this->sessionDataMock->method('get')->willReturnCallback(
+      static fn(string $key) => $key === 'canvassDate' ? $oldDate : NULL);
+    $this->messengerMock->expects($this->once())->method('addWarning')->with(NlpContactDate::LATE_MSG);
+    $formState = $this->buildActionFormState(99999,
+      ['type' => 'notContacted', 'contactMethod' => 1, 'notContacted' => 2]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testReportsSavedForARecentContactDateGetNoReminder(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->dataEntryReportsMock->method('noContactResponse')->willReturn(NlpDataEntryReports::SAVED);
+    $recentDate = date('Y-m-d', strtotime('-3 days'));
+    $this->sessionDataMock->method('get')->willReturnCallback(
+      static fn(string $key) => $key === 'canvassDate' ? $recentDate : NULL);
+    $this->messengerMock->expects($this->never())->method('addWarning');
+    $formState = $this->buildActionFormState(99999,
+      ['type' => 'notContacted', 'contactMethod' => 1, 'notContacted' => 2]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+  }
+
+  public function testSaveOfNothingLeavesNoResultsAndNoMessage(): void {
+    $formState = new FormState();
+    $this->configureSubmitBase($formState);
+    $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => '']);
+    $this->messengerMock->expects($this->never())->method('addStatus');
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame([], $formState->get('saveResults'));
+  }
+
+  public function testADuplicateNewCellNumberIsNotSavedAgain(): void {
+    $this->reportsMock->method('isDuplicateReport')
+      ->with($this->callback(static fn($r) => $r['type'] === 'Change' && $r['value'] === 'New cell number'
+        && $r['text'] === '503-555-1234'))
+      ->willReturn(TRUE);
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $this->votersMock->expects($this->never())->method('updateVoterPhone');
+    $formState = $this->buildActionFormState(99999, ['type' => 'updateContact', 'contactMethod' => 0,
+      'updateContact' => ['contactChange' => 'NC', 'newContact' => '503-555-1234']]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame([['status' => NlpDataEntryReports::DUPLICATE, 'text' => 'New cell number 503-555-1234']],
+      $formState->get('saveResults')[99999]);
+  }
+
+  public function testANewEmailIsSavedWhenNotADuplicate(): void {
+    $this->reportsMock->method('isDuplicateReport')->willReturn(FALSE);
+    $this->reportsMock->expects($this->once())->method('setNlReport')
+      ->with($this->callback(static fn($r) => $r['type'] === 'Change' && $r['text'] === 'a@b.org'));
+    $formState = $this->buildActionFormState(99999, ['type' => 'updateContact', 'contactMethod' => 0,
+      'updateContact' => ['contactChange' => 'NE', 'newContact' => 'a@b.org']]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame([['status' => NlpDataEntryReports::SAVED, 'text' => 'New email a@b.org']],
+      $formState->get('saveResults')[99999]);
+  }
+
+  public function testAnInvalidNewEmailIsShownAsNotSaved(): void {
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $formState = $this->buildActionFormState(99999, ['type' => 'updateContact', 'contactMethod' => 0,
+      'updateContact' => ['contactChange' => 'NE', 'newContact' => 'a@b']]);
+
+    $form = [];
+    $this->form->submitForm($form, $formState);
+
+    $this->assertSame(NlpDataEntryReports::NOT_SAVED, $formState->get('saveResults')[99999][0]['status']);
   }
 
   public function testSubmitFormWarnsAndSavesNothingWhenNlMissing(): void {
@@ -1056,9 +1427,9 @@ class DataEntryFormTest extends UnitTestCase {
   public function testSubmitFormSaveReportsUsesChosenContactDate(): void {
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): string {
         $reportedDate = $report['contactDate'];
-        return TRUE;
+        return NlpDataEntryReports::SAVED;
       });
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $formState->setValue('canvassDate', '2026-10-09');
@@ -1071,9 +1442,9 @@ class DataEntryFormTest extends UnitTestCase {
   public function testSubmitFormSaveReportsDefaultsContactDateToToday(): void {
     $reportedDate = NULL;
     $this->dataEntryReportsMock->expects($this->once())->method('noContactResponse')
-      ->willReturnCallback(static function (array $report) use (&$reportedDate): bool {
+      ->willReturnCallback(static function (array $report) use (&$reportedDate): string {
         $reportedDate = $report['contactDate'];
-        return TRUE;
+        return NlpDataEntryReports::SAVED;
       });
     $formState = $this->buildActionFormState(99999, ['type' => 'notContacted']);
     $form = [];

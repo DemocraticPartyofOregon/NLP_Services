@@ -26,6 +26,9 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'addNote')]
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'voterMoved')]
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'pledgeToVote')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'editReportText')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'reportTextProblem')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryReports::class, 'deleteVoterReport')]
 #[Group('nlpservices')]
 class NlpDataEntryReportsTest extends UnitTestCase {
 
@@ -342,10 +345,65 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->nlsMock->expects($this->once())->method('resultsReported');
     $this->awardsMock->expects($this->once())->method('nlParticipation');
 
-    $this->assertTrue($this->service->noContactResponse(
+    $this->assertSame(NlpDataEntryReports::SAVED, $this->service->noContactResponse(
       $this->baseReport(),
       $this->baseAction(['notContacted' => 2])
     ));
+  }
+
+  public function testNoContactResponseSkipsADuplicateAndSendsNothingToVoteBuilder(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Phone');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Left message');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->reportsMock->expects($this->once())->method('isDuplicateReport')
+      ->with($this->callback(static fn($r) => $r['type'] === 'contact' && $r['value'] === 'Left message'
+        && $r['contactDate'] === '2026-05-30'))
+      ->willReturn(TRUE);
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
+    $this->votersMock->expects($this->never())->method('updateTurfVoter');
+    $this->nlsMock->expects($this->never())->method('resultsReported');
+
+    $this->assertSame(NlpDataEntryReports::DUPLICATE, $this->service->noContactResponse(
+      $this->baseReport(),
+      $this->baseAction(['notContacted' => 2])
+    ));
+  }
+
+  public function testNoContactResponseSkipsASecondPostcardThisCycle(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Postcard');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Mailed');
+    $this->reportsMock->expects($this->once())->method('voterSentPostcard')->with(99999)->willReturn(TRUE);
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
+    $this->votersMock->expects($this->never())->method('updateTurfVoter');
+
+    $this->assertSame(NlpDataEntryReports::ALREADY_MAILED, $this->service->noContactResponse(
+      $this->baseReport(),
+      $this->baseAction(['notContacted' => 2])
+    ));
+  }
+
+  public function testNoContactResponseSavesTheFirstPostcard(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Postcard');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Mailed');
+    $this->reportsMock->method('voterSentPostcard')->willReturn(FALSE);
+    $this->reportsMock->method('isDuplicateReport')->willReturn(FALSE);
+    $this->reportsMock->expects($this->once())->method('setNlReport')->willReturn(5);
+
+    $this->assertSame(NlpDataEntryReports::SAVED, $this->service->noContactResponse(
+      $this->baseReport(),
+      $this->baseAction(['notContacted' => 2])
+    ));
+  }
+
+  public function testNoContactResponseDoesNotAskAboutPostcardsForOtherMethods(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
+    $this->nlpConfigurationMock->method('getContactResponse')->willReturn('Not home');
+    $this->reportsMock->expects($this->never())->method('voterSentPostcard');
+    $this->reportsMock->method('setNlReport')->willReturn(5);
+
+    $this->service->noContactResponse($this->baseReport(), $this->baseAction(['notContacted' => 2]));
   }
 
   public function testNoContactResponseSavesNothingWhenResponseUnknown(): void {
@@ -359,7 +417,7 @@ class NlpDataEntryReportsTest extends UnitTestCase {
     $this->nlsMock->expects($this->never())->method('resultsReported');
     $this->awardsMock->expects($this->never())->method('nlParticipation');
 
-    $this->assertFalse($this->service->noContactResponse(
+    $this->assertSame(NlpDataEntryReports::NOT_SAVED, $this->service->noContactResponse(
       $this->baseReport(),
       $this->baseAction(['notContacted' => 2])
     ));
@@ -589,6 +647,46 @@ class NlpDataEntryReportsTest extends UnitTestCase {
   // pledgeToVote
   // ---------------------------------------------------------------------------
 
+  public function testPledgeToVoteSkipsADuplicateAndSendsNothingToVoteBuilder(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')->willReturn([
+      'surveyQuestionId' => 10,
+      'name'             => 'Pledge',
+      'responses'        => [3 => ['name' => 'Yes']],
+    ]);
+    $this->votersMock->method('getVoterById')->willReturn([]);
+    $this->reportsMock->expects($this->once())->method('isDuplicateReport')
+      ->with($this->callback(static fn($r) => $r['type'] === 'Survey' && $r['value'] === 'Yes'))
+      ->willReturn(TRUE);
+    $this->reportsMock->expects($this->never())->method('setNlReport');
+    $this->apiSurveyQuestionMock->expects($this->never())->method('reportSurveyResponse');
+    $this->votersMock->expects($this->never())->method('updateTurfVoter');
+
+    $this->assertSame(NlpDataEntryReports::DUPLICATE, $this->service->pledgeToVote(
+      $this->baseReport(),
+      $this->baseAction(['surveyResponse' => 3, 'firstName' => 'Bob'])
+    ));
+  }
+
+  public function testPledgeToVoteSavesWhenNotADuplicate(): void {
+    $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
+    $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')->willReturn([
+      'surveyQuestionId' => 10,
+      'name'             => 'Pledge',
+      'responses'        => [3 => ['name' => 'Yes']],
+    ]);
+    $this->votersMock->method('getVoterById')->willReturn([]);
+    $this->reportsMock->method('isDuplicateReport')->willReturn(FALSE);
+    $this->reportsMock->expects($this->once())->method('setNlReport')->willReturn(20);
+
+    $this->assertSame(NlpDataEntryReports::SAVED, $this->service->pledgeToVote(
+      $this->baseReport(),
+      $this->baseAction(['surveyResponse' => 3, 'firstName' => 'Bob'])
+    ));
+  }
+
   public function testPledgeToVoteCallsSetNlReport(): void {
     $this->nlpConfigurationMock->method('getContactMethod')->willReturn('Walk');
     $this->nlpConfigurationMock->method('getCycle')->willReturn('2026');
@@ -693,6 +791,132 @@ class NlpDataEntryReportsTest extends UnitTestCase {
       $this->baseReport(),
       $this->baseAction(['surveyResponse' => 3, 'firstName' => 'Bob'])
     );
+  }
+
+  // ---------------------------------------------------------------------------
+  // editReportText
+  // ---------------------------------------------------------------------------
+
+  public function testEditReportTextCleansANoteLikeTheNoteBox(): void {
+    $this->reportsMock->expects($this->once())
+      ->method('updateComment')
+      ->with(['reportIndex' => 77, 'text' => 'Tom &amp; Ann<br>call back']);
+
+    $this->service->editReportText(['reportIndex' => 77, 'type' => 'Comment'], " <b>Tom & Ann</b>\ncall back ");
+  }
+
+  /**
+   * A report of a new email, or with $phoneType of a new phone number.
+   */
+  protected function typedChangeReport(string $phoneType = 'email', string $text = 'old@example.org'): array {
+    $this->reportsMock->method('typedChange')->willReturn($phoneType);
+    $value = ['email' => 'New email', 'cellPhone' => 'New cell number', 'homePhone' => 'New home number'][$phoneType];
+    return ['reportIndex' => 78, 'vanid' => 99999, 'type' => 'Change', 'value' => $value, 'text' => $text];
+  }
+
+  public function testEditReportTextKeepsAnEmailOnOneLineWithoutHtml(): void {
+    $this->reportsMock->expects($this->once())
+      ->method('updateComment')
+      ->with(['reportIndex' => 78, 'text' => 'new@example.org']);
+    $this->votersMock->expects($this->never())->method('updateVoterPhone');
+
+    $this->service->editReportText($this->typedChangeReport(), " <i>new@example.org</i>\n");
+  }
+
+  public function testEditReportTextShortensAnEmailToTheDataEntryLength(): void {
+    $this->reportsMock->expects($this->once())
+      ->method('updateComment')
+      ->with($this->callback(static fn(array $r) => mb_strlen($r['text']) === NlpDataEntryReports::MAX_CONTACT_TEXT));
+
+    $this->service->editReportText($this->typedChangeReport(), str_repeat('x', 2000));
+  }
+
+  public function testEditReportTextCorrectsTheVotersPhoneWhileItIsTheReportedNumber(): void {
+    $this->votersMock->method('getVoterById')->with(99999)->willReturn(['cellPhone' => '5035551243']);
+    $this->votersMock->expects($this->once())->method('updateVoterPhone')
+      ->with(99999, ['cellPhone' => '503-555-1234']);
+
+    $this->service->editReportText($this->typedChangeReport('cellPhone', '(503) 555-1243'), '503-555-1234');
+  }
+
+  public function testEditReportTextLeavesTheVotersPhoneWhenItHasSinceChanged(): void {
+    $this->votersMock->method('getVoterById')->willReturn(['homePhone' => '5419990000']);
+    $this->votersMock->expects($this->never())->method('updateVoterPhone');
+
+    $this->service->editReportText($this->typedChangeReport('homePhone', '503-555-1243'), '503-555-1234');
+  }
+
+  // ---------------------------------------------------------------------------
+  // reportTextProblem
+  // ---------------------------------------------------------------------------
+
+  public function testReportTextProblemRefusesAnInvalidPhoneNumber(): void {
+    $report = $this->typedChangeReport('cellPhone', '503-555-1243');
+    $this->assertNotSame('', $this->service->reportTextProblem($report, '503-555'));
+    $this->assertSame('', $this->service->reportTextProblem($report, '(503) 555-1234'));
+  }
+
+  public function testReportTextProblemRefusesAnInvalidEmail(): void {
+    $report = $this->typedChangeReport();
+    $this->assertNotSame('', $this->service->reportTextProblem($report, 'new@example'));
+    $this->assertSame('', $this->service->reportTextProblem($report, ' new@example.org '));
+  }
+
+  public function testReportTextProblemAcceptsAnyNote(): void {
+    $this->reportsMock->method('typedChange')->willReturn('');
+    $this->assertSame('', $this->service->reportTextProblem(['type' => 'Comment'], ''));
+  }
+
+  // ---------------------------------------------------------------------------
+  // deleteVoterReport
+  // ---------------------------------------------------------------------------
+
+  public function testDeleteVoterReportDeletesAndLeavesTheTurfVoterAloneWhenNotReferenced(): void {
+    $this->reportsMock->expects($this->once())->method('deleteReport')->with(77);
+    $this->votersMock->method('getTurfVoter')
+      ->willReturn(['turfIndex' => 42, 'pledgedToVote' => 10, 'attemptedContact' => 11]);
+    $this->votersMock->expects($this->never())->method('updateTurfVoter');
+
+    $this->service->deleteVoterReport(['reportIndex' => 77, 'vanid' => 99999, 'type' => 'Comment', 'value' => '']);
+  }
+
+  public function testDeleteVoterReportPointsThePledgeAtTheNextNewestSurveyReport(): void {
+    $this->votersMock->method('getTurfVoter')
+      ->willReturn(['turfIndex' => 42, 'pledgedToVote' => 77, 'attemptedContact' => 11]);
+    $this->reportsMock->method('getNlpTypeReports')->with(99999, NlpReports::SURVEY)
+      ->willReturn([['reportIndex' => 30], ['reportIndex' => 55]]);
+    $this->votersMock->expects($this->once())->method('updateTurfVoter')
+      ->with(['vanid' => 99999, 'turfIndex' => 42, 'pledgedToVote' => 55]);
+
+    $this->service->deleteVoterReport(['reportIndex' => 77, 'vanid' => 99999, 'type' => 'Survey', 'value' => 'Yes']);
+  }
+
+  public function testDeleteVoterReportClearsTheAttemptWhenNoOtherContactReport(): void {
+    $this->votersMock->method('getTurfVoter')
+      ->willReturn(['turfIndex' => 42, 'pledgedToVote' => 0, 'attemptedContact' => 77]);
+    $this->reportsMock->method('getNlpTypeReports')->with(99999, NlpReports::CONTACT)->willReturn([]);
+    $this->votersMock->expects($this->once())->method('updateTurfVoter')
+      ->with(['vanid' => 99999, 'turfIndex' => 42, 'attemptedContact' => 0]);
+
+    $this->service->deleteVoterReport(['reportIndex' => 77, 'vanid' => 99999, 'type' => 'contact', 'value' => 'Left message']);
+  }
+
+  public function testDeleteVoterReportClearsMovedWhenTheLastMovedReportIsDeleted(): void {
+    $this->votersMock->method('getTurfVoter')
+      ->willReturn(['turfIndex' => 42, 'pledgedToVote' => 0, 'attemptedContact' => 0]);
+    $this->reportsMock->method('getReport')->willReturn([]);
+    $this->votersMock->expects($this->once())->method('setMovedStatus')->with(42, 99999, FALSE);
+
+    $this->service->deleteVoterReport(['reportIndex' => 77, 'vanid' => 99999, 'type' => 'contact', 'value' => 'Moved']);
+  }
+
+  public function testDeleteVoterReportKeepsMovedWhileAnotherMovedReportRemains(): void {
+    $this->votersMock->method('getTurfVoter')
+      ->willReturn(['turfIndex' => 42, 'pledgedToVote' => 0, 'attemptedContact' => 0]);
+    $this->reportsMock->method('getReport')->willReturn(['reportIndex' => 60]);
+    $this->votersMock->expects($this->never())->method('setMovedStatus');
+
+    $this->service->deleteVoterReport(['reportIndex' => 77, 'vanid' => 99999, 'type' => 'contact', 'value' => 'Moved']);
   }
 
 }

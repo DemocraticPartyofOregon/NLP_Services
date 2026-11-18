@@ -24,7 +24,12 @@ class NlpVoters {
   protected NlpReports $reportsObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct( $connection, $matchbacksObj, $reportsObj, $nlpConfigurationObj) {
+  public function __construct(
+    Connection $connection,
+    NlpMatchbacks $matchbacksObj,
+    NlpReports $reportsObj,
+    NlpConfiguration $nlpConfigurationObj,
+  ) {
     $this->connection = $connection;
     $this->matchbacksObj = $matchbacksObj;
     $this->reportsObj = $reportsObj;
@@ -420,7 +425,7 @@ class NlpVoters {
       return [];
     }
 
-    return $result->fetchAssoc();
+    return $result->fetchAssoc() ?: [];
   }
 
   /**

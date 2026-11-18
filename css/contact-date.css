@@ -1,0 +1,13 @@
+/*
+ * @file
+ * The note under the date of a voter contact (js/contact-date.js).  The date
+ * bar's date box is narrow, so the note opens below it, over the page.
+ */
+
+div.canvass_date, .form-type-date { position: relative; }
+.nlp-contact-date-note { position: absolute; left: 0; top: 100%; z-index: 20; width: 260px;
+    margin: 2px 0 0 0; padding: 4px 6px; font-size: x-small; font-weight: bold; line-height: 1.2;
+    background: #ffffff; border: 2px solid currentColor; border-radius: 5px; }
+.nlp-contact-date-note[hidden] { display: none; }
+.nlp-contact-date-future { color: #c62828; }
+.nlp-contact-date-late { color: #8a6d00; }

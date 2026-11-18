@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace Drupal\Tests\nlpservices\Unit\Form;
 
 use Drupal\Core\Form\FormState;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\ApiSurveyQuestion;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\Form\DataEntryPostcardsForm;
 use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpContactDate;
 use Drupal\nlpservices\NlpDataEntryVoters;
 use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpReports;
@@ -18,6 +20,7 @@ use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\MockObject\MockObject;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RequestStack;
 
@@ -39,6 +42,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   private NlpDataEntryVoters $dataEntryVotersMock;
   private NlpConfiguration $configurationMock;
   private ApiSurveyQuestion $apiSurveyQuestionMock;
+  private MessengerInterface&MockObject $messengerMock;
 
   protected function setUp(): void {
     parent::setUp();
@@ -51,6 +55,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $this->dataEntryVotersMock   = $this->createMock(NlpDataEntryVoters::class);
     $this->configurationMock     = $this->createMock(NlpConfiguration::class);
     $this->apiSurveyQuestionMock = $this->createMock(ApiSurveyQuestion::class);
+    $this->messengerMock         = $this->createMock(MessengerInterface::class);
   }
 
   // -------------------------------------------------------------------------
@@ -71,7 +76,94 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
     $requestStack = new RequestStack();
     $requestStack->push(Request::create('/', 'POST', [], [], [], ['REMOTE_ADDR' => '203.0.113.7']));
     $form->setRequestStack($requestStack);
+    $form->setStringTranslation($this->getStringTranslationStub());
+    $form->setMessenger($this->messengerMock);
     return $form;
+  }
+
+  // ---------------------------------------------------------------------------
+  // The date the cards were mailed, and the confirmation
+  // ---------------------------------------------------------------------------
+
+  public function testAFutureMailingDateIsRejectedOnSubmit(): void {
+    $formState = new FormState();
+    $formState->setValues(['canvassDate' => date('Y-m-d', strtotime('+1 day')), 'allVoters' => 0]);
+    $formState->setTriggeringElement(['#type' => 'submit', '#name' => 'op']);
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+
+    $this->assertStringContainsString(NlpContactDate::FUTURE_MSG, (string) $formState->getErrors()['canvassDate']);
+  }
+
+  public function testTheAllVotersCheckboxIsNotHeldUpByTheDate(): void {
+    $formState = new FormState();
+    $formState->setValues(['canvassDate' => date('Y-m-d', strtotime('+1 day')), 'allVoters' => 1]);
+    $formState->setTriggeringElement(['#type' => 'checkbox', '#name' => 'allVoters']);
+
+    $form = [];
+    $this->buildFormInstance()->validateForm($form, $formState);
+
+    $this->assertSame([], $formState->getErrors());
+  }
+
+  public function testSavedPostcardsAreConfirmedWithTheReminderWhenLate(): void {
+    $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
+    $this->configurationMock->method('getCanvassResponseCodes')->willReturn($this->baseCanvassResponseCodes());
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
+    $statuses = [];
+    $this->messengerMock->method('addStatus')->willReturnCallback(
+      function ($message) use (&$statuses) { $statuses[] = (string) $message; return $this->messengerMock; });
+    $this->messengerMock->expects($this->once())->method('addWarning')->with(NlpContactDate::LATE_MSG);
+
+    $formState = new FormState();
+    $formState->set('rep', 1);
+    $formState->setValues([
+      'canvassDate' => date('Y-m-d', strtotime('-10 days')),
+      'voter-1-11111' => 1,
+      'voter-1-22222' => 1,
+      'allVoters' => 0,
+    ]);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertSame(['Your postcard reports were saved for Voter 11111 and Voter 22222.  Thank you!'], $statuses);
+  }
+
+  public function testAVoterWithAPostcardAlreadyReportedIsSkippedAndNamed(): void {
+    $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
+    $this->configurationMock->method('getCanvassResponseCodes')->willReturn($this->baseCanvassResponseCodes());
+    $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
+    $this->votersMock->method('getVoterById')->willReturnCallback(static fn(int $vanid) => [
+      11111 => ['firstName' => 'Ann', 'lastName' => 'Lee'],
+      22222 => ['firstName' => 'Bob', 'lastName' => 'Smith'],
+    ][$vanid]);
+    // Bob already has a postcard this cycle, from anyone on any date.
+    $this->reportsMock->method('voterSentPostcard')->willReturnCallback(static fn(int $vanid) => $vanid === 22222);
+    $this->reportsMock->expects($this->once())->method('setNlReport')
+      ->with($this->callback(static fn(array $r) => $r['vanid'] === 11111));
+    $this->apiSurveyQuestionMock->expects($this->once())->method('reportSurveyResponse');
+    $statuses = [];
+    $this->messengerMock->method('addStatus')->willReturnCallback(
+      function ($message) use (&$statuses) { $statuses[] = (string) $message; return $this->messengerMock; });
+
+    $formState = new FormState();
+    $formState->set('rep', 1);
+    $formState->setValues([
+      'canvassDate' => date('Y-m-d'),
+      'voter-1-11111' => 1,
+      'voter-1-22222' => 1,
+      'allVoters' => 0,
+    ]);
+
+    $form = [];
+    $this->buildFormInstance()->submitForm($form, $formState);
+
+    $this->assertSame([
+      'Your postcard reports were saved for Ann Lee.  Thank you!',
+      'A postcard was already reported this election, so not saved again: Bob Smith.',
+    ], $statuses);
   }
 
   private function baseVoter(int $vanid = 11111): array {

@@ -11,6 +11,7 @@ use Drupal\Core\Language\LanguageInterface;
 use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\nlpservices\NlpConfiguration;
+use Drupal\nlpservices\NlpDataEntryReports;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
 use Drupal\nlpservices\NlpReports;
 use Drupal\nlpservices\NlpSessionData;
@@ -676,10 +677,192 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $this->assertSame('2026-10-01[Walk] Left lit', $cell['list']['contacts']['#markup']);
   }
 
+  public function testSaveResultsAreShownAboveTheVotersStatus(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Door']);
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')
+      ->willReturn(['scriptQuestion' => 'Will you vote?', 'responses' => []]);
+    $this->nlpConfigurationMock->method('getContactResponses')->willReturn([]);
+    $voterArray = $this->service->buildDataEntryVoterArray($this->baseVoter());
+
+    $form = $this->service->buildVoterDataEntryTable([$voterArray], ['99999' => [
+      ['status' => NlpDataEntryReports::SAVED, 'text' => '[Phone] Left message'],
+      ['status' => NlpDataEntryReports::DUPLICATE, 'text' => 'New email a@b.org'],
+      ['status' => NlpDataEntryReports::NOT_SAVED, 'text' => 'New cell number <b>5</b>'],
+      ['status' => NlpDataEntryReports::ALREADY_MAILED, 'text' => '[Postcard] Mailed'],
+    ]]);
+
+    $html = (string) $form['dataEntry']['row_5_99999']['col_5_1']['#markup'];
+    $this->assertStringContainsString('<div class="voter-save-saved">&#10004; Saved: [Phone] Left message</div>', $html);
+    $this->assertStringContainsString('Already saved for this date, so not saved again: New email a@b.org', $html);
+    // What was typed is escaped.
+    $this->assertStringContainsString('Not saved: New cell number &lt;b&gt;5&lt;/b&gt;', $html);
+    $this->assertStringContainsString(
+      'A postcard was already reported this election, so not saved again: [Postcard] Mailed', $html);
+    // The results come before the status line.
+    $this->assertLessThan(strpos($html, 'Voter contact status:'), strpos($html, 'voter-save-results'));
+  }
+
+  public function testNoSaveResultsShowsOnlyTheStatus(): void {
+    $form = $this->buildTableWithHistory('');
+
+    $html = (string) $form['dataEntry']['row_5_99999']['col_5_1']['#markup'];
+    $this->assertStringNotContainsString('voter-save-results', $html);
+    $this->assertStringContainsString('Voter contact status:', $html);
+  }
+
   public function testHistoricalContactsOmittedWhenThereAreNone(): void {
     $form = $this->buildTableWithHistory('');
 
     $this->assertArrayNotHasKey('line_2_4_3', $form['dataEntry']['row_2_99999']['col_2_4']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // The Edit button and its list of reports
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The voter's reports, keyed by vanid as from NlpReports::getNlpReports().
+   */
+  protected function voterContacts(): array {
+    return ['99999' => [
+      ['reportIndex' => 77, 'mcid' => 101, 'type' => 'Comment', 'value' => '', 'text' => 'Tom &amp; Ann<br>call back'],
+      ['reportIndex' => 78, 'mcid' => 202, 'type' => 'contact', 'value' => 'Left message', 'text' => ''],
+      ['reportIndex' => 79, 'mcid' => 101, 'type' => 'Activist', 'value' => 1, 'text' => 'NLPHostile'],
+    ]];
+  }
+
+  /**
+   * Builds the table for one voter with voterContacts(), as NL 101.  The NL
+   * may change their own reports (77 and 79); 79's text can't be changed.
+   */
+  protected function buildTableWithEditableReports(): array {
+    $this->reportsMock->method('canEditReport')
+      ->willReturnCallback(static fn(array $r, int $mcid, bool $imp) => $imp || $r['mcid'] === $mcid);
+    $this->reportsMock->method('formatNlReport')
+      ->willReturnCallback(static fn(array $r) => 'line ' . $r['reportIndex']);
+    $this->reportsMock->method('isTextEditable')
+      ->willReturnCallback(static fn(array $r) => $r['type'] !== 'Activist');
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Door']);
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')
+      ->willReturn(['scriptQuestion' => 'Will you vote?', 'responses' => []]);
+    $this->nlpConfigurationMock->method('getContactResponses')->willReturn([]);
+    $voterArray = $this->service->buildDataEntryVoterArray(
+      $this->baseVoter([
+        'historic' => ['display' => 'some contacts', 'displayLines' => 1],
+        'contacts' => $this->voterContacts(),
+      ]), 101, FALSE);
+    return $this->service->buildVoterDataEntryTable([$voterArray]);
+  }
+
+  public function testEditableReportsAreTheOnesTheUserMayChange(): void {
+    $this->reportsMock->method('canEditReport')
+      ->willReturnCallback(static fn(array $r, int $mcid, bool $imp) => $imp || $r['mcid'] === $mcid);
+    $this->reportsMock->method('formatNlReport')->willReturn('line');
+    $this->reportsMock->method('isTextEditable')->willReturn(TRUE);
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $voter = $this->baseVoter(['contacts' => $this->voterContacts()]);
+
+    $asNl = $this->service->buildDataEntryVoterArray($voter, 101, FALSE);
+    $asImpersonator = $this->service->buildDataEntryVoterArray($voter, 101, TRUE);
+    $noNl = $this->service->buildDataEntryVoterArray($voter);
+
+    $this->assertSame([77, 79], array_keys($asNl['editableReports']));
+    $this->assertSame([77, 78, 79], array_keys($asImpersonator['editableReports']));
+    $this->assertSame([], $noNl['editableReports']);
+    // A note's saved <br> and HTML entities are turned back into what was typed.
+    $this->assertSame("Tom & Ann\ncall back", $asNl['editableReports'][77]['text']);
+    $this->assertSame(NlpReports::MAX_COMMENT, $asNl['editableReports'][77]['maxLength']);
+  }
+
+  public function testEditableReportsSkipReportsNotInTheHistoricalContacts(): void {
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->reportsMock->method('formatNlReport')->willReturn('');
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+
+    $result = $this->service->buildDataEntryVoterArray(
+      $this->baseVoter(['contacts' => $this->voterContacts()]), 101, TRUE);
+
+    $this->assertSame([], $result['editableReports']);
+  }
+
+  public function testEditButtonOpensAListOfTheEditableReports(): void {
+    $form = $this->buildTableWithEditableReports();
+
+    $cell = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3'];
+    $this->assertSame('Edit', $cell['editButton']['#value']);
+    $this->assertSame('button', $cell['editButton']['#attributes']['type']);
+    $this->assertContains('report-edit-toggle', $cell['editButton']['#attributes']['class']);
+    $this->assertSame('hidden', $cell['edit']['#attributes']['hidden']);
+    $this->assertArrayHasKey('report_77', $cell['edit']);
+    $this->assertArrayHasKey('report_79', $cell['edit']);
+    $this->assertArrayNotHasKey('report_78', $cell['edit']);
+  }
+
+  public function testEachEditableReportHasDeleteAndEditWithASaveButton(): void {
+    $form = $this->buildTableWithEditableReports();
+
+    $item = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3']['edit']['report_77'];
+    $this->assertStringContainsString('line 77', $item['display']['#markup']);
+    $this->assertSame('submit', $item['buttons']['delete']['#type']);
+    $this->assertSame('report_delete-77', $item['buttons']['delete']['#name']);
+    $this->assertSame('button', $item['buttons']['edit']['#attributes']['type']);
+    $this->assertSame('hidden', $item['textArea']['#attributes']['hidden']);
+    $this->assertSame("Tom & Ann\ncall back", $item['textArea']['text']['#default_value']);
+    $this->assertSame('report_save-77', $item['textArea']['save']['#name']);
+  }
+
+  public function testAPhoneNumberOrEmailIsCorrectedInAOneLineBox(): void {
+    $this->reportsMock->method('canEditReport')->willReturn(TRUE);
+    $this->reportsMock->method('formatNlReport')->willReturn('line');
+    $this->reportsMock->method('isTextEditable')->willReturn(TRUE);
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Door']);
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')
+      ->willReturn(['scriptQuestion' => 'Will you vote?', 'responses' => []]);
+    $this->nlpConfigurationMock->method('getContactResponses')->willReturn([]);
+    $voterArray = $this->service->buildDataEntryVoterArray($this->baseVoter([
+      'historic' => ['display' => 'some contacts', 'displayLines' => 1],
+      'contacts' => ['99999' => [
+        ['reportIndex' => 80, 'mcid' => 101, 'type' => 'Change', 'value' => 'New email', 'text' => 'a@b.org'],
+      ]],
+    ]), 101, FALSE);
+
+    $form = $this->service->buildVoterDataEntryTable([$voterArray]);
+
+    $text = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3']['edit']['report_80']['textArea']['text'];
+    $this->assertSame('textfield', $text['#type']);
+    $this->assertSame('a@b.org', $text['#default_value']);
+    $this->assertSame(NlpDataEntryReports::MAX_CONTACT_TEXT, $text['#maxlength']);
+  }
+
+  public function testANoteIsCorrectedInABoxOfSeveralLines(): void {
+    $form = $this->buildTableWithEditableReports();
+
+    $text = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3']['edit']['report_77']['textArea']['text'];
+    $this->assertSame('textarea', $text['#type']);
+    $this->assertSame(NlpReports::MAX_COMMENT, $text['#maxlength']);
+  }
+
+  public function testAReportWhoseTextCantChangeHasOnlyDelete(): void {
+    $form = $this->buildTableWithEditableReports();
+
+    $item = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3']['edit']['report_79'];
+    $this->assertSame('report_delete-79', $item['buttons']['delete']['#name']);
+    $this->assertArrayNotHasKey('edit', $item['buttons']);
+    $this->assertArrayNotHasKey('textArea', $item);
+  }
+
+  public function testNoEditButtonWithoutEditableReports(): void {
+    $form = $this->buildTableWithHistory('2026-10-01[Walk] Left lit');
+
+    $cell = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3'];
+    $this->assertArrayNotHasKey('editButton', $cell);
+    $this->assertArrayNotHasKey('edit', $cell);
   }
 
 }

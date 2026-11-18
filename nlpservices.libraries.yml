@@ -28,12 +28,22 @@ info-boxes:
     layout:
       css/info-boxes.css: {}
 data-entry-table:
-  version: "1.0.1"
+  version: "1.0.4"
   css:
     layout:
       css/data-entry-table.css: {}
   js:
     js/historical-contacts.js: {}
+  dependencies:
+    - core/drupal
+    - core/once
+contact-date:
+  version: "1.0.0"
+  css:
+    component:
+      css/contact-date.css: {}
+  js:
+    js/contact-date.js: {}
   dependencies:
     - core/drupal
     - core/once

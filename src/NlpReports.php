@@ -314,37 +314,10 @@ class NlpReports {
     if(empty($voterReports)) {return $voterReportsDisplay;}
     foreach ($voterReports as $reports) {
       foreach ($reports as $report) {
-        if(empty($report['type'])) {continue;}
-        $reportType = strtolower($report['type']);
-        $reportDisplay = '';
-        switch ($reportType) {
-          case 'contact':
-            $reportDisplay = $report['value'].' '.$report['text'];
-            break;
-          case 'comment':
-            $reportDisplay = $report['text'];
-            break;
-          case 'survey':
-            $reportDisplay = $report['text'].': '.$report['value'];
-            break;
-          case 'activist':
-            $activistCodeName = $report['text'];
-            $activistCodeValue = $report['value'];
-            $activistDisplay = ($activistCodeValue)?'Yes':'No';
-            $reportDisplay = $activistCodeName.': '.$activistDisplay;
-            break;
-        }
-        if(!empty($reportDisplay)) {
+        $newReport = $this->formatNlReport($report);
+        if($newReport !== '') {
           if (!empty($voterReportsDisplay['display'])) {
             $voterReportsDisplay['display'] .= '<br/>';
-          }
-          $newReport = $report['contactDate'].'['.$report['contactType'].'] '.$reportDisplay;
-          // The NL who made the report, only when both names are known
-          // (NlpDataEntryVoters::addNlNames() fills in names missing from older reports).
-          $nickname = trim((string)($report['nickname'] ?? ''));
-          $lastName = trim((string)($report['lastName'] ?? ''));
-          if ($nickname !== '' && $lastName !== '') {
-            $newReport .= ' (By '.Html::escape($nickname.' '.$lastName).')';
           }
           $voterReportsDisplay['display'] .= $newReport;
           $lines = ceil(strlen($newReport)/60);
@@ -353,6 +326,113 @@ class NlpReports {
       }
     }
     return $voterReportsDisplay;
+  }
+
+  /**
+   * formatNlReport
+   *
+   * The line the historical voter contacts show for one report: the date, the
+   * contact type, what was reported and, when both names are known, the NL who
+   * made it.
+   *
+   * @param array $report - a row of the results table.
+   * @return string - '' for a report the historical contacts don't show.
+   */
+  public function formatNlReport(array $report): string
+  {
+    if(empty($report['type'])) {return '';}
+    $reportDisplay = '';
+    switch (strtolower($report['type'])) {
+      case 'contact':
+        $reportDisplay = $report['value'].' '.$report['text'];
+        break;
+      case 'comment':
+        $reportDisplay = $report['text'];
+        break;
+      case 'survey':
+        $reportDisplay = $report['text'].': '.$report['value'];
+        break;
+      case 'activist':
+        $activistCodeName = $report['text'];
+        $activistCodeValue = $report['value'];
+        $activistDisplay = ($activistCodeValue)?'Yes':'No';
+        $reportDisplay = $activistCodeName.': '.$activistDisplay;
+        break;
+      case 'change':
+        // New phone numbers and email, bad numbers, opt outs, lawn signs and
+        // rides.  A bad number report keeps the phone type (cellPhone or
+        // homePhone) in the text and the number in the value.
+        $text = (string)($report['text'] ?? '');
+        $value = rtrim((string)($report['value'] ?? ''));
+        $reportDisplay = in_array($text, ['cellPhone', 'homePhone'], TRUE) ? $value : trim($value.' '.$text);
+        break;
+    }
+    if(empty($reportDisplay)) {return '';}
+    $line = $report['contactDate'].'['.$report['contactType'].'] '.$reportDisplay;
+    // The NL who made the report, only when both names are known
+    // (NlpDataEntryVoters::addNlNames() fills in names missing from older reports).
+    $nickname = trim((string)($report['nickname'] ?? ''));
+    $lastName = trim((string)($report['lastName'] ?? ''));
+    if ($nickname !== '' && $lastName !== '') {
+      $line .= ' (By '.Html::escape($nickname.' '.$lastName).')';
+    }
+    return $line;
+  }
+
+  /**
+   * canEditReport
+   *
+   * Whether the data entry page lets the user change or delete a report.  An
+   * NL may change only their own reports from the current election cycle.  A
+   * coordinator or admin impersonating the NL may change any report.
+   *
+   * @param array $report - a row of the results table.
+   * @param int $mcid - the NL whose data entry page this is.
+   * @param bool $impersonating - a coordinator or admin is acting as the NL.
+   * @return bool
+   */
+  public function canEditReport(array $report, int $mcid, bool $impersonating): bool
+  {
+    if ($impersonating) {return TRUE;}
+    return $mcid > 0
+      && (int)($report['mcid'] ?? 0) === $mcid
+      && (string)($report['cycle'] ?? '') === (string)$this->cycle;
+  }
+
+  /**
+   * isTextEditable
+   *
+   * Whether a report's text can be changed, to correct typing: only a note or
+   * a new phone number or email the NL typed.  Every other report can only be
+   * deleted.
+   *
+   * @param array $report - a row of the results table.
+   * @return bool
+   */
+  public function isTextEditable(array $report): bool
+  {
+    $type = strtolower((string)($report['type'] ?? ''));
+    if ($type === 'comment') {return TRUE;}
+    return $type === 'change' && $this->typedChange($report) !== '';
+  }
+
+  /**
+   * typedChange
+   *
+   * For a report of a new phone number or email, which of them it is.
+   *
+   * @param array $report - a row of the results table.
+   * @return string - 'cellPhone', 'homePhone' or 'email', or '' for any other report.
+   */
+  public function typedChange(array $report): string
+  {
+    if (strtolower((string)($report['type'] ?? '')) !== 'change') {return '';}
+    return match (strtolower(trim((string)($report['value'] ?? '')))) {
+      'new cell number' => 'cellPhone',
+      'new home number' => 'homePhone',
+      'new email' => 'email',
+      default => '',
+    };
   }
   
   /**
@@ -412,6 +492,45 @@ class NlpReports {
     catch (Exception $e) {
       nlp_debug_msg('updateReportsMissingNlName', $e);
     }
+  }
+
+  /**
+   * isDuplicateReport
+   *
+   * Whether the NL already saved this same report for this voter with this
+   * same contact date: the same type, value and text.  Volunteers often
+   * report the same attempt again when they don't see their first report,
+   * so the data entry page skips the copy.  A report on another day is a new
+   * attempt, not a duplicate.
+   *
+   * @param array $report - the report about to be saved: vanid, mcid,
+   *   contactDate, type, value, text and, optionally, cycle.
+   * @return bool
+   */
+  public function isDuplicateReport(array $report): bool
+  {
+    try {
+      $query = $this->connection->select(self::NLP_RESULTS_TBL, 'r');
+      $query->addField('r', 'reportIndex');
+      $query->condition('vanid', $report['vanid']);
+      $query->condition('mcid', $report['mcid']);
+      $query->condition('cycle', !empty($report['cycle']) ? $report['cycle'] : $this->cycle);
+      $query->condition('contactDate', $report['contactDate']);
+      $query->condition('type', $report['type']);
+      $query->condition('value', (string)($report['value'] ?? ''));
+      $text = (string)($report['text'] ?? '');
+      if ($text === '') {
+        $query->condition($query->orConditionGroup()->isNull('text')->condition('text', ''));
+      } else {
+        $query->condition('text', $text);
+      }
+      $count = $query->countQuery()->execute()->fetchField();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('isDuplicateReport', $e);
+      return FALSE;
+    }
+    return $count > 0;
   }
 
   /**

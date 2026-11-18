@@ -255,12 +255,13 @@ class NlpDataEntryDateBar
     $form_element['date-cell'] = [
       '#markup'=>" \n ".'<!-- date cell --><div class="canvass_date">',
     ];
-    $form_element['canvassDate'] = [
+    // No future date, and a reminder for a late one (NlpContactDate).
+    $form_element['canvassDate'] = NlpContactDate::dateElement([
       '#type' => 'date',
       '#title' => t('Date of the voter contact'),
       // Picking a date alone is not a report to save (unsaved-changes.js).
       '#attributes' => ['class' => ['nlp-not-an-edit']],
-    ];
+    ]);
     if(!empty($defaultDate)) {
       $form_element['canvassDate']['#default_value'] = $defaultDate;
     }

@@ -12,6 +12,7 @@ use Drupal\nlpservices\NlpNls;
 use Drupal\nlpservices\NlpDataEntryVoters;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\ApiSurveyQuestion;
+use Drupal\nlpservices\NlpContactDate;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class DataEntryPostcardsForm extends FormBase
@@ -85,11 +86,12 @@ class DataEntryPostcardsForm extends FormBase
     ];
 
     $defaultDate = $form_state->get('canvassDate');
-    $form['postcards']['canvassDate'] = [
+    // No future date, and a reminder for a late one (NlpContactDate).
+    $form['postcards']['canvassDate'] = NlpContactDate::dateElement([
       '#type' => 'date',
       '#title' => 'Date of the voter contact',
       '#default_value' => $defaultDate,
-    ];
+    ]);
 
     $form['postcards']['AllVotersDescription'] = [
       '#markup' => '<p>Check the <b>All Voters</b> box below to select all the
@@ -167,6 +169,13 @@ sent.  There is no need to report this an additional time.</p>',
       $form_state->set('allVoters', FALSE);
     }
 
+    // The date the cards were mailed can't be in the future.  Only a submit
+    // saves; the All Voters checkbox just redraws the list.
+    $isSubmit = ($form_state->getTriggeringElement()['#type'] ?? '') === 'submit';
+    $dateProblem = NlpContactDate::problem((string)($values['canvassDate'] ?? ''));
+    if ($isSubmit && $dateProblem !== '') {
+      $form_state->setErrorByName('canvassDate', $dateProblem . '  Nothing was saved; fix the date and submit again.');
+    }
   }
 
   /**
@@ -186,18 +195,46 @@ sent.  There is no need to report this an additional time.</p>',
     $canvassDate = $values['canvassDate'];
 
     // For each voter with the checkbox checked, report the postcard mailed.
+    $reported = $skipped = [];
     foreach ($values as $valueIndex=>$value) {
       $valueIndexParts =  explode('-',$valueIndex);
       if($valueIndexParts[0] == 'voter') {
         if(!empty($value)) {
-          $vanid = $valueIndexParts[2];
-          $this->reportPostcardMailed($vanid,$canvassDate,$mcid);
+          $vanid = (int) $valueIndexParts[2];
+          $voter = $this->votersObj->getVoterById($vanid);
+          $name = trim(($voter['firstName'] ?? '') . ' ' . ($voter['lastName'] ?? '')) ?: 'Voter ' . $vanid;
+          if ($this->reportPostcardMailed($vanid,$canvassDate,$mcid)) {
+            $reported[] = $name;
+          } else {
+            $skipped[] = $name;
+          }
         }
       }
+    }
+    // Let the volunteer see whose reports were saved, and whose were skipped.
+    if (!empty($reported)) {
+      $this->messenger()->addStatus($this->t('Your postcard reports were saved for @names.  Thank you!',
+        ['@names' => $this->listNames($reported)]));
+      if (NlpContactDate::isLate((string) $canvassDate)) {
+        $this->messenger()->addWarning(NlpContactDate::LATE_MSG);
+      }
+    }
+    if (!empty($skipped)) {
+      $this->messenger()->addStatus($this->t('A postcard was already reported this election, so not saved again: @names.',
+        ['@names' => $this->listNames($skipped)]));
     }
 
     $form_state->set('allVoters', FALSE);
     $form_state->setUserInput(['allVoters'=>0,]);
+  }
+
+  /**
+   * "Ann Lee", "Ann Lee and Bob Smith", or "Ann Lee, Bob Smith and Carl Diaz".
+   */
+  private function listNames(array $names): string
+  {
+    $last = array_pop($names);
+    return empty($names) ? (string) $last : implode(', ', $names) . ' and ' . $last;
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -227,10 +264,16 @@ sent.  There is no need to report this an additional time.</p>',
    * @param int $vanid
    * @param string $canvassDate
    * @param int $mcid
-   * @return void
+   * @return bool - FALSE if a postcard was already reported for the voter
+   *   this cycle, so nothing was reported.
    */
-  public function reportPostcardMailed(int $vanid, string $canvassDate, int $mcid): void
+  public function reportPostcardMailed(int $vanid, string $canvassDate, int $mcid): bool
   {
+    // A voter gets one postcard a cycle: once anyone has reported one, on any
+    // date, it isn't reported again (here or to VoteBuilder).
+    if ($this->reportsObj->voterSentPostcard($vanid)) {
+      return FALSE;
+    }
     $county = $this->sessionDataObj->getCounty();
 
     // Get the canvass response codes for the Postcard contact method.
@@ -281,6 +324,7 @@ sent.  There is no need to report this an additional time.</p>',
 
     // This NL has reported results.
     $this->nlsObj->resultsReported($mcid,$county);
+    return TRUE;
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

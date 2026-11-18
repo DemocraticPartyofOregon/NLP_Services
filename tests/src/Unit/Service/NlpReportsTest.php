@@ -57,6 +57,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private function buildConditionMock(): Condition {
       $condMock = $this->createMock(Condition::class);
       $condMock->method('condition')->willReturnSelf();
+      $condMock->method('isNull')->willReturnSelf();
       return $condMock;
     }
 
@@ -1062,6 +1063,151 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $service = $this->buildService();
       $service->insertNlReports(['vanid' => 999, 'type' => 'Survey']);
       $service->flushNlReports();
+    }
+
+    // -------------------------------------------------------------------------
+    // formatNlReport()
+    // -------------------------------------------------------------------------
+
+    public function testFormatNlReportGivesTheHistoricalContactsLine(): void {
+      $report = ['type' => 'Contact', 'value' => 'Left message', 'text' => '', 'contactDate' => '2026-10-01',
+        'contactType' => 'Phone', 'nickname' => 'Jane', 'lastName' => 'Doe'];
+      $this->assertSame('2026-10-01[Phone] Left message  (By Jane Doe)', $this->buildService()->formatNlReport($report));
+    }
+
+    public function testFormatNlReportIsEmptyForATypeTheContactsDontShow(): void {
+      $report = ['type' => 'Unknown', 'value' => 'x', 'text' => 'y', 'contactDate' => '2026-10-01',
+        'contactType' => 'Walk'];
+      $this->assertSame('', $this->buildService()->formatNlReport($report));
+    }
+
+    public function testFormatNlReportShowsANewEmail(): void {
+      $report = ['type' => 'Change', 'value' => 'New email', 'text' => 'a@b.org', 'contactDate' => '2026-10-01',
+        'contactType' => 'Walk'];
+      $this->assertSame('2026-10-01[Walk] New email a@b.org', $this->buildService()->formatNlReport($report));
+    }
+
+    public function testFormatNlReportShowsABadNumberWithoutItsPhoneType(): void {
+      $report = ['type' => 'change', 'value' => 'Wrong number: (503) 555-1234', 'text' => 'cellPhone',
+        'contactDate' => '2026-10-01', 'contactType' => 'Phone'];
+      $this->assertSame('2026-10-01[Phone] Wrong number: (503) 555-1234', $this->buildService()->formatNlReport($report));
+    }
+
+    public function testFormatNlReportShowsAnOptOutWithOneSpace(): void {
+      $report = ['type' => 'Change', 'value' => 'Opt out of texting: ', 'text' => '(503) 555-1234',
+        'contactDate' => '2026-10-01', 'contactType' => 'Phone'];
+      $this->assertSame('2026-10-01[Phone] Opt out of texting: (503) 555-1234', $this->buildService()->formatNlReport($report));
+    }
+
+    public function testDisplayNlReportsIncludesChangeReports(): void {
+      $input = [[
+        ['type' => 'Change', 'value' => 'Needs ride to polls', 'text' => '', 'contactDate' => '2026-10-01', 'contactType' => 'Walk'],
+      ]];
+      $this->assertSame('2026-10-01[Walk] Needs ride to polls', $this->buildService()->displayNlReports($input)['display']);
+    }
+
+    // -------------------------------------------------------------------------
+    // isDuplicateReport()
+    // -------------------------------------------------------------------------
+
+    private function attemptReport(): array {
+      return ['vanid' => 999, 'mcid' => 101, 'contactDate' => '2026-10-01', 'type' => 'contact',
+        'value' => 'Left message', 'text' => ''];
+    }
+
+    public function testIsDuplicateReportWhenTheSameReportWasSavedForTheDate(): void {
+      $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(1));
+      $this->assertTrue($this->buildService()->isDuplicateReport($this->attemptReport()));
+    }
+
+    public function testIsDuplicateReportNotWhenNothingMatches(): void {
+      $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(0));
+      $this->assertFalse($this->buildService()->isDuplicateReport($this->attemptReport()));
+    }
+
+    public function testIsDuplicateReportMatchesTheNlVoterDateTypeValueAndCycle(): void {
+      $conditions = [];
+      $selectMock = $this->createMock(Select::class);
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchField')->willReturn(0);
+      $countMock = $this->createMock(Select::class);
+      $countMock->method('execute')->willReturn($stmtMock);
+      $selectMock->method('addField')->willReturnSelf();
+      $selectMock->method('orConditionGroup')->willReturn($this->buildConditionMock());
+      $selectMock->method('countQuery')->willReturn($countMock);
+      $selectMock->method('condition')->willReturnCallback(
+        function ($field, $value = NULL) use (&$conditions, $selectMock) {
+          if (is_string($field)) {
+            $conditions[$field] = $value;
+          }
+          return $selectMock;
+        });
+      $this->connectionMock->method('select')->willReturn($selectMock);
+
+      $this->buildService()->isDuplicateReport($this->attemptReport());
+
+      // The text is empty, so it's matched by a condition group (NULL or '').
+      $this->assertSame(['vanid' => 999, 'mcid' => 101, 'cycle' => '2026', 'contactDate' => '2026-10-01',
+        'type' => 'contact', 'value' => 'Left message'], $conditions);
+    }
+
+    public function testIsDuplicateReportIsFalseWhenTheQueryFails(): void {
+      $this->connectionMock->method('select')->willThrowException(new \Exception('db down'));
+      $this->assertFalse($this->buildService()->isDuplicateReport($this->attemptReport()));
+    }
+
+    // -------------------------------------------------------------------------
+    // canEditReport()
+    // -------------------------------------------------------------------------
+
+    public function testCanEditReportAllowsTheNlsOwnReportThisCycle(): void {
+      $this->assertTrue($this->buildService()->canEditReport(['mcid' => 101, 'cycle' => '2026'], 101, FALSE));
+    }
+
+    public function testCanEditReportRefusesAnotherNlsReport(): void {
+      $this->assertFalse($this->buildService()->canEditReport(['mcid' => 202, 'cycle' => '2026'], 101, FALSE));
+    }
+
+    public function testCanEditReportRefusesTheNlsReportFromAnEarlierCycle(): void {
+      $this->assertFalse($this->buildService()->canEditReport(['mcid' => 101, 'cycle' => '2024'], 101, FALSE));
+    }
+
+    public function testCanEditReportRefusesWithoutAnMcid(): void {
+      $this->assertFalse($this->buildService()->canEditReport(['mcid' => 0, 'cycle' => '2026'], 0, FALSE));
+    }
+
+    public function testCanEditReportAllowsAnImpersonatorAnyReport(): void {
+      $this->assertTrue($this->buildService()->canEditReport(['mcid' => 202, 'cycle' => '2020'], 101, TRUE));
+    }
+
+    // -------------------------------------------------------------------------
+    // isTextEditable()
+    // -------------------------------------------------------------------------
+
+    public function testIsTextEditableForNotesPhoneNumbersAndEmail(): void {
+      $service = $this->buildService();
+      $this->assertTrue($service->isTextEditable(['type' => 'Comment', 'value' => '']));
+      $this->assertTrue($service->isTextEditable(['type' => 'Change', 'value' => 'New cell number']));
+      $this->assertTrue($service->isTextEditable(['type' => 'Change', 'value' => 'New home number']));
+      $this->assertTrue($service->isTextEditable(['type' => 'Change', 'value' => 'New email']));
+    }
+
+    public function testIsTextEditableNotForOtherReports(): void {
+      $service = $this->buildService();
+      $this->assertFalse($service->isTextEditable(['type' => 'contact', 'value' => 'Left message']));
+      $this->assertFalse($service->isTextEditable(['type' => 'Survey', 'value' => 'Yes']));
+      $this->assertFalse($service->isTextEditable(['type' => 'Activist', 'value' => 1]));
+      $this->assertFalse($service->isTextEditable(['type' => 'contact', 'value' => 'Moved']));
+      $this->assertFalse($service->isTextEditable(['type' => 'change', 'value' => 'Wrong number: 5035551234']));
+      $this->assertFalse($service->isTextEditable(['type' => 'Change', 'value' => 'Wants lawn sign']));
+    }
+
+    public function testTypedChangeNamesTheNewPhoneOrEmail(): void {
+      $service = $this->buildService();
+      $this->assertSame('cellPhone', $service->typedChange(['type' => 'Change', 'value' => 'New cell number']));
+      $this->assertSame('homePhone', $service->typedChange(['type' => 'Change', 'value' => 'New home number']));
+      $this->assertSame('email', $service->typedChange(['type' => 'Change', 'value' => 'New email']));
+      $this->assertSame('', $service->typedChange(['type' => 'Comment', 'value' => 'New email']));
     }
 
   }

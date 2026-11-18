@@ -6,6 +6,19 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 
 class NlpDataEntryReports
 {
+  // What became of a report the data entry page asked to save.
+  public const string SAVED = 'saved';
+  public const string DUPLICATE = 'duplicate';
+  public const string NOT_SAVED = 'notSaved';
+  // A voter gets one postcard a cycle, so a postcard already reported for
+  // the voter this cycle, by anyone on any date, isn't reported again.
+  public const string ALREADY_MAILED = 'alreadyMailed';
+
+  // The longest phone number or email the data entry page takes.
+  public const int MAX_CONTACT_TEXT = 128;
+  // A phone number the data entry page accepts.
+  public const string PHONE_PATTERN = '/^\+?(\d{1,4})?[-.\s]?(\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4})$/';
+
   protected NlpReports $reportsObj;
   protected NlpNls $nlsObj;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
@@ -15,8 +28,16 @@ class NlpDataEntryReports
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiActivistCodes $apiActivistCodesObj;
   
-  public function __construct($reportsObj, $nlsObj, $apiSurveyQuestionObj, $votersObj,
-                              $apiVoterObj, $awardsObj, $nlpConfigurationObj, $apiActivistCodesObj )
+  public function __construct(
+    NlpReports $reportsObj,
+    NlpNls $nlsObj,
+    ApiSurveyQuestion $apiSurveyQuestionObj,
+    NlpVoters $votersObj,
+    ApiVoter $apiVoterObj,
+    NlpAwards $awardsObj,
+    NlpConfiguration $nlpConfigurationObj,
+    ApiActivistCodes $apiActivistCodesObj,
+  )
   {
     $this->reportsObj = $reportsObj;
     $this->nlsObj = $nlsObj;
@@ -161,10 +182,13 @@ class NlpDataEntryReports
    * @param array $action - The action array containing the contact method and attempt result.
    *             'contactMethod' => The contact method ID.
    *             'notContacted' => The response ID for not contacted.
-   * @return bool - FALSE if the response isn't one of the method's responses
-   *             and nothing was saved.
+   * @return string - SAVED; DUPLICATE if the NL already reported this same
+   *             attempt for this date (nothing is saved again);
+   *             ALREADY_MAILED for a postcard when one was already reported
+   *             for the voter this cycle; NOT_SAVED if the response isn't one
+   *             of the method's responses.
    */
-  public function noContactResponse( array $report, array $action): bool
+  public function noContactResponse( array $report, array $action): string
   {
     $contactMethodId = $action['contactMethod'];
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($contactMethodId);
@@ -174,7 +198,10 @@ class NlpDataEntryReports
     // its report would show as an attempt with an empty result.  Save nothing.
     $responseName = $this->nlpConfigurationObj->getContactResponse($contactMethod, $responseId);
     if (empty($responseName)) {
-      return FALSE;
+      return self::NOT_SAVED;
+    }
+    if ($contactMethod === 'Postcard' && $this->reportsObj->voterSentPostcard((int) $report['vanid'])) {
+      return self::ALREADY_MAILED;
     }
 
     // Save the contact attempt in NLP Services.
@@ -183,6 +210,9 @@ class NlpDataEntryReports
     $report['cycle'] = $this->nlpConfigurationObj->getCycle();
     $report['contactType'] = $contactMethod;
     $report['value'] = $responseName;
+    if ($this->reportsObj->isDuplicateReport($report)) {
+      return self::DUPLICATE;
+    }
     $rIndex = $this->reportsObj->setNlReport($report);
 
     //  Report the canvass response code to VoteBuilder.
@@ -207,7 +237,7 @@ class NlpDataEntryReports
     // This NL has reported results.
     $this->nlsObj->resultsReported($report['mcid'], $report['county']);
     $this->awardsObj->nlParticipation($report['mcid'], 'Completed');
-    return TRUE;
+    return self::SAVED;
   }
 
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -341,14 +371,7 @@ class NlpDataEntryReports
    */
   public function addNote( array $report, array $action): void
   {
-    $noteString = trim(htmlentities(strip_tags($action['note']), ENT_QUOTES));
-    $commentMax = $this->reportsObj::MAX_COMMENT;
-    if (strlen($noteString) > $commentMax) {
-      $note = substr($noteString, 0, $commentMax);  // Truncate the comment.
-    } else {
-      $note = $noteString;
-    }
-    $note = str_replace(["\r\n", "\n", "\r"], "<br>", $note);
+    $note = $this->cleanNote($action['note']);
     // if a note for this voter already exists, update the note else create one.
     $reportIndex = $action['reportIndex'];
     if (empty($reportIndex)) {
@@ -363,7 +386,150 @@ class NlpDataEntryReports
       $this->reportsObj->updateComment($report);
     }
   }
-  
+
+  /**
+   * cleanNote
+   *
+   * A note as it's saved: no HTML, at most MAX_COMMENT characters, and line
+   * breaks as <br>.
+   *
+   * @param string $note
+   * @return string
+   */
+  private function cleanNote(string $note): string
+  {
+    $noteString = trim(htmlentities(strip_tags($note), ENT_QUOTES));
+    $commentMax = $this->reportsObj::MAX_COMMENT;
+    if (strlen($noteString) > $commentMax) {
+      $noteString = substr($noteString, 0, $commentMax);  // Truncate the comment.
+    }
+    return str_replace(["\r\n", "\n", "\r"], "<br>", $noteString);
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * reportTextProblem
+   *
+   * Why the corrected text of a report can't be saved, or '' if it can.  A
+   * new phone number must be a valid phone number and a new email a valid
+   * email, as when they were first reported.
+   *
+   * @param array $report - the report's row from the results table.
+   * @param string $text - the corrected text.
+   * @return string
+   */
+  public function reportTextProblem(array $report, string $text): string
+  {
+    $text = $this->cleanContactText($text);
+    return match ($this->reportsObj->typedChange($report)) {
+      'cellPhone', 'homePhone' => preg_match(self::PHONE_PATTERN, $text)
+        ? '' : 'Enter a valid phone number.  The report was not changed.',
+      'email' => filter_var($text, FILTER_VALIDATE_EMAIL)
+        ? '' : 'Enter a valid email address.  The report was not changed.',
+      default => '',
+    };
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * editReportText
+   *
+   * Correct the text of a note, or of a new phone number or email, from the
+   * data entry page's Edit list.  A note is cleaned the same way as one typed
+   * in the note box.  A new phone number was also saved as the voter's phone,
+   * so the voter's phone is corrected too while it's still that number.  Check
+   * reportTextProblem() first.
+   *
+   * @param array $report - the report's row from the results table.
+   * @param string $text - the corrected text.
+   * @return void
+   */
+  public function editReportText(array $report, string $text): void
+  {
+    $isNote = strtolower((string)($report['type'] ?? '')) === 'comment';
+    $newText = $isNote ? $this->cleanNote($text) : $this->cleanContactText($text);
+    $this->reportsObj->updateComment([
+      'reportIndex' => $report['reportIndex'],
+      'text' => $newText,
+    ]);
+
+    $phoneType = $this->reportsObj->typedChange($report);
+    if ($phoneType !== 'cellPhone' && $phoneType !== 'homePhone') {
+      return;
+    }
+    $vanid = (int) $report['vanid'];
+    $voter = $this->votersObj->getVoterById($vanid);
+    $digits = static fn($phone): string => (string) preg_replace('/\D/', '', (string) $phone);
+    if (!empty($voter) && $digits($voter[$phoneType] ?? '') === $digits($report['text'] ?? '')) {
+      $this->votersObj->updateVoterPhone($vanid, [$phoneType => $newText]);
+    }
+  }
+
+  /**
+   * A typed phone number or email as it's saved: no HTML, on one line.
+   */
+  private function cleanContactText(string $text): string
+  {
+    $text = trim((string) preg_replace('/\s+/', ' ', strip_tags($text)));
+    return mb_substr($text, 0, self::MAX_CONTACT_TEXT);
+  }
+
+  /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+   * deleteVoterReport
+   *
+   * Delete a report from the data entry page's Edit list.  The voter's turf
+   * record points at the voter's latest pledge and latest contact attempt;
+   * when one of those is deleted, it points at the next latest instead (or
+   * none), so the contact status stays right.  Deleting the voter's last
+   * Moved report clears the moved flag.  Only NLP Services' copy is deleted;
+   * what was sent to VoteBuilder stays as it was.
+   *
+   * @param array $report - the report's row from the results table.
+   * @return void
+   */
+  public function deleteVoterReport(array $report): void
+  {
+    $reportIndex = (int) $report['reportIndex'];
+    $vanid = (int) $report['vanid'];
+    $this->reportsObj->deleteReport($reportIndex);
+
+    $turfVoter = $this->votersObj->getTurfVoter($vanid);
+    if (empty($turfVoter)) {
+      return;
+    }
+    $fields = [];
+    if ((int)($turfVoter['pledgedToVote'] ?? 0) === $reportIndex) {
+      $fields['pledgedToVote'] = $this->newestReportIndex($vanid, NlpReports::SURVEY);
+    }
+    if ((int)($turfVoter['attemptedContact'] ?? 0) === $reportIndex) {
+      $fields['attemptedContact'] = $this->newestReportIndex($vanid, NlpReports::CONTACT);
+    }
+    if (!empty($fields)) {
+      $this->votersObj->updateTurfVoter(
+        ['vanid' => $vanid, 'turfIndex' => $turfVoter['turfIndex']] + $fields);
+    }
+
+    $isMoved = strtolower((string)($report['type'] ?? '')) === NlpReports::CONTACT
+      && strtolower((string)($report['value'] ?? '')) === 'moved';
+    if ($isMoved) {
+      $movedReport = $this->reportsObj->getReport(
+        ['vanid' => $vanid, 'type' => NlpReports::CONTACT, 'value' => 'moved', 'cycle' => NULL]);
+      if (empty($movedReport)) {
+        $this->votersObj->setMovedStatus((int) $turfVoter['turfIndex'], $vanid, FALSE);
+      }
+    }
+  }
+
+  /**
+   * The index of the voter's newest report of this type this cycle, or 0.
+   */
+  private function newestReportIndex(int $vanid, string $type): int
+  {
+    $newest = 0;
+    foreach ($this->reportsObj->getNlpTypeReports($vanid, $type) as $report) {
+      $newest = max($newest, (int) $report['reportIndex']);
+    }
+    return $newest;
+  }
+
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * voterMoved
    *
@@ -443,9 +609,10 @@ class NlpDataEntryReports
    *            'contactMethod' => The contact method ID.
    *           'surveyResponse' => The survey response ID for the pledge to vote.
    *            'turfIndex' => The turf index for the voter.
-   * @return void
+   * @return string - SAVED, or DUPLICATE if the NL already reported this same
+   *            response for this date (nothing is saved again).
    */
-  public function pledgeToVote( array $report, array $action ): void
+  public function pledgeToVote( array $report, array $action ): string
   {
     // Save the survey question response in NLP Services.
    
@@ -474,8 +641,11 @@ class NlpDataEntryReports
     $report['qid'] = $qid;
     $report['cycle'] = $this->nlpConfigurationObj->getCycle();
     $report['contactType'] = $contactMethod;
+    if ($this->reportsObj->isDuplicateReport($report)) {
+      return self::DUPLICATE;
+    }
     $rIndex = $this->reportsObj->setNlReport($report);
-    
+
     // Report the response to VoteBuilder.
     $canvassDate = date(DATE_ATOM, strtotime($report['contactDate']));
     $surveyResponse = [
@@ -506,6 +676,7 @@ class NlpDataEntryReports
     // This NL has reported results.
     $this->nlsObj->resultsReported($mcid, $county);
     $this->awardsObj->nlParticipation($mcid, 'Completed');
+    return self::SAVED;
   }
   
 }

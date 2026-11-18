@@ -19,6 +19,12 @@ div.line-spacer { padding-bottom:4px; }
 .voter-postcard { color:blue; font-weight: bold; }
 .voter-attempt { color:blue; font-weight: bold; }
 .voter-no-attempt { color:red; font-weight: bold; }
+/* What became of the reports just saved for a voter, above the status line. */
+.voter-save-results { margin: 0 0 4px 0; padding: 3px 6px; border-radius: 5px;
+    background: #ffffff; border: 1px solid #2e7d32; font-weight: bold; }
+.voter-save-saved { color: #2e7d32; }
+.voter-save-duplicate { color: #8a6d00; }
+.voter-save-not-saved { color: #c62828; }
 /* "Voter contact status:", "Thank you." and "Success!" keep black whatever the status color. */
 .contact-status-plain { color: #000000; }
 .historical-report-title { color:blue; font-weight: bold; }
@@ -31,6 +37,16 @@ div.line-spacer { padding-bottom:4px; }
     font-size: x-small; text-align: left; padding: 3px;
     border: 2px solid #0000ff; border-radius: 5px; background: #ffffff; }
 .historical-report-list[hidden] { display: none; }
+/* The Edit button's popup of reports the user may change; it opens where the contacts list does. */
+.historical-contacts .report-edit-toggle { margin: 2px 0 2px 4px; }
+.report-edit-list { position: absolute; left: -175px; top: 100%; z-index: 10; width: 500px;
+    font-size: x-small; text-align: left; padding: 3px;
+    border: 2px solid #0000ff; border-radius: 5px; background: #ffffff; }
+.report-edit-list[hidden] { display: none; }
+.report-edit-item { padding: 3px 0; border-top: 1px solid #cfe4f0; }
+.report-edit-buttons .button, .report-text-area .button { margin: 2px 4px 2px 0; padding: 2px 8px; font-size: x-small; }
+.report-text-area[hidden], .report-edit-buttons [hidden] { display: none; }
+.report-text-area textarea, .report-text-area input[type="text"] { width: 100%; box-sizing: border-box; font-size: small; }
 
 div.end-big-box { clear: both; }
 /* Full width, like the data entry table below it (the theme gives tables width: 100%). */
