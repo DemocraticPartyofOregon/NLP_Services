@@ -7,6 +7,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service;
 use Drupal\Core\Datetime\DateFormatterInterface;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Extension\ModuleExtensionList;
+use Drupal\Core\Language\LanguageInterface;
+use Drupal\Core\Language\LanguageManagerInterface;
 use Drupal\Core\Logger\LoggerChannelFactoryInterface;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpDataEntryVoterListDisplay;
@@ -53,6 +55,12 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
     $container->set('logger.factory', $loggerFactoryMock);
+    // DrupalDateTime, used for a report's contact date, asks for the language.
+    $languageMock = $this->createMock(LanguageInterface::class);
+    $languageMock->method('getId')->willReturn('en');
+    $languageManagerMock = $this->createMock(LanguageManagerInterface::class);
+    $languageManagerMock->method('getCurrentLanguage')->willReturn($languageMock);
+    $container->set('language_manager', $languageManagerMock);
     \Drupal::setContainer($container);
 
     $this->service = new NlpDataEntryVoterListDisplay(
@@ -580,6 +588,58 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $result = $this->service->buildDataEntryVoterArray($voter);
 
     $this->assertStringContainsString('voter-hostile', (string) $result['contactStatusMsg']);
+    // Contacted is only for a response to the survey question.
+    $this->assertStringContainsString('Voter contact status:</span> tried.', (string) $result['contactStatusMsg']);
+  }
+
+  /**
+   * The label in black, then the status and details in the status's color.
+   */
+  private function statusStart(string $class, string $status): string {
+    return '<div class="' . $class . '"><span class="contact-status-plain">Voter contact status:</span> '
+      . $status . '. ';
+  }
+
+  public function testContactStatusMsgBeginsWithNotYetTried(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+
+    $result = $this->service->buildDataEntryVoterArray($this->baseVoter());
+
+    // Nothing follows the details: no thank-you, no success.
+    $this->assertSame($this->statusStart('voter-no-attempt', 'not yet tried')
+      . 'You have not yet attempted to contact Bob.</div>', (string) $result['contactStatusMsg']);
+  }
+
+  public function testContactStatusMsgBeginsWithTriedAfterAnAttempt(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->reportsMock->method('getNlpReport')
+      ->willReturn(['contactDate' => '2026-10-01', 'contactType' => 'Walk', 'value' => 'Not home']);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+
+    $voter  = $this->baseVoter(['turfVoter' => ['pledgedToVote' => 0, 'attemptedContact' => 12]]);
+    $result = $this->service->buildDataEntryVoterArray($voter);
+
+    // The thank-you is in black.
+    $this->assertSame($this->statusStart('voter-attempt', 'tried')
+      . 'On May 30 you attempted to contact Bob.  The result was - [Walk] Not home'
+      . ' <span class="contact-status-plain">Thank you.</span></div>', (string) $result['contactStatusMsg']);
+  }
+
+  public function testContactStatusMsgBeginsWithContactedAfterAPledgeResponse(): void {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->reportsMock->method('getNlpReport')
+      ->willReturn(['contactDate' => '2026-10-01', 'contactType' => 'Walk', 'value' => 'Yes']);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+
+    $voter  = $this->baseVoter(['turfVoter' => ['pledgedToVote' => 12, 'attemptedContact' => 0]]);
+    $result = $this->service->buildDataEntryVoterArray($voter);
+
+    // Success! is in black.
+    $this->assertSame($this->statusStart('voter-pledge', 'contacted')
+      . 'On May 30 you asked Bob to pledge to vote. The response was - [Walk] Yes.'
+      . ' <span class="contact-status-plain">Success!</span></div>',
+      (string) $result['contactStatusMsg']);
   }
 
   // ---------------------------------------------------------------------------

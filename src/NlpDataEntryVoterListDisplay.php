@@ -156,16 +156,19 @@ class NlpDataEntryVoterListDisplay
                </div><div class="end-big-box"></div>';
     }
     $voterArray['star'] = $star;
-    //  The status message.
+    //  The status message.  It begins with the voter contact status (not yet
+    //  tried, tried or contacted), followed by the details.  "Contacted" is
+    //  only for a response to the survey question (the pledge to vote), the
+    //  purpose of the program; every other report is "tried".
     $statusMessage = [
-      'deceased' => ['class'=>'voter-deceased', 'text'=>':fn has been marked as deceased.'],
-      'hostile' => ['class'=>'voter-hostile', 'text'=>':fn has been marked as hostile and will be removed from future turfs.  Do not attempt to contact this voter again.'],
-      'moved' => ['class'=>'voter-moved', 'text'=>':fn has moved.'],
-      'pledge' => ['class'=>'voter-pledge', 'text'=>'On :contactDate you asked :fn to pledge to vote. The response was - :response.'],
-      'county' => ['class'=>'voter-county', 'text'=>':scriptQuestion.  On :contactDate the response was - :response'],
-      'postcard' => ['class'=>'voter-postcard', 'text'=>'On :contactDate you sent :fn a postcard.'],
-      'attempt' => ['class'=>'voter-attempt', 'text'=>'On :contactDate you attempted to contact :fn.  The result was - :response'],
-      'noAttempt' => ['class'=>'voter-no-attempt', 'text'=>'You have not yet attempted to contact :fn.'],
+      'deceased' => ['class'=>'voter-deceased', 'status'=>'tried', 'text'=>':fn has been marked as deceased.'],
+      'hostile' => ['class'=>'voter-hostile', 'status'=>'tried', 'text'=>':fn has been marked as hostile and will be removed from future turfs.  Do not attempt to contact this voter again.'],
+      'moved' => ['class'=>'voter-moved', 'status'=>'tried', 'text'=>':fn has moved.'],
+      'pledge' => ['class'=>'voter-pledge', 'status'=>'contacted', 'text'=>'On :contactDate you asked :fn to pledge to vote. The response was - :response.'],
+      'county' => ['class'=>'voter-county', 'status'=>'contacted', 'text'=>':scriptQuestion.  On :contactDate the response was - :response'],
+      'postcard' => ['class'=>'voter-postcard', 'status'=>'tried', 'text'=>'On :contactDate you sent :fn a postcard.'],
+      'attempt' => ['class'=>'voter-attempt', 'status'=>'tried', 'text'=>'On :contactDate you attempted to contact :fn.  The result was - :response'],
+      'noAttempt' => ['class'=>'voter-no-attempt', 'status'=>'not yet tried', 'text'=>'You have not yet attempted to contact :fn.'],
     ];
     $contactDate = $scriptQuestion = $response = NULL;
     $fn = $voter['nickname'];
@@ -219,8 +222,21 @@ class NlpDataEntryVoterListDisplay
       ':scriptQuestion' => $scriptQuestion ?? '',
       ':response' => $response ?? '',
     ]);
+    // The label and the ending (thank-you or success) stay black; the status
+    // and details take the status's color.
+    $status = $statusMessage[$contactStatusType]['status'];
+    $ending = match ($status) {
+      'tried' => t('Thank you.'),
+      'contacted' => t('Success!'),
+      default => '',
+    };
+    if ($ending !== '') {
+      $ending = ' <span class="contact-status-plain">' . $ending . '</span>';
+    }
     $voterArray['contactStatusMsg'] = Markup::create(
-      '<div class="' . $statusMessage[$contactStatusType]['class'] . '">' . $contactStatusMsg . '</div>'
+      '<div class="' . $statusMessage[$contactStatusType]['class'] . '">'
+      . '<span class="contact-status-plain">' . t('Voter contact status:') . '</span> '
+      . $status . '. ' . $contactStatusMsg . $ending . '</div>'
     );
     return $voterArray;
   }

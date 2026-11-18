@@ -19,6 +19,8 @@ div.line-spacer { padding-bottom:4px; }
 .voter-postcard { color:blue; font-weight: bold; }
 .voter-attempt { color:blue; font-weight: bold; }
 .voter-no-attempt { color:red; font-weight: bold; }
+/* "Voter contact status:", "Thank you." and "Success!" keep black whatever the status color. */
+.contact-status-plain { color: #000000; }
 .historical-report-title { color:blue; font-weight: bold; }
 .historical-contacts { position: relative; }
 .historical-contacts .historical-contacts-toggle { margin: 2px 0; }
