@@ -15,3 +15,6 @@ composer.lock
 /robots.txt
 /update.php
 .phpunit.result.cache
+# VS Code SFTP/FTP deploy config (natizyskunk.sftp) - per-developer
+.vscode/sftp.json
+.vscode/deploy.sh

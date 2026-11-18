@@ -1,0 +1,94 @@
+{
+  // Runs the module's PHPUnit suites inside the local DDEV site (C:\DemocraticPartyofOregon\drupal-site).
+  // Terminal > Run Task...  (Ctrl+Shift+B runs the default: all tests)
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "DDEV: Enable Xdebug",
+      "type": "shell",
+      "command": "ddev xdebug on",
+      "presentation": {
+        "reveal": "silent",
+        "close": true
+      }
+    },
+    {
+      "label": "DDEV: Disable Xdebug",
+      "type": "shell",
+      "command": "ddev xdebug off",
+      "presentation": {
+        "reveal": "silent",
+        "close": true
+      }
+    },
+    {
+      "label": "Tests: all (unit + kernel)",
+      "type": "process",
+      "command": "ddev",
+      "args": [
+        "nlp-test",
+        "all",
+        "--no-progress"
+      ],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: unit",
+      "type": "process",
+      "command": "ddev",
+      "args": [
+        "nlp-test",
+        "unit"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: kernel",
+      "type": "process",
+      "command": "ddev",
+      "args": [
+        "nlp-test",
+        "kernel"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Tests: current test file",
+      "detail": "Open a *Test.php file (e.g. ApiActivistCodesTest.php) and run this",
+      "type": "process",
+      "command": "ddev",
+      "args": [
+        "nlp-test",
+        "${input:suite}",
+        "--filter",
+        "${fileBasenameNoExtension}"
+      ],
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "DDEV: start site",
+      "type": "process",
+      "command": "ddev",
+      "args": [
+        "start"
+      ],
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "suite",
+      "type": "pickString",
+      "description": "Which suite is this test in?",
+      "options": ["unit", "kernel"],
+      "default": "unit"
+    }
+  ]
+}

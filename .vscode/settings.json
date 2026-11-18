@@ -1,0 +1,19 @@
+{
+    "intelephense.environment.phpVersion": "8.3",
+    // The workspace is just this module; point Intelephense at the host Drupal
+    // site's vendor/ and core so Guzzle, Symfony and \Drupal resolve.
+    "intelephense.environment.includePaths": [
+        "../../../../vendor",
+        "../../../core"
+    ],
+    // Index Drupal's procedural PHP files too.
+    "files.associations": {
+        "*.module": "php",
+        "*.install": "php",
+        "*.inc": "php",
+        "*.theme": "php",
+        "*.profile": "php"
+    },
+    // Log each SFTP extension transfer to the Output panel ("sftp" channel).
+    "sftp.printDebugLog": true
+}
