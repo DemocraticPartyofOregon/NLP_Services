@@ -4,8 +4,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Messenger\MessengerInterface;
+  use Drupal\nlpservices\ApiNls;
   use Drupal\nlpservices\NlpConfiguration;
   use Drupal\nlpservices\NlpDataEntryVoters;
+  use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpReports;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\Tests\UnitTestCase;
@@ -16,6 +18,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private NlpReports $reportsMock;
     private NlpConfiguration $configMock;
     private MessengerInterface $messengerMock;
+    private NlpNls $nlsMock;
+    private ApiNls $apiNlsMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -23,6 +27,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->reportsMock   = $this->createMock(NlpReports::class);
       $this->configMock    = $this->createMock(NlpConfiguration::class);
       $this->messengerMock = $this->createMock(MessengerInterface::class);
+      $this->nlsMock       = $this->createMock(NlpNls::class);
+      $this->apiNlsMock    = $this->createMock(ApiNls::class);
 
       $container = new ContainerBuilder();
       $container->set('string_translation', $this->getStringTranslationStub());
@@ -40,7 +46,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     private function buildService(): NlpDataEntryVoters {
-      return new NlpDataEntryVoters($this->votersMock, $this->reportsMock, $this->configMock);
+      return new NlpDataEntryVoters($this->votersMock, $this->reportsMock, $this->configMock,
+        $this->nlsMock, $this->apiNlsMock);
     }
 
     private function baseVoter(array $overrides = []): array {
@@ -114,6 +121,141 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->setupFetchVotersReturning($rawVoters);
       $result = $this->buildService()->fetchVoters(42);
       $this->assertCount(3, $result);
+    }
+
+    // -------------------------------------------------------------------------
+    // addNlNames
+    // -------------------------------------------------------------------------
+
+    private function report(int $mcid, ?string $nickname, ?string $lastName): array {
+      return ['mcid' => $mcid, 'nickname' => $nickname, 'lastName' => $lastName, 'type' => 'Comment'];
+    }
+
+    public function testAddNlNamesLeavesReportsThatHaveBothNamesAlone(): void {
+      $this->nlsMock->expects($this->never())->method('getNlById');
+      $this->apiNlsMock->expects($this->never())->method('getApiNls');
+      $this->reportsMock->expects($this->never())->method('updateNlName');
+
+      $contacts = [100 => [$this->report(7, 'Jane', 'Doe')]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesFillsMissingNameFromTheNlsTableAndSavesIt(): void {
+      $this->nlsMock->method('getNlById')->with(7)
+        ->willReturn(['mcid' => 7, 'nickname' => 'Janie', 'firstName' => 'Jane', 'lastName' => 'Doe']);
+      $this->apiNlsMock->expects($this->never())->method('getApiNls');
+      $this->reportsMock->expects($this->once())->method('updateNlName')->with(7, 'Janie', 'Doe');
+
+      $result = $this->buildService()->addNlNames([100 => [$this->report(7, NULL, '')]]);
+
+      $this->assertSame('Janie', $result[100][0]['nickname']);
+      $this->assertSame('Doe', $result[100][0]['lastName']);
+    }
+
+    public function testAddNlNamesUsesFirstNameWhenTheNlHasNoNickname(): void {
+      $this->nlsMock->method('getNlById')
+        ->willReturn(['mcid' => 7, 'nickname' => '', 'firstName' => 'Jane', 'lastName' => 'Doe']);
+
+      $result = $this->buildService()->addNlNames([100 => [$this->report(7, '', 'Doe')]]);
+
+      $this->assertSame('Jane', $result[100][0]['nickname']);
+    }
+
+    public function testAddNlNamesAsksMyCampaignWhenTheNlIsNotInTheNlsTable(): void {
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->apiNlsMock->expects($this->once())->method('getApiNls')->with('', 7)
+        ->willReturn(['mcid' => 7, 'nickname' => NULL, 'firstName' => 'Jane', 'lastName' => 'Doe']);
+      $this->reportsMock->expects($this->once())->method('updateNlName')->with(7, 'Jane', 'Doe');
+
+      $result = $this->buildService()->addNlNames([100 => [$this->report(7, NULL, NULL)]]);
+
+      $this->assertSame('Jane', $result[100][0]['nickname']);
+      $this->assertSame('Doe', $result[100][0]['lastName']);
+    }
+
+    public function testAddNlNamesMarksTheReportsWhenMyCampaignHasNoSuchNl(): void {
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn([]);
+      $this->apiNlsMock->method('getMcidStatus')->with('', 7)->willReturn(ApiNls::MCID_MISSING);
+      $this->reportsMock->expects($this->never())->method('updateNlName');
+      $this->reportsMock->expects($this->once())->method('markNlNameNotFound')->with(7);
+
+      $contacts = [100 => [$this->report(7, NULL, NULL)]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesMarksTheReportsWhenNeitherPlaceHasBothNames(): void {
+      // The nls table has only the first name; MyCampaign only the last.
+      $this->nlsMock->method('getNlById')
+        ->willReturn(['mcid' => 7, 'nickname' => 'Jane', 'firstName' => 'Jane', 'lastName' => '']);
+      $this->apiNlsMock->method('getApiNls')
+        ->willReturn(['mcid' => 7, 'nickname' => NULL, 'firstName' => NULL, 'lastName' => 'Doe']);
+      $this->apiNlsMock->expects($this->never())->method('getMcidStatus');
+      $this->reportsMock->expects($this->never())->method('updateNlName');
+      $this->reportsMock->expects($this->once())->method('markNlNameNotFound')->with(7);
+
+      $contacts = [100 => [$this->report(7, 'Jane', NULL)]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesAsksMyCampaignWhenTheNlsTableLacksTheLastName(): void {
+      $this->nlsMock->method('getNlById')
+        ->willReturn(['mcid' => 7, 'nickname' => 'Jane', 'firstName' => 'Jane', 'lastName' => '']);
+      $this->apiNlsMock->method('getApiNls')
+        ->willReturn(['mcid' => 7, 'nickname' => 'Janie', 'firstName' => 'Jane', 'lastName' => 'Doe']);
+      $this->reportsMock->expects($this->once())->method('updateNlName')->with(7, 'Janie', 'Doe');
+
+      $result = $this->buildService()->addNlNames([100 => [$this->report(7, NULL, NULL)]]);
+
+      $this->assertSame('Doe', $result[100][0]['lastName']);
+    }
+
+    public function testAddNlNamesDoesNotMarkTheReportsWhenTheApiCannotBeReached(): void {
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn([]);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn(ApiNls::MCID_UNKNOWN);
+      $this->reportsMock->expects($this->never())->method('markNlNameNotFound');
+
+      $contacts = [100 => [$this->report(7, NULL, NULL)]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesDoesNotMarkTheReportsForAnInvalidApiKey(): void {
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->apiNlsMock->method('getApiNls')->willReturn(['Invalid key']);
+      $this->apiNlsMock->method('getMcidStatus')->willReturn(ApiNls::MCID_UNKNOWN);
+      $this->reportsMock->expects($this->never())->method('updateNlName');
+      $this->reportsMock->expects($this->never())->method('markNlNameNotFound');
+
+      $contacts = [100 => [$this->report(7, NULL, NULL)]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesSkipsReportsAlreadyMarkedNotFound(): void {
+      $this->nlsMock->expects($this->never())->method('getNlById');
+      $this->apiNlsMock->expects($this->never())->method('getApiNls');
+
+      $contacts = [100 => [$this->report(7, NULL, NULL) + ['nlNameNotFound' => '1']]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesSkipsReportsWithNoMcid(): void {
+      $this->nlsMock->expects($this->never())->method('getNlById');
+
+      $contacts = [100 => [$this->report(0, NULL, NULL)]];
+      $this->assertSame($contacts, $this->buildService()->addNlNames($contacts));
+    }
+
+    public function testAddNlNamesLooksUpEachNlOnlyOnce(): void {
+      // The API can't be reached, so nothing is marked and a second lookup
+      // would hit the API again.
+      $this->nlsMock->expects($this->once())->method('getNlById')->willReturn([]);
+      $this->apiNlsMock->expects($this->once())->method('getApiNls')->willReturn([]);
+      $this->apiNlsMock->expects($this->once())->method('getMcidStatus')->willReturn(ApiNls::MCID_UNKNOWN);
+
+      $service = $this->buildService();
+      $service->addNlNames([100 => [$this->report(7, NULL, NULL), $this->report(7, '', '')]]);
+      $service->addNlNames([200 => [$this->report(7, NULL, NULL)]]);
     }
 
     // -------------------------------------------------------------------------

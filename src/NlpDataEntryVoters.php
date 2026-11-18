@@ -11,7 +11,20 @@ class NlpDataEntryVoters
   protected NlpReports $reportsObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct($votersObj,$reportsObj, $nlpConfigurationObj) {
+  /**
+   * NL names already looked up, keyed by mcid: ['nickname' => ..., 'lastName' => ...],
+   * or [] when neither the nls table nor MyCampaign has both names. Saves
+   * looking up the same NL for every voter in the turf.
+   */
+  private array $nlNames = [];
+
+  public function __construct(
+    NlpVoters $votersObj,
+    NlpReports $reportsObj,
+    NlpConfiguration $nlpConfigurationObj,
+    private readonly NlpNls $nlsObj,
+    private readonly ApiNls $apiNlsObj,
+  ) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
@@ -22,7 +35,9 @@ class NlpDataEntryVoters
     return new static(
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
-      $container->get('nlpservices.configuration')
+      $container->get('nlpservices.configuration'),
+      $container->get('nlpservices.nls'),
+      $container->get('nlpservices.api_nls'),
     );
   }
 
@@ -41,13 +56,102 @@ class NlpDataEntryVoters
     foreach ($votersInTurf as $voterInfo) {
       $vanid = $voterInfo['vanid'];
       $voterInfo['status'] = $this->votersObj->getVoterStatus($vanid);
-      $voterContacts = $this->reportsObj->getNlpReports($vanid);
+      $voterContacts = $this->addNlNames($this->reportsObj->getNlpReports($vanid));
       $voterInfo['contacts'] = $voterContacts;
       $voterInfo['activist'] = $this->reportsObj->getNlpAcReport($vanid);
       $voterInfo['historic'] = $this->reportsObj->displayNlReports($voterContacts);
       $voters[$vanid] = $voterInfo;
     }
     return $voters;
+  }
+
+  /**
+   * addNlNames
+   *
+   * Fill in the NL's first name (nickname) and last name on reports missing
+   * either one, so the historical contacts can say who made each report. The
+   * name comes from the nls table, or from MyCampaign when the nls table
+   * doesn't have both names, and is saved to the NL's report records so the
+   * lookup isn't repeated. When neither has both names, the NL's reports are
+   * marked nlNameNotFound instead, and later page loads skip the search.
+   *
+   * @param array $voterContacts - reports keyed by vanid, as from NlpReports::getNlpReports().
+   * @return array - the same reports, with the names filled in where found.
+   */
+  public function addNlNames(array $voterContacts): array
+  {
+    foreach ($voterContacts as $vanid => $reports) {
+      foreach ($reports as $i => $report) {
+        if (!empty($report['nickname']) && !empty($report['lastName'])) {continue;}
+        // Already searched for, and not found.
+        if (!empty($report['nlNameNotFound'])) {continue;}
+        $mcid = (int)($report['mcid'] ?? 0);
+        if ($mcid <= 0) {continue;}
+        $name = $this->lookupNlName($mcid);
+        if (empty($name)) {continue;}
+        $voterContacts[$vanid][$i]['nickname'] = $name['nickname'];
+        $voterContacts[$vanid][$i]['lastName'] = $name['lastName'];
+      }
+    }
+    return $voterContacts;
+  }
+
+  /**
+   * lookupNlName
+   *
+   * Find an NL's first and last name, first in the nls table and then in
+   * MyCampaign, and save it to the NL's reports that are missing it. If
+   * neither has both names, mark those reports so the search isn't repeated.
+   *
+   * @param int $mcid
+   * @return array - ['nickname' => ..., 'lastName' => ...], or [] if not found.
+   */
+  private function lookupNlName(int $mcid): array
+  {
+    if (array_key_exists($mcid, $this->nlNames)) {
+      return $this->nlNames[$mcid];
+    }
+    $name = $this->nameFromNlRecord($this->nlsObj->getNlById($mcid));
+    $searchFailed = FALSE;
+    if (empty($name)) {
+      $apiNl = $this->apiNlsObj->getApiNls('', $mcid);
+      // An unrecognized API key comes back as ['Invalid key'].
+      if (isset($apiNl[0])) {$apiNl = [];}
+      $name = $this->nameFromNlRecord($apiNl);
+      // No record can mean MyCampaign doesn't have the NL, or that the API
+      // couldn't be reached. Only the first is a reason to stop searching.
+      $searchFailed = empty($apiNl)
+        && $this->apiNlsObj->getMcidStatus('', $mcid) !== ApiNls::MCID_MISSING;
+    }
+    if (!empty($name)) {
+      $this->reportsObj->updateNlName($mcid, $name['nickname'], $name['lastName']);
+    }
+    elseif (!$searchFailed) {
+      $this->reportsObj->markNlNameNotFound($mcid);
+    }
+    $this->nlNames[$mcid] = $name;
+    return $name;
+  }
+
+  /**
+   * The name from an NL record (nls table or MyCampaign), using the first
+   * name when there's no nickname.
+   *
+   * @param array $nl
+   * @return array - ['nickname' => ..., 'lastName' => ...], or [] if the
+   *   record is missing the first or last name.
+   */
+  private function nameFromNlRecord(array $nl): array
+  {
+    $nickname = trim((string)($nl['nickname'] ?? ''));
+    if ($nickname === '') {
+      $nickname = trim((string)($nl['firstName'] ?? ''));
+    }
+    $lastName = trim((string)($nl['lastName'] ?? ''));
+    if ($nickname === '' || $lastName === '') {
+      return [];
+    }
+    return ['nickname' => $nickname, 'lastName' => $lastName];
   }
 
   /**

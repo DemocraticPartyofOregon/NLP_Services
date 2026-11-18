@@ -246,6 +246,31 @@ function nlpservices_update_10006(): string
 }
 
 /**
+ * Adds nlNameNotFound to nlp_results.
+ *
+ * The data entry page's historical contacts show the NL who made each
+ * report. Reports missing the NL's name get it from the nls table or
+ * MyCampaign; when neither has both names, the report is marked so the
+ * search isn't repeated on every page load.
+ *
+ * @noinspection PhpUnused
+ */
+function nlpservices_update_10007(): string
+{
+  $table = 'nlp_results';
+  $field = 'nlNameNotFound';
+  $dbSchema = Drupal::database()->schema();
+  if (!$dbSchema->tableExists($table)) {
+    return "Table $table does not exist; nothing to update.";
+  }
+  if ($dbSchema->fieldExists($table, $field)) {
+    return "$table.$field already exists.";
+  }
+  $dbSchema->addField($table, $field, nlpservices_schema()[$table]['fields'][$field]);
+  return "Added $table.$field.";
+}
+
+/**
  * Implements hook_uninstall().
  * @noinspection PhpUnused
  * @noinspection PhpUnusedParameterInspection
@@ -555,6 +580,8 @@ function nlpservices_schema(): array
       'contactId' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'description' => 'Unique code for a VoteBuilder contact report (for MiniVAN)'],
       'reportTime' => [ 'type' => 'int', 'size' => 'normal', 'unsigned' => TRUE, 'description' => 'Unix time the report was saved in NLP Services.'],
       'reportIp' => [ 'type' => 'varchar', 'length' => 45, 'description' => 'IP address of the person who submitted the report in NLP Services.'],
+      'nlNameNotFound' => [ 'type' => 'int', 'size' => 'tiny', 'unsigned' => TRUE,
+        'description' => '1 when the NL\'s first or last name was missing and could not be found in the nls table or MyCampaign, so the search is not repeated.'],
     ],
     'indexes' => [
       'vanid' => [ 'vanid', ],

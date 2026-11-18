@@ -317,6 +317,51 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringContainsString('Second note', $result['display']);
     }
 
+    public function testDisplayNlReportsAddsTheNlWhoMadeTheReport(): void {
+      $input = [[
+        ['type' => 'comment', 'text' => 'Spoke with voter', 'contactDate' => '2026-01-01', 'contactType' => 'Walk',
+          'nickname' => 'Jane', 'lastName' => 'Doe'],
+      ]];
+      $result = $this->buildService()->displayNlReports($input);
+      $this->assertSame('2026-01-01[Walk] Spoke with voter By Jane Doe', $result['display']);
+    }
+
+    public function testDisplayNlReportsLeavesOutTheNlWithoutTheFirstName(): void {
+      $input = [[
+        ['type' => 'comment', 'text' => 'Note', 'contactDate' => '2026-01-01', 'contactType' => 'Walk',
+          'nickname' => '', 'lastName' => 'Doe'],
+      ]];
+      $result = $this->buildService()->displayNlReports($input);
+      $this->assertSame('2026-01-01[Walk] Note', $result['display']);
+    }
+
+    public function testDisplayNlReportsLeavesOutTheNlWithoutTheLastName(): void {
+      $input = [[
+        ['type' => 'comment', 'text' => 'Note', 'contactDate' => '2026-01-01', 'contactType' => 'Walk',
+          'nickname' => 'Jane', 'lastName' => NULL],
+      ]];
+      $result = $this->buildService()->displayNlReports($input);
+      $this->assertSame('2026-01-01[Walk] Note', $result['display']);
+    }
+
+    public function testDisplayNlReportsLeavesOutTheNlWhenUnknown(): void {
+      $input = [[
+        ['type' => 'comment', 'text' => 'Note', 'contactDate' => '2026-01-01', 'contactType' => 'Walk',
+          'nickname' => NULL, 'lastName' => ''],
+      ]];
+      $result = $this->buildService()->displayNlReports($input);
+      $this->assertStringNotContainsString('By', $result['display']);
+    }
+
+    public function testDisplayNlReportsEscapesTheNlName(): void {
+      $input = [[
+        ['type' => 'comment', 'text' => 'Note', 'contactDate' => '2026-01-01', 'contactType' => 'Walk',
+          'nickname' => '<b>Jane</b>', 'lastName' => 'Doe'],
+      ]];
+      $result = $this->buildService()->displayNlReports($input);
+      $this->assertStringContainsString('By &lt;b&gt;Jane&lt;/b&gt; Doe', $result['display']);
+    }
+
     // -------------------------------------------------------------------------
     // prepareExportRecord()
     // -------------------------------------------------------------------------

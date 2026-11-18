@@ -285,7 +285,7 @@ services:
 
   nlpservices.data_entry_voters:
     class: Drupal\nlpservices\NlpDataEntryVoters
-    arguments: [ '@nlpservices.voters' , '@nlpservices.reports', '@nlpservices.configuration' ]
+    arguments: [ '@nlpservices.voters' , '@nlpservices.reports', '@nlpservices.configuration', '@nlpservices.nls', '@nlpservices.api_nls' ]
 
   nlpservices.data_entry_voter_list_display:
     class: Drupal\nlpservices\NlpDataEntryVoterListDisplay

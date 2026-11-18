@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal\Component\Utility\Html;
 use Drupal\Core\Database\Connection;
 use Exception;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -27,7 +28,8 @@ class NlpReports {
   protected Connection $connection;
   protected DatabaseFunctions $dbFunctionsObj;
 
-  public function __construct( $nlpConfiguration, $connection, $dbFunctionsObj) {
+  public function __construct(NlpConfiguration $nlpConfiguration, Connection $connection,
+                              DatabaseFunctions $dbFunctionsObj) {
     $this->nlpConfiguration = $nlpConfiguration;
     $this->connection = $connection;
     $this->dbFunctionsObj = $dbFunctionsObj;
@@ -337,6 +339,13 @@ class NlpReports {
             $voterReportsDisplay['display'] .= '<br/>';
           }
           $newReport = $report['contactDate'].'['.$report['contactType'].'] '.$reportDisplay;
+          // The NL who made the report, only when both names are known
+          // (NlpDataEntryVoters::addNlNames() fills in names missing from older reports).
+          $nickname = trim((string)($report['nickname'] ?? ''));
+          $lastName = trim((string)($report['lastName'] ?? ''));
+          if ($nickname !== '' && $lastName !== '') {
+            $newReport .= ' By '.Html::escape($nickname.' '.$lastName);
+          }
           $voterReportsDisplay['display'] .= $newReport;
           $lines = ceil(strlen($newReport)/60);
           $voterReportsDisplay['displayLines'] = $voterReportsDisplay['displayLines'] + $lines;
@@ -346,6 +355,65 @@ class NlpReports {
     return $voterReportsDisplay;
   }
   
+  /**
+   * updateNlName
+   *
+   * Fill in the NL's name on this NL's reports that are missing the first
+   * name (nickname) or the last name. Reports that already have both are
+   * left alone.
+   *
+   * @param int $mcid - the vanId in MyCampaign of the NL.
+   * @param string $nickname
+   * @param string $lastName
+   * @return void
+   */
+  public function updateNlName(int $mcid, string $nickname, string $lastName): void
+  {
+    $this->updateReportsMissingNlName($mcid, [
+      // The columns are varchar(64).
+      'nickname' => mb_substr($nickname, 0, 64),
+      'lastName' => mb_substr($lastName, 0, 64),
+    ]);
+  }
+
+  /**
+   * markNlNameNotFound
+   *
+   * Mark this NL's reports that are missing the first name (nickname) or the
+   * last name, after neither the nls table nor MyCampaign had both, so the
+   * names aren't searched for again.
+   *
+   * @param int $mcid - the vanId in MyCampaign of the NL.
+   * @return void
+   */
+  public function markNlNameNotFound(int $mcid): void
+  {
+    $this->updateReportsMissingNlName($mcid, ['nlNameNotFound' => 1]);
+  }
+
+  /**
+   * Set fields on an NL's reports that are missing the nickname or last name.
+   */
+  private function updateReportsMissingNlName(int $mcid, array $fields): void
+  {
+    try {
+      $update = $this->connection->update(self::NLP_RESULTS_TBL);
+      $missingName = $update->orConditionGroup()
+        ->isNull('nickname')
+        ->condition('nickname', '')
+        ->isNull('lastName')
+        ->condition('lastName', '');
+      $update
+        ->fields($fields)
+        ->condition('mcid', $mcid)
+        ->condition($missingName)
+        ->execute();
+    }
+    catch (Exception $e) {
+      nlp_debug_msg('updateReportsMissingNlName', $e);
+    }
+  }
+
   /**
    * getNlpReport
    *
