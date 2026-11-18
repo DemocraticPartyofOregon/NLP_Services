@@ -125,6 +125,35 @@ function nlpservices_user_login(Drupal\user\Entity\User $account): void
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_user_logout
+ * Implements hook_user_logout().
+ *
+ * Ends an impersonation of an NL that is still going when the session logs out.
+ *
+ * @noinspection PhpUnusedParameterInspection
+ */
+function nlpservices_user_logout(AccountInterface $account): void
+{
+  Drupal::service('nlpservices.impersonation')->endOnLogout();
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_page_top
+ * Implements hook_page_top().
+ *
+ * Shows the notice, with the link back to the impersonator's account, while
+ * impersonating an NL.  It's a placeholder filled in on each request, so pages
+ * stay cacheable.
+ */
+function nlpservices_page_top(array &$page_top): void
+{
+  $page_top['nlpservices_impersonation'] = [
+    '#lazy_builder' => ['nlpservices.impersonation:buildBanner', []],
+    '#create_placeholder' => TRUE,
+  ];
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * implements nlp_debug_msg
  *
  * An exception passed as $values is also written to the log, with its

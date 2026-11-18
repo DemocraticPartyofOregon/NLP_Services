@@ -7,6 +7,7 @@ Links for functions to manage NLs.
 {% set fixes = path('nlpservices.legislative_fixes_form') %}
 {% set remindUser = path('nlpservices.login_credentials_reminder_form') %}
 {% set mcid = path('nlpservices.reassign_mcid_form') %}
+{% set impersonate = path('nlpservices.impersonate_nl_form') %}
 
 
 <div class="nlp-menu-page">
@@ -18,6 +19,7 @@ Links for functions to manage NLs.
         <li><a href={{ displayNls }}>Display the list of active NLs.</a></li>
         <li><a href={{ syncNls }}>Sync a new list of active NLs.</a></li>
         <li><a href={{ remindUser }}>Send an email to an NL with a login reminder.</a></li>
+        <li><a href={{ impersonate }}>Impersonate an NL to see their turfs.</a></li>
 
     </ul>
 

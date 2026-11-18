@@ -108,6 +108,11 @@ menu-page:
   css:
     component:
       css/menu-page.css: {}
+impersonation-banner:
+  version: "1.0.0"
+  css:
+    component:
+      css/impersonation-banner.css: {}
 form-helper:
   version: "1.0.0"
   css:

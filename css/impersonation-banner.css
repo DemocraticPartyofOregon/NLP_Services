@@ -1,0 +1,20 @@
+/*
+ * @file
+ * The notice at the top of every page while a coordinator impersonates an NL.
+ */
+.nlp-impersonation-banner {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  padding: 0.5em 1em;
+  background-color: #fff3cd;
+  border-bottom: 2px solid #c69500;
+  color: #4d3800;
+  font-size: 1rem;
+  text-align: center;
+}
+.nlp-impersonation-banner a {
+  margin-left: 0.5em;
+  font-weight: bold;
+  color: #003d80;
+}

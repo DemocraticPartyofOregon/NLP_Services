@@ -236,6 +236,28 @@ nlpservices.login_credentials_reminder_form:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.impersonate_nl_form:
+  path: '/nlpservices-impersonate-nl'
+  defaults:
+    _form: Drupal\nlpservices\Form\ImpersonateNlForm
+    _title: 'Impersonate an NL'
+  requirements:
+    _permission: 'nlp tools access'
+  options:
+    no_cache: 'TRUE'
+
+# Reached from the notice shown while impersonating, so it needs no NLP
+# permission: the NL's account is the one logged in at that point.
+nlpservices.impersonate_return:
+  path: '/nlpservices-impersonate-return'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\ImpersonationController::returnToAccount
+  requirements:
+    _user_is_logged_in: 'TRUE'
+    _csrf_token: 'TRUE'
+  options:
+    no_cache: 'TRUE'
+
 nlpservices.turf_delivery_message_form:
   path: '/nlpservices-turf-delivery-message'
   defaults:
