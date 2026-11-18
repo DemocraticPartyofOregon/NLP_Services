@@ -15,9 +15,9 @@ class ApiFolders {
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
   public function __construct(
-    $client,
-    $nlpConfigurationObj,
-    $apiKeyManagementObj,
+    ClientInterface $client,
+    NlpConfiguration $nlpConfigurationObj,
+    ApiKeyManagement $apiKeyManagementObj,
     private readonly RouteMatchInterface $routeMatch,
   ) {
     $this->client = $client;
