@@ -20,7 +20,12 @@ div.line-spacer { padding-bottom:4px; }
 .voter-attempt { color:blue; font-weight: bold; }
 .voter-no-attempt { color:red; font-weight: bold; }
 .historical-report-title { color:blue; font-weight: bold; }
-.historical-report-list { left: -175px; top: 16px; width: 500px; font-size:x-small; }
+.historical-contacts { position: relative; }
+.historical-contacts .historical-contacts-toggle { margin: 2px 0; }
+.historical-report-list { position: absolute; left: -175px; top: 100%; z-index: 10; width: 500px;
+    font-size: x-small; text-align: left; padding: 3px;
+    border: 2px solid #0000ff; border-radius: 5px; background: #ffffff; }
+.historical-report-list[hidden] { display: none; }
 
 div.end-big-box { clear: both; }
 div.date-bar { width: 1230px; margin:0; padding:0;}

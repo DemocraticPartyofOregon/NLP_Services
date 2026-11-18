@@ -22,6 +22,7 @@ use PHPUnit\Framework\Attributes\Group;
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'validateDataEntrySelection')]
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'whatChanged')]
 #[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'buildDataEntryVoterArray')]
+#[CoversMethod(\Drupal\nlpservices\NlpDataEntryVoterListDisplay::class, 'buildVoterDataEntryTable')]
 #[Group('nlpservices')]
 class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
 
@@ -579,6 +580,46 @@ class NlpDataEntryVoterListDisplayTest extends UnitTestCase {
     $result = $this->service->buildDataEntryVoterArray($voter);
 
     $this->assertStringContainsString('voter-hostile', (string) $result['contactStatusMsg']);
+  }
+
+  // ---------------------------------------------------------------------------
+  // buildVoterDataEntryTable — historical contacts
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Builds the data entry table for one voter with the given historical display.
+   */
+  protected function buildTableWithHistory(string $historicalDisplay): array {
+    $this->reportsMock->method('getCanvassResults')->willReturn([]);
+    $this->sessionDataMock->method('getVoterContactMethod')->willReturn(['code' => 0]);
+    $this->nlpConfigurationMock->method('getContactMethods')->willReturn([0 => 'Door']);
+    $this->nlpConfigurationMock->method('getPledgeSurveyQuestion')
+      ->willReturn(['scriptQuestion' => 'Will you vote?', 'responses' => []]);
+    $this->nlpConfigurationMock->method('getContactResponses')->willReturn([]);
+    $voterArray = $this->service->buildDataEntryVoterArray(
+      $this->baseVoter(['historic' => ['display' => $historicalDisplay, 'displayLines' => 1]]));
+    return $this->service->buildVoterDataEntryTable([$voterArray]);
+  }
+
+  public function testHistoricalContactsShowsTitleAndShowContactsButton(): void {
+    $form = $this->buildTableWithHistory('2026-10-01[Walk] Left lit');
+
+    $cell = $form['dataEntry']['row_2_99999']['col_2_4']['line_2_4_3'];
+    $this->assertStringContainsString('Historical Voter Contacts', $cell['title']['#markup']);
+    $this->assertSame('button', $cell['button']['#tag']);
+    $this->assertSame('Show Contacts', $cell['button']['#value']);
+    // A plain button, so clicking it doesn't submit the data entry form.
+    $this->assertSame('button', $cell['button']['#attributes']['type']);
+    $this->assertContains('historical-contacts-toggle', $cell['button']['#attributes']['class']);
+    // The contacts start hidden; historical-contacts.js shows them on click.
+    $this->assertSame('hidden', $cell['list']['#attributes']['hidden']);
+    $this->assertSame('2026-10-01[Walk] Left lit', $cell['list']['contacts']['#markup']);
+  }
+
+  public function testHistoricalContactsOmittedWhenThereAreNone(): void {
+    $form = $this->buildTableWithHistory('');
+
+    $this->assertArrayNotHasKey('line_2_4_3', $form['dataEntry']['row_2_99999']['col_2_4']);
   }
 
 }

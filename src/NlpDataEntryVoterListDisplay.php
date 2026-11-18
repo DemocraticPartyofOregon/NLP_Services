@@ -19,9 +19,9 @@ class NlpDataEntryVoterListDisplay
   protected NlpSessionData $nlpSessionDataObj;
 
   public function __construct(
-    $reportsObj,
-    $nlpConfigurationObj,
-    $nlpSessionDataObj,
+    NlpReports $reportsObj,
+    NlpConfiguration $nlpConfigurationObj,
+    NlpSessionData $nlpSessionDataObj,
     private readonly ModuleExtensionList $moduleExtensionList,
     private readonly DateFormatterInterface $dateFormatter,
   )
@@ -348,14 +348,36 @@ class NlpDataEntryVoterListDisplay
         '#type' => 'select',
         '#options' => $responseOptionsDisplay,
       ];
-      // Display of a popup link for the historical contacts by an NL, past and current.
+      // The historical contacts by an NL, past and current, shown in a popup
+      // that the "Show Contacts" button opens and closes
+      // (js/historical-contacts.js).
       $historical = $voterArray['historical'];
       if(!empty($historical)) {
-        $historicalContacts = '<span class="historical-report-list">' . $historical . '</span>';
         $form['dataEntry']['row_2_' . $vanid]['col_2_4']['line_2_4_3'] = [
-          '#type' => 'markup',
-          '#markup' => '<div><div class="line-spacer"></div><div class="hint_note historical-report-title">'
-            . '<p><br>View historical contacts' . $historicalContacts . '</p></div></div>',
+          '#type' => 'container',
+          '#attributes' => ['class' => ['historical-contacts']],
+          'title' => [
+            '#type' => 'markup',
+            '#markup' => '<div class="line-spacer"></div>'
+              . '<div class="historical-report-title">Historical Voter Contacts</div>',
+          ],
+          // A real <button> isn't allowed in #markup (Xss::filterAdmin strips it).
+          // type="button" keeps it from submitting the form.
+          'button' => [
+            '#type' => 'html_tag',
+            '#tag' => 'button',
+            '#value' => 'Show Contacts',
+            '#attributes' => [
+              'type' => 'button',
+              'class' => ['button', 'historical-contacts-toggle'],
+              'aria-expanded' => 'false',
+            ],
+          ],
+          'list' => [
+            '#type' => 'container',
+            '#attributes' => ['class' => ['historical-report-list'], 'hidden' => 'hidden'],
+            'contacts' => ['#markup' => $historical],
+          ],
         ];
       }
       // The checkbox to indicate the reason that the voter was not contacted.
