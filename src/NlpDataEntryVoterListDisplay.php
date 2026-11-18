@@ -374,8 +374,7 @@ class NlpDataEntryVoterListDisplay
           '#attributes' => ['class' => ['historical-contacts']],
           'title' => [
             '#type' => 'markup',
-            '#markup' => '<div class="line-spacer"></div>'
-              . '<div class="historical-report-title">Historical Voter Contacts</div>',
+            '#markup' => '<div class="historical-report-title">Historical Voter Contacts</div>',
           ],
           // A real <button> isn't allowed in #markup (Xss::filterAdmin strips it).
           // type="button" keeps it from submitting the form.

@@ -22,7 +22,10 @@ div.line-spacer { padding-bottom:4px; }
 /* "Voter contact status:", "Thank you." and "Success!" keep black whatever the status color. */
 .contact-status-plain { color: #000000; }
 .historical-report-title { color:blue; font-weight: bold; }
-.historical-contacts { position: relative; }
+/* A blue rounded box around the title and button, like the date bar's boxes.  The contacts
+   list is absolutely positioned, so it opens outside the box. */
+.historical-contacts { position: relative; width: fit-content; margin: 10px 0 0 0; padding: 5px;
+    border: 1px solid blue; border-radius: 5px; }
 .historical-contacts .historical-contacts-toggle { margin: 2px 0; }
 .historical-report-list { position: absolute; left: -175px; top: 100%; z-index: 10; width: 500px;
     font-size: x-small; text-align: left; padding: 3px;
@@ -30,7 +33,8 @@ div.line-spacer { padding-bottom:4px; }
 .historical-report-list[hidden] { display: none; }
 
 div.end-big-box { clear: both; }
-div.date-bar { width: 1230px; margin:0; padding:0;}
+/* Full width, like the data entry table below it (the theme gives tables width: 100%). */
+div.date-bar { width: 100%; margin:0; padding:0;}
 div.date-box-left {float: left; font-size:x-small; width: 140px; margin:0; padding:4px 0 0 0;}
 div.counts-box-left {float: left; font-size:x-small; width: 180px; margin:0; padding:4px 0 0 0;}
 div.awards-box-left {float: left; font-size:x-small; width: 280px; margin:0; padding:4px 0 0 0;}
@@ -39,19 +43,19 @@ div.methods-box-left {float: left; font-size:x-small; width: 140px; margin:0; pa
 
 div.inner-box-left {float: left; font-size:x-small;  margin:0; padding:4px 0 0 0;}
 
-div.reports-note-right { float: right; width: 300px; margin: 0 5px 0 0; padding: 4px 0 0 0; }
+div.reports-note-right { float: right; width: 320px; margin: 0 5px 0 0; padding: 4px 0 0 0; }
 section.reports-note-box { margin: 0; padding: 5px; border: 1px solid blue; border-radius: 5px;
-    font-size: xx-small; line-height: 1.15; color: maroon; }
+    font-size: small; line-height: 1; color: maroon; text-wrap: balance; }
 
 div.turf-name-right {float: right; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
-section.turf-name-box {width: 361px; margin:0; padding:5px; border: 1px solid blue; border-radius: 5px; font-size:small;}
+section.turf-name-box {width: 361px; margin:0 0 0 auto; padding:5px; border: 1px solid blue; border-radius: 5px; font-size:small;}
 div.turf-name { margin: 0 0 0 0}
 
 div.refresh-box-right {float: right; font-size:x-small; width: 195px; margin:0; padding:4px 0 0 0;}
 .refresh_box { width: 185px; margin:0; padding:3px; border: 1px solid red; border-radius: 5px; }
 
 div.nav-box-right {float: right; font-size:x-small; width: 400px; margin:0; padding:4px 0 0 0;}
-.nav_box { width: 361px; margin:0; padding:5px; border: 1px solid red; border-radius: 5px; font-size:x-small; }
+.nav_box { width: 361px; margin:0 0 0 auto; padding:5px; border: 1px solid red; border-radius: 5px; font-size:x-small; }
 .nav_div { width: 360px; background-image: none; padding:0; margin:0; border:1px; }
 .nav_number {float:left; text-align: center; padding: 2px 2px 0 2px;}
 .nav_dots {float:left; text-align: center; padding: 8px 2px 0 2px; font-size:small; }
