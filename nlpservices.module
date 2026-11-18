@@ -1,10 +1,13 @@
 <?php /** @noinspection PhpUnused */
 
+use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\DatabaseException;
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\nlpservices\NlpCronRunner;
+use Drupal\user\Entity\User;
 use Psr\Log\LogLevel;
 
 const NLP_MODULE = 'nlpservices';
@@ -223,6 +226,8 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
       // Swap an email address for its username before Drupal checks the login.
       array_unshift($form['#validate'], 'nlpservices_login_email_validate');
       $form['#validate'][] = 'nlpservices_login_validate';
+      // Runs after Drupal's own submit, so it can replace the redirect to the account page.
+      $form['#submit'][] = 'nlpservices_login_redirect';
       $form['name']['#title'] = t('Username or email');
       $form['name']['#description'] = t('Enter your username or the email address your coordinator has for you.');
       $form['login_help'] = [
@@ -230,6 +235,10 @@ function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id
             [':url' => Url::fromRoute('nlpservices.login_help')->toString()]) . '</p>',
         '#weight' => 200,
       ];
+      break;
+
+    case 'user_pass_reset':
+      nlpservices_leader_reset_form($form, $form_state);
       break;
   }
 }
@@ -287,8 +296,8 @@ function nlpservices_login_email_validate(&$form, FormStateInterface $form_state
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * nlpservices_login_validate
  *
- * Report login failures to the log file.   We're looking for attempts to guess passwords and to help
- * NLs who are having trouble with login.
+ * Report login attempts with an unknown username to the log file.   We're looking for attempts to
+ * guess passwords and to help NLs who are having trouble with login.
  *
  * @param $form
  * @param FormStateInterface $form_state
@@ -315,18 +324,58 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
       $messenger->addWarning(t('No account uses that email address.  Try your username, or ask your
         coordinator which email address they have for you.'));
     }
+  }
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_login_redirect
+ *
+ * Sends an NLP Leader to the leader start page, which takes them to data
+ * entry if they have a turf, instead of their account page.  A destination in
+ * the login URL still takes precedence.
+ *
+ * @param $form
+ * @param FormStateInterface $form_state
+ * @return void
+ * @noinspection PhpUnused
+ * @noinspection PhpUnusedParameterInspection
+ */
+function nlpservices_login_redirect(&$form, FormStateInterface $form_state): void
+{
+  $account = User::load($form_state->get('uid'));
+  if (empty($account)) { return; }
+  $roles = $account->getRoles();
+  if (!Drupal::service('nlpservices.drupal_user')->isLeaderOnly($roles)) {
+    if (in_array(NLP_LEADER_ROLE_ID, $roles, TRUE)) {
+      Drupal::logger('nlpservices')->notice('Login landing for @name: account page, not only an NLP Leader (roles: @roles).',
+        ['@name' => $account->getAccountName(), '@roles' => implode(', ', $roles)]);
+    }
     return;
   }
-  $mcid = $user['mcid'];
-  if(empty($mcid)) { return; }  // No need to record the PW mistake for non-NLP users.
-  $magicWordObj = Drupal::service('nlpservices.magic_word');
-  $magicWord = $magicWordObj->getMagicWord($mcid);
-  $admin = (in_array('administrator',$user['roles']) OR in_array('nlp_admin',$user['roles']));
-  if($pass !== $magicWord && !$admin) {
-    Drupal::logger('nlpservices')->notice('Login attempt: '.$userName.' miss matched pass: '
-      .$pass.' ['.$magicWord.']');
-  }
-  //nlp_debug_msg('$mcid',$mcid);
+  $form_state->setRedirect('nlpservices.leader_start');
+}
+
+/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
+ * nlpservices_leader_reset_form
+ *
+ * Adjusts the page a one-time login link opens, for an NLP Leader: the Log in
+ * button goes on to the leader start page instead of the account page where
+ * Drupal asks for a new password, and the text doesn't mention changing it.
+ *
+ * @param array $form
+ * @param FormStateInterface $form_state
+ * @return void
+ */
+function nlpservices_leader_reset_form(array &$form, FormStateInterface $form_state): void
+{
+  $account = $form_state->getBuildInfo()['args'][0] ?? NULL;
+  if (!$account instanceof AccountInterface) { return; }
+  if (!Drupal::service('nlpservices.drupal_user')->isLeaderOnly($account->getRoles())) { return; }
+  $form['#title'] = t('Neighborhood Leader login');
+  $form['message'] = ['#markup' => '<p>' . t('Click the Log in button to log in as %user_name.',
+      ['%user_name' => $account->getAccountName()]) . '</p>'];
+  $destination = Url::fromRoute('nlpservices.leader_start')->toString();
+  $form['#action'] .= '?' . UrlHelper::buildQuery(['destination' => $destination]);
 }
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *

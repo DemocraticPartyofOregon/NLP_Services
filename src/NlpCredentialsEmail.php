@@ -172,34 +172,30 @@ class NlpCredentialsEmail
   /**
    * sendLoginHelpEmail
    *
-   * Emails an NL who asked for help logging in their username and a one-time
-   * link to their password, along with their coordinator's contact information.
+   * Emails an NL who asked for help logging in a one-time login link, so they
+   * can log in without their password, along with their username and their
+   * coordinator's contact information.
    *
    * @param array $user - the NL's Drupal user array.
    * @return bool
    */
   public function sendLoginHelpEmail(array $user): bool
   {
-    $mcid = (int) $user['mcid'];
-    $key = $this->mcidRecoveryObj->saveRecoveryKey($mcid);
-    if(empty($key)) {
+    $loginUrl = $this->drupalUserObj->getOneTimeLoginUrl((int) $user['uid']);
+    if(empty($loginUrl)) {
       return FALSE;
     }
-    $serverUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
-    $revealUrl = $serverUrl . '/nlp-mcid-recovery?key=' . $key;
 
-    $nl = $this->nlsObj->getNlById($mcid);
+    $nl = $this->nlsObj->getNlById((int) $user['mcid']);
     $nlCoordinator = (!empty($nl)) ? $this->coordinatorsObj->getAssignedCoordinator($nl) : [];
     $firstName = (!empty($user['firstName'])) ? $user['firstName'] : 'Neighborhood Leader';
 
     $message = "<p>$firstName,</p>".
-      "<p>Here is your login for NLP Services, as you asked.</p>".
-      "<p><b>Neighborhood Leader Login: </b>".
-      '<a href="'.$serverUrl.'" target="_blank">'.$serverUrl.'</a>'.
-      "<br><b>Username:</b> ".$user['userName'].
-      '<br><a href="' . $revealUrl . '">Click here to see your password</a> (this link can only be used once)</p>'.
-      "<p>Type the username and password exactly as shown, or copy and paste them.  ".
-      "You can also type your email address in place of the username.</p>";
+      "<p>Here is a link to log in to NLP Services, as you asked.  You won't need your password.</p>".
+      '<p><a href="' . $loginUrl . '"><b>Click here to log in</b></a>, then click the Log in button.</p>'.
+      "<p>The link works once and expires in 24 hours.  If it has expired, use the ".
+      "<i>Email me my login</i> link on the login page to get a new one.</p>".
+      "<p>Your username is <b>".$user['userName']."</b>.</p>";
     if(!empty($nlCoordinator)) {
       $message .= "<p>If you still can't log in, contact your coordinator:</p>".
         $this->coordinatorContactInfo($nlCoordinator, 'Request for help with login');

@@ -10,6 +10,7 @@ use Drupal\Core\Entity\EntityStorageInterface;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Session\AccountProxyInterface;
 use Drupal\user\Entity\User;
+use Drupal\user\OneTimeAuthentication;
 use Drupal\user\UserAuthInterface;
 use Drupal\user\UserInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -23,11 +24,12 @@ class DrupalUser {
   protected RequestStack $requestStack;
 
   public function __construct (
-    $magicWordObj,
-    $requestStack,
+    MagicWord $magicWordObj,
+    RequestStack $requestStack,
     private readonly EntityTypeManagerInterface $entityTypeManager,
     private readonly AccountProxyInterface $currentUser,
     private readonly UserAuthInterface $userAuth,
+    private readonly OneTimeAuthentication $oneTimeAuthentication,
   ) {
     $this->magicWordObj = $magicWordObj;
     $this->requestStack = $requestStack;
@@ -41,6 +43,7 @@ class DrupalUser {
       $container->get('entity_type.manager'),
       $container->get('current_user'),
       $container->get('user.auth'),
+      $container->get(OneTimeAuthentication::class),
     );
   }
 
@@ -301,6 +304,44 @@ class DrupalUser {
     if(!empty($this->getUserByName($email))) {return '';}
     $user = $this->getUserByEmail($email);
     return $user['userName'] ?? '';
+  }
+
+  /**
+   * isLeaderOnly
+   *
+   * True when the roles include NLP Leader and none of the coordinator or
+   * administrator roles.  Login help and the data entry landing are only for
+   * these users; coordinators and administrators manage their own logins.
+   *
+   * @param array $roles - role ids, as in the NLP user array's 'roles'.
+   * @return bool
+   */
+  public function isLeaderOnly(array $roles): bool
+  {
+    if (!in_array(NLP_LEADER_ROLE_ID, $roles, TRUE)) {
+      return FALSE;
+    }
+    return empty(array_intersect([NLP_COORDINATOR_ROLE_ID, NLP_ADMIN_ROLE_ID, 'administrator'], $roles));
+  }
+
+  /**
+   * getOneTimeLoginUrl
+   *
+   * Returns Drupal's one-time login link for the account, or '' if there is
+   * no such account.  The link opens a page with a Log in button, so an email
+   * scanner that follows it doesn't use it up.  It expires after the site's
+   * password reset timeout (24 hours by default) and works once.
+   *
+   * @param int $uid
+   * @return string
+   */
+  public function getOneTimeLoginUrl(int $uid): string
+  {
+    $account = $this->getUserStorage('getOneTimeLoginUrl')?->load($uid);
+    if (!$account instanceof UserInterface) {
+      return '';
+    }
+    return $this->oneTimeAuthentication->generateOneTimeLoginUrl($account)->toString();
   }
 
   /**

@@ -575,6 +575,15 @@ nlpservices.mcid_recovery:
   options:
     no_cache: TRUE
 
+nlpservices.leader_start:
+  path: '/nlpservices-leader-start'
+  defaults:
+    _controller: Drupal\nlpservices\Controller\LeaderStartController::start
+  requirements:
+    _user_is_logged_in: 'TRUE'
+  options:
+    no_cache: 'TRUE'
+
 nlpservices.login_help:
   path: '/nlpservices-login-help'
   defaults:

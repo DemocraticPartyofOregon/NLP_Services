@@ -14,7 +14,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\MagicWord;
   use Drupal\Tests\UnitTestCase;
+  use Drupal\Component\Datetime\TimeInterface;
+  use Drupal\Core\Language\LanguageInterface;
+  use Drupal\Core\Language\LanguageManagerInterface;
+  use Drupal\Core\Routing\UrlGeneratorInterface;
+  use Drupal\Core\Site\Settings;
+  use Drupal\user\OneTimeAuthentication;
   use Drupal\user\UserAuthInterface;
+  use Drupal\user\UserInterface;
+  use PHPUnit\Framework\Attributes\DataProvider;
   use Psr\Log\LoggerInterface;
   use Symfony\Component\DependencyInjection\ContainerBuilder;
   use Symfony\Component\HttpFoundation\Request;
@@ -27,6 +35,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private object $entityTypeManagerMock;
     private object $currentUserMock;
     private object $userAuthMock;
+    private object $timeMock;
+    private object $languageManagerMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -35,6 +45,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
       $this->currentUserMock     = $this->createMock(AccountProxyInterface::class);
       $this->userAuthMock        = $this->createMock(UserAuthInterface::class);
+      $this->timeMock            = $this->createMock(TimeInterface::class);
+      $this->languageManagerMock = $this->createMock(LanguageManagerInterface::class);
     }
 
     protected function tearDown(): void {
@@ -53,6 +65,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->entityTypeManagerMock,
         $this->currentUserMock,
         $this->userAuthMock,
+        new OneTimeAuthentication($this->timeMock, $this->languageManagerMock),
       );
     }
 
@@ -341,6 +354,73 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         [$this->buildUserStub(['userName' => 'alice@example.com'])],
         [$this->buildUserStub(['userName' => 'other.name'])]);
       $this->assertSame('', $this->buildDrupalUser()->loginNameForEmail('alice@example.com'));
+    }
+
+    // -------------------------------------------------------------------------
+    // isLeaderOnly
+    // -------------------------------------------------------------------------
+
+    public static function leaderRolesProvider(): array {
+      return [
+        'leader'                  => [['authenticated', 'nlp_leader'], TRUE],
+        'leader and coordinator'  => [['authenticated', 'nlp_leader', 'nlp_coordinator'], FALSE],
+        'leader and NLP admin'    => [['authenticated', 'nlp_leader', 'nlp_admin'], FALSE],
+        'leader and administrator'=> [['authenticated', 'nlp_leader', 'administrator'], FALSE],
+        'coordinator only'        => [['authenticated', 'nlp_coordinator'], FALSE],
+        'no NLP role'             => [['authenticated'], FALSE],
+        'no roles'                => [[], FALSE],
+      ];
+    }
+
+    #[DataProvider('leaderRolesProvider')]
+    public function testIsLeaderOnly(array $roles, bool $expected): void {
+      $this->assertSame($expected, $this->buildDrupalUser()->isLeaderOnly($roles));
+    }
+
+    // -------------------------------------------------------------------------
+    // getOneTimeLoginUrl
+    // -------------------------------------------------------------------------
+
+    private function mockUserLoad(?UserInterface $account): void {
+      $storageMock = $this->createMock(EntityStorageInterface::class);
+      $storageMock->method('load')->with(39)->willReturn($account);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
+    }
+
+    public function testGetOneTimeLoginUrlIsEmptyForAnUnknownAccount(): void {
+      $this->mockUserLoad(NULL);
+      $this->assertSame('', $this->buildDrupalUser()->getOneTimeLoginUrl(39));
+    }
+
+    public function testGetOneTimeLoginUrlIsDrupalsResetLinkForTheAccount(): void {
+      new Settings(['hash_salt' => 'test-salt']);
+      $account = $this->createMock(UserInterface::class);
+      $account->method('id')->willReturn(39);
+      $account->method('getPreferredLangcode')->willReturn('en');
+      $this->mockUserLoad($account);
+      $this->timeMock->method('getCurrentTime')->willReturn(1700000000);
+      $this->languageManagerMock->method('getLanguage')->willReturn($this->createMock(LanguageInterface::class));
+
+      $route = [];
+      $urlGenerator = $this->createMock(UrlGeneratorInterface::class);
+      $urlGenerator->method('generateFromRoute')
+        ->willReturnCallback(function ($name, $parameters) use (&$route): string {
+          $route = compact('name', 'parameters');
+          return 'https://example.com/user/reset/39/1700000000/' . $parameters['hash'];
+        });
+      $container = new ContainerBuilder();
+      $container->set('url_generator', $urlGenerator);
+      Drupal::setContainer($container);
+
+      $url = $this->buildDrupalUser()->getOneTimeLoginUrl(39);
+
+      // The confirmation page, not the immediate login, so email scanners can't use it up.
+      $this->assertSame('user.reset', $route['name']);
+      $this->assertSame(39, $route['parameters']['uid']);
+      $this->assertSame(1700000000, $route['parameters']['timestamp']);
+      $this->assertNotEmpty($route['parameters']['hash']);
+      $this->assertSame('https://example.com/user/reset/39/1700000000/' . $route['parameters']['hash'], $url);
     }
 
   }

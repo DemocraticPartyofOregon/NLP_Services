@@ -10,7 +10,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\Form\LoginHelpForm;
-  use Drupal\nlpservices\MagicWord;
   use Drupal\nlpservices\NlpCredentialsEmail;
   use Drupal\Tests\UnitTestCase;
   use Psr\Log\LoggerInterface;
@@ -18,7 +17,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   class LoginHelpFormTest extends UnitTestCase {
 
     private DrupalUser $drupalUserMock;
-    private MagicWord $magicWordMock;
     private NlpCredentialsEmail $credentialsEmailMock;
     private FloodInterface $floodMock;
     private MessengerInterface $messengerMock;
@@ -28,7 +26,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     protected function setUp(): void {
       parent::setUp();
       $this->drupalUserMock       = $this->createMock(DrupalUser::class);
-      $this->magicWordMock        = $this->createMock(MagicWord::class);
       $this->credentialsEmailMock = $this->createMock(NlpCredentialsEmail::class);
       $this->floodMock            = $this->createMock(FloodInterface::class);
       $this->messengerMock        = $this->createMock(MessengerInterface::class);
@@ -60,7 +57,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private function buildForm(): LoginHelpForm {
       $form = new LoginHelpForm(
         $this->drupalUserMock,
-        $this->magicWordMock,
         $this->credentialsEmailMock,
         $this->floodMock,
       );
@@ -129,10 +125,10 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // submitForm
     // -------------------------------------------------------------------------
 
-    public function testSubmitFormEmailsAnNlWithASavedPassword(): void {
+    public function testSubmitFormEmailsAnNlpLeader(): void {
       $user = $this->nlUser();
       $this->drupalUserMock->method('getUserByEmail')->with('alice@example.com')->willReturn($user);
-      $this->magicWordMock->method('getMagicWord')->with(42)->willReturn('planet7');
+      $this->drupalUserMock->method('isLeaderOnly')->with(['authenticated', 'nlp_leader'])->willReturn(TRUE);
       $this->credentialsEmailMock->expects($this->once())->method('sendLoginHelpEmail')
         ->with($user)->willReturn(TRUE);
       $this->floodMock->expects($this->once())->method('register')
@@ -157,37 +153,22 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertSame('user.login', $formState->getRedirect()->getRouteName());
     }
 
-    public function testSubmitFormSendsNothingWithoutASavedPassword(): void {
-      $this->drupalUserMock->method('getUserByEmail')->willReturn($this->nlUser());
-      $this->magicWordMock->method('getMagicWord')->willReturn('');
+    public function testSubmitFormSendsNothingToAnAccountThatIsNotOnlyAnNlpLeader(): void {
+      // A coordinator, an administrator, or an account with no NLP role.
+      $this->drupalUserMock->method('getUserByEmail')
+        ->willReturn($this->nlUser(['roles' => ['authenticated', 'nlp_leader', 'nlp_coordinator']]));
+      $this->drupalUserMock->method('isLeaderOnly')->willReturn(FALSE);
       $this->credentialsEmailMock->expects($this->never())->method('sendLoginHelpEmail');
       $this->messengerMock->expects($this->once())->method('addStatus');
 
       $this->submit('alice@example.com');
 
-      $this->assertSame(['Login help not sent, no NL password saved for: alice.smith'], $this->notices);
-    }
-
-    public function testSubmitFormSendsNothingToAnAccountWithoutAnMcid(): void {
-      $this->drupalUserMock->method('getUserByEmail')->willReturn($this->nlUser(['mcid' => NULL]));
-      $this->magicWordMock->expects($this->never())->method('getMagicWord');
-      $this->credentialsEmailMock->expects($this->never())->method('sendLoginHelpEmail');
-
-      $this->submit('alice@example.com');
-    }
-
-    public function testSubmitFormSendsNothingToAnAdministrator(): void {
-      $this->drupalUserMock->method('getUserByEmail')
-        ->willReturn($this->nlUser(['roles' => ['authenticated', 'nlp_admin']]));
-      $this->magicWordMock->method('getMagicWord')->willReturn('planet7');
-      $this->credentialsEmailMock->expects($this->never())->method('sendLoginHelpEmail');
-
-      $this->submit('alice@example.com');
+      $this->assertSame(['Login help not sent, not an NLP Leader: alice.smith'], $this->notices);
     }
 
     public function testSubmitFormLogsNothingSentWhenTheEmailFails(): void {
       $this->drupalUserMock->method('getUserByEmail')->willReturn($this->nlUser());
-      $this->magicWordMock->method('getMagicWord')->willReturn('planet7');
+      $this->drupalUserMock->method('isLeaderOnly')->willReturn(TRUE);
       $this->credentialsEmailMock->method('sendLoginHelpEmail')->willReturn(FALSE);
       $this->messengerMock->expects($this->once())->method('addStatus');
 

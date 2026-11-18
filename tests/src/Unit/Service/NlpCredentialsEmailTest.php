@@ -462,12 +462,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // sendLoginHelpEmail
     // -------------------------------------------------------------------------
 
+    private const string LOGIN_URL = 'https://example.com/user/reset/7/1700000000/hmac-abc';
+
     private function loginHelpUser(): array {
-      return ['mcid' => 42, 'userName' => 'bsmith', 'email' => 'bob@example.com', 'firstName' => 'Bob'];
+      return ['uid' => 7, 'mcid' => 42, 'userName' => 'bsmith', 'email' => 'bob@example.com', 'firstName' => 'Bob'];
     }
 
-    public function testSendLoginHelpEmailSendsUsernameAndPasswordLinkToTheNl(): void {
+    public function testSendLoginHelpEmailSendsAOneTimeLoginLinkToTheNl(): void {
       $this->setupStandardMocks();
+      $this->drupalUserMock->method('getOneTimeLoginUrl')->with(7)->willReturn(self::LOGIN_URL);
+      $this->mcidRecoveryMock->expects($this->never())->method('saveRecoveryKey');
       $sent = [];
       $this->sendMailMock->expects($this->once())->method('sendEmail')
         ->willReturnCallback(function ($key, $to, $subject, $message, $reply) use (&$sent): bool {
@@ -479,8 +483,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->assertSame('account_reminder', $sent['key']);
       $this->assertSame('bob@example.com', $sent['to']);
+      $this->assertStringContainsString('href="' . self::LOGIN_URL . '"', $sent['message']);
       $this->assertStringContainsString('bsmith', $sent['message']);
-      $this->assertStringContainsString('https://example.com/nlp-mcid-recovery?key=abc-key-123', $sent['message']);
+      $this->assertStringNotContainsString('nlp-mcid-recovery', $sent['message']);
       $this->assertStringContainsString('Jane Doe', $sent['message']);
       $this->assertSame('jane@example.com', $sent['reply']);
     }
@@ -488,8 +493,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSendLoginHelpEmailWithoutACoordinatorLeavesOutTheContact(): void {
       $this->nlsMock->method('getNlById')->willReturn([]);
       $this->coordinatorsMock->expects($this->never())->method('getAssignedCoordinator');
-      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
-      $this->setupRequestMock();
+      $this->drupalUserMock->method('getOneTimeLoginUrl')->willReturn(self::LOGIN_URL);
       $sent = [];
       $this->sendMailMock->method('sendEmail')
         ->willReturnCallback(function ($key, $to, $subject, $message, $reply) use (&$sent): bool {
@@ -502,8 +506,9 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNull($sent['reply']);
     }
 
-    public function testSendLoginHelpEmailReturnsFalseWithoutARecoveryKey(): void {
-      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('');
+    public function testSendLoginHelpEmailReturnsFalseWithoutALoginLink(): void {
+      // The account wasn't found.
+      $this->drupalUserMock->method('getOneTimeLoginUrl')->willReturn('');
       $this->sendMailMock->expects($this->never())->method('sendEmail');
       $this->assertFalse($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
     }
@@ -511,9 +516,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testSendLoginHelpEmailReturnsFalseWhenSendingFails(): void {
       $this->nlsMock->method('getNlById')->willReturn($this->baseNl());
       $this->coordinatorsMock->method('getAssignedCoordinator')->willReturn($this->baseCoordinator());
-      $this->mcidRecoveryMock->method('saveRecoveryKey')->willReturn('key');
+      $this->drupalUserMock->method('getOneTimeLoginUrl')->willReturn(self::LOGIN_URL);
       $this->sendMailMock->method('sendEmail')->willReturn(FALSE);
-      $this->setupRequestMock();
       $this->assertFalse($this->buildService()->sendLoginHelpEmail($this->loginHelpUser()));
     }
 

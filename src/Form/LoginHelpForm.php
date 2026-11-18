@@ -7,13 +7,13 @@ use Drupal\Core\Flood\FloodInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\DrupalUser;
-use Drupal\nlpservices\MagicWord;
 use Drupal\nlpservices\NlpCredentialsEmail;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Lets an NL who can't log in email themselves their username and a one-time
- * link to their password, without waiting for a coordinator.
+ * Lets an NL who can't log in email themselves a one-time login link, without
+ * waiting for a coordinator.  Only NLP Leaders get one; coordinators and
+ * administrators manage their own logins.
  *
  * The reply is the same whether or not the email address is on file, so the
  * form can't be used to find out who is an NL.
@@ -28,14 +28,13 @@ class LoginHelpForm extends FormBase
   const int FLOOD_WINDOW = 3600;
 
   protected DrupalUser $drupalUserObj;
-  protected MagicWord $magicWordObj;
   protected NlpCredentialsEmail $credentialsEmailObj;
   protected FloodInterface $flood;
 
-  public function __construct($drupalUserObj, $magicWordObj, $credentialsEmailObj, $flood)
+  public function __construct(DrupalUser $drupalUserObj, NlpCredentialsEmail $credentialsEmailObj,
+                              FloodInterface $flood)
   {
     $this->drupalUserObj = $drupalUserObj;
-    $this->magicWordObj = $magicWordObj;
     $this->credentialsEmailObj = $credentialsEmailObj;
     $this->flood = $flood;
   }
@@ -47,7 +46,6 @@ class LoginHelpForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.drupal_user'),
-      $container->get('nlpservices.magic_word'),
       $container->get('nlpservices.credentials_email'),
       $container->get('flood'),
     );
@@ -68,7 +66,7 @@ class LoginHelpForm extends FormBase
   {
     $form['intro'] = [
       '#markup' => '<p>' . $this->t('Enter the email address your Neighborhood Leader coordinator has for you.
-        We will email you your username and a link to see your password.') . '</p>',
+        We will email you a link that logs you in.') . '</p>',
     ];
     $form['email'] = [
       '#type' => 'email',
@@ -106,35 +104,15 @@ class LoginHelpForm extends FormBase
     $logger = Drupal::logger('nlpservices');
     if (empty($user)) {
       $logger->notice('Login help asked for an email not on file: ' . $email);
-    } elseif (!$this->isNlWithPassword($user)) {
-      $logger->notice('Login help not sent, no NL password saved for: ' . $user['userName']);
+    } elseif (!$this->drupalUserObj->isLeaderOnly($user['roles'] ?? [])) {
+      $logger->notice('Login help not sent, not an NLP Leader: ' . $user['userName']);
     } elseif ($this->credentialsEmailObj->sendLoginHelpEmail($user)) {
       $logger->notice('Login help sent to: ' . $user['userName']);
     }
 
     $this->messenger()->addStatus($this->t('If that email address belongs to a Neighborhood Leader,
-      we have sent it the username and a link to the password.  Check your spam folder if it
-      doesn\'t arrive in a few minutes.'));
+      we have sent it a link to log in.  Check your spam folder if it doesn\'t arrive in a few
+      minutes.'));
     $form_state->setRedirect('user.login');
-  }
-
-  /**
-   * isNlWithPassword
-   *
-   * An account gets login help when it belongs to an NL or coordinator (it has
-   * an MCID) with a saved password.  Administrators manage their own logins.
-   *
-   * @param array $user - the Drupal user array.
-   * @return bool
-   */
-  private function isNlWithPassword(array $user): bool
-  {
-    if (empty($user['mcid'])) {
-      return FALSE;
-    }
-    if (array_intersect(['administrator', NLP_ADMIN_ROLE_ID], $user['roles'] ?? [])) {
-      return FALSE;
-    }
-    return !empty($this->magicWordObj->getMagicWord((int) $user['mcid']));
   }
 }

@@ -79,7 +79,8 @@ services:
 
   nlpservices.drupal_user:
     class: Drupal\nlpservices\DrupalUser
-    arguments: [ '@nlpservices.magic_word', '@request_stack', '@entity_type.manager', '@current_user', '@user.auth' ]
+    arguments: [ '@nlpservices.magic_word', '@request_stack', '@entity_type.manager', '@current_user', '@user.auth',
+                 '@Drupal\user\OneTimeAuthentication' ]
 
   nlpservices.encryption:
     class: Drupal\nlpservices\NlpEncryption
