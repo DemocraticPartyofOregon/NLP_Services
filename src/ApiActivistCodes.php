@@ -60,7 +60,11 @@ class ApiActivistCodes
   protected NlpConfiguration $nlpConfigurationObj;
   private ApiKeyManagement $apiKeyManagementObj;
 
-  public function __construct( $client, $nlpConfigurationObj, $apiKeyManagementObj ) {
+  public function __construct(
+    ClientInterface $client,
+    NlpConfiguration $nlpConfigurationObj,
+    ApiKeyManagement $apiKeyManagementObj,
+  ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
