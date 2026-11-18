@@ -47,7 +47,14 @@ class NlpNls {
   protected DatabaseFunctions $dbFunctionsObj;
   protected StateInterface $state;
   protected LockBackendInterface $lock;
-  public function __construct( $connection, $dbFunctionsObj, ConfigFactoryInterface $configFactory, $state, $lock) {
+  
+  public function __construct(
+    Connection $connection,
+    DatabaseFunctions $dbFunctionsObj,
+    ConfigFactoryInterface $configFactory,
+    StateInterface $state,
+    LockBackendInterface $lock,
+  ) {
     $this->connection = $connection;
     $this->dbFunctionsObj = $dbFunctionsObj;
     $this->state = $state;
