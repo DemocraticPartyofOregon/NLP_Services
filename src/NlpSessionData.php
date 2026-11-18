@@ -16,7 +16,12 @@ class NlpSessionData
   protected NlpConfiguration $nlpConfigurationObj;
   protected RequestStack $requestStack;
 
-  public function __construct( $tempStoreObj, $drupalUser, $nlpConfigurationObj, $requestStack ) {
+  public function __construct(
+    PrivateTempStoreFactory $tempStoreObj,
+    DrupalUser $drupalUser,
+    NlpConfiguration $nlpConfigurationObj,
+    RequestStack $requestStack,
+  ) {
     $this->tempStoreObj = $tempStoreObj;
     $this->drupalUser = $drupalUser;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
@@ -36,6 +41,8 @@ class NlpSessionData
   }
 
   /**
+   * getCounty
+   * 
    * Returns the county for the current user.  An admin can change the county they
    * are working in, which permits them to support any county.
    *
@@ -57,6 +64,8 @@ class NlpSessionData
   }
 
   /**
+   * setVoterContactMethod
+   * 
    * Sets the contact method for a voter.
    *
    * @param array $method - An array with the contact method data.
@@ -70,6 +79,8 @@ class NlpSessionData
   }
 
   /**
+   * setDefaultVoterContactMethod
+   * 
    * Sets the default contact method and applies it to every voter, replacing
    * any contact method chosen for a single voter.
    *
@@ -83,6 +94,8 @@ class NlpSessionData
   }
 
   /**
+   * getVoterContactMethod
+   * 
    * Returns the voter contact method for a voter.  Defaults to the default
    * contact method, or Walk if no default is set.
    *
@@ -116,6 +129,8 @@ class NlpSessionData
   }
 
   /**
+   * setNewDistricts
+   * 
    * Sets the new districts for the session.  It remembers the session and
    * restores the hd and precinct focus for the coordinator.  It helps reduce
    * keystrokes for managing NLs and turfs.  The indexes for hd and precinct are
@@ -167,6 +182,8 @@ class NlpSessionData
   }
 
   /**
+   * getHdOptions
+   * 
    * Returns the list of house districts saved in the session.
    *
    * @return array - An associative array of house district names.
@@ -178,6 +195,8 @@ class NlpSessionData
   }
 
   /**
+   * saveHdIndex
+   * 
    * Saves the index of the selected house district in the session.
    *
    * @param int $hdIndex
@@ -191,6 +210,8 @@ class NlpSessionData
   }
 
   /**
+   * getSavedHdIndex
+   * 
    * Returns the index of the selected house district saved in the session.
    * If a hd_index query parameter is present in the current request, it is
    * saved to session first, so URL-driven HD selection takes effect immediately.
@@ -208,6 +229,8 @@ class NlpSessionData
   }
 
   /**
+   * getPrecinctList
+   * 
    * Returns the list of precincts saved in the session for the selected house district.
    *
    * @return array - An associative array of precinct names for the selected house district.
@@ -219,6 +242,8 @@ class NlpSessionData
   }
 
   /**
+   * getSavedPrecinctIndex
+   * 
    * Returns the index of the selected precinct saved in the session.
    * If a pct_index query parameter is present in the current request, it is
    * saved to session first, so URL-driven precinct selection takes effect immediately.
@@ -248,6 +273,8 @@ class NlpSessionData
   }
 
   /**
+   * savePrecinctIndex
+   * 
    * Saves the index of the selected precinct in the session.
    *
    * @param int $pctIndex - The index of the selected precinct.
@@ -261,6 +288,8 @@ class NlpSessionData
   }
 
   /**
+   * getSavedHd
+   * 
    * Returns the saved house district value for the current user.
    *
    * @return int - The saved house district, or 0 for 'All' or none saved.
@@ -273,6 +302,8 @@ class NlpSessionData
   }
 
   /**
+   * set
+   * 
    * Sets a value in the session storage.
    * Known Keys:
    * - turfIndex - The index of the current turf being worked on.
@@ -294,6 +325,8 @@ class NlpSessionData
   }
 
   /**
+   * get
+   * 
    * Gets a value from the session storage.
    * If the key does not exist, it returns NULL.
    *
