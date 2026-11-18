@@ -2,10 +2,12 @@
 
 namespace Drupal\nlpservices\Config;
 
+use Drupal\Core\Config\ConfigFactoryInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpEmailConfiguration;
 use Drupal\nlpservices\NlpImap;
+use Drupal\nlpservices\NlpSendEmail;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -15,11 +17,14 @@ class EmailConfigurationForm extends FormBase {
 
   protected NlpImap $imapObj;
   protected NlpEmailConfiguration $emailConfigurationObj;
+  protected NlpSendEmail $sendEmailObj;
 
-  public function __construct($config_factory, $imapObj, $emailConfigurationObj) {
+  public function __construct(ConfigFactoryInterface $config_factory, NlpImap $imapObj,
+                              NlpEmailConfiguration $emailConfigurationObj, NlpSendEmail $sendEmailObj) {
     $this->configFactory = $config_factory;
     $this->imapObj = $imapObj;
     $this->emailConfigurationObj = $emailConfigurationObj;
+    $this->sendEmailObj = $sendEmailObj;
   }
 
   /**
@@ -31,6 +36,7 @@ class EmailConfigurationForm extends FormBase {
       $container->get('config.factory'),
       $container->get('nlpservices.imap'),
       $container->get('nlpservices.email_configuration'),
+      $container->get('nlpservices.send_email'),
     );
   }
 
@@ -77,7 +83,8 @@ For Gmail, use imap.gmail.com and port 993, not smtp.gmail.com and port 587.</p>
       $emailConfiguration['email'] = $siteMail;
     }
     $this->warnIfNotSiteMail($emailConfiguration['email'], $siteMail);
-    $form['notifications'] += $this->buildEmailInfo('notifications', $emailConfiguration);
+    $this->warnIfPlainTextMail();
+    $form['notifications'] +=$this->buildEmailInfo('notifications', $emailConfiguration);
 
     $form['minivan'] = [
       '#type' => 'fieldset',
@@ -153,6 +160,7 @@ voting starts.</p>',
     if (isset($emailInfo['notifications'])) {
       $this->warnIfNotSiteMail((string) ($emailInfo['notifications']['email'] ?? ''), $this->getSiteMail());
     }
+    $this->warnIfPlainTextMail();
 
     $emailConfiguration = $form_state->get('emailConfiguration') ?? [];
     foreach ($emailInfo as $type => $configuration) {
@@ -234,6 +242,23 @@ voting starts.</p>',
         '@email' => $notificationEmail,
         '@site' => $siteMail,
       ]));
+    }
+  }
+
+  /**
+   * warnIfPlainTextMail
+   *
+   * Warn when the site's mail setup sends NLP Services emails as plain text,
+   * where their links don't work.  Like warnIfNotSiteMail(), it's called from
+   * build and submit, and the messenger shows the warning only once.
+   *
+   * @return void
+   */
+  private function warnIfPlainTextMail(): void
+  {
+    $problem = $this->sendEmailObj->htmlMailProblem();
+    if ($problem !== '') {
+      $this->messenger()->addWarning($this->t('@problem', ['@problem' => $problem]));
     }
   }
 

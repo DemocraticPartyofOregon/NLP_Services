@@ -14,6 +14,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Config\EmailConfigurationForm;
 use Drupal\nlpservices\NlpEmailConfiguration;
 use Drupal\nlpservices\NlpImap;
+use Drupal\nlpservices\NlpSendEmail;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\Group;
@@ -27,6 +28,7 @@ class EmailConfigurationFormTest extends UnitTestCase {
   private NlpImap $imapObjMock;
   private NlpEmailConfiguration $emailConfigurationObjMock;
   private MessengerInterface $messengerMock;
+  private NlpSendEmail $sendEmailObjMock;
 
   protected function setUp(): void {
     parent::setUp();
@@ -34,6 +36,8 @@ class EmailConfigurationFormTest extends UnitTestCase {
     $this->imapObjMock              = $this->createMock(NlpImap::class);
     $this->emailConfigurationObjMock = $this->createMock(NlpEmailConfiguration::class);
     $this->messengerMock            = $this->createMock(MessengerInterface::class);
+    // Mail is set up for HTML unless a test says otherwise.
+    $this->sendEmailObjMock         = $this->createMock(NlpSendEmail::class);
 
     $container = new ContainerBuilder();
     $container->set('string_translation', $this->getStringTranslationStub());
@@ -55,6 +59,7 @@ class EmailConfigurationFormTest extends UnitTestCase {
       $this->configFactoryMock,
       $this->imapObjMock,
       $this->emailConfigurationObjMock,
+      $this->sendEmailObjMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
@@ -153,6 +158,26 @@ class EmailConfigurationFormTest extends UnitTestCase {
     $this->assertSame('site@example.com', $form['notifications']['info_notifications_email']['#default_value']);
     // Only notifications defaults to the site email.
     $this->assertSame('', $form['minivan']['info_minivan_email']['#default_value']);
+  }
+
+  public function testBuildFormWarnsWhenEmailsWouldBeSentAsPlainText(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([], 'notify@example.com');
+    $this->sendEmailObjMock->method('htmlMailProblem')->willReturn('The SMTP module is set to send emails as plain text.');
+    $this->messengerMock->expects($this->once())
+      ->method('addWarning')
+      ->with($this->messageContaining('@problem', '@problem', 'set to send emails as plain text'));
+
+    $this->buildForm()->buildForm([], new FormState());
+  }
+
+  public function testBuildFormDoesNotWarnWhenEmailsGoOutAsHtml(): void {
+    $this->stubEmailConfigurations([]);
+    $this->stubCronConfiguration([], 'notify@example.com');
+    $this->sendEmailObjMock->method('htmlMailProblem')->willReturn('');
+    $this->messengerMock->expects($this->never())->method('addWarning');
+
+    $this->buildForm()->buildForm([], new FormState());
   }
 
   public function testBuildFormKeepsStoredNotificationsEmailAndWarnsWhenItDiffersFromSiteMail(): void {

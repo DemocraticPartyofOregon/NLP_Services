@@ -2,6 +2,8 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal\Core\Config\ConfigFactoryInterface;
+  use Drupal\Core\Config\ImmutableConfig;
   use Drupal\Core\Language\LanguageInterface;
   use Drupal\Core\Language\LanguageManagerInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
@@ -21,6 +23,12 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private LanguageManagerInterface $languageManagerMock;
     private NlpConfiguration $nlpConfigurationMock;
     private object $messengerMock;
+    private ConfigFactoryInterface $configFactoryMock;
+    /** @var array system.mail's interface setting: '<module>_<key>' or '<module>' or 'default' => plugin id. */
+    private array $mailInterface = ['default' => 'SMTPMailSystem'];
+    private bool $smtpAllowHtml = TRUE;
+    /** @var string[] Warnings logged to the nlpservices channel. */
+    private array $warnings = [];
 
     protected function setUp(): void {
       parent::setUp();
@@ -33,7 +41,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $languageMock->method('getId')->willReturn('en');
       $this->languageManagerMock->method('getDefaultLanguage')->willReturn($languageMock);
 
+      $this->warnings = [];
       $loggerMock = $this->createMock(LoggerInterface::class);
+      $loggerMock->method('warning')->willReturnCallback(function ($message, array $context = []): void {
+        $this->warnings[] = strtr((string) $message, $context);
+      });
+
+      $this->configFactoryMock = $this->createMock(ConfigFactoryInterface::class);
+      $this->configFactoryMock->method('get')->willReturnCallback(function (string $name) {
+        $config = $this->createMock(ImmutableConfig::class);
+        $config->method('get')->willReturnCallback(fn(string $key) => match ([$name, $key]) {
+          ['system.mail', 'interface'] => $this->mailInterface,
+          ['smtp.settings', 'smtp_allowhtml'] => $this->smtpAllowHtml,
+          default => NULL,
+        });
+        return $config;
+      });
       $loggerFactoryMock = $this->createMock(LoggerChannelFactoryInterface::class);
       $loggerFactoryMock->method('get')->willReturn($loggerMock);
 
@@ -56,6 +79,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->htmlTextMock,
         $this->languageManagerMock,
         $this->nlpConfigurationMock,
+        $this->configFactoryMock,
       );
     }
 
@@ -69,6 +93,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container->set('nlpservices.html_text', $this->htmlTextMock);
       $container->set('language_manager', $this->languageManagerMock);
       $container->set('nlpservices.configuration', $this->nlpConfigurationMock);
+      $container->set('config.factory', $this->configFactoryMock);
 
       $service = NlpSendEmail::create($container);
 
@@ -218,7 +243,74 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->htmlTextMock,
         $languageManagerMock,
         $this->nlpConfigurationMock,
+        $this->configFactoryMock,
       ))->sendEmail('key', 'to@example.com', 'Sub', 'Msg');
+    }
+
+    // -------------------------------------------------------------------------
+    // htmlMailProblem()
+    // -------------------------------------------------------------------------
+
+    public function testHtmlMailProblemIsEmptyForSmtpWithHtmlAllowed(): void {
+      $this->assertSame('', $this->buildService()->htmlMailProblem('account_reminder'));
+    }
+
+    public function testHtmlMailProblemNamesTheSmtpSettingWhenHtmlIsNotAllowed(): void {
+      $this->smtpAllowHtml = FALSE;
+      $problem = $this->buildService()->htmlMailProblem('account_reminder');
+      $this->assertStringContainsString('Allow to send e-mails formatted as HTML', $problem);
+    }
+
+    public function testHtmlMailProblemForDrupalsDefaultMailer(): void {
+      $this->mailInterface = ['default' => 'php_mail'];
+      $this->assertStringContainsString("Drupal's default mailer", $this->buildService()->htmlMailProblem());
+    }
+
+    public function testHtmlMailProblemTreatsNoMailerSettingAsDrupalsDefault(): void {
+      $this->mailInterface = [];
+      $this->assertStringContainsString("Drupal's default mailer", $this->buildService()->htmlMailProblem());
+    }
+
+    public function testHtmlMailProblemUsesTheMailerSetForTheModule(): void {
+      $this->mailInterface = ['default' => 'php_mail', 'nlpservices' => 'SMTPMailSystem'];
+      $this->assertSame('', $this->buildService()->htmlMailProblem('deliver_turf'));
+    }
+
+    public function testHtmlMailProblemUsesTheMailerSetForTheEmailKey(): void {
+      $this->mailInterface = ['default' => 'SMTPMailSystem', 'nlpservices_deliver_turf' => 'php_mail'];
+      $this->assertNotSame('', $this->buildService()->htmlMailProblem('deliver_turf'));
+      $this->assertSame('', $this->buildService()->htmlMailProblem('account_reminder'));
+    }
+
+    public function testHtmlMailProblemIsEmptyForAMailerItCannotCheck(): void {
+      $this->mailInterface = ['default' => 'symfony_mailer'];
+      $this->assertSame('', $this->buildService()->htmlMailProblem());
+    }
+
+    // -------------------------------------------------------------------------
+    // sendEmail() logs a plain-text problem
+    // -------------------------------------------------------------------------
+
+    private function sendTwice(NlpSendEmail $service): void {
+      $this->nlpConfigurationMock->method('getNotificationEmail')->willReturn('from@example.com');
+      $this->htmlTextMock->method('getText')->willReturn('');
+      $this->mailManagerMock->method('mail')->willReturn(['result' => TRUE]);
+      $service->sendEmail('deliver_turf', 'a@example.com', 'Sub', 'Msg');
+      $service->sendEmail('deliver_turf', 'b@example.com', 'Sub', 'Msg');
+    }
+
+    public function testSendEmailLogsAPlainTextProblemOncePerRequestAndStillSends(): void {
+      $this->smtpAllowHtml = FALSE;
+      $this->mailManagerMock->expects($this->exactly(2))->method('mail')->willReturn(['result' => TRUE]);
+      $this->sendTwice($this->buildService());
+
+      $this->assertCount(1, $this->warnings);
+      $this->assertStringStartsWith('Email "deliver_turf" will be sent as plain text: The SMTP module', $this->warnings[0]);
+    }
+
+    public function testSendEmailLogsNothingWhenHtmlMailWorks(): void {
+      $this->sendTwice($this->buildService());
+      $this->assertSame([], $this->warnings);
     }
 
   }

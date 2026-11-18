@@ -13,7 +13,9 @@ use Drupal\field\Entity\FieldStorageConfig;
  *
  * Verifies that the private filesystem is configured, since API key files
  * (see ApiKeyManagement) are stored under private:// so they are not
- * directly downloadable over the web.
+ * directly downloadable over the web.  On the Status report, also shows
+ * whether NLP Services emails go out as HTML, since their links don't work
+ * in plain text.
  *
  * @noinspection PhpUnused
  */
@@ -29,7 +31,37 @@ function nlpservices_requirements( string $phase ): array
       'severity' => RequirementSeverity::Error,
     ];
   }
+  // The module's services aren't available until it's installed.
+  if ($phase === 'runtime') {
+    $requirements['nlpservices_html_email'] = _nlpservices_html_email_requirement(
+      Drupal::service('nlpservices.send_email')->htmlMailProblem());
+  }
   return $requirements;
+}
+
+/**
+ * Builds the Status report entry for the email format, given the problem
+ * NlpSendEmail::htmlMailProblem() found ('' for none).
+ *
+ * @param string $problem
+ * @return array
+ */
+function _nlpservices_html_email_requirement(string $problem): array
+{
+  if ($problem === '') {
+    return [
+      'title' => t('NLP Services: email format'),
+      'value' => t('HTML'),
+      'severity' => RequirementSeverity::OK,
+    ];
+  }
+  return [
+    'title' => t('NLP Services: email format'),
+    'value' => t('Plain text'),
+    // Fixed text from NlpSendEmail, not user input.
+    'description' => $problem,
+    'severity' => RequirementSeverity::Warning,
+  ];
 }
 
 /**
