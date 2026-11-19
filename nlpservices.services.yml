@@ -254,7 +254,12 @@ services:
     class: Drupal\nlpservices\NlpCreateWalksheet
     arguments: [ '@nlpservices.voters', '@nlpservices.paths', '@nlpservices.configuration',
                  '@nlpservices.session_data', '@nlpservices.pdf_generator', '@nlpservices.response_codes',
-                 '@nlpservices.turfs', '@nlpservices.api_voter' ]
+                 '@nlpservices.turfs', '@nlpservices.api_voter', '@nlpservices.turf_map' ]
+
+  nlpservices.turf_map:
+    class: Drupal\nlpservices\NlpTurfMap
+    arguments: [ '@http_client', '@nlpservices.turfs', '@nlpservices.voters', '@nlpservices.configuration',
+                 '@nlpservices.api_key_management', '@nlpservices.pdf_generator', '@file_system', '@file_url_generator' ]
 
   nlpservices.email_configuration:
     class: Drupal\nlpservices\NlpEmailConfiguration

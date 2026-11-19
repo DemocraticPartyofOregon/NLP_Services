@@ -35,9 +35,13 @@ class NlpCreateWalksheet
   protected ApiResponseCodes $apiResponseCodesObj;
   protected NlpTurfs $turfObj;
   protected ApiVoter $apiVoterObj;
-  public function __construct($votersObj, $pathsObj, $nlpConfigurationObj, $nlpSessionDataObj,
-                              $pdfGeneratorObj, $apiResponseCodesObj, $turfObj, $apiVoterObj)
+  protected NlpTurfMap $turfMapObj;
+  public function __construct(NlpVoters $votersObj, NlpPaths $pathsObj, NlpConfiguration $nlpConfigurationObj,
+                              NlpSessionData $nlpSessionDataObj, PdfGenerator $pdfGeneratorObj,
+                              ApiResponseCodes $apiResponseCodesObj, NlpTurfs $turfObj, ApiVoter $apiVoterObj,
+                              NlpTurfMap $turfMapObj)
   {
+    $this->turfMapObj = $turfMapObj;
     $this->votersObj = $votersObj;
     $this->pathsObj = $pathsObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
@@ -58,7 +62,8 @@ class NlpCreateWalksheet
       $container->get('nlpservices.pdf_generator'),
       $container->get('nlpservices.response_codes'),
       $container->get('nlpservices.turfs'),
-      $container->get('nlpservices.api_voter')
+      $container->get('nlpservices.api_voter'),
+      $container->get('nlpservices.turf_map'),
     );
   }
   
@@ -85,6 +90,7 @@ class NlpCreateWalksheet
     }
 
     $this->turfInfo = [
+      'turfIndex' => $turfIndex,
       'county' => $this->nlpSessionDataObj->getCounty(),
       'turfName' => $turf['turfName'],
       'voterCount' => $turf['voterCount'],
@@ -338,8 +344,11 @@ class NlpCreateWalksheet
     $html = $this->createTheWalksheetInfo($this->turfInfo);
     
     $html .= $this->createWalksheetInstructions($this->turfInfo);
-    
-    // The voter list starts on a new page after the instructions.
+
+    // The map gets its own page between the instructions and the voter list.
+    $html .= $this->createMapPage($this->turfInfo);
+
+    // The voter list starts on a new page after the instructions (or the map).
     if (!empty($walksheetData)) {
       $html .= '<pagebreak />';
     }
@@ -383,6 +392,47 @@ class NlpCreateWalksheet
     return $this->pdfGeneratorObj->generatePdf($html, $pathToPdf);
   }
   
+  /**
+   * createMapPage
+   *
+   * A page with the turf's map: a pin at each door.  Doors left off the map
+   * (far from the rest of the turf, or not found) are listed under it.
+   * Without a map (no Mapbox token, or a mapping service is down), the walk
+   * sheet simply has no map page.
+   *
+   * @param array $turfInfo - An array containing turf information.
+   *
+   * @return string - The HTML for the page, starting with its page break, or ''.
+   */
+  private function createMapPage(array $turfInfo): string
+  {
+    if (empty($turfInfo['turfIndex'])) {
+      return '';
+    }
+    $map = $this->turfMapObj->walksheetMap($turfInfo['turfIndex']);
+    if (empty($map['path'])) {
+      return '';
+    }
+    $turfName = htmlspecialchars($turfInfo['turfName']);
+    $mapPath = htmlspecialchars($map['path']);
+    // The map image is 1280x900.  The landscape page leaves about 266mm x
+    // 192mm inside its margins; 172mm high (245mm wide) leaves room for the
+    // heading and a line or two listing doors that aren't on the map.
+    $html = '<pagebreak />';
+    $html .= '<div style="font-size:10pt; font-family: Arial, Helvetica, sans-serif;">';
+    $html .= "<p style=\"margin:0 0 4px 0;\"><b>$turfName</b></p>";
+    $html .= "<div style=\"text-align:center;\"><img src=\"$mapPath\" style=\"width:245mm; height:172mm;\" /></div>";
+    if (!empty($map['notOnMap'])) {
+      $doors = [];
+      foreach ($map['notOnMap'] as $door) {
+        $doors[] = htmlspecialchars($door['address']) . ' (' . htmlspecialchars($door['why']) . ')';
+      }
+      $html .= '<p style="margin:4px 0 0 0; font-size:9pt;"><b>Not on the map:</b> ' . implode('; ', $doors) . '</p>';
+    }
+    $html .= '</div>';
+    return $html;
+  }
+
   /**
    * canvassResultsCodeTable
    *

@@ -206,6 +206,36 @@ From the menu bar, click Appearance, select Bartik as the default theme and then
 
 From the menu bar, click Configuration and then click the Site Information link.   In Site Details set the Site name to NLP Services and the E-mail address to <notifications@nmysite.sfx>.
 
+## Get the keys for the walk sheet map
+
+Each walk sheet PDF includes a map of the turf with a pin at each door.  Making the map takes two steps, each with its own service:
+
+- **Geocoding** finds where each door is.  **Geocodio** places most pins on the building itself and needs an API key.  Without a Geocodio key, NLP Services uses the free **US Census geocoder**, which needs no key but places the pins along the street in front of the houses.  Even with Geocodio, any door Geocodio isn't sure about is double-checked with Census.
+- **Mapbox** draws the map image (the same map service VoteBuilder uses).  It needs an access token.  **Without a Mapbox token, walk sheets have no map**; everything else works as before.
+
+Both keys are stored with the Key module in the private files directory set up above, so `file_private_path` must be working first.
+
+### Mapbox access token
+
+1. Sign up at <https://account.mapbox.com/auth/signup/>.  Mapbox asks for a credit card even for the free tier.
+2. On the account page (<https://account.mapbox.com/>), under **Access tokens**, copy the **Default public token**.  It starts with `pk.`.  You can instead click **Create a token** to make one just for this site (e.g., named for the state); the default public scopes are all it needs.
+3. Don't add **URL restrictions** to the token.  The site asks Mapbox for the map from the server, not from a browser, so a URL-restricted token is refused.
+
+The free tier covers 50,000 maps a month.  Each turf's map is made once and kept until the turf's addresses change, so printing a walk sheet again doesn't count against it.
+
+### Geocodio API key (optional, recommended)
+
+1. Sign up at <https://dash.geocod.io/register>.
+2. In the dashboard, open **API Keys** and create a key, named for the site (e.g., `oregonnlp.org`).  Copy it; it's a long string of letters and digits.
+
+The free plan covers 2,500 lookups a day.  Each door counts as one lookup, but only when its turf's map is first made (or remade after its addresses change), so a day of new turfs averaging 50 doors uses about 2,500 lookups for 50 turfs.  Sites that share one Geocodio account share the daily limit, so give each site its own account if several will be busy at once.  If the limit is reached (or Geocodio is down), maps are made with Census alone, and each is made again with Geocodio the next time its walk sheet is printed.
+
+### Enter the keys
+
+On the NLP configuration page, click **Step 3: Set up the map keys for the walk sheets**.  Paste the Mapbox token and the Geocodio key, click **Save**, then click **Test the stored keys**.  Each key should report that it works.  (The Geocodio test uses one lookup.)
+
+The page shows only the first and last few characters of each stored key.  To change a key, paste the new one and save; leaving a box blank keeps the stored key.  Check **Remove** to delete a key: without Geocodio, maps use Census alone; without Mapbox, walk sheets have no map.
+
 ## Configure NLP Services
 
 Navigate to the Manage County menu item.  Look for the link for downloading documents.  Click that and download the NlpConfiguration document and finish setting up NLP Services.

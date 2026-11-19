@@ -398,6 +398,14 @@ nlpservices.export_nls_status_form:
   requirements:
     _permission: 'nlp tools access'
 
+nlpservices.map_key_configuration_form:
+  path: '/nlpservices-map-key-configuration'
+  defaults:
+    _form: Drupal\nlpservices\Config\MapKeyConfigurationForm
+    _title: 'Walk sheet map keys'
+  requirements:
+    _permission: 'nlp administer'
+
 nlpservices.key_validate_form:
   path: '/nlpservices-key-validate-form'
   defaults:

@@ -4,6 +4,7 @@ Links for functions to configure NLP services.
 
 {% set keys = path('nlpservices.api_configuration_form') %}
 {% set keysVerification = path('nlpservices.key_validate_form') %}
+{% set mapKeys = path('nlpservices.map_key_configuration_form') %}
 {% set activistCode = path('nlpservices.activist_code_configuration_form') %}
 {% set responseCodes = path('nlpservices.response_code_configuration_form') %}
 {% set surveyQuestion = path('nlpservices.survey_question_configuration_form') %}
@@ -31,19 +32,20 @@ Links for functions to configure NLP services.
 {% trans %}
 
     <h1>New site or new election</h1>
-    <p>The following 9 steps are to create a new NLP Services site and set up a new election.   For just a new
-        election, steps 3, 4 and 5 can be repeated with new information.</p>
+    <p>The following 10 steps are to create a new NLP Services site and set up a new election.   For just a new
+        election, steps 4, 5 and 6 can be repeated with new information.</p>
 
     <ul>
         <li><a href={{ keys }}>Step 1: Build the database for API keys.</a></li>
         <li><a href={{ keysVerification }}>Step 2: Verify the API keys work.</a></li>
-        <li><a href={{ electionCycle }}>Step 3: Set up the election date and name.</a></li>
-        <li><a href={{ activistCode }}>Step 4: Set up the activist codes.</a></li>
-        <li><a href={{ responseCodes }}>Step 5: Set up the canvass response codes.</a></li>
-        <li><a href={{ surveyQuestion }}>Step 6: Select the survey question.</a></li>
-        <li><a href={{ emails }}>Step 7: Set up the email used by the site.</a></li>
-        <li><a href={{ documents }}>Step 8: Set up the training documents.</a></li>
-        <li><a href={{ welcome }}>Step 9: Build the Welcome page.</a></li>
+        <li><a href={{ mapKeys }}>Step 3: Set up the map keys for the walk sheets.</a></li>
+        <li><a href={{ electionCycle }}>Step 4: Set up the election date and name.</a></li>
+        <li><a href={{ activistCode }}>Step 5: Set up the activist codes.</a></li>
+        <li><a href={{ responseCodes }}>Step 6: Set up the canvass response codes.</a></li>
+        <li><a href={{ surveyQuestion }}>Step 7: Select the survey question.</a></li>
+        <li><a href={{ emails }}>Step 8: Set up the email used by the site.</a></li>
+        <li><a href={{ documents }}>Step 9: Set up the training documents.</a></li>
+        <li><a href={{ welcome }}>Step 10: Build the Welcome page.</a></li>
 
     </ul>
 
@@ -51,12 +53,12 @@ Links for functions to configure NLP services.
     <p>The next steps are needed if you are rebuilding a site for an existing NLP.</p>
 
     <ul>
-        <li><a href={{ importReports }}>Step 10: Import historical voter contact reports.</a></li>
-        <li><a href={{ importAwards }}>Step 11: Import NL Awards file.</a></li>
-        <li><a href={{ importUsers }}>Step 12: Import Drupal user accounts.</a></li>
-        <li><a href={{ importTurfAssignments }}>Step 13: Import the turf assignments file.</a></li>
-        <li><a href={{ importCredentials }}>Step 14: Import NL credentials.</a></li>
-        <li><a href={{ documents }}>Step 15: Replace one of the default documents.</a></li>
+        <li><a href={{ importReports }}>Step 11: Import historical voter contact reports.</a></li>
+        <li><a href={{ importAwards }}>Step 12: Import NL Awards file.</a></li>
+        <li><a href={{ importUsers }}>Step 13: Import Drupal user accounts.</a></li>
+        <li><a href={{ importTurfAssignments }}>Step 14: Import the turf assignments file.</a></li>
+        <li><a href={{ importCredentials }}>Step 15: Import NL credentials.</a></li>
+        <li><a href={{ documents }}>Step 16: Replace one of the default documents.</a></li>
     </ul>
 
     <h1>Enable Cron tasks</h1>

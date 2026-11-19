@@ -8,6 +8,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpCreateWalksheet;
   use Drupal\nlpservices\NlpPaths;
   use Drupal\nlpservices\NlpSessionData;
+  use Drupal\nlpservices\NlpTurfMap;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\nlpservices\PdfGenerator;
@@ -26,6 +27,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     private ApiResponseCodes $responseCodesMock;
     private NlpTurfs $turfsMock;
     private ApiVoter $apiVoterMock;
+    private NlpTurfMap $turfMapMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -37,6 +39,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->responseCodesMock = $this->createMock(ApiResponseCodes::class);
       $this->turfsMock         = $this->createMock(NlpTurfs::class);
       $this->apiVoterMock      = $this->createMock(ApiVoter::class);
+      // A mock's walksheetMap() returns [] (no map) unless a test says otherwise.
+      $this->turfMapMock       = $this->createMock(NlpTurfMap::class);
     }
 
     // -------------------------------------------------------------------------
@@ -53,7 +57,23 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->responseCodesMock,
         $this->turfsMock,
         $this->apiVoterMock,
+        $this->turfMapMock,
       );
+    }
+
+    /**
+     * Builds the walk sheet for turf 7 and returns the HTML sent to the PDF generator.
+     */
+    private function captureWalksheetHtml(): string {
+      $capturedHtml = '';
+      $this->pdfMock->method('generatePdf')
+        ->willReturnCallback(function (string $html) use (&$capturedHtml): string {
+          $capturedHtml = $html;
+          return 'public://temp/walksheet.pdf';
+        });
+      $service = $this->buildService();
+      $service->createWalksheetPdf($service->createWalksheetArray(7));
+      return $capturedHtml;
     }
 
     private function baseTurf(): array {
@@ -325,6 +345,53 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       // strip_tags removes <b> from the question; plain text should appear.
       $this->assertStringContainsString('Will you vote?', $capturedHtml);
+    }
+
+    // -------------------------------------------------------------------------
+    // createWalksheetPdf — map page
+    // -------------------------------------------------------------------------
+
+    public function testCreateWalksheetPdfAddsMapPageForTheTurf(): void {
+      $this->setupStandardConfigMocks();
+      $this->votersMock->method('fetchVotersByTurf')->willReturn([$this->baseVoter()]);
+      $this->turfMapMock->expects($this->once())->method('walksheetMap')->with(7)
+        ->willReturn(['path' => '/private/turf-maps/turf-7-abc.png', 'notOnMap' => []]);
+
+      $html = $this->captureWalksheetHtml();
+
+      $this->assertStringContainsString('<img src="/private/turf-maps/turf-7-abc.png"', $html);
+      $this->assertStringNotContainsString('Not on the map', $html);
+      // The map comes after the instructions and before the voter list.
+      $this->assertLessThan(strpos($html, '123 Main St'), strpos($html, 'turf-7-abc.png'));
+      $this->assertGreaterThan(strpos($html, 'Will you vote?'), strpos($html, 'turf-7-abc.png'));
+    }
+
+    public function testCreateWalksheetPdfListsDoorsNotOnTheMap(): void {
+      $this->setupStandardConfigMocks();
+      $this->votersMock->method('fetchVotersByTurf')->willReturn([$this->baseVoter()]);
+      $this->turfMapMock->method('walksheetMap')->willReturn([
+        'path' => '/private/turf-maps/turf-7-abc.png',
+        'notOnMap' => [
+          ['address' => '9 Far Rd, Bronson', 'why' => '4.0 mi away'],
+          ['address' => '1 Lost <Ln>, Salem', 'why' => 'address not found'],
+        ],
+      ]);
+
+      $html = $this->captureWalksheetHtml();
+
+      $this->assertStringContainsString('<b>Not on the map:</b> 9 Far Rd, Bronson (4.0 mi away); 1 Lost &lt;Ln&gt;, Salem (address not found)', $html);
+    }
+
+    public function testCreateWalksheetPdfWithoutMapHasNoMapPage(): void {
+      $this->setupStandardConfigMocks();
+      $this->votersMock->method('fetchVotersByTurf')->willReturn([$this->baseVoter()]);
+      $this->turfMapMock->method('walksheetMap')->willReturn([]);
+
+      $html = $this->captureWalksheetHtml();
+
+      $this->assertStringNotContainsString('<img', $html);
+      // Only the break before the voter list.
+      $this->assertSame(1, substr_count($html, '<pagebreak />'));
     }
 
     public function testCreateWalksheetPdfEmptyWalksheetDataProducesNoPageBreak(): void {
