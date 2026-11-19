@@ -26,8 +26,12 @@ class NlpTurfStatus
   protected NlpVoters $votersObj;
   protected ApiActivistCodes $apiActivistCodesObj;
 
-  public function __construct($connection, $turfsObj, $votersObj, $apiActivistCodesObj)
-  {
+  public function __construct(
+    Connection $connection,
+    NlpTurfs $turfsObj,
+    NlpVoters $votersObj,
+    ApiActivistCodes $apiActivistCodesObj,
+  ) {
     $this->connection = $connection;
     $this->turfsObj = $turfsObj;
     $this->votersObj = $votersObj;
