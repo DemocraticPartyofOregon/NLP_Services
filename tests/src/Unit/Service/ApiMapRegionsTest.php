@@ -262,7 +262,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->clientMock->method('request')
         ->willReturn($this->makeResponse(['items' => []]));
 
-      // Empty items → getMapRegionInfo returns [], so mapOptions has only 'all' → returns []
+      // Empty items → getMapRegionInfo returns [], so mapOptions has only ALL_MAP_REGIONS → returns []
       $result = $this->buildService()->mapRegionOptions('TEST', 10);
 
       $this->assertSame([], $result);
@@ -276,8 +276,8 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $result = $this->buildService()->mapRegionOptions('TEST', 10);
 
       $keys = array_keys($result);
-      $this->assertSame('all', $keys[0]);
-      $this->assertSame('All', $result['all']);
+      $this->assertSame(ApiMapRegions::ALL_MAP_REGIONS, $keys[0]);
+      $this->assertSame('All', $result[ApiMapRegions::ALL_MAP_REGIONS]);
       // Region A should sort before Region B
       $this->assertSame(100, $keys[1]);
       $this->assertSame(200, $keys[2]);
@@ -299,7 +299,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testMapRegionTurfOptionsReturnsEmptyWhenMapRegionIdIsEmpty(): void {
-      $this->assertSame([], $this->buildService()->mapRegionTurfOptions(''));
+      $this->assertSame([], $this->buildService()->mapRegionTurfOptions(0));
     }
 
     public function testMapRegionTurfOptionsReturnsSpecificRegionTurfs(): void {
@@ -325,7 +325,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $svc = $this->buildService();
       $svc->getMapRegionInfo('TEST', 10);
 
-      $result = $svc->mapRegionTurfOptions('all');
+      $result = $svc->mapRegionTurfOptions(ApiMapRegions::ALL_MAP_REGIONS);
 
       $this->assertArrayHasKey(5001, $result);
       $this->assertArrayHasKey(5002, $result);

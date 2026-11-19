@@ -17,11 +17,21 @@ class ApiMapRegions
    */
   private const int PAGE_LOAD_RETRIES = 1;
 
+  /**
+   * The map region option that selects every map region in the folder.  Map
+   * region IDs from VAN are positive, and 0 means no map region is selected.
+   */
+  public const int ALL_MAP_REGIONS = -1;
+
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
   private array $mapRegions = [];
-  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj ) {
+  public function __construct(
+    ClientInterface $client,
+    NlpConfiguration $nlpConfigurationObj,
+    ApiKeyManagement $apiKeyManagementObj,
+  ) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
@@ -42,13 +52,14 @@ class ApiMapRegions
    * Get the map region options for a county and folder.
    * This function retrieves the map regions from the API and returns an array of
    * map region options where the key is the map region ID and the value is the
-   * map region name.  The first element in the array is 'all' => 'All'.
+   * map region name.  The first element in the array is
+   * ALL_MAP_REGIONS => 'All'.
    *
-   * @param $committee
-   * @param $folderId
+   * @param string $committee
+   * @param int $folderId
    * @return array
    */
-  public function mapRegionOptions($committee,$folderId): array
+  public function mapRegionOptions(string $committee, int $folderId): array
   {
     if(empty($committee)) {return [];}
     $mapRegionInfo = $this->getMapRegionInfo($committee,$folderId);
@@ -56,7 +67,7 @@ class ApiMapRegions
       return $mapRegion['mapRegionName'];
     }, $mapRegionInfo);
     asort($mapOptions);
-    $mapOptions = ['all'=>'All'] + $mapOptions;
+    $mapOptions = [self::ALL_MAP_REGIONS => 'All'] + $mapOptions;
     
     if(count($mapOptions) <= 1) {$mapOptions = [];}
     return $mapOptions;
@@ -82,13 +93,14 @@ class ApiMapRegions
    *     minivanNumber - The minivan number for the turf.
    *     minivanCreateDate - The date the minivan was created.
    *
-   * @param $mapRegionId
+   * @param int $mapRegionId - A map region ID, ALL_MAP_REGIONS for every
+   *   region, or 0 for none.
    * @return array
    */
-  public function mapRegionTurfOptions($mapRegionId): array
+  public function mapRegionTurfOptions(int $mapRegionId): array
   {
     if(empty($mapRegionId)) {return [];}
-    if($mapRegionId == 'all') {
+    if($mapRegionId === self::ALL_MAP_REGIONS) {
       $mapRegionIds = array_keys($this->mapRegions);
     } else {
       $mapRegionIds = [0=>$mapRegionId,];
@@ -263,7 +275,7 @@ class ApiMapRegions
     $mapRegionOptionsSaved = [];
     foreach ($turfArray as $turfIndex => $turf) {
       
-      $mapRegionId = $turf['mapRegionId'];
+      $mapRegionId = (int) $turf['mapRegionId'];
       if(empty($mapRegionId)) {continue;}
       if (array_key_exists($mapRegionId, $mapRegionOptionsSaved)) {
         $mapRegionOptions = $mapRegionOptionsSaved[$mapRegionId];

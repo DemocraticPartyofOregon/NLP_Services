@@ -309,7 +309,7 @@ class SyncTurfForm extends FormBase {
       // A Map Region was selected for the turf selection. (Narrows the display of turfs for
       // folders with lots of precincts.)
       case 'map_region_select':
-        $mapRegionId = $values['map_region_select'];
+        $mapRegionId = (int) $values['map_region_select'];
         $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);
         $form_state->setRebuild();
         return;
@@ -664,13 +664,13 @@ class SyncTurfForm extends FormBase {
       // Reveal the Map Regions.
       $mapRegionOptions = $this->mapRegionsObj->mapRegionOptions($county, $currentFolderId);
       $this->nlpSessionDataObj->set('mapRegionOptions', $mapRegionOptions);
-      $mapRegionId = $this->nlpSessionDataObj->get('mapRegionId');
+      $mapRegionId = (int) $this->nlpSessionDataObj->get('mapRegionId');
 
       if (empty($mapRegionOptions[$mapRegionId])) {  // It appears the Map Region has been deleted.
         $mapRegionId = 0;
       }
       if (empty($mapRegionId)) {
-        $mapRegionId = key($mapRegionOptions);
+        $mapRegionId = (int) key($mapRegionOptions);  // NULL (no map regions) becomes 0.
       }
       // Remember the working Map Region and the turf choices in the map region.
       $this->nlpSessionDataObj->set('mapRegionId',$mapRegionId);

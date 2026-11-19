@@ -454,6 +454,68 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->assertContains(['mapRegionId', 3], $captured);
     }
 
+    public function testValidateFormMapRegionSelectStoresPostedStringAsInt(): void {
+      $captured = [];
+      $formState = $this->createMock(FormStateInterface::class);
+      $formState->method('getTriggeringElement')->willReturn(['#name' => 'map_region_select']);
+      // Drupal returns a posted select value as a string.
+      $formState->method('getValues')->willReturn(['map_region_select' => (string) ApiMapRegions::ALL_MAP_REGIONS]);
+
+      $this->sessionDataMock->method('set')
+        ->willReturnCallback(function ($key, $value) use (&$captured): void {
+          $captured[] = [$key, $value];
+        });
+
+      $form = [];
+      $this->buildForm()->validateForm($form, $formState);
+
+      $this->assertContains(['mapRegionId', ApiMapRegions::ALL_MAP_REGIONS], $captured);
+    }
+
+    // -------------------------------------------------------------------------
+    // buildTurfFilter — always passes an int map region ID
+    // -------------------------------------------------------------------------
+
+    /**
+     * Runs buildTurfFilter (map region view) and returns the ID it passed to
+     * mapRegionTurfOptions.
+     */
+    private function mapRegionIdPassedByTurfFilter(array $mapRegionOptions, mixed $savedMapRegionId): mixed {
+      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->foldersMock->method('getFolderOptions')->willReturn([10 => 'Folder A']);
+      $this->sessionDataMock->method('get')->willReturnMap([
+        ['folderId', 10],
+        ['mapRegionId', $savedMapRegionId],
+      ]);
+      $this->mapRegionsMock->method('mapRegionOptions')->willReturn($mapRegionOptions);
+      $passed = 'not called';
+      $this->mapRegionsMock->method('mapRegionTurfOptions')
+        ->willReturnCallback(function ($mapRegionId) use (&$passed): array {
+          $passed = $mapRegionId;
+          return [];
+        });
+
+      $method = new \ReflectionMethod(SyncTurfForm::class, 'buildTurfFilter');
+      $method->invoke($this->buildForm(), FALSE);
+      return $passed;
+    }
+
+    public function testBuildTurfFilterPassesZeroWhenFolderHasNoMapRegions(): void {
+      // key([]) is NULL; it must reach mapRegionTurfOptions as 0.
+      $this->assertSame(0, $this->mapRegionIdPassedByTurfFilter([], NULL));
+    }
+
+    public function testBuildTurfFilterReplacesStaleSessionValueWithFirstOption(): void {
+      // A session saved before ALL_MAP_REGIONS replaced the 'all' key.
+      $options = [ApiMapRegions::ALL_MAP_REGIONS => 'All', 100 => 'Region A'];
+      $this->assertSame(ApiMapRegions::ALL_MAP_REGIONS, $this->mapRegionIdPassedByTurfFilter($options, 'all'));
+    }
+
+    public function testBuildTurfFilterKeepsSavedMapRegion(): void {
+      $options = [ApiMapRegions::ALL_MAP_REGIONS => 'All', 100 => 'Region A'];
+      $this->assertSame(100, $this->mapRegionIdPassedByTurfFilter($options, '100'));
+    }
+
     // -------------------------------------------------------------------------
     // validateForm — 'change_to_lists' / 'change_to_turfs'
     // -------------------------------------------------------------------------
