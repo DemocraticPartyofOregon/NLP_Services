@@ -535,8 +535,7 @@ class NlpImap
 
     $data = imap_fetchbody($this->connection, $messageNumber, $prefix);
     if (!is_string($data)) {
-      nlp_debug_msg(t('Failed to retrieve message structure for message number = %id',
-        ['%id' => $messageNumber]),'');
+      nlp_debug_msg('imap_fetchbody', 'Failed to retrieve message body for message number = ' . $messageNumber);
       $attachment['data'] = '';
     }
     else {

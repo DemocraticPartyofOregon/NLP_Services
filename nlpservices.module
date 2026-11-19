@@ -2,12 +2,16 @@
 
 use Drupal\Component\Utility\UrlHelper;
 use Drupal\Core\Database\DatabaseException;
+use Drupal\Core\Entity\Display\EntityViewDisplayInterface;
 use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\Render\Markup;
 use Drupal\Core\Url;
 use Drupal\Core\Utility\Error;
 use Drupal\nlpservices\NlpCronRunner;
+use Drupal\node\NodeInterface;
 use Drupal\user\Entity\User;
+use Drupal\user\UserInterface;
 use Psr\Log\LogLevel;
 
 const NLP_MODULE = 'nlpservices';
@@ -19,100 +23,13 @@ const NLP_COORDINATOR_ROLE_LABEL = 'NLP Coordinator';
 const NLP_LEADER_ROLE_LABEL = 'NLP Leader';
 
 /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Implements hook_mail_alter
- *
- * For NLP messages, add the signature line and set the language.
- * For email to deliver a turf, add the information to notify
- * the sender if the email is non-deliverable.
- *
- * @param $message
- * @noinspection PhpUnused
- */
-function nlpservices_mail_alter(&$message): void
-{
-  // Suppress the user account creation email.
-  if ($message['id'] == 'user_status_activated') {
-    $message['send'] = FALSE;
-    return;
-  }
-  switch ($message['module']) {
-    case NLP_MODULE:
-      $message['headers']['List-Unsubscribe'] =
-        "<mailto: notifications@nlpservices.org?subject=unsubscribe>";
-      break;
-    case 'user':
-
-      if ($message['key'] == 'status_activated') {
-        $userObj = Drupal::service('nlpservices.drupal_user');
-        $currentUser = $userObj->getCurrentUser();
-        $firstName = $currentUser['firstName'];
-        $lastName = $currentUser['lastName'];
-        $fullName = $firstName . " " . $lastName;
-        $email = $currentUser['email'];
-        $messageAddition = t("This email was sent to you by: @name.  If you do not know your password, contact your county NLP coordinator.  <br>Email:@email",
-          ['@name' => $fullName, '@email' => $email]);
-
-        $message['body'][] = $messageAddition;
-        $message['reply-to'] = $email;
-      }
-      break;
-  }
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * Implements hook_mail
- *
- * @param $key
- * @param $message
- * @param $params
- * @noinspection PhpUnused
- */
-function nlpservices_mail($key, &$message, $params): void
-{
-  if($message['module'] != NLP_MODULE) {return;}
-  $boundary = uniqid('np');
-  switch ($key) {
-    case 'deliver_turf':
-    case 'account_reminder':
-    case 'forward_nl_reply':
-    case 'help_request':
-    case 'turf_deletion_notification':
-    case 'missing_nl_notification':
-    case 'nlp_admin_notice':
-      //if($key=='forward_nl_reply') {
-      //  nlp_debug_msg('emailForward', $message);
-      //}
-      $message['headers']['Content-Type'] = 'multipart/alternative; boundary="'. $boundary.'"';
-      if(!empty($params['headers'])) {
-        $message['headers'] = array_merge($message['headers'], $params['headers']);
-      }
-      $message['subject'] = $params['subject'];
-      if(empty($params['from'])) {
-        $message['from'] = Drupal::service('config.factory')->get('system.site')->get('mail');
-      } else {
-        $message['from'] = $params['from'];
-      }
-      $message['body'] =  [];
-      $msgPlain = "--" . $boundary . "\n";
-      $msgPlain .= 'Content-Type: text/plain; charset=UTF-8'."\n";
-      $msgPlain .= $params['plainText'];
-      $msgHtml = "--" . $boundary . "\n";
-      $msgHtml .= "Content-Type: text/html; charset=utf-8\n";
-      $msgHtml .= $params['message'];
-      $message['body'][0] =  $msgPlain.$msgHtml."\n--" . $boundary . "--";
-      break;
-  }
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * nlpservices_user_login
  * Implements hook_user_login().
  *
  * Gets the user's county and saves it in the temp storage for various forms.
  *
- * @noinspection PhpUnused
  */
-function nlpservices_user_login(Drupal\user\Entity\User $account): void
+function nlpservices_user_login(UserInterface $account): void
 {
   $countyValue = $account->get('field_county')->getValue();
   if(empty($countyValue)) {return;}
@@ -129,8 +46,6 @@ function nlpservices_user_login(Drupal\user\Entity\User $account): void
  * Implements hook_user_logout().
  *
  * Ends an impersonation of an NL that is still going when the session logs out.
- *
- * @noinspection PhpUnusedParameterInspection
  */
 function nlpservices_user_logout(AccountInterface $account): void
 {
@@ -159,13 +74,17 @@ function nlpservices_page_top(array &$page_top): void
  * An exception passed as $values is also written to the log, with its
  * backtrace, so errors caught in try/catch blocks aren't only shown on screen.
  *
- * @param $msg
+ * @param string $msg
  * @param mixed $values
  */
-function nlp_debug_msg($msg, mixed $values='EMPTY'): void
+function nlp_debug_msg(string $msg, mixed $values='EMPTY'): void
 {
   $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
   $frame = $backTrace[0] ?? [];
+  // Called through nlp_debug_msg_safe(), report where that was called from.
+  if (($backTrace[1]['function'] ?? '') === 'nlp_debug_msg_safe') {
+    $frame = $backTrace[1];
+  }
   $file = $frame['file'] ?? __FILE__;
   $file_name = basename($file);
   $messenger = Drupal::messenger();
@@ -182,39 +101,39 @@ function nlp_debug_msg($msg, mixed $values='EMPTY'): void
       ['@caller' => $msg, '@mod' => $caller, '@callerLine' => $line], $level);
     $values = $values->getMessage();
   }
-  $location = '@mod @line ';
-
-  $location .= $msg.' = ';
-
-  if(is_string($values) OR is_scalar($values) OR empty($values)) {
-    if(!empty($values)) {
-      if(is_bool($values)) {
-        $msg = t($location.'@values', ['@values' => 'TRUE','@mod'=>$caller,'@line'=>$line]);
-      } else {
-        $msg = t($location.'@values', ['@values' => $values,'@mod'=>$caller,'@line'=>$line]);
-      }
-    } elseif($values === 0) {
-      $msg = t($location.'@values', ['@values' => '0','@mod'=>$caller,'@line'=>$line]);
-    } elseif($values === FALSE) {
-      $msg = t($location.'@values', ['@values' => 'FALSE','@mod'=>$caller,'@line'=>$line]);
-    } elseif($values === NULL) {
-      $msg = t($location.'@values', ['@values' => 'NULL','@mod'=>$caller,'@line'=>$line]);
-    } else {
-      $msg = t($location.'@values', ['@values' => 'empty','@mod'=>$caller,'@line'=>$line]);
-    }
-  } elseif (is_object($values)) {
-    $huh = json_encode($values);
-    $msg = t($location."<br><pre>$huh</pre>",
-      ['@mod'=>$caller,'@line'=>$line]);
+  // The message and values go in placeholders, so they are escaped and the
+  // translatable strings stay fixed.
+  $args = ['@mod' => $caller, '@line' => $line, '@msg' => $msg];
+  if (is_object($values)) {
+    $args['@dump'] = (string) json_encode($values);
+    $text = t('@mod @line @msg = <br><pre>@dump</pre>', $args);
+  } elseif (is_array($values) && !empty($values)) {
+    // highlight_string() escapes the code it shows, so its output is safe
+    // markup.  It's already wrapped in <pre>.
+    $args['@dump'] = Markup::create(highlight_string("<?php\n\$values =\n" . var_export($values, TRUE) . ";\n?>", TRUE));
+    $text = t('@mod @line @msg = <br>@dump', $args);
   } else {
-    $nice = highlight_string("<?php\n\$values =\n" . var_export($values, true) . ";\n?>", TRUE);
-    $msg = t($location."<br><pre>$nice</pre>",
-      ['@mod'=>$caller,'@line'=>$line]);
+    $args['@values'] = match (TRUE) {
+      $values === TRUE => 'TRUE',
+      $values === FALSE => 'FALSE',
+      $values === NULL => 'NULL',
+      $values === '', $values === [] => 'empty',
+      default => (string) $values,
+    };
+    $text = t('@mod @line @msg = @values', $args);
   }
-  $messenger->addMessage($msg, $messenger::TYPE_STATUS,TRUE);
+  $messenger->addMessage($text, $messenger::TYPE_STATUS,TRUE);
 }
 
-function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
+/**
+ * nlp_debug_msg_safe
+ *
+ * Shows the debug message only to an NLP admin, and only when debug is on.
+ *
+ * @param string $msg
+ * @param mixed $values
+ */
+function nlp_debug_msg_safe(string $msg, mixed $values='EMPTY'): void
 {
   $drupalUserObj = Drupal::service('nlpservices.drupal_user');
   $admin = $drupalUserObj->isNlpAdminUser();
@@ -223,12 +142,12 @@ function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
   if($admin AND $debug) {
     nlp_debug_msg($msg,  $values);
 
-    $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 4);
-    if(empty($backTrace)) {return;}
+    // The function that called this one, and the line of that call.
+    $backTrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
     $messenger = Drupal::messenger();
-    $file = $backTrace[1]['function'] ?? 'unknown';
-    $line = $backTrace[1]['line'] ?? 'unknown';
-    $messenger->addMessage('backtrace: '.$file.' '.$line);
+    $function = $backTrace[1]['function'] ?? 'unknown';
+    $line = $backTrace[0]['line'] ?? 'unknown';
+    $messenger->addMessage('backtrace: '.$function.' '.$line);
   }
 }
 
@@ -238,10 +157,8 @@ function nlp_debug_msg_safe($msg, mixed $values='EMPTY'): void
  *
  * Used to provide CSS for various forms used in NLP Services.
  *
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_form_alter(&$form, FormStateInterface $form_state, $form_id): void
+function nlpservices_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void
 {
   //nlp_debug_msg('$form_id',$form_id);
   switch ($form_id) {
@@ -307,13 +224,11 @@ function nlpservices_add_password_caution(array &$form): void
  * NLs often type their email address as the username.  Replace it with the
  * username of the account that has that email, so the login works.
  *
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
  * @return void
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_login_email_validate(&$form, FormStateInterface $form_state): void
+function nlpservices_login_email_validate(array &$form, FormStateInterface $form_state): void
 {
   $name = (string) $form_state->getValue('name');
   $userName = Drupal::service('nlpservices.drupal_user')->loginNameForEmail($name);
@@ -328,13 +243,11 @@ function nlpservices_login_email_validate(&$form, FormStateInterface $form_state
  * Report login attempts with an unknown username to the log file.   We're looking for attempts to
  * guess passwords and to help NLs who are having trouble with login.
  *
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
  * @return void
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_login_validate(&$form, FormStateInterface $form_state): void
+function nlpservices_login_validate(array &$form, FormStateInterface $form_state): void
 {
   $values = $form_state->getValues();
   $pass = $values['pass'];
@@ -363,13 +276,11 @@ function nlpservices_login_validate(&$form, FormStateInterface $form_state): voi
  * entry if they have a turf, instead of their account page.  A destination in
  * the login URL still takes precedence.
  *
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
  * @return void
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_login_redirect(&$form, FormStateInterface $form_state): void
+function nlpservices_login_redirect(array &$form, FormStateInterface $form_state): void
 {
   $account = User::load($form_state->get('uid'));
   if (empty($account)) { return; }
@@ -412,13 +323,11 @@ function nlpservices_leader_reset_form(array &$form, FormStateInterface $form_st
  *
  * Saves a password change by an NLP Services user.
  *
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
  * @return void
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_user_submit(&$form, FormStateInterface $form_state): void
+function nlpservices_user_submit(array &$form, FormStateInterface $form_state): void
 {
   //nlp_debug_msg('values',$form_state->getValues());
   $mcidValue = $form_state->getValue('field_mcid');
@@ -636,25 +545,23 @@ function nlpservices_cron (): void
 
 }
 
-/** @noinspection PhpUnusedParameterInspection */
 /**
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
- * @param $form_id
+ * @param string $form_id
  * @return void
  */
-function nlpservices_form_user_form_alter(&$form, FormStateInterface $form_state, $form_id): void
+function nlpservices_form_user_form_alter(array &$form, FormStateInterface $form_state, string $form_id): void
 {
   $form['#validate'][] = 'nlpservices_custom_validation';
 }
 
-/** @noinspection PhpUnusedParameterInspection */
 /**
- * @param $form
+ * @param array $form
  * @param FormStateInterface $form_state
  * @return void
  */
-function nlpservices_custom_validation($form, FormStateInterface $form_state): void
+function nlpservices_custom_validation(array $form, FormStateInterface $form_state): void
 {
   $countyValue = $form_state->getValue('field_county');
   $county = $countyValue[0]['value'] ?? '';
@@ -671,38 +578,11 @@ function nlpservices_custom_validation($form, FormStateInterface $form_state): v
  * Prevents the Welcome page node from being cached so that election
  * date changes propagate immediately to all visitors.
  *
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
  */
-function nlpservices_node_view(array &$build, Drupal\node\NodeInterface $node, Drupal\Core\Entity\Display\EntityViewDisplayInterface $display, string $view_mode): void
+function nlpservices_node_view(array &$build, NodeInterface $node, EntityViewDisplayInterface $display, string $view_mode): void
 {
   if ($node->bundle() === 'page' && $node->label() === 'Welcome') {
     $build['#cache']['max-age'] = 0;
   }
-}
-
-/** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- * This converts a string to hex for debugging
- *
- * @param $string
- * @return string
- * @noinspection PhpUnused
- */
-function strToHex($string): string
-{
-  $hex = '';
-  $len = strlen($string);
-  for ($i = 0; $i < $len; $i++) {
-    $so = ord($string[$i]);
-    $sh = dechex($so);
-    $shp = str_pad($sh, 2, '0',STR_PAD_LEFT);
-    if(($so < 128) AND ($so > 31)) {
-      $hex .= ' '.$string[$i].' '.$shp;
-    } else {
-      $hex .= ' .. '.$shp;
-    }
-    if($i>255) {break;}
-  }
-  return $hex;
 }
 

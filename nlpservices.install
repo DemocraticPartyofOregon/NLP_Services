@@ -17,9 +17,10 @@ use Drupal\field\Entity\FieldStorageConfig;
  * whether NLP Services emails go out as HTML, since their links don't work
  * in plain text.
  *
- * @noinspection PhpUnused
+ * @param string $phase
+ * @return array
  */
-function nlpservices_requirements( string $phase ): array
+function nlpservices_requirements(string $phase): array
 {
   $requirements = [];
 
@@ -89,20 +90,34 @@ function _nlpservices_ensure_front_page(): void
 }
 
 /**
- * Implements hook_install().
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
+ * Turns off the email Drupal sends when an account is activated.
+ *
+ * NLP accounts are made by coordinators, who send the login themselves.  The
+ * setting is "Notify user when account is activated" on the Account settings
+ * page.
  */
-function nlpservices_install($is_syncing): void
+function _nlpservices_disable_activation_email(): void
+{
+  Drupal::configFactory()->getEditable('user.settings')
+    ->set('notify.status_activated', FALSE)
+    ->save();
+}
+
+/**
+ * Implements hook_install().
+ *
+ * @param bool $is_syncing
+ */
+function nlpservices_install(bool $is_syncing): void
 {
   _nlpservices_ensure_keys_directory();
   _nlpservices_ensure_front_page();
+  _nlpservices_disable_activation_email();
 }
 
 /**
  * Creates the private://keys directory for sites that installed this module
  * before API keys were moved off the public filesystem.
- * @noinspection PhpUnused
  */
 function nlpservices_update_10001(): void
 {
@@ -118,8 +133,6 @@ function nlpservices_update_10001(): void
  * private:// on disk doesn't update that stored path, so this walks every
  * 'file' provider key and repoints it at the private location if the file
  * has already been moved there.
- *
- * @noinspection PhpUnused
  */
 function nlpservices_update_10002(): void
 {
@@ -160,7 +173,6 @@ function nlpservices_update_10002(): void
 
 /**
  * Sets the front page to the NLP Services welcome page for existing installs.
- * @noinspection PhpUnused
  */
 function nlpservices_update_10003(): void
 {
@@ -174,8 +186,6 @@ function nlpservices_update_10003(): void
  * (cd, county, party). Widening the key can't create duplicates, so the
  * existing rows are kept. The key is rebuilt unconditionally, which gives
  * the same result on a site whose key is already correct.
- *
- * @noinspection PhpUnused
  */
 function nlpservices_update_10004(): string
 {
@@ -197,8 +207,6 @@ function nlpservices_update_10004(): string
  * and keeps the state name in nlpservices-state-name. Code that expects a
  * list gets the HD arrays instead of names (e.g., the API configuration
  * form's key cleanup).
- *
- * @noinspection PhpUnused
  */
 function nlpservices_update_10005(): string
 {
@@ -225,8 +233,6 @@ function nlpservices_update_10005(): string
  * A crosstab file with an HD column has a row per HD in each county.  The
  * existing rows get HD 0, which is what an import without an HD column
  * saves.  Widening the key can't create duplicates, so the rows are kept.
- *
- * @noinspection PhpUnused
  */
 function nlpservices_update_10006(): string
 {
@@ -252,8 +258,6 @@ function nlpservices_update_10006(): string
  * report. Reports missing the NL's name get it from the nls table or
  * MyCampaign; when neither has both names, the report is marked so the
  * search isn't repeated on every page load.
- *
- * @noinspection PhpUnused
  */
 function nlpservices_update_10007(): string
 {
@@ -271,11 +275,23 @@ function nlpservices_update_10007(): string
 }
 
 /**
- * Implements hook_uninstall().
- * @noinspection PhpUnused
- * @noinspection PhpUnusedParameterInspection
+ * Turns off the account activation email.
+ *
+ * The module used to stop this email in hook_mail_alter(), now the user
+ * setting is turned off instead.
  */
-function nlpservices_uninstall($is_syncing): void
+function nlpservices_update_10008(): string
+{
+  _nlpservices_disable_activation_email();
+  return 'Turned off the account activation email.';
+}
+
+/**
+ * Implements hook_uninstall().
+ *
+ * @param bool $is_syncing
+ */
+function nlpservices_uninstall(bool $is_syncing): void
 {
   $fields = [
     'county',
@@ -304,8 +320,6 @@ function nlpservices_uninstall($is_syncing): void
  * Implements hook_schema().
  *
  * Builds all the NLP Services database tables.
- *
- * @noinspection PhpUnused
  */
 function nlpservices_schema(): array
 {
@@ -360,7 +374,6 @@ function nlpservices_schema(): array
     ],
   ];
 
-  /** @noinspection DuplicatedCode */
   $schema['nlp_target_voter_count'] = [
     'description' => 'Target voter ballot status counts from VoteBuilder crosstab export.',
     'fields' => [
@@ -381,7 +394,6 @@ function nlpservices_schema(): array
     ],
   ];
 
-  /** @noinspection DuplicatedCode */
   $schema['nlp_all_voter_count'] = [
     'description' => 'All voter ballot status counts from VoteBuilder crosstab export.',
     'fields' => [
