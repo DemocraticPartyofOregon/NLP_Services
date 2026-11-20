@@ -343,6 +343,44 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringNotContainsString(NlpResultsSummary::HD_NOTE, $display['participation']['#markup']);
     }
 
+    public function testHdMissingFromAFileWithHdsShowsZeroes(): void {
+      $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
+      $this->sessionMock->method('getCounty')->willReturn('Levy');
+      $this->turfsMock->method('getTurfHdNames')->willReturn([10 => 10, 43 => 43]);
+      $this->turfsMock->method('getVoterCounts')->willReturn(0);
+      $this->crosstabsMock->method('getCountsByHd')->willReturn([]);
+      // Looked up once for the request, not once per HD.
+      $this->crosstabsMock->expects($this->once())->method('hasHdCounts')->willReturn(TRUE);
+
+      $service = $this->buildService();
+      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Levy', NlpResultsSummary::ALL);
+      $section = $result['sections'][1];
+      $display = $service->buildDistrictDisplay('HD', $section['value'], $section['rows'], $section['participation']);
+
+      $this->assertSame('HD', $section['type']);
+      foreach (['all', 'dem', 'rep', 'na'] as $key) {
+        $this->assertSame(0, $section['rows'][$key]['registered']);
+        $this->assertSame('0%', $section['rows'][$key]['pct']);
+      }
+      $this->assertStringContainsString(NlpResultsSummary::HD_MISSING_NOTE, $display['participation']['#markup']);
+      $this->assertStringNotContainsString(NlpResultsSummary::HD_NOTE, $display['participation']['#markup']);
+    }
+
+    public function testHdMissingNoteInPdfAndNoNoteForCountedHd(): void {
+      $this->configurationMock->method('getElectionName')->willReturn('General');
+      $zeroRow = ['name' => 'All Voters', 'registered' => 0, 'voted' => 0, 'pct' => '0%'];
+      $countedRow = ['name' => 'All Voters', 'registered' => 30, 'voted' => 12, 'pct' => '40%'];
+      $sections = [
+        ['type' => 'HD', 'title' => 'Levy County, House District 10', 'participation' => [], 'rows' => ['all' => $zeroRow]],
+        ['type' => 'HD', 'title' => 'Lane County, House District 7', 'participation' => [], 'rows' => ['all' => $countedRow]],
+      ];
+
+      $html = $this->buildService()->buildPdfHtml('Test', $sections);
+
+      $this->assertSame(1, substr_count($html, NlpResultsSummary::HD_MISSING_NOTE));
+      $this->assertStringNotContainsString(NlpResultsSummary::HD_NOTE, $html);
+    }
+
     public function testBuildDistrictDisplayHdAddsNote(): void {
       $result = $this->buildService()->buildDistrictDisplay('HD', ['county' => 'Lane', 'hd' => 7], [], ['line a']);
 

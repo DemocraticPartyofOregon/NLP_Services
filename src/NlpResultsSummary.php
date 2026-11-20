@@ -25,6 +25,10 @@ class NlpResultsSummary
   public const string ALL = 'all';
   public const string COUNTY_SUMMARY = 'summary';
   public const string HD_NOTE = 'VoteBuilder counts by HD are not available; the crosstab file had no HD column.';
+  public const string HD_MISSING_NOTE = 'No VoteBuilder counts for this HD in the crosstab file.';
+
+  // Whether the crosstab file had HD counts; looked up once per request.
+  protected ?bool $hasHdCounts = NULL;
 
   protected NlpVoters $votersObj;
   protected NlpMatchbacks $matchbacksObj;
@@ -384,11 +388,33 @@ class NlpResultsSummary
   }
 
   /**
-   * An HD section without VoteBuilder rows gets a note saying why.
+   * The note for an HD section that has no VoteBuilder counts.
+   *
+   * With no HD column in the crosstab file there are no VoteBuilder rows at
+   * all.  With one, an HD the file didn't cover gets rows of zeroes (see
+   * buildResultsTableArray()).
+   *
+   * @param string $type - 'CD', 'County', 'HD', or 'NLP'.
+   * @param array $rows - the rows of the section.
+   * @return string - the note, or '' if none is needed.
    */
-  private function needsHdNote(string $type, array $rows): bool
+  private function hdNote(string $type, array $rows): string
   {
-    return $type === 'HD' && !isset($rows['all']);
+    if ($type !== 'HD') {
+      return '';
+    }
+    if (!isset($rows['all'])) {
+      return self::HD_NOTE;
+    }
+    return empty($rows['all']['registered']) ? self::HD_MISSING_NOTE : '';
+  }
+
+  /**
+   * Whether the crosstab file had HD counts.
+   */
+  private function hasHdCounts(): bool
+  {
+    return $this->hasHdCounts ??= $this->crosstabsObj->hasHdCounts();
   }
 
   /**
@@ -429,8 +455,9 @@ class NlpResultsSummary
       $this->writeToTempFile($fh, [['']]);
       $this->writeToTempFile($fh, [[$section['title'], 'Registered', 'Voted', 'Participation']]);
       $this->writeToTempFile($fh, array_values($section['participation']));
-      if ($this->needsHdNote($section['type'], $section['rows'])) {
-        $this->writeToTempFile($fh, [self::HD_NOTE]);
+      $hdNote = $this->hdNote($section['type'], $section['rows']);
+      if ($hdNote !== '') {
+        $this->writeToTempFile($fh, [$hdNote]);
       }
       $this->writeToTempFile($fh, array_map('array_values', array_values($section['rows'])));
     }
@@ -463,8 +490,9 @@ class NlpResultsSummary
       $html .= '<div style="page-break-inside: avoid;">';
       $html .= '<h2>' . Html::escape($section['title']) . '</h2>';
       $lines = array_map([Html::class, 'escape'], array_values($section['participation']));
-      if ($this->needsHdNote($section['type'], $section['rows'])) {
-        $lines[] = '<i>' . Html::escape(self::HD_NOTE) . '</i>';
+      $hdNote = $this->hdNote($section['type'], $section['rows']);
+      if ($hdNote !== '') {
+        $lines[] = '<i>' . Html::escape($hdNote) . '</i>';
       }
       $html .= '<p>' . implode('<br>', $lines) . '</p>';
       $html .= '<table class="summary" autosize="1"><caption>Summary of results for the '
@@ -611,8 +639,9 @@ class NlpResultsSummary
       '#markup' => "<h1>$title</h1>",
     ];
 
-    if($this->needsHdNote($type, $rows)) {
-      $countyParticipation[] = '<i>' . self::HD_NOTE . '</i>';
+    $hdNote = $this->hdNote($type, $rows);
+    if ($hdNote !== '') {
+      $countyParticipation[] = '<i>' . $hdNote . '</i>';
     }
     if(!empty($countyParticipation)) {
       $participation = '<p>'.implode('<br>', $countyParticipation).'</p>';
@@ -660,6 +689,11 @@ class NlpResultsSummary
       'HD' => $this->crosstabsObj->getCountsByHd($value['county'], (int) $value['hd']),
       default => [],
     };
+    // When the file had HDs but not this one, its VoteBuilder rows are zeroes.
+    if ($type === 'HD' && empty($counts) && $this->hasHdCounts()) {
+      $zero = ['regVoters' => 0, 'regVoted' => 0];
+      $counts = ['Democrats' => $zero, 'Republicans' => $zero, 'Non-Affiliated' => $zero, 'ALL' => $zero];
+    }
     $rows = $this->buildBallotCounts($counts, $nlpCounts);
 
     $row = [];

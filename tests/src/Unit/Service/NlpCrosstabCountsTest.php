@@ -291,6 +291,38 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(140, $result['D']['regVoters']);
     }
 
+    private function mockHdQuery(mixed $fetchResult): Select {
+      $stmtMock = $this->createMock(StatementInterface::class);
+      $stmtMock->method('fetchField')->willReturn($fetchResult);
+      $selectMock = $this->createMock(Select::class);
+      $selectMock->method('addField')->willReturn('c_hd');
+      $selectMock->method('condition')->willReturnSelf();
+      $selectMock->method('range')->willReturnSelf();
+      $selectMock->method('execute')->willReturn($stmtMock);
+      $this->connectionMock->method('select')->willReturn($selectMock);
+      return $selectMock;
+    }
+
+    public function testHasHdCountsTrueWhenAnHdRowExists(): void {
+      $selectMock = $this->mockHdQuery('7');
+      $selectMock->expects($this->once())->method('condition')->with('hd', 0, '>')->willReturnSelf();
+      $this->assertTrue($this->buildCrosstab()->hasHdCounts());
+    }
+
+    public function testHasHdCountsFalseWhenEveryRowIsHdZero(): void {
+      $this->mockHdQuery(FALSE);
+      $this->assertFalse($this->buildCrosstab()->hasHdCounts());
+    }
+
+    public function testHasHdCountsFalseOnException(): void {
+      $selectMock = $this->createMock(Select::class);
+      $selectMock->method('condition')->willReturnSelf();
+      $selectMock->method('range')->willReturnSelf();
+      $selectMock->method('execute')->willThrowException(new \Exception('DB error'));
+      $this->connectionMock->method('select')->willReturn($selectMock);
+      $this->assertFalse($this->buildCrosstab()->hasHdCounts());
+    }
+
     public function testGetCountsByHdExceptionReturnsEmptyArray(): void {
       $selectMock = $this->createMock(Select::class);
       $selectMock->method('fields')->willReturnSelf();

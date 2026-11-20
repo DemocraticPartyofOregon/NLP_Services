@@ -6,6 +6,7 @@ use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\nlpservices\NlpCrosstabCounts;
 
 /**
@@ -15,7 +16,7 @@ class ImportCrosstabsForm extends FormBase
 {
   protected NlpCrosstabCounts $crosstabsObj;
 
-  public function __construct($crosstabsObj, $requestStack) {
+  public function __construct(NlpCrosstabCounts $crosstabsObj, RequestStack $requestStack) {
     $this->crosstabsObj = $crosstabsObj;
     $this->requestStack = $requestStack;
   }
@@ -171,15 +172,24 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
     } while (TRUE);
     fclose($fh);
 
-    if (empty($crossTabCounts)) { return; }
+    if (empty($crossTabCounts)) {
+      $messenger->addError(t('The file has no county counts, so nothing was imported.'));
+      return;
+    }
     // Replace the previous file's counts so none are added in twice.
     if (!$this->crosstabsObj->deleteAllCrosstabCounts()) {
       $messenger->addError(t('Failed to remove the previous ballot counts.'));
       return;
     }
+    $saved = $failed = 0;
+    $counties = $hds = [];
     foreach ($crossTabCounts as $cd => $cdCounts) {
       foreach ($cdCounts as $county => $countyCounts) {
+        $counties[$county] = TRUE;
         foreach ($countyCounts as $hd => $hdCounts) {
+          if ($hd > 0) {
+            $hds[$county . '|' . $hd] = TRUE;
+          }
           foreach ($hdCounts as $party => $partyCounts) {
             $counts = [
               'cd'        => $cd,
@@ -189,18 +199,55 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
               'regVoters' => $partyCounts['reg'],
               'regVoted'  => $partyCounts['br'],
             ];
-            $this->crosstabsObj->updateCrosstabCounts($counts);
+            if ($this->crosstabsObj->updateCrosstabCounts($counts)) {
+              $saved++;
+            }
+            else {
+              $failed++;
+            }
           }
         }
       }
     }
+
+    if ($failed > 0) {
+      // Usually the database is missing a column the import needs.
+      $messenger->addError(t('@failed of @total ballot counts could not be saved. Check that the database updates have been run (drush updb), then import the file again.',
+        ['@failed' => $failed, '@total' => $saved + $failed]));
+      return;
+    }
+
+    $this->reportHdColumn($hdPos !== NULL, count($hds));
 
     $createTime = $form_state->get('createTime');
     Drupal::configFactory()->getEditable('nlpservices.configuration')
       ->set('nlpservices-crosstab-create-time', $createTime)
       ->save();
 
-    $messenger->addStatus(t('The ballot count file has been successfully uploaded.'));
+    $messenger->addStatus(t('The ballot count file has been successfully uploaded: @counts counts for @counties counties and @hds house districts.',
+      ['@counts' => $saved, '@counties' => count($counties), '@hds' => count($hds)]));
+  }
+
+  /**
+   * Warns when the summaries by HD will have no VoteBuilder counts.
+   *
+   * Without an HD column, or with one that has no HD numbers, every count is
+   * saved for the whole county (HD 0), and the summary for an HD shows only
+   * the NLP counts.
+   *
+   * @param bool $hasHdColumn
+   *   TRUE if the first header record has a column named "HD".
+   * @param int $hdCount
+   *   The number of different county house districts with counts.
+   */
+  private function reportHdColumn(bool $hasHdColumn, int $hdCount): void
+  {
+    if (!$hasHdColumn) {
+      $this->messenger()->addWarning(t('The file has no column named "HD" in its first header row, so the counts were saved for whole counties only. The summaries by HD will show only the NLP counts.'));
+    }
+    elseif ($hdCount === 0) {
+      $this->messenger()->addWarning(t('The file has an HD column, but it has no HD numbers, so the counts were saved for whole counties only. The summaries by HD will show only the NLP counts.'));
+    }
   }
 
   /**
@@ -212,6 +259,22 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
     return preg_match('/\d+/', $rawHd, $matches) ? (int) $matches[0] : 0;
   }
 
+  /**
+   * Reads the next record of the crosstab file as a header.
+   *
+   * The crosstab export starts with two header records: the first names the
+   * column groups and the second names the columns within them.  Each column
+   * name is cleaned the same way as the count fields (slashes stripped, HTML
+   * escaped, tags removed, trimmed) so it can be matched by
+   * NlpCrosstabCounts::decodeCrosstabsHeader().
+   *
+   * @param resource $fh
+   *   The open crosstab file.  (PHP has no type declaration for resources.)
+   *
+   * @return array
+   *   The cleaned column names in file order, or an empty array if the record
+   *   could not be read (end of file or an unreadable file).
+   */
   private function getHeaderRecord($fh): array
   {
     $rawHeader = fgetcsv($fh, escape: '');
@@ -225,7 +288,25 @@ The date will be in the form mm_dd_yyyy.  If the date is missing, the current ti
     return $headerColumns;
   }
 
-  private function extractCreateDate($fileName): int
+  /**
+   * Gets the time the crosstab report was created from its file name.
+   *
+   * A formatted VAN report ends its file name with the date and time it was
+   * created, separated from the rest of the name and each other by blanks,
+   * with underscores in place of slashes and colons, for example
+   * "Demographics 09_25_2026 3_45_12 PM.csv".  The last three blank-separated
+   * parts are read as the date, the time and AM/PM (only the first two
+   * characters of the last part are used, so an extension is ignored).
+   *
+   * @param string $fileName
+   *   The file name as the user uploaded it.
+   *
+   * @return int
+   *   The creation time as a Unix timestamp, or 0 if the name has fewer than
+   *   four parts, doesn't end in AM or PM, or the date and time can't be
+   *   parsed.
+   */
+  private function extractCreateDate(string $fileName): int
   {
     $fileNameParts = explode(' ', $fileName);
     $partsCount = count($fileNameParts);

@@ -11,6 +11,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\nlpservices\Form\ImportCrosstabsForm;
   use Drupal\nlpservices\NlpCrosstabCounts;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\Constraint\Callback;
   use Symfony\Component\HttpFoundation\File\UploadedFile;
   use Symfony\Component\HttpFoundation\FileBag;
   use Symfony\Component\HttpFoundation\Request;
@@ -115,6 +116,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
     // getFormId
     // -------------------------------------------------------------------------
+
+    /** Matches a message (a string or a TranslatableMarkup) containing $text. */
+    private function messageContains(string $text): Callback {
+      return $this->callback(fn($message): bool => str_contains((string) $message, $text));
+    }
 
     public function testGetFormIdReturnsExpectedId(): void {
       $this->assertSame('nlpservices_import_crosstabs_form', $this->buildForm()->getFormId());
@@ -481,9 +487,66 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testSubmitFormNoDataRowsSkipsConfigSaveAndStatus(): void {
       $this->messengerMock->expects($this->never())->method('addStatus');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('no county counts'));
       $this->crosstabsMock->expects($this->never())->method('updateCrosstabCounts');
 
       $this->submitFormWithDataRows([]);
+    }
+
+    // -------------------------------------------------------------------------
+    // submitForm — import report
+    // -------------------------------------------------------------------------
+
+    public function testSubmitFormReportsCountsThatFailedToSave(): void {
+      $configMock = $this->addConfigFactoryToContainer();
+      $configMock->expects($this->never())->method('save');
+      $this->crosstabsMock->method('updateCrosstabCounts')->willReturn(FALSE);
+      $this->messengerMock->expects($this->never())->method('addStatus');
+      $this->messengerMock->expects($this->once())->method('addError')
+        ->with($this->messageContains('2 of 2 ballot counts could not be saved'));
+
+      $this->submitFormWithDataRows([
+        ['Multnomah', '1', 'Democrats', '100', '200'],
+      ]);
+    }
+
+    public function testSubmitFormWithoutHdColumnWarns(): void {
+      $this->addConfigFactoryToContainer();
+      $this->crosstabsMock->method('updateCrosstabCounts')->willReturn(TRUE);
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('no column named "HD"'));
+      $this->messengerMock->expects($this->once())->method('addStatus')
+        ->with($this->messageContains('2 counts for 1 counties and 0 house districts'));
+
+      $this->submitFormWithDataRows([
+        ['Multnomah', '1', 'Democrats', '100', '200'],
+      ]);
+    }
+
+    public function testSubmitFormWithHdColumnReportsHouseDistricts(): void {
+      $this->addConfigFactoryToContainer();
+      $this->crosstabsMock->method('updateCrosstabCounts')->willReturn(TRUE);
+      $this->messengerMock->expects($this->never())->method('addWarning');
+      $this->messengerMock->expects($this->once())->method('addStatus')
+        ->with($this->messageContains('5 counts for 1 counties and 2 house districts'));
+
+      $this->submitFormWithHdRows([
+        ['Lane', '4', 'Democrats', '10', '20', '007'],
+        ['Lane', '4', 'Republicans', '5', '15', '007'],
+        ['Lane', '4', 'Democrats', '30', '40', 'HD 8'],
+      ]);
+    }
+
+    public function testSubmitFormWithEmptyHdColumnWarns(): void {
+      $this->addConfigFactoryToContainer();
+      $this->crosstabsMock->method('updateCrosstabCounts')->willReturn(TRUE);
+      $this->messengerMock->expects($this->once())->method('addWarning')
+        ->with($this->messageContains('has no HD numbers'));
+
+      $this->submitFormWithHdRows([
+        ['Lane', '4', 'Democrats', '10', '20', ''],
+      ]);
     }
 
   }

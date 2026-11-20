@@ -235,6 +235,28 @@ class NlpCrosstabCounts
   }
 
   /**
+   * hasHdCounts
+   *
+   * Whether the imported crosstab file had an HD column with HD numbers.
+   * Without one, every count is saved with HD 0.
+   *
+   * @return bool
+   */
+  public function hasHdCounts(): bool
+  {
+    $query = $this->connection->select(self::CROSSTAB_COUNTS_TBL, 'c');
+    $query->addField('c', 'hd');
+    $query->condition('hd', 0, '>');
+    $query->range(0, 1);
+    try {
+      return $query->execute()->fetchField() !== FALSE;
+    } catch (Exception $e) {
+      nlp_debug_msg('hasHdCounts', $e);
+      return FALSE;
+    }
+  }
+
+  /**
    * aggregateCountsByParty
    * 1. Aggregates the counts by party.
    * 2. The counts are grouped by party.
