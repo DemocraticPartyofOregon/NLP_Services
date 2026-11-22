@@ -129,17 +129,18 @@ Replace `nlpadmin` and `ftpuser` with the actual install user and FTP user for t
 
 ## Install the support modules
 
-This version of NLP Services requires six additional modules: "Automated Logout" (autologout), "Encrypt" (encrypt), "Key" (key), "Real AES" (real_aes), "SMTP Authentication Support" (smtp) and "Token" (token).  It also uses the mPDF library and the Bartik theme.  These should all be installed using composer.
+This version of NLP Services requires six additional modules: "Automated Logout" (autologout), "Encrypt" (encrypt), "Key" (key), "Real AES" (real_aes), "SMTP Authentication Support" (smtp) and "Token" (token).  It also uses the mPDF and PDF Parser libraries and the Bartik theme.  These should all be installed using composer.
 
     composer require 'drupal/autologout:^2.0'
     composer install
     composer require mpdf/mpdf
+    composer require smalot/pdfparser
     composer require 'drupal/bartik:^1.1'
-    composer require 'drupal/token:^1.17'
+    composer require 'drupal/token:^1.18'
     composer require 'drupal/smtp:^1.4'
     composer require 'drupal/real_aes:^2.6'
-    composer require 'drupal/key:^1.22'
-    composer require 'drupal/encrypt:^3.2'
+    composer require 'drupal/key:^1.23'
+    composer require 'drupal/encrypt:^3.3'
 
 ## Install and enable nlpservices module
 
