@@ -17,7 +17,7 @@ Do the whole checklist on a copy of the site before doing it on the real one.  T
 
 - [ ] In cPanel, create a subdomain (for example `staging.oregonnlp.org`) and an empty database.
 - [ ] Copy the site directory: `cp -a ~/myStateName ~/myStateName-staging`.
-- [ ] Copy the database: `drush sql:dump > ~/staging.sql`, then import it into the new database with `mysql -u <user> -p <newdb> < ~/staging.sql`.
+- [ ] Copy the database: `drush sql:dump --extra-dump=--no-tablespaces > ~/staging.sql`.  Check that `tail -n 1 ~/staging.sql` says `-- Dump completed`, then import it into the new database with `mysql -u <user> -p <newdb> < ~/staging.sql`.  (Without `--no-tablespaces`, MySQL 8 stops with "Access denied; you need (at least one of) the PROCESS privilege(s)", because cPanel database users don't have that privilege.  The tablespace information it leaves out isn't needed.)
 - [ ] In the copy's `web/sites/default/settings.php`, change the database settings to the new database, and add the subdomain to `trusted_host_patterns`.
 - [ ] Point the subdomain's document root at `~/myStateName-staging/web`.
 - [ ] When you reach step 6 on the copy, use `~/private-files-staging` wherever it says `~/private-files`.  The private directory sits outside the site directory, so the copy would otherwise share it with the real site.
@@ -28,7 +28,7 @@ Note anything that goes wrong on the copy here, so the real upgrade doesn't hit 
 ## 1. Before you start
 
 - [ ] Pick a quiet time.  Turn off the cron job in cPanel for the duration (comment it out), so nothing runs halfway through the upgrade.
-- [ ] Back up the database: `drush sql:dump --gzip --result-file=$HOME/backup-$(date +%F).sql` (it writes `backup-<date>.sql.gz`).
+- [ ] Back up the database: `drush sql:dump --extra-dump=--no-tablespaces --gzip --result-file=$HOME/backup-$(date +%F).sql` (it writes `backup-<date>.sql.gz`; see step 0 for `--no-tablespaces`).  Check it's complete: `zcat ~/backup-$(date +%F).sql.gz | tail -n 1` says `-- Dump completed`.
 - [ ] Back up the files: `tar czf ~/backup-$(date +%F)-files.tgz ~/myStateName`.  Or make a full cPanel backup (Files → Backup).
 - [ ] PHP is 8.3 or newer for **both** the website (cPanel → Select PHP Version) and the command line (`php -v`).  Drupal 11 requires it.
 - [ ] The imap extension is on for both: `php -m | grep imap`, and Select PHP Version → Extensions for the website.  Without it on the command line, composer refuses to install V7_3; without it on the website, the email cron tasks fail.
