@@ -20,6 +20,7 @@ Do the whole checklist on a copy of the site before doing it on the real one.  T
 - [ ] Copy the database: `drush sql:dump > ~/staging.sql`, then import it into the new database with `mysql -u <user> -p <newdb> < ~/staging.sql`.
 - [ ] In the copy's `web/sites/default/settings.php`, change the database settings to the new database, and add the subdomain to `trusted_host_patterns`.
 - [ ] Point the subdomain's document root at `~/myStateName-staging/web`.
+- [ ] When you reach step 6 on the copy, use `~/private-files-staging` wherever it says `~/private-files`.  The private directory sits outside the site directory, so the copy would otherwise share it with the real site.
 - [ ] Turn off the copy's cron tasks (Enable Cron tasks page) and don't add a cron job for it, so the copy doesn't process the real MiniVAN and matchback emails or email NLs.
 
 Note anything that goes wrong on the copy here, so the real upgrade doesn't hit it.
@@ -83,10 +84,11 @@ Don't run `drush updb` yet.
 
 V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be downloaded over the web.  V7_3 keeps them in the private files directory and won't run without one.
 
-- [ ] Create the private directory outside `web`: `mkdir -p ~/myStateName/private/keys && chmod 750 ~/myStateName/private`.
-- [ ] In `web/sites/default/settings.php`, set (or uncomment) `$settings['file_private_path'] = '/home/myAccount/myStateName/private';`
-- [ ] `drush cr` so Drupal registers `private://`.
-- [ ] Move the key files: `mv web/sites/default/files/keys/*.key ~/myStateName/private/keys/`.  Update 10002 repoints each key only if its file is already there, so do this **before** `drush updb`.
+- [ ] Create the private directory in the home directory, outside `myStateName` and `web` (every NLP site uses `~/private-files`): `mkdir -p ~/private-files/keys && chmod 750 ~/private-files ~/private-files/keys`.
+- [ ] In `web/sites/default/settings.php`, set (or uncomment) `$settings['file_private_path'] = '/home/myAccount/private-files';`.  It must be the full path; PHP doesn't understand `~`.
+- [ ] `drush cr` so Drupal registers `private://`.  `drush status` should show `Files, Private : /home/myAccount/private-files`.
+- [ ] Move the key files: `mv web/sites/default/files/keys/*.key ~/private-files/keys/`.  Update 10002 repoints each key only if its file is already there, so do this **before** `drush updb`.
+- [ ] Check they're there: `ls -l ~/private-files/keys` lists one `.key` file per committee.
 - [ ] `drush updb -y`.  These updates should run, with these messages:
 
   | Update | What it does | Message |

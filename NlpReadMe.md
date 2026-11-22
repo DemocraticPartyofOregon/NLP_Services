@@ -41,25 +41,23 @@ Use your TTY app to redefine the public HTML directory (In the commands below, c
     mv ~/public_html ~/public_html_backup
     ln -s ~/myStateName/web/ ~/public_html
 
-Create a directory for the private files for saving API keys and set the permissions:
+Create a directory for the private files for saving API keys.  Every NLP site uses `private-files` in the account's home directory, next to `myStateName` and outside the web tree, so nothing in it can be downloaded over the web:
 
-    mkdir -p private_files
-    chmod 755 private_files private_files
+    mkdir -p ~/private-files/keys
+    chmod 750 ~/private-files ~/private-files/keys
 
-    mkdir -p /home/myStateName/private_files/keys
-    ?? chown -R www-data:www-data /home/myStateName/private_files
-    chmod 755 /home/myStateName/private_files/keys
+On a cPanel host, the website runs as your own account, so no other permissions are needed.  On a server where the website runs as a different user (such as `www-data` on Ubuntu), give that user's group access too: `sudo chgrp -R www-data ~/private-files`.
 
 Drupal has to be told where this directory is, by setting `file_private_path` in the site's `settings.php` file.  That file only exists once the Drupal installation below has finished, so come back to this step then.  It must be done before installing NLP Services, which won't install without it.  Drupal makes `settings.php` read-only during installation, so make it writable, append the setting, and make it read-only again:
 
     chmod u+w ~/myStateName/web/sites/default/settings.php
-    echo "\$settings['file_private_path'] = '/home/myStateName/private_files';" >> ~/myStateName/web/sites/default/settings.php
+    echo "\$settings['file_private_path'] = '$HOME/private-files';" >> ~/myStateName/web/sites/default/settings.php
     chmod 444 ~/myStateName/web/sites/default/settings.php
 
-Use the full path to the directory created above, starting with `/`.  PHP does not understand `~`, so `'~/private_files'` will not work.  The `\` before `$settings` keeps the shell from treating it as a variable.  If `settings.php` is owned by another user (such as `www-data`), the commands need `sudo`.  Putting `sudo` in front of `echo` is not enough, because the `>>` still runs as you, so use `tee` instead:
+The setting must be the full path, starting with `/`, such as `/home/sandbox6/private-files`.  PHP does not understand `~`, so `'~/private-files'` will not work.  The shell fills in `$HOME` with your home directory's full path, while the `\` before `$settings` keeps the shell from treating that one as a variable.  If `settings.php` is owned by another user (such as `www-data`), the commands need `sudo`.  Putting `sudo` in front of `echo` is not enough, because the `>>` still runs as you, so use `tee` instead:
 
     sudo chmod u+w ~/myStateName/web/sites/default/settings.php
-    echo "\$settings['file_private_path'] = '/home/myStateName/private_files';" | sudo tee -a ~/myStateName/web/sites/default/settings.php
+    echo "\$settings['file_private_path'] = '$HOME/private-files';" | sudo tee -a ~/myStateName/web/sites/default/settings.php
     sudo chmod 444 ~/myStateName/web/sites/default/settings.php
 
 Check the result with:
