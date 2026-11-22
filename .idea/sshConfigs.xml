@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SshConfigs">
+    <configs>
+      <sshConfig authType="PASSWORD" host="nlpdebug.org" id="3c82ec11-4b96-4da4-9c32-eff65a4c3816" port="22" nameFormat="DESCRIPTIVE" username="nlpadmin" useOpenSSHConfig="true" />
+    </configs>
+  </component>
+</project>

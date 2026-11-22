@@ -19,7 +19,7 @@
       <paths name="NLPDebug">
         <serverdata>
           <mappings>
-            <mapping deploy="/web/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
+            <mapping deploy="/var/www/drupal/web/modules/custom/nlpservices" local="$PROJECT_DIR$" web="/" />
           </mappings>
         </serverdata>
       </paths>

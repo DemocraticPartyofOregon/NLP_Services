@@ -30,8 +30,8 @@
           </advancedOptions>
         </fileTransfer>
       </webServer>
-      <webServer id="b74fe30a-5045-4fb0-bdb0-44976804545d" name="NLPDebug" url="http://nlpdebug.org">
-        <fileTransfer host="nlpdebug.org" port="21">
+      <webServer id="b74fe30a-5045-4fb0-bdb0-44976804545d" name="NLPDebug" url="https://nlpdebug.org">
+        <fileTransfer accessType="SFTP" host="nlpdebug.org" port="22" sshConfigId="3c82ec11-4b96-4da4-9c32-eff65a4c3816" sshConfig="nlpadmin@nlpdebug.org:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
           </advancedOptions>
