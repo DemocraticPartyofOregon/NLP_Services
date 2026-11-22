@@ -40,7 +40,9 @@ and create that directory inside the container.
 
 ### `ddev` CLI is unreliable on this machine — use `docker exec` directly
 
-On this Windows/git-bash setup (ddev/docker installed without admin rights into `~/bin`), state-changing `ddev` subcommands (`ddev restart`, `ddev composer require`, `ddev mutagen sync`) reliably **hang indefinitely with zero output** — confirmed by checking for the underlying process inside the container (never spawned) and on the host (an orphaned `ddev` process that has to be killed manually). Read-only commands (`ddev describe`, `ddev list`) work fine.
+On this Windows/git-bash setup (installed without admin rights; since the 2026-11-22 upgrade, DDEV 1.25.6 lives in `~/AppData/Local/Programs/DDEV` and Docker Desktop 4.99 in `~/AppData/Local/Programs/DockerDesktop`, not `~/bin`), state-changing `ddev` subcommands (`ddev restart`, `ddev composer require`, `ddev mutagen sync`) reliably **hang indefinitely with zero output** — confirmed by checking for the underlying process inside the container (never spawned) and on the host (an orphaned `ddev` process that has to be killed manually). Read-only commands (`ddev describe`, `ddev list`) work fine.
+
+**`ddev start` does work** (2026-11-22), unless a DDEV installer is still running in the background: the 1.25.6 installer reported success but its process stayed alive, and `ddev start` hung after `Starting nlp-dev...` until that process was ended in Task Manager and the installer rerun. A DDEV upgrade removes the project's containers but keeps its images and volumes (including `nlp-dev-mariadb`), so `ddev start` is all that's needed afterwards. `DDEV_DEBUG=true ddev start` shows where a hang happens. The `nlp-dev` Drupal site itself is **not installed** (the `db` database is empty and `/` redirects to `install.php`); the test suites don't need it.
 
 **Workaround: bypass the `ddev` wrapper and talk to the container directly.** This worked instantly every time it was tried:
 ```bash
@@ -64,7 +66,7 @@ MSYS_NO_PATHCONV=1 docker exec -w /var/www/html ddev-nlp-dev-web vendor/bin/phpu
 ```
 Pass `--testsuite nlpservices` — running phpunit with no testsuite also picks up the Kernel tests without their required env vars (below), giving ~18 spurious errors. This requires `drupal/core-dev:^11.4` on the **site's root** `composer.json` (it's there).
 
-As of 2026-11-17: Unit suite passes — **3190 tests, 8228 assertions, 0 failures, 2 skipped** (the two fixture-replay tests, see Tier 2 below). Kernel suite: 18 tests, **1 known failure** in `DatabaseFunctionsTest::testGetColumnNamesReturnsRealColumnsInOrder` (column-order mismatch, not yet investigated).
+As of 2026-11-22: Unit suite passes — **3357 tests, 8696 assertions, 0 failures, 2 skipped** (the two fixture-replay tests, see Tier 2 below). Kernel suite: 25 tests, **1 known failure** in `DatabaseFunctionsTest::testGetColumnNamesReturnsRealColumnsInOrder` (column-order mismatch, not yet investigated).
 
 ### Kernel tests (added 2026-09-13)
 
