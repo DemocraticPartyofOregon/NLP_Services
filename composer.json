@@ -1,6 +1,6 @@
 {
     "name": "drupal/nlpservices",
-    "description": "Neighborhood Leader organizing module for Drupal 10",
+    "description": "Neighborhood Leader organizing module for Drupal 11",
     "type": "drupal-custom-module",
     "license": "GPL-2.0-or-later",
     "repositories": [
@@ -14,7 +14,7 @@
         "ext-mbstring": "*",
         "ext-imap": "*",
         "ext-openssl": "*",
-        "drupal/autologout": "^1.4",
+        "drupal/autologout": "^1.4 || ^2.0",
         "drupal/bartik": "^1.1",
         "drupal/encrypt": "^3.2",
         "drupal/key": "^1.22",
