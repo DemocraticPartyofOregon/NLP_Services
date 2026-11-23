@@ -1,6 +1,6 @@
 # Upgrading a site from Drupal 10 / V7_2_1 to Drupal 11 / V7_3
 
-This is the checklist for the in-place upgrade of the production sites (oregonnlp.org first, then the other three).  Each site keeps its database, users and content.  For a brand-new site, follow NlpReadMe.md instead.
+This is the checklist for the in-place upgrade of the production sites (oregonnlp.org first, then mtdemsnlp.org and mississippinlp.org).  specialnlp.org was already on Drupal 11 and V7_3, and was brought up to date in November 2026; it only needs the old public key files removed (end of step 6) and the tests in step 8.  Each site keeps its database, users and content.  For a brand-new site, follow NlpReadMe.md instead.
 
 Throughout, `myAccount` is the cPanel account, `myStateName` is the directory holding `composer.json`, `vendor` and `web`, and `drush` is the alias from "Add a drush alias for the SSH shell" in NlpReadMe.md.  Run every command over SSH from `/home/myAccount/myStateName` unless it says otherwise.
 
@@ -34,6 +34,19 @@ Note anything that goes wrong on the copy here, so the real upgrade doesn't hit 
 - [ ] The imap extension is on for both: `php -m | grep imap`, and Select PHP Version → Extensions for the website.  Without it on the command line, composer refuses to install V7_3; without it on the website, the email cron tasks fail.
 - [ ] Composer is version 2.7 or newer: `composer --version`.
 - [ ] Composer has enough memory.  If a command stops with "Allowed memory size exhausted", run it as `php -d memory_limit=-1 $(which composer) ...`.
+- [ ] The old key files can't be downloaded.  Until step 6 moves them, they're in the public `web/sites/default/files/keys`, along with `secret_key.key` that decrypts them.  From any computer, `curl -sI https://<site>/sites/default/files/keys/secret_key.key | head -n 1` must say `403 Forbidden`.  If it says `200 OK`, block the folder first (PHP still reads the files; only the website stops serving them):
+  ```bash
+  cat > web/sites/default/files/keys/.htaccess <<'EOF'
+  # API key files must never be served over the web.
+  <IfModule mod_authz_core.c>
+    Require all denied
+  </IfModule>
+  <IfModule !mod_authz_core.c>
+    Deny from all
+  </IfModule>
+  EOF
+  ```
+- [ ] Web server log archiving is on: cPanel → Metrics → Raw Access → "Archive logs in your home directory at the end of each stats run every 24 hours".  Without it, `~/access-logs` only holds the last day or so, and there's no way to check later who requested what.
 
 ## 2. Find what blocks Drupal 11
 
@@ -106,7 +119,7 @@ V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be do
 - [ ] `drush cr`
 - [ ] Reports → Status report: no NLP Services errors (private file path, HTML email).
 - [ ] NLP configuration → Step 2, "Verify the API keys work".  Every committee's key verifies.
-- [ ] Only once Step 2 passes: `rm -r web/sites/default/files/keys`.
+- [ ] Only once Step 2 passes: `rm -r web/sites/default/files/keys` (this also removes the `.htaccess` block from step 1, which is no longer needed).  `curl -sI https://<site>/sites/default/files/keys/secret_key.key | head -n 1` should now say `404 Not Found`.
 
 ## 7. Set up what's new in V7_3
 

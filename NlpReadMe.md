@@ -54,7 +54,7 @@ Drupal has to be told where this directory is, by setting `file_private_path` in
     echo "\$settings['file_private_path'] = '$HOME/private-files';" >> ~/myStateName/web/sites/default/settings.php
     chmod 444 ~/myStateName/web/sites/default/settings.php
 
-The setting must be the full path, starting with `/`, such as `/home/sandbox6/private-files`.  PHP does not understand `~`, so `'~/private-files'` will not work.  The shell fills in `$HOME` with your home directory's full path, while the `\` before `$settings` keeps the shell from treating that one as a variable.  If `settings.php` is owned by another user (such as `www-data`), the commands need `sudo`.  Putting `sudo` in front of `echo` is not enough, because the `>>` still runs as you, so use `tee` instead:
+The setting must be the full path, starting with `/`, such as `/home/<your account>/private-files`.  PHP does not understand `~`, so `'~/private-files'` will not work.  The shell fills in `$HOME` with your home directory's full path, while the `\` before `$settings` keeps the shell from treating that one as a variable.  If `settings.php` is owned by another user (such as `www-data`), the commands need `sudo`.  Putting `sudo` in front of `echo` is not enough, because the `>>` still runs as you, so use `tee` instead:
 
     sudo chmod u+w ~/myStateName/web/sites/default/settings.php
     echo "\$settings['file_private_path'] = '$HOME/private-files';" | sudo tee -a ~/myStateName/web/sites/default/settings.php
