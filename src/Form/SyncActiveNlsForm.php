@@ -86,24 +86,24 @@ class SyncActiveNlsForm extends FormBase
     // a second POST that hides the first one's redirect to the batch page.
     $form['#attached']['library'][] = 'core/drupal.form';
 
-    $county = $this->nlpSessionObj->getCommittee();
-    if (empty($county)) {
+    $committee = $this->nlpSessionObj->getCommittee();
+    if (empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
     }
-    $form_state->set('county', $county);
+    $form_state->set('county', $committee);
     
-    // Search for any folders with the county name somewhere in the folder name.  We do this because
-    // the API can see every folder, regardless of county, and only county-specific folders are of
+    // Search for any folders with the committee name somewhere in the folder name.  We do this because
+    // the API can see every folder, regardless of committee, and only committee-specific folders are of
     // value here.
     $database = 1;
-    $folderInfo = $this->folders->getApiFolders($county, $database);
+    $folderInfo = $this->folders->getApiFolders($committee, $database);
     $folderIdFound = 0;
-    $countyFolderName = $county . self::DD_FOLDER_SUFFIX;
+    $committeeFolderName = $committee . self::DD_FOLDER_SUFFIX;
     $folderId = 0;
     foreach ($folderInfo as $folderId => $folderName) {
-      if ($folderName == $countyFolderName) {
+      if ($folderName == $committeeFolderName) {
         $folderIdFound = $folderId;
         break;
       }
@@ -115,8 +115,8 @@ the NLP Services Admin.</p>',
       ];
       return $form;
     }
-    // Get a list of saved lists in the county folder.
-    $lists = $this->savedLists->getSavedLists( $county, $database, $folderId );
+    // Get a list of saved lists in the committee folder.
+    $lists = $this->savedLists->getSavedLists( $committee, $database, $folderId );
     if (empty($lists)) {
       $form['no-lists'] = [
         '#markup' => '<p>There are no lists saved in the county folder.</p>',
@@ -159,23 +159,23 @@ the NLP Services Admin.</p>',
   {
     $messenger = Drupal::messenger();
     $listId = (int) $form_state->getValue('file_select');
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
 
-    // Only one rebuild per county at a time. The mark also tells a turf sync
-    // in this county that the NLs are being rebuilt.
-    if (!$this->nls->startActiveNlsSync($county)) {
+    // Only one rebuild per committee at a time. The mark also tells a turf sync
+    // in this committee that the NLs are being rebuilt.
+    if (!$this->nls->startActiveNlsSync($committee)) {
       $messenger->addError(t('Someone else is already rebuilding the list of active NLs for @county. Wait a few minutes for the rebuild to finish, then sync the active NLs again if you still need to.',
-        ['@county' => $county]));
+        ['@county' => $committee]));
       return;
     }
 
     // Get a list of vanIds for the NLs in the list.
     $database = 1;
     $activistCodes = ['NLPNotRegisteredAC', 'NLPDropoutAC', ];
-    $exportJob = $this->exportJobs->getExportJobs( $county, $database, $listId, $activistCodes );
+    $exportJob = $this->exportJobs->getExportJobs( $committee, $database, $listId, $activistCodes );
     if (empty($exportJob) or $exportJob['result'] != 'ok' OR empty($exportJob['downloadUrl'])) {
       $messenger->addError('NL database build failed.');
-      $this->nls->endActiveNlsSync($county);
+      $this->nls->endActiveNlsSync($committee);
       return;
     }
     // The old list of active NLs is deleted by the first batch step, not here,
@@ -191,7 +191,7 @@ the NLP Services Admin.</p>',
         FileExists::Replace);
     } catch (EntityStorageException $e) {
       nlp_debug_msg('File create failed.', $e);
-      $this->nls->endActiveNlsSync($county);
+      $this->nls->endActiveNlsSync($committee);
       return;
     }
     $file->setTemporary();
@@ -199,7 +199,7 @@ the NLP Services Admin.</p>',
       $file->save();
     } catch (Exception $e) {
       nlp_debug_msg('error', $e);
-      $this->nls->endActiveNlsSync($county);
+      $this->nls->endActiveNlsSync($committee);
       return;
     }
     $copied = copy($remoteUrl, $localFileUrl);
@@ -212,7 +212,7 @@ the NLP Services Admin.</p>',
     Drupal::logger('nlpservices')->notice(
       'Sync active NLs: county @county, selected listId @listId, VoteBuilder exported savedListId @exported, file @file has @rows NL rows.',
       [
-        '@county' => $county,
+        '@county' => $committee,
         '@listId' => $listId,
         '@exported' => $exportJob['savedListId'] ?? 'none',
         '@file' => $localFileUrl,
@@ -230,7 +230,7 @@ the NLP Services Admin.</p>',
     // active NLs.
     $args = [
       'uri'    => $localFileUrl,
-      'county' => $county,
+      'county' => $committee,
     ];
     $batch = [
       'title'            => t('Processing sync of active NLs.'),

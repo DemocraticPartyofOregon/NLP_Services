@@ -562,7 +562,7 @@ class DataEntryForm extends FormBase
       return;
     }
 
-    $county = $this->sessionDataObj->getCommittee();
+    $committee = $this->sessionDataObj->getCommittee();
     // Report with the date of the voter contact the NL chose, or today if none.
     if (empty($canvassDate)) {
       $canvassDate = date('Y-m-d');
@@ -576,7 +576,7 @@ class DataEntryForm extends FormBase
         $report = [
           'vanid' => $vanid,
           'mcid' => $mcid,
-          'county' => $county,
+          'county' => $committee,
           'cd' => $voterArrays[$vanid]['cd'],
           'contactDate' => $canvassDate,
           'firstName' => $nlsInfo['firstName'],
@@ -1107,7 +1107,7 @@ not checked have already received a postcard for this election.</p></div>',
     if (!$this->claimSubmission($submissionKey)) {
       return;
     }
-    $county = $this->sessionDataObj->getCommittee();
+    $committee = $this->sessionDataObj->getCommittee();
     $contactMethodName = 'Postcard';
 
     $rid =$this->nlpConfigurationObj->getResponseId('Postcard','Mailed');
@@ -1120,7 +1120,7 @@ not checked have already received a postcard for this election.</p></div>',
 
     $report  = [
       'mcid' => $mcid,
-      'county' => $county,
+      'county' => $committee,
       'turfIndex' => $turfIndex,
       'contactMethod' => ['name'=>$contactMethodName,'code'=>$cid],
       'contactDate' => $canvassDate,
@@ -1156,10 +1156,10 @@ not checked have already received a postcard for this election.</p></div>',
   {
     $messenger = Drupal::messenger();
 
-    $county = $this->sessionDataObj->getCommittee();
-    $form_state->set('county',$county);
+    $committee = $this->sessionDataObj->getCommittee();
+    $form_state->set('county',$committee);
 
-    $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
+    $hdOptions = $this->turfsObj->getTurfHD($committee); // HDs with turfs.
     $this->sessionDataObj->setNewDistricts($hdOptions);
 
     $currentUser = $this->drupalUserObj->getCurrentUser();
@@ -1172,7 +1172,7 @@ not checked have already received a postcard for this election.</p></div>',
     $turfIndex = $this->sessionDataObj->get('turfIndex');
 
     //Do we have a turf?
-    $turfArray = $this->turfsObj->turfExists($mcid,$county);
+    $turfArray = $this->turfsObj->turfExists($mcid,$committee);
     $form_state->set('turfArray', $turfArray);
     if (empty($turfArray)) {
       $messenger->addWarning("You do not have a turf assigned");
@@ -1291,9 +1291,9 @@ not checked have already received a postcard for this election.</p></div>',
   function updateMinivanInfo(int $turfIndex): void
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
-    $county = $this->sessionDataObj->getCommittee();
+    $committee = $this->sessionDataObj->getCommittee();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->mapRegionsObj->updateMinivanInfo($county, $turfArray);
+    $this->mapRegionsObj->updateMinivanInfo($committee, $turfArray);
 
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {

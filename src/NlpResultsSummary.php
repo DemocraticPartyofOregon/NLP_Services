@@ -134,7 +134,7 @@ class NlpResultsSummary
   public function getCountyOptions(): array
   {
     if ($this->drupalUser->isNlpAdminUser()) {
-      return $this->votersObj->getParticipatingCounties();
+      return $this->votersObj->getParticipatingCommittees();
     }
     $county = $this->sessionObj->getCommittee();
     return empty($county) ? [] : [$county];
@@ -225,7 +225,7 @@ class NlpResultsSummary
     if (!$this->drupalUser->isNlpAdminUser()) {
       return ['error' => 'Only an NLP admin can display the state summary.'];
     }
-    $counties = $this->votersObj->getParticipatingCounties();
+    $counties = $this->votersObj->getParticipatingCommittees();
     if (empty($counties)) {
       return ['error' => 'No county has voters assigned to turfs.'];
     }

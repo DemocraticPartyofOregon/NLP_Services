@@ -6,33 +6,26 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Form\FormStateInterface;
   use Drupal\Core\Messenger\MessengerInterface;
-  use Drupal\Core\TempStore\PrivateTempStore;
-  use Drupal\Core\TempStore\PrivateTempStoreFactory;
   use Drupal\nlpservices\Form\LegislativeFixesForm;
   use Drupal\nlpservices\NlpLegislativeFixes;
+  use Drupal\nlpservices\NlpSessionData;
   use Drupal\Tests\UnitTestCase;
 
   class LegislativeFixesFormTest extends UnitTestCase {
 
     private NlpLegislativeFixes $legFixesMock;
     private MessengerInterface $messengerMock;
-    private PrivateTempStoreFactory $tempStoreFactoryMock;
-    private PrivateTempStore $tempStoreMock;
+    private NlpSessionData $sessionDataMock;
 
     protected function setUp(): void {
       parent::setUp();
       $this->legFixesMock         = $this->createMock(NlpLegislativeFixes::class);
       $this->messengerMock        = $this->createMock(MessengerInterface::class);
-      $this->tempStoreMock        = $this->createMock(PrivateTempStore::class);
-      $this->tempStoreFactoryMock = $this->createMock(PrivateTempStoreFactory::class);
-      $this->tempStoreFactoryMock->method('get')
-        ->with('nlpservices.session_data')
-        ->willReturn($this->tempStoreMock);
+      $this->sessionDataMock      = $this->createMock(NlpSessionData::class);
 
       $container = new ContainerBuilder();
       $container->set('string_translation', $this->getStringTranslationStub());
       $container->set('messenger', $this->messengerMock);
-      $container->set('tempstore.private', $this->tempStoreFactoryMock);
       Drupal::setContainer($container);
     }
 
@@ -46,7 +39,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     private function buildForm(): LegislativeFixesForm {
-      $form = new LegislativeFixesForm($this->legFixesMock);
+      $form = new LegislativeFixesForm($this->legFixesMock, $this->sessionDataMock);
       $form->setStringTranslation($this->getStringTranslationStub());
       return $form;
     }
@@ -72,13 +65,12 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // buildForm — first entry loads county from tempstore
+    // buildForm — first entry loads the committee from the session
     // -------------------------------------------------------------------------
 
-    public function testBuildFormFirstEntryLoadsCountyFromTempstore(): void {
-      $this->tempStoreMock->expects($this->once())
-        ->method('get')
-        ->with('Committee')
+    public function testBuildFormFirstEntryLoadsCommitteeFromSession(): void {
+      $this->sessionDataMock->expects($this->once())
+        ->method('getCommittee')
         ->willReturn('Denver');
 
       $this->legFixesMock->method('getLegFixes')->willReturn([]);

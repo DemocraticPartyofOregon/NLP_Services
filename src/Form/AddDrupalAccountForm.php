@@ -55,25 +55,25 @@ class AddDrupalAccountForm extends FormBase
       $form_state->set('reenter', TRUE);
       $form_state->set('page', 'addUser');
       $sessionObj = Drupal::getContainer()->get('nlpservices.session_data');
-      $county = $sessionObj->getCommittee();
-      $form_state->set('county',$county);
+      $committee = $sessionObj->getCommittee();
+      $form_state->set('county',$committee);
       $adminRole = $this->drupalUser->isNlpAdminUser();
       $form_state->set('admin',$adminRole);
     }
 
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     $page = $form_state->get('page');
 
     switch ($page) {
 
       case 'addUser':
-        if(empty($county)) {
+        if(empty($committee)) {
           $messenger = Drupal::messenger();
           $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
           break;
         }
         $form['county-name'] = [
-          '#markup' => "<h1>".$county." County</h1>",
+          '#markup' => "<h1>".$committee." County</h1>",
         ];
         $form['needle'] = [
           '#type' => 'textfield',
@@ -204,7 +204,7 @@ want to participate as an NL.  This case is rare.</p>",
     $messenger = Drupal::messenger();
     $form_state->set('reenter', TRUE);
     $form_state->setRebuild();
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
 
     $triggering_element = $form_state->getTriggeringElement();
     $element_clicked = $triggering_element['#name'];
@@ -212,7 +212,7 @@ want to participate as an NL.  This case is rare.</p>",
 
       case 'add-submit':
         $needle = $form_state->getValue('needle');
-        $nlList = $this->nls->searchNls($needle,$county);
+        $nlList = $this->nls->searchNls($needle,$committee);
         if(empty($nlList)) {
           $messenger->addStatus(t('No NLs found.'));
           return;

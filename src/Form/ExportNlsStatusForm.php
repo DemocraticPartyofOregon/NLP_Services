@@ -66,39 +66,39 @@ class ExportNlsStatusForm extends FormBase
   {
     if (empty($form_state->get('reenter'))) {
       if ($this->drupalUserObj->isNlpAdminUser()) {
-        // An admin can export all counties or just one.
-        $countyOptions = ['all' => $this->t('All counties')];
-        foreach ($this->nlpConfigurationObj->getCommitteeNames() as $countyName) {
-          $countyOptions[$countyName] = $countyName;
+        // An admin can export all committees or just one.
+        $committeeOptions = ['all' => $this->t('All counties')];
+        foreach ($this->nlpConfigurationObj->getCommitteeNames() as $committeeName) {
+          $committeeOptions[$committeeName] = $committeeName;
         }
-        $county = $form_state->getValue('countySelect') ?? 'all';
+        $committee = $form_state->getValue('countySelect') ?? 'all';
         $form['countySelect'] = [
           '#type' => 'select',
-          '#options' => $countyOptions,
+          '#options' => $committeeOptions,
           '#default_value' => 'all',
           '#title' => $this->t('Select the county for export'),
           '#ajax' => [
-            'callback' => '::countySelectedCallback',
+            'callback' => '::committeeSelectedCallback',
             'wrapper' => 'hd-select-wrapper',
           ],
         ];
       } else {
-        $county = $this->nlpSessionObj->getCommittee();
-        if (empty($county)) {
+        $committee = $this->nlpSessionObj->getCommittee();
+        if (empty($committee)) {
           $this->messenger()->addError($this->t('The county is missing'));
           return [];
         }
       }
-      $form_state->set('county', $county);
+      $form_state->set('county', $committee);
 
-      // The HD select is only offered when a single county is selected.
+      // The HD select is only offered when a single committee is selected.
       $form['hdSelect'] = [
         '#type' => 'container',
         '#attributes' => ['id' => 'hd-select-wrapper'],
       ];
-      if ($county !== 'all') {
+      if ($committee !== 'all') {
         $hdNames = ['All' => 'All'];
-        foreach ($this->nlsObj->getHdList($county) as $hd) {
+        foreach ($this->nlsObj->getHdList($committee) as $hd) {
           $hdNames[$hd] = $hd;
         }
         $form['hdSelect']['districtSelect'] = [
@@ -113,14 +113,14 @@ class ExportNlsStatusForm extends FormBase
       ];
     } else {
       $tempFileName = $form_state->get('fileName');
-      $county = $form_state->get('county');
-      if ($county === 'all') {
+      $committee = $form_state->get('county');
+      if ($committee === 'all') {
         $page = '<h2>' . $this->t('Export of NLs status for all counties.') . '</h2>';
       } else {
         $hd = $form_state->get('hd');
         $hd = empty($hd) ? 'All' : $hd;
         $page = '<h2>' . $this->t('Export of NLs status for @county County, HD @hd', [
-            '@county' => Html::escape($county),
+            '@county' => Html::escape($committee),
             '@hd'     => $hd,
           ]) . '</h2>';
       }
@@ -141,12 +141,12 @@ class ExportNlsStatusForm extends FormBase
     $form_state->setRebuild();
     $form_state->set('reenter', TRUE);
 
-    $county = $this->drupalUserObj->isNlpAdminUser()
+    $committee = $this->drupalUserObj->isNlpAdminUser()
       ? ($form_state->getValue('countySelect') ?? 'all')
       : $form_state->get('county');
-    $form_state->set('county', $county);
-    // The 'All' HD option casts to 0, which exports every HD in the county.
-    $hd = ($county === 'all') ? 0 : (int) $form_state->getValue('districtSelect');
+    $form_state->set('county', $committee);
+    // The 'All' HD option casts to 0, which exports every HD in the committee.
+    $hd = ($committee === 'all') ? 0 : (int) $form_state->getValue('districtSelect');
     $form_state->set('hd', $hd);
 
     $tempFile = $this->fileFunctionsObj->createTempCsvFile('nls-status');
@@ -158,16 +158,16 @@ class ExportNlsStatusForm extends FormBase
     $tempFileName = $tempFile['uri'];
     $form_state->set('fileName', $tempFileName);
 
-    $this->nlpExportNlsStatusObj->createNlsStatusFile($tempFileName, $county, $hd);
+    $this->nlpExportNlsStatusObj->createNlsStatusFile($tempFileName, $committee, $hd);
   }
 
   /**
-   * countySelectedCallback
+   * committeeSelectedCallback
    *
-   * AJAX callback for the county select; refreshes the HD select.
+   * AJAX callback for the committee select; refreshes the HD select.
    */
   /** @noinspection PhpUnusedParameterInspection */
-  public function countySelectedCallback(array $form, FormStateInterface $form_state): array
+  public function committeeSelectedCallback(array $form, FormStateInterface $form_state): array
   {
     return $form['hdSelect'];
   }

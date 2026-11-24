@@ -9,11 +9,10 @@ use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\Core\TempStore\PrivateTempStore;
-use Drupal\Core\TempStore\PrivateTempStoreFactory;
 use Drupal\nlpservices\Form\UploadInstructionsForm;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpPaths;
+use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
 use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
@@ -31,8 +30,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   private NlpPaths $pathsMock;
   private FileSystemInterface $fileSystemMock;
   private MessengerInterface $messengerMock;
-  private PrivateTempStoreFactory $tempStoreFactoryMock;
-  private PrivateTempStore $tempStoreMock;
+  private NlpSessionData $sessionDataMock;
 
   protected function setUp(): void {
     parent::setUp();
@@ -41,17 +39,11 @@ class UploadInstructionsFormTest extends UnitTestCase {
     $this->pathsMock          = $this->createMock(NlpPaths::class);
     $this->fileSystemMock     = $this->createMock(FileSystemInterface::class);
     $this->messengerMock      = $this->createMock(MessengerInterface::class);
-
-    $this->tempStoreMock = $this->createMock(PrivateTempStore::class);
-    $this->tempStoreFactoryMock = $this->createMock(PrivateTempStoreFactory::class);
-    $this->tempStoreFactoryMock->method('get')
-      ->with('nlpservices.session_data')
-      ->willReturn($this->tempStoreMock);
+    $this->sessionDataMock    = $this->createMock(NlpSessionData::class);
 
     $container = new ContainerBuilder();
     $container->set('messenger', $this->messengerMock);
     $container->set('string_translation', $this->getStringTranslationStub());
-    $container->set('tempstore.private', $this->tempStoreFactoryMock);
     Drupal::setContainer($container);
 
     $_FILES = [];
@@ -72,16 +64,15 @@ class UploadInstructionsFormTest extends UnitTestCase {
       $this->instructionsMock,
       $this->pathsMock,
       $this->fileSystemMock,
+      $this->sessionDataMock,
     );
     $form->setStringTranslation($this->getStringTranslationStub());
     $form->setMessenger($this->messengerMock);
     return $form;
   }
 
-  private function stubCounty(string $county): void {
-    $this->tempStoreMock->method('get')
-      ->with('Committee')
-      ->willReturn($county);
+  private function stubCommittee(string $committee): void {
+    $this->sessionDataMock->method('getCommittee')->willReturn($committee);
   }
 
   // -------------------------------------------------------------------------
@@ -100,7 +91,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormNoCountyAddsWarning(): void {
-    $this->stubCounty('');
+    $this->stubCommittee('');
     $this->messengerMock->expects($this->once())->method('addWarning');
 
     $formState = new FormState();
@@ -108,7 +99,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormNoCountyReturnsEmptyArray(): void {
-    $this->stubCounty('');
+    $this->stubCommittee('');
 
     $formState = new FormState();
     $form = $this->buildFormInstance()->buildForm([], $formState);
@@ -121,7 +112,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormStoresCountyInFormState(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();
@@ -131,7 +122,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormCallsGetInstructionsWithCounty(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->expects($this->once())
       ->method('getInstructions')
       ->with('TestCounty')
@@ -143,7 +134,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
 
   public function testBuildFormStoresCurrentInstructionsInFormState(): void {
     $current = ['canvass' => ['originalFileName' => 'canvass.pdf'], 'postcard' => []];
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn($current);
 
     $formState = new FormState();
@@ -153,7 +144,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormContainsInstructionFieldset(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();
@@ -164,7 +155,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormContainsCanvassFileInput(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();
@@ -175,7 +166,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormContainsCardFileInput(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();
@@ -186,7 +177,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormContainsSubmitButton(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();
@@ -197,7 +188,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormAttachesLibraries(): void {
-    $this->stubCounty('TestCounty');
+    $this->stubCommittee('TestCounty');
     $this->instructionsMock->method('getInstructions')->willReturn([]);
 
     $formState = new FormState();

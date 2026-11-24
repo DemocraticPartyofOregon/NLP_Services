@@ -174,7 +174,7 @@ class ExportVoterContactReportsForm extends FormBase
   /**
    * exportVoterContactReports
    *
-   * Export the NL reports for a county and put them in a tab-delimited file
+   * Export the NL reports for a committee and put them in a tab-delimited file
    * suitable for download.
    *
    * The file can be used for an archive of an election

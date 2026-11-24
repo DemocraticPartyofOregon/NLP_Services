@@ -83,37 +83,37 @@ class DeleteTurfForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
 
     if (empty($form_state->get('reenter'))) {
-      $county = $this->nlpSessionDataObj->getCommittee();
-      if(empty($county)) {
+      $committee = $this->nlpSessionDataObj->getCommittee();
+      if(empty($committee)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
-      $form_state->set('county',$county);
-      $hdOptions = $this->turfs->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfs->getCommitteeTurfCount($county);
+      $form_state->set('county',$committee);
+      $hdOptions = $this->turfs->getTurfHD($committee); // HDs with turfs.
+      $turfCount = $this->turfs->getCommitteeTurfCount($committee);
       if($turfCount<$this->turfs::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
       $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
 
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
 
     $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
 
-    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfs, $this->nlpSessionDataObj, $county, $currentHd);
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfs, $this->nlpSessionDataObj, $committee, $currentHd);
 
     // Include turfs whose NL was removed from the active NLs, so they are
     // stranded with no way to delete them.
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $turfArray = $this->turfs->getTurfs($county,'All', TRUE);
+      $turfArray = $this->turfs->getTurfs($committee,'All', TRUE);
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
-      $turfArray = $this->getHdTurfs($this->turfs, $this->nlpSessionDataObj, $county, $currentHd, TRUE);
+      $turfArray = $this->getHdTurfs($this->turfs, $this->nlpSessionDataObj, $committee, $currentHd, TRUE);
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
 
@@ -234,7 +234,7 @@ class DeleteTurfForm extends FormBase
         return;
 
       default:
-        $county = $form_state->get('county');
+        $committee = $form_state->get('county');
         // From the list of turfs in the list, find the ones to be deleted.
         $turfArray = $form_state->get('turfArray');
         $selections = $form_state->get('selections');
@@ -272,7 +272,7 @@ class DeleteTurfForm extends FormBase
             $voterCount = (int) ($turfChoice['voterCount'] ?? 0);
 
             $turf['mcid'] = $mcid;
-            $turf['county'] = $county;
+            $turf['county'] = $committee;
             $turf['turfIndex'] = $turfIndex;
 
 

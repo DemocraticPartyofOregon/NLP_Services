@@ -17,19 +17,19 @@ trait TurfPrecinctFilterTrait
    *
    * Builds the precinct select options for the selected HD and saves them in
    * the session.  When the HD is 0 (all HDs), the options are every precinct in the
-   * county with turfs; otherwise only the precincts in that HD.  The first
+   * committee with turfs; otherwise only the precincts in that HD.  The first
    * option is always 'All'.
    *
    * @param NlpTurfs $turfsObj
    * @param NlpSessionData $sessionDataObj
-   * @param string $county
+   * @param string $committee
    * @param int $currentHd - The selected HD, or 0 for all HDs.
    * @return array - [$pctOptions, $currentPctIndex]
    */
   protected function buildPrecinctOptions(NlpTurfs $turfsObj, NlpSessionData $sessionDataObj,
-                                          string $county, int $currentHd): array
+                                          string $committee, int $currentHd): array
   {
-    $pctNames = array_filter($turfsObj->getTurfPrecinctNames($county, $currentHd), 'strlen');
+    $pctNames = array_filter($turfsObj->getTurfPrecinctNames($committee, $currentHd), 'strlen');
     $pctOptions = array_merge(['All'], array_values($pctNames));
     $sessionDataObj->setNewDistricts($sessionDataObj->getHdOptions(), $pctOptions);
     $currentPctIndex = $sessionDataObj->getSavedPrecinctIndex();
@@ -65,22 +65,22 @@ trait TurfPrecinctFilterTrait
    *
    * Returns the turfs in the selected HD.  HD 0 means all HDs, but those turfs
    * are loaded only when 'All' is one of the HD options, which it is only when
-   * the county has fewer than TURF_ALL_MAX turfs.
+   * the committee has fewer than TURF_ALL_MAX turfs.
    *
    * @param NlpTurfs $turfsObj
    * @param NlpSessionData $sessionDataObj
-   * @param string $county
+   * @param string $committee
    * @param int $currentHd - The selected HD, or 0 for all HDs.
    * @param bool $includeRemovedNls - Include turfs whose NL is not in the NLs table.
    * @return array - Turf records keyed by turfIndex.
    */
-  protected function getHdTurfs(NlpTurfs $turfsObj, NlpSessionData $sessionDataObj, string $county,
+  protected function getHdTurfs(NlpTurfs $turfsObj, NlpSessionData $sessionDataObj, string $committee,
                                 int $currentHd, bool $includeRemovedNls = FALSE): array
   {
     if (empty($currentHd) && !in_array('All', $sessionDataObj->getHdOptions(), TRUE)) {
       return [];
     }
-    return $turfsObj->getTurfs($county, $currentHd, $includeRemovedNls);
+    return $turfsObj->getTurfs($committee, $currentHd, $includeRemovedNls);
   }
 
 }

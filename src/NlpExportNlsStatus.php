@@ -87,7 +87,7 @@ class NlpExportNlsStatus
     fwrite($fh, $hdrCsv);
 
     if ($county === 'all') {
-      $counties = $this->voters->getParticipatingCounties();
+      $counties = $this->voters->getParticipatingCommittees();
     } else {
       $counties = [$county];
     }

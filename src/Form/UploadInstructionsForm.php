@@ -9,6 +9,7 @@ use Drupal\Core\File\FileSystemInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpInstructions;
 use Drupal\nlpservices\NlpPaths;
+use Drupal\nlpservices\NlpSessionData;
 
 /**
  * @noinspection PhpUnused
@@ -19,12 +20,14 @@ class UploadInstructionsForm extends FormBase
   protected NlpInstructions $instructions;
   protected NlpPaths $paths;
   protected FileSystemInterface $fileSystem;
-  
-  public function __construct($instructions,$paths,$fileSystem)
+  protected NlpSessionData $sessionData;
+
+  public function __construct($instructions,$paths,$fileSystem,$sessionData)
   {
     $this->instructions = $instructions;
     $this->paths = $paths;
     $this->fileSystem = $fileSystem;
+    $this->sessionData = $sessionData;
   }
   
   /**
@@ -36,6 +39,7 @@ class UploadInstructionsForm extends FormBase
       $container->get('nlpservices.instructions'),
       $container->get('nlpservices.paths'),
       $container->get('file_system'),
+      $container->get('nlpservices.session_data'),
     );
   }
   
@@ -52,18 +56,16 @@ class UploadInstructionsForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    // Get the instruction file names for this county, canvass and postcard.
-    $factory = Drupal::service('tempstore.private');
-    $store = $factory->get('nlpservices.session_data');
-    $county = $store->get('Committee');
-    if(empty($county)) {
+    // Get the instruction file names for this committee, canvass and postcard.
+    $committee = $this->sessionData->getCommittee();
+    if(empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
     }
-    $form_state->set('county',$county);
+    $form_state->set('county',$committee);
     
-    $current = $this->instructions->getInstructions($county);
+    $current = $this->instructions->getInstructions($committee);
     $form_state->set('current',$current);
     // Create the form to display of all the NLs
     
@@ -162,19 +164,19 @@ the postcard instructions with their turf.</p>'
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     $current = $form_state->get('current');
   
     $canvass = $_FILES['files']['name']['canvass'];
     if (!empty($canvass)) {
       $canvassTemp = $_FILES['files']['tmp_name']['canvass'];
-      $this->updateInstructionsFile($county,'canvass',$canvass,$canvassTemp,$current);
+      $this->updateInstructionsFile($committee,'canvass',$canvass,$canvassTemp,$current);
     }
   
     $postcard = $_FILES['files']['name']['card'];
     if (!empty($postcard)) {
       $postcardTemp = $_FILES['files']['tmp_name']['card'];
-      $this->updateInstructionsFile($county,'postcard',$postcard,$postcardTemp,$current);
+      $this->updateInstructionsFile($committee,'postcard',$postcard,$postcardTemp,$current);
     }
     
   }
@@ -186,17 +188,17 @@ the postcard instructions with their turf.</p>'
    * Move the file with the instructions in PDF format and remember the name.
    * Delete the previous file if it exists.
    *
-   * @param $county
+   * @param $committee
    * @param $type - either NE_CANVASS or NE_POSTCARD.
    * @param $newFilename
    * @param $temp
    * @param $current
    */
-  function updateInstructionsFile($county,$type,$newFilename,$temp,$current): void
+  function updateInstructionsFile($committee,$type,$newFilename,$temp,$current): void
   {
     $filename = $type.'_'.'instructions'.'_'.time().'.pdf';
-    // Move the temp to the permanent location with a generic county name.
-    $path = $this->paths->getPath('INST',$county);
+    // Move the temp to the committee's permanent location with a generic file name.
+    $path = $this->paths->getPath('INST',$committee);
     $fullName = $path.$filename;
     if(!empty($current[$type]['fileName'])) {
       $currentName = $path.$current[$type]['fileName'];
@@ -205,7 +207,7 @@ the postcard instructions with their turf.</p>'
     $this->fileSystem->moveUploadedFile($temp, $fullName);
     
     $req = array(
-      'county' => $county,
+      'county' => $committee,
       'type' => $type,
       'fileName' => $filename,
       'originalFileName' => $newFilename,

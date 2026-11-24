@@ -50,12 +50,12 @@ class AwakeController extends ControllerBase {
     $resyncTurfObj = Drupal::getContainer()->get('nlpservices.resync_turf');
     
     $turfsObj = Drupal::getContainer()->get('nlpservices.turfs');
-    $countiesWithTurfs = $turfsObj->getCommitteesWithTurfs();
-    nlp_debug_msg('$countiesWithTurfs',$countiesWithTurfs);
+    $committeesWithTurfs = $turfsObj->getCommitteesWithTurfs();
+    nlp_debug_msg('$committeesWithTurfs',$committeesWithTurfs);
     
-    $county = "Jefferson";
+    $committee = "Jefferson";
     
-    $chunks = $resyncTurfObj->turfsToResyncCheck($county);
+    $chunks = $resyncTurfObj->turfsToResyncCheck($committee);
     nlp_debug_msg('$chunks',$chunks);
     
     $output = $this->salutation->getSalutation();

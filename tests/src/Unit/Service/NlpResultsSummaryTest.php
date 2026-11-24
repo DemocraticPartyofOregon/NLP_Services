@@ -188,7 +188,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testGetCountyOptionsLimitsNonAdminToSessionCounty(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->sessionMock->method('getCommittee')->willReturn('Lane');
-      $this->votersMock->expects($this->never())->method('getParticipatingCounties');
+      $this->votersMock->expects($this->never())->method('getParticipatingCommittees');
 
       $this->assertSame(['Lane'], $this->buildService()->getCountyOptions());
     }
@@ -235,7 +235,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testStateSummaryIsSumOfCountiesOnly(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-      $this->votersMock->method('getParticipatingCounties')->willReturn(['Benton', 'Lane']);
+      $this->votersMock->method('getParticipatingCommittees')->willReturn(['Benton', 'Lane']);
       $this->crosstabsMock->method('getCountsByCounty')->willReturn([
         'ALL' => ['regVoters' => 50, 'regVoted' => 25],
       ]);
@@ -269,7 +269,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testAllCountiesAddsStateSummaryAndDisplaysIt(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-      $this->votersMock->method('getParticipatingCounties')->willReturn(['Benton', 'Lane']);
+      $this->votersMock->method('getParticipatingCommittees')->willReturn(['Benton', 'Lane']);
       $this->crosstabsMock->method('getCountsByCounty')->willReturn([]);
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
 

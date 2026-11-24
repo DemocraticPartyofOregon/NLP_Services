@@ -56,14 +56,14 @@ class ImpersonateNlForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $county = $this->nlpSessionDataObj->getCommittee();
-    if (empty($county)) {
+    $committee = $this->nlpSessionDataObj->getCommittee();
+    if (empty($committee)) {
       $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab
         to select a county.'));
       return [];
     }
 
-    $nls = $this->countyNls($county);
+    $nls = $this->committeeNls($committee);
     $hdOptions = array_merge(['All'], $this->hdOptions($nls));
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
     if (!isset($hdOptions[$currentHdIndex])) {
@@ -94,7 +94,7 @@ class ImpersonateNlForm extends FormBase
     ];
     $form['options_display'] = $this->searchBarObj->searchBar($hdOptions, $currentHdIndex,
       $pctOptions, $currentPctIndex);
-    $form['nl-table'] = $this->nlTable($nls, $this->nlsWithTurfs($county));
+    $form['nl-table'] = $this->nlTable($nls, $this->nlsWithTurfs($committee));
 
     $form['#attached']['library'][] = 'nlpservices/nlp-table';
     $form['#attached']['library'][] = 'nlpservices/search-boxes';
@@ -127,22 +127,22 @@ class ImpersonateNlForm extends FormBase
   }
 
   /**
-   * countyNls
+   * committeeNls
    *
    * Returns the county's accounts that can be impersonated: NLs who aren't
    * also coordinators or admins, sorted by last then first name.  Drupal
    * accounts don't hold a precinct, so each NL's is taken from their NL record
    * ('' if they have none).
    *
-   * @param string $county
+   * @param string $committee
    * @return array - NLP user arrays keyed by uid, with a 'precinct' field.
    */
-  private function countyNls(string $county): array
+  private function committeeNls(string $committee): array
   {
     $impersonator = $this->drupalUser->getCurrentUser();
-    $nls = array_filter($this->drupalUser->getUsers($county),
+    $nls = array_filter($this->drupalUser->getUsers($committee),
       fn(array $user) => $this->impersonationObj->impersonationRefusal($impersonator, $user) === '');
-    $precincts = $this->nlsObj->getPrecinctsByMcid($county);
+    $precincts = $this->nlsObj->getPrecinctsByMcid($committee);
     foreach ($nls as $uid => $nl) {
       $nls[$uid]['precinct'] = $precincts[$nl['mcid'] ?? ''] ?? '';
     }
@@ -190,12 +190,12 @@ class ImpersonateNlForm extends FormBase
   /**
    * nlsWithTurfs
    *
-   * @param string $county
+   * @param string $committee
    * @return array - the MCIDs of the county's NLs who have a turf, as keys.
    */
-  private function nlsWithTurfs(string $county): array
+  private function nlsWithTurfs(string $committee): array
   {
-    return array_flip(array_map('strval', $this->turfsObj->getNlsWithTurfs($county)));
+    return array_flip(array_map('strval', $this->turfsObj->getNlsWithTurfs($committee)));
   }
 
   /**

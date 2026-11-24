@@ -64,15 +64,15 @@ class DeleteDrupalAccountsForm extends FormBase
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
 
-      $county = $this->sessionDataObj->getCommittee();
-      $form_state->set('county',$county);
+      $committee = $this->sessionDataObj->getCommittee();
+      $form_state->set('county',$committee);
 
       $form_state->set('page', 'displayUsers');
       if(!$this->drupalUser->isNlpAdminUser()) {
-        $form_state->set('county_selected',$county);
+        $form_state->set('county_selected',$committee);
       }
 
-      $users = $this->drupalUser->getUsers($county);
+      $users = $this->drupalUser->getUsers($committee);
       $userCount = count($users);
 
       $hdOptions = $this->hdsWithUsers($users);
@@ -84,8 +84,8 @@ class DeleteDrupalAccountsForm extends FormBase
     }
 
     $page = $form_state->get('page');
-    $county = $form_state->get('county');
-    if(empty($county)) {
+    $committee = $form_state->get('county');
+    if(empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
@@ -95,13 +95,13 @@ class DeleteDrupalAccountsForm extends FormBase
       // A search needle was entered, display all possible matches.
       $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
-        $users = $this->drupalUser->getUsers($county);
+        $users = $this->drupalUser->getUsers($committee);
         $form_state->set('search-needle', NULL);
         $users = $this->searchBarObj->searchInfoArray($needle,$users);
       } else {
         $this->sessionDataObj->getSavedHdIndex();  // Apply an hd_index query parameter before reading the HD.
         $currentHd = $this->sessionDataObj->getSavedHd();
-        $users = $this->drupalUser->getUsers($county);
+        $users = $this->drupalUser->getUsers($committee);
         if(!empty($currentHd)) {
           $users = $this->justUsersInHd($users, $currentHd);
         }

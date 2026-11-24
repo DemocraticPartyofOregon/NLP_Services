@@ -16,8 +16,8 @@ use Drupal\nlpservices\DrupalUser;
  */
 class TurfDeliveryMessageForm extends FormBase
 {
-  // Select the key for the statewide default message. It is not a county name,
-  // so it can't collide with one of the county options.
+  // Select the key for the statewide default message. It is not a committee name,
+  // so it can't collide with one of the committee options.
   const string STATE_OPTION = '__state__';
 
   protected NlpConfiguration $nlpConfiguration;
@@ -63,12 +63,12 @@ class TurfDeliveryMessageForm extends FormBase
         $form_state->set('page', 'county_select');
         $form_state->set('admin', TRUE);
       } else {
-        $county = $this->sessionData->getCommittee();
+        $committee = $this->sessionData->getCommittee();
         $form_state->set('page', 'edit_county');
         $form_state->set('admin', FALSE);
-        $form_state->set('county_selected', $county);
-        $countyMsg = $this->turfMsg->getTurfMsg($county);
-        $form_state->set('countyMsg', $countyMsg);
+        $form_state->set('county_selected', $committee);
+        $committeeMsg = $this->turfMsg->getTurfMsg($committee);
+        $form_state->set('countyMsg', $committeeMsg);
       }
     }
 
@@ -79,7 +79,7 @@ class TurfDeliveryMessageForm extends FormBase
         $form['county_select'] = array(
           '#type' => 'select',
           '#title' => t('State/County'),
-          '#options' => $this->countyOptions(),
+          '#options' => $this->committeeOptions(),
           '#description' => t('Select either the state or a specify county.'),
         );
         $form['county_select_submit'] = array(
@@ -116,20 +116,20 @@ class TurfDeliveryMessageForm extends FormBase
         break;
 
       case 'edit_county':
-        $county = $form_state->get('county_selected');
+        $committee = $form_state->get('county_selected');
         $form['edit-box'] = [
           '#type' => 'fieldset',
           '#prefix' => " \n" . '<div class="edit-text">' . " \n",
           '#suffix' => " \n" . '</div>' . " \n",
         ];
         $form['edit-box']['county-name'] = [
-          '#markup' => "<h1>Edit the turf-delivery message for ".$county." County.</h1>",
+          '#markup' => "<h1>Edit the turf-delivery message for ".$committee." County.</h1>",
         ];
         $form['edit-box']['help'] = $this->editHelp();
-        $countySelected = $form_state->get('county_selected');
+        $committeeSelected = $form_state->get('county_selected');
         $form['edit-box']['body'] = [
           '#type' => 'text_format',
-          '#title' => $countySelected.' County Email Template',
+          '#title' => $committeeSelected.' County Email Template',
           '#default_value' => $form_state->get('countyMsg'),
           '#format' => 'full_html',
           '#rows' => 25,
@@ -138,7 +138,7 @@ class TurfDeliveryMessageForm extends FormBase
         $form['edit-box']['county_edit'] = [
           '#type' => 'submit',
           '#name' => 'county-edit',
-          '#value' => t('Create or update the '.$countySelected.' County email message. >>'),
+          '#value' => t('Create or update the '.$committeeSelected.' County email message. >>'),
         ];
         break;
     }
@@ -160,17 +160,17 @@ class TurfDeliveryMessageForm extends FormBase
     switch ($page) {
 
       case 'county_select':
-        $countySelected = $form_state->getValue('county_select');
+        $committeeSelected = $form_state->getValue('county_select');
 
-        if($countySelected == self::STATE_OPTION) {
+        if($committeeSelected == self::STATE_OPTION) {
           $stateMsg = $this->turfMsg->getTurfMsg();
 
           $form_state->set('stateMsg', $stateMsg);
           $form_state->set('page', 'edit_state');
         } else {
-          $countyMsg = $this->turfMsg->getTurfMsg($countySelected);
-          $form_state->set('county_selected', $countySelected);
-          $form_state->set('countyMsg', $countyMsg);
+          $committeeMsg = $this->turfMsg->getTurfMsg($committeeSelected);
+          $form_state->set('county_selected', $committeeSelected);
+          $form_state->set('countyMsg', $committeeMsg);
           $form_state->set('page', 'edit_county');
         }
         break;
@@ -187,14 +187,14 @@ class TurfDeliveryMessageForm extends FormBase
         break;
 
       case 'edit_county':
-        $countySelected = $form_state->get('county_selected');
-        $countyMsg = $form_state->getValue('body')['value'];
-        if(!str_contains($countyMsg,'@coordinatorContactInfo')) {
+        $committeeSelected = $form_state->get('county_selected');
+        $committeeMsg = $form_state->getValue('body')['value'];
+        if(!str_contains($committeeMsg,'@coordinatorContactInfo')) {
           $messenger->addError('The @coordinatorContactInfo tag is missing.  This tag must be somewhere
           in the body of the email message. ');
           return;
         }
-        $this->turfMsg->putTurfMsg($countySelected,$countyMsg);
+        $this->turfMsg->putTurfMsg($committeeSelected,$committeeMsg);
         if($form_state->get('admin')) {
           $form_state->set('page', 'county_select');
         } else {
@@ -207,18 +207,18 @@ class TurfDeliveryMessageForm extends FormBase
   /**
    * countyOptions
    *
-   * The statewide default message is followed by each county, keyed by name.
-   * The configured county names no longer include a 'State' entry (the State
+   * The statewide default message is followed by each committee, keyed by name.
+   * The configured committee names no longer include a 'State' entry (the State
    * Committee key is stored separately), so the state option is added here.
    *
    * @return array
    */
-  protected function countyOptions(): array
+  protected function committeeOptions(): array
   {
     $stateName = $this->nlpConfiguration->getStateName() ?: 'State';
     $options = [self::STATE_OPTION => $stateName . ' (default for all counties)'];
-    foreach ($this->nlpConfiguration->getCommitteeNames() as $countyName) {
-      $options[$countyName] = $countyName;
+    foreach ($this->nlpConfiguration->getCommitteeNames() as $committeeName) {
+      $options[$committeeName] = $committeeName;
     }
     return $options;
   }

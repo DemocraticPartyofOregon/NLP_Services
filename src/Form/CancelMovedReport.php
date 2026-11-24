@@ -24,17 +24,15 @@ class CancelMovedReport extends FormBase
   protected NlpVoters $votersObj;
   protected NlpReports $reportsObj;
   protected NlpSessionData $sessionObj;
-  protected PrivateTempStoreFactory $privateTempstoreObj;
   protected NlpSearchBar $searchBarObj;
   protected NlpVoterListDisplay $voterListDisplayObj;
   
-  public function __construct($votersObj, $reportsObj, $sessionObj, $privateTempstoreObj,
+  public function __construct($votersObj, $reportsObj, $sessionObj,
                               $searchBarObj, $voterListDisplayObj )
   {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->sessionObj = $sessionObj;
-    $this->privateTempstoreObj = $privateTempstoreObj;
     $this->searchBarObj = $searchBarObj;
     $this->voterListDisplayObj = $voterListDisplayObj;
   }
@@ -48,7 +46,6 @@ class CancelMovedReport extends FormBase
       $container->get('nlpservices.voters'),
       $container->get('nlpservices.reports'),
       $container->get('nlpservices.session_data'),
-      $container->get('tempstore.private'),
       $container->get('nlpservices.search_bar'),
       $container->get('nlpservices.voter_list_display'),
     );
@@ -72,14 +69,11 @@ class CancelMovedReport extends FormBase
       $form_state->set('reenter',TRUE);
       $form_state->set('options',[]);
       
-      $factory = Drupal::service('tempstore.private');
-      $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('Committee');
-      $form_state->set('county', $county);
+      $form_state->set('county', $this->sessionObj->getCommittee());
     }
     
-    $county = $form_state->get('county');
-    if(empty($county)) {
+    $committee = $form_state->get('county');
+    if(empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
@@ -88,7 +82,7 @@ class CancelMovedReport extends FormBase
     $voterArray = [];
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $voterArray = $this->votersObj->searchVoters($county,$needle);
+      $voterArray = $this->votersObj->searchVoters($committee,$needle);
       $form_state->set('search-needle', NULL);
     }
     

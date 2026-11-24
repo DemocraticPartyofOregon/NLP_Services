@@ -75,37 +75,37 @@ class DisplayTurfsForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
 
     if (empty($form_state->get('reenter'))) {
-      $county = $this->sessionDataObj->getCommittee();
-      if(empty($county)) {
+      $committee = $this->sessionDataObj->getCommittee();
+      if(empty($committee)) {
         $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
-      $form_state->set('county',$county);
-      $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfsObj->getCommitteeTurfCount($county);
+      $form_state->set('county',$committee);
+      $hdOptions = $this->turfsObj->getTurfHD($committee); // HDs with turfs.
+      $turfCount = $this->turfsObj->getCommitteeTurfCount($committee);
       if($turfCount<$this->turfsObj::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
 
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
-    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->sessionDataObj, $county, $currentHd);
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->sessionDataObj, $committee, $currentHd);
 
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $turfArray = $this->turfsObj->getTurfs($county,'All');
+      $turfArray = $this->turfsObj->getTurfs($committee,'All');
       $form_state->set('search-needle', '');
       $turfArray = $this->searchBarObj->searchInfoArray($needle,$turfArray);
     } else {
-      $turfArray = $this->getHdTurfs($this->turfsObj, $this->sessionDataObj, $county, $currentHd);
+      $turfArray = $this->getHdTurfs($this->turfsObj, $this->sessionDataObj, $committee, $currentHd);
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->sessionDataObj);
     }
 
     // Update the latest minivan information.
-    $this->apiMapRegionObj->updateMinivanInfo($county, $turfArray);
+    $this->apiMapRegionObj->updateMinivanInfo($committee, $turfArray);
 
     // Create the table data for building the list of turfs.
     $turfTableArray = $this->turfDisplayObj->buildTurfTableArray($turfArray,'display');

@@ -168,13 +168,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testCreateNlsStatusFileUsesGetParticipatingCountiesForAllCounties(): void {
-      $this->votersMock->expects($this->once())->method('getParticipatingCounties')->willReturn([]);
+      $this->votersMock->expects($this->once())->method('getParticipatingCommittees')->willReturn([]);
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'all');
     }
 
     public function testCreateNlsStatusFileDoesNotCallGetParticipatingCountiesForSpecificCounty(): void {
-      $this->votersMock->expects($this->never())->method('getParticipatingCounties');
+      $this->votersMock->expects($this->never())->method('getParticipatingCommittees');
       $this->nlsMock->method('getCountyNls')->willReturn([]);
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');

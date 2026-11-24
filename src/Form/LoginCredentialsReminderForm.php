@@ -76,16 +76,16 @@ class LoginCredentialsReminderForm extends FormBase
       $form_state->set('page', 'displayUsers');
       $form_state->set('hd', 0);
 
-      $county = $this->nlpSessionDataObj->getCommittee();
-      $form_state->set('county',$county);
-      if(empty($county)) {
+      $committee = $this->nlpSessionDataObj->getCommittee();
+      $form_state->set('county',$committee);
+      if(empty($committee)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab
         to select a county.'));
         return [];
       }
 
-      $users = $this->drupalUser->getUsers($county);
+      $users = $this->drupalUser->getUsers($committee);
       $userCount = count($users);
 
       $hdOptions = $this->hdsWithUsers($users,'All');
@@ -101,10 +101,10 @@ class LoginCredentialsReminderForm extends FormBase
     $currentHdIndex = $form_state->get('currentHdIndex');
     $hdOptions = $form_state->get('hdOptions');
     $currentHd = $hdOptions[$currentHdIndex];
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
 
     $page = $form_state->get('page');
-    $users = $this->addPrecincts($this->drupalUser->getUsers($county), $county);
+    $users = $this->addPrecincts($this->drupalUser->getUsers($committee), $committee);
 
     // Precinct choices are the precincts of the users in the selected HD, taken
     // before any name search so an option's position doesn't move.
@@ -287,12 +287,12 @@ class LoginCredentialsReminderForm extends FormBase
    * A user with no NL record gets an empty precinct.
    *
    * @param array $users - Array of Drupal users keyed by uid.
-   * @param string $county
+   * @param string $committee
    * @return array - The users with a 'precinct' field added.
    */
-  private function addPrecincts(array $users, string $county): array
+  private function addPrecincts(array $users, string $committee): array
   {
-    $precincts = $this->nlsObj->getPrecinctsByMcid($county);
+    $precincts = $this->nlsObj->getPrecinctsByMcid($committee);
     foreach ($users as $uid => $user) {
       $users[$uid]['precinct'] = $precincts[$user['mcid'] ?? ''] ?? '';
     }

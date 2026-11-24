@@ -80,25 +80,25 @@ class CoordinatorsForm extends FormBase
     if(empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
       $form_state->set('scope','unknown');
-      $county = $this->sessionDataObj->getCommittee();
-      if(empty($county)) {
+      $committee = $this->sessionDataObj->getCommittee();
+      if(empty($committee)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
-      $form_state->set('county',$county);
+      $form_state->set('county',$committee);
       
-      $allNlRecords = $this->nlsObj->getNls($county, 'All');
+      $allNlRecords = $this->nlsObj->getNls($committee, 'All');
       $nlCount = count($allNlRecords);
       
-      $hdOptions = $this->nlsObj->getHdList($county);
+      $hdOptions = $this->nlsObj->getHdList($committee);
       if($nlCount<$this->nlsObj::NLS_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
     
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     
     $sortRequest  = [];
     $sort = (!empty($_GET['sort']))?$_GET['sort']:'';
@@ -125,8 +125,8 @@ coordinator and not to the NLP Site admin.</p>"),
       '#suffix' => '</div>',
     ];
     
-    // Get all the coordinators assigned for this county.
-    $assignedCoordinators = $this->coordinatorsObj->getCoordinators($county);
+    // Get all the coordinators assigned for this committee.
+    $assignedCoordinators = $this->coordinatorsObj->getCoordinators($committee);
     $roleLabels = $this->drupalUserObj->getRoleLabels();
     foreach ($assignedCoordinators as $cIndex=>$assignedCoordinator) {
       $mcid = $assignedCoordinator['mcid'];
@@ -140,7 +140,7 @@ coordinator and not to the NLP Site admin.</p>"),
     }
     
     $form_state->set('assignedCoordinators',$assignedCoordinators);
-    // Get the Drupal users with the coordinator role for this county.
+    // Get the Drupal users with the coordinator role for this committee.
     $form['manageCoordinators'] = [
       '#type' => 'fieldset',
       '#prefix' => '<div id="coordinator-div">',
@@ -149,10 +149,10 @@ coordinator and not to the NLP Site admin.</p>"),
     
     $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
-    $countyNLs = $this->nlsObj->getCountyNls($county,$currentHd);
+    $committeeNls = $this->nlsObj->getCountyNls($committee,$currentHd);
     
-    $availableNLs = $countyNLs;
-    $unassignedCoordinators = $countyNLs;
+    $availableNLs = $committeeNls;
+    $unassignedCoordinators = $committeeNls;
     $form_state->set('unassignedCoordinators',$unassignedCoordinators);
     
     /* - - - assign a coordinator  - - - */
@@ -160,13 +160,13 @@ coordinator and not to the NLP Site admin.</p>"),
     // Search the list of available NLs for a match with the needle.
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $allCountyNls = $this->nlsObj->getCountyNls($county);
-      $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCountyNls);
+      $allCommitteeNls = $this->nlsObj->getCountyNls($committee);
+      $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCommitteeNls);
     }
 
     // The NL records don't have the Drupal roles, get them from the user accounts.
     $userRoles = [];
-    foreach ($this->drupalUserObj->getUsers($county) as $user) {
+    foreach ($this->drupalUserObj->getUsers($committee) as $user) {
       if(!empty($user['mcid'])) {
         $userRoles[$user['mcid']] = $this->roleLabels($user['roles'],$roleLabels);
       }
@@ -196,7 +196,7 @@ coordinator and not to the NLP Site admin.</p>"),
     $triggeringElement = $form_state->getTriggeringElement();
     $elementClicked = $triggeringElement['#name'];
     //nlp_debug_msg('elementClicked',$elementClicked);
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     switch ($elementClicked) {
       
       case 'hd-select-add':
@@ -216,11 +216,11 @@ coordinator and not to the NLP Site admin.</p>"),
         
         $form_state->set('addCoordinators',$selections);
         
-        $allCountyCoordinators = $this->coordinatorsObj->getAllCoordinators($county);
-        $countyCoordinators = (empty($allCountyCoordinators[$county]))?[]:$allCountyCoordinators[$county];
+        $allCommitteeCoordinators = $this->coordinatorsObj->getAllCoordinators($committee);
+        $committeeCoordinators = (empty($allCommitteeCoordinators[$committee]))?[]:$allCommitteeCoordinators[$committee];
         $scope = $form_state->get('scope');
         $assignmentRole = [
-          'county' => $county,
+          'county' => $committee,
           'scope' => $scope,
           'hd' => NULL,
           'precincts' => [],
@@ -239,14 +239,14 @@ coordinator and not to the NLP Site admin.</p>"),
               $form_state->setErrorByName('hd-assigned',t('You must select an HD to be managed.'));
               break;
             }
-            $hdList = $this->nlsObj->getHdList($county);
+            $hdList = $this->nlsObj->getHdList($committee);
             $hdOptions = array_combine($hdList, $hdList);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
             $precinctList = $form_state->getValue('pct-list');
             $precincts = explode(',',$precinctList);
             foreach ($precincts as $precinct) {
-              if($this->coordinatorsObj->duplicateScope('precinct',$precinct,$countyCoordinators)) {
+              if($this->coordinatorsObj->duplicateScope('precinct',$precinct,$committeeCoordinators)) {
                 $form_state->setErrorByName('scope',t('A contact coordinator for precinct '.
                   $precinct.' is already assigned.'));
               }
@@ -258,18 +258,18 @@ coordinator and not to the NLP Site admin.</p>"),
           case 'hd':
             
             $hdSelect = $form_state->getValue('hd-assigned');
-            $hdList = $this->nlsObj->getHdList($county);
+            $hdList = $this->nlsObj->getHdList($committee);
             $hdOptions = array_combine($hdList, $hdList);
             array_unshift($hdOptions , 'Select an HD');
             $hd = $hdOptions[$hdSelect];
-            if($this->coordinatorsObj->duplicateScope('hd',$hd,$countyCoordinators)) {
+            if($this->coordinatorsObj->duplicateScope('hd',$hd,$committeeCoordinators)) {
               $form_state->setErrorByName('scope',t('A contact coordinator for this HD is already assigned.'));
             }
             $assignmentRole['hd'] = $hd;
             $assignmentRole['precinctList'] = NULL;
             break;
           case 'county':
-            if($this->coordinatorsObj->duplicateScope('county',$county,$countyCoordinators)) {
+            if($this->coordinatorsObj->duplicateScope('county',$committee,$committeeCoordinators)) {
               $form_state->setErrorByName('scope',t('A county-wide contact coordinator is already assigned..'));
             }
             $assignmentRole['hd'] = NULL;
@@ -544,8 +544,8 @@ coordinator to groups of NLs.</p>',
     $form['assignment']['coordinator_choice'] =
       $this->coordinatorsListDisplayObj->buildCoordinatorsTable('add',$tableArray);
     
-    $county = $this->sessionDataObj->getCommittee();
-    $hdList = $this->nlsObj->getHdList($county);
+    $committee = $this->sessionDataObj->getCommittee();
+    $hdList = $this->nlsObj->getHdList($committee);
     $hdOptions = array_combine($hdList, $hdList);
     $form['assignment']['scope_selection'] =
       $this->buildScope($scope, $this->scopeOptions,$hdOptions);

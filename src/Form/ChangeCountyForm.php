@@ -9,7 +9,7 @@ use Drupal\nlpservices\NlpSessionData;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
- * Lets an NLP admin change the county they are managing.  The change persists
+ * Lets an NLP admin change the committee they are managing.  The change persists
  * until they log out or change it again.
  *
  * @noinspection PhpUnused
@@ -47,21 +47,21 @@ class ChangeCountyForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $county = $this->sessionDataObj->getCommittee();
-    $countyNames = $this->nlpConfigurationObj->getCommitteeNames();
+    $committee = $this->sessionDataObj->getCommittee();
+    $committeeNames = $this->nlpConfigurationObj->getCommitteeNames();
 
     $form['current_county'] = [
-      '#markup' => '<h1>' . (empty($county)
+      '#markup' => '<h1>' . (empty($committee)
         ? $this->t('No county is selected.')
-        : $this->t('Currently managing @county County', ['@county' => $county])) . '</h1>',
+        : $this->t('Currently managing @county County', ['@county' => $committee])) . '</h1>',
     ];
 
     $form['county_select'] = [
       '#type' => 'select',
       '#title' => $this->t('Change County'),
-      '#options' => array_combine($countyNames, $countyNames),
+      '#options' => array_combine($committeeNames, $committeeNames),
       '#empty_option' => $this->t('Select County'),
-      '#default_value' => in_array($county, $countyNames, TRUE) ? $county : '',
+      '#default_value' => in_array($committee, $committeeNames, TRUE) ? $committee : '',
       '#required' => TRUE,
       '#attributes' => ['aria-describedby' => 'county-select-note'],
     ];
@@ -84,14 +84,14 @@ class ChangeCountyForm extends FormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
-    $county = $form_state->getValue('county_select');
+    $committee = $form_state->getValue('county_select');
 
-    $this->sessionDataObj->set('Committee', $county);
+    $this->sessionDataObj->set('Committee', $committee);
     $this->sessionDataObj->set('currentFolderId', 0);
     $this->sessionDataObj->set('currentHd', 0);
     $this->sessionDataObj->set('currentPct', '');
 
-    $this->messenger()->addStatus($this->t('You are now managing @county County.', ['@county' => $county]));
+    $this->messenger()->addStatus($this->t('You are now managing @county County.', ['@county' => $committee]));
     $form_state->setRedirect('nlpservices.manage_county_menu');
   }
 

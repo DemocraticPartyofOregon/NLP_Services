@@ -7,6 +7,7 @@ use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\nlpservices\NlpLegislativeFixes;
+use Drupal\nlpservices\NlpSessionData;
 
 /**
  * @noinspection PhpUnused
@@ -15,10 +16,12 @@ class LegislativeFixesForm extends FormBase
 {
   
   protected NlpLegislativeFixes $legFixes;
-  
-  public function __construct($legFixes)
+  protected NlpSessionData $sessionData;
+
+  public function __construct($legFixes, $sessionData)
   {
     $this->legFixes = $legFixes;
+    $this->sessionData = $sessionData;
   }
   
   /**
@@ -28,6 +31,7 @@ class LegislativeFixesForm extends FormBase
   {
     return new static(
       $container->get('nlpservices.legislative_fixes'),
+      $container->get('nlpservices.session_data'),
     );
   }
   
@@ -46,13 +50,10 @@ class LegislativeFixesForm extends FormBase
   {
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
-      $factory = Drupal::service('tempstore.private');
-      $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('Committee');
-      $form_state->set('county', $county);
+      $form_state->set('county', $this->sessionData->getCommittee());
     }
-    $county = $form_state->get('county');
-    if(empty($county)) {
+    $committee = $form_state->get('county');
+    if(empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
@@ -70,7 +71,7 @@ class LegislativeFixesForm extends FormBase
       are used when a list of Prospective NLs is uploaded and the substitution is made only if the uploaded values 
       for HD/pct are empty.   After setting the substitute values, upload the list of prospective NLs again.',
     );
-    $existingFixes = $this->legFixes->getLegFixes($county);
+    $existingFixes = $this->legFixes->getLegFixes($committee);
     // If fixes exist, display them in case one or more are to be deleted.
     if(!empty($existingFixes)) {
       $form_state->set('fixes',$existingFixes);

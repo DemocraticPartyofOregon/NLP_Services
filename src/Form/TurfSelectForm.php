@@ -56,8 +56,8 @@ class TurfSelectForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $messenger = Drupal::messenger();
-    $county = $this->sessionDataObj->getCommittee();
-    $form_state->set('county',$county);
+    $committee = $this->sessionDataObj->getCommittee();
+    $form_state->set('county',$committee);
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];
     if(empty($mcid)) {
@@ -65,7 +65,7 @@ class TurfSelectForm extends FormBase
       return $form;
     }
     // Check if this NL has one or more turfs.
-    $turfArray = $this->turfObj->turfExists($mcid,$county);
+    $turfArray = $this->turfObj->turfExists($mcid,$committee);
     $form_state->set('turfArray', $turfArray);
     if (empty($turfArray)) {
       $messenger->addError("You do not have a turf assigned.");

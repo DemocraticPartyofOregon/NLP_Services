@@ -48,16 +48,16 @@ class ExportTableController extends ControllerBase
     }
     $source = empty($_GET['source'])? '': $_GET['source'];
 
-    $county = '';
+    $committee = '';
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
-    // The activist code history has no county, so only an admin can export it.
+    // The activist code history has no committee, so only an admin can export it.
     if(!$admin && $tableName == 'nlp_ac_history') {
       return ['#markup' => 'Invalid table name.'];
     }
     if(!$admin) {
-      $county = $currentUser['county'];
-      $county = (empty($county)) ? '' : (string) $county;
+      $committee = $currentUser['county'];
+      $committee = (empty($committee)) ? '' : (string) $committee;
     }
     
     $tempDir = 'public://temp';
@@ -79,7 +79,7 @@ class ExportTableController extends ControllerBase
     }
     $columnNames = $this->databaseFunctionsObj->getColumnNames($tableName);
     
-    $results = $this->databaseFunctionsObj->exportTable($tableName,$columnNames,$tempFileName,$county,!$admin);
+    $results = $this->databaseFunctionsObj->exportTable($tableName,$columnNames,$tempFileName,$committee,!$admin);
     
     $page = '';
     if($results) {

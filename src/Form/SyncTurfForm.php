@@ -96,16 +96,16 @@ class SyncTurfForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     if (empty($form_state->get('reenter'))) {
-      $county = $this->nlpSessionDataObj->getCommittee();
-      if(empty($county)) {
+      $committee = $this->nlpSessionDataObj->getCommittee();
+      if(empty($committee)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
-      $form_state->set('county',$county);
+      $form_state->set('county',$committee);
       // Set up the possible values for HD and Pct for the search for an NL.
-      $hdList = $this->nlsObj->getHdList($county);
-      $pctList = $this->nlsObj->getPctList($county); // All precincts in the county.
+      $hdList = $this->nlsObj->getHdList($committee);
+      $pctList = $this->nlsObj->getPctList($committee); // All precincts in the county.
       $this->nlpSessionDataObj->setNewDistricts($hdList,$pctList);
       // POST-requests (AJAX or submit-button) must restore from session so AJAX callbacks
       // see the correct page. Sort links (GET + ?sort=) also restore from session.
@@ -139,7 +139,7 @@ class SyncTurfForm extends FormBase {
         $this->nlpSessionDataObj->set('turfId', NULL);
       }
     }
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
     $page = $form_state->get('page');
     switch ($page) {
 
@@ -218,7 +218,7 @@ class SyncTurfForm extends FormBase {
 
       case 'nl_search_by_name':
         $needle = $form_state->get('needle') ?? '';
-        $county = $this->nlpSessionDataObj->getCommittee();
+        $committee = $this->nlpSessionDataObj->getCommittee();
         $form['nl_select'] = [
           '#type' => 'fieldset',
           '#attributes' => ['class' => ['no-border-fieldset']],
@@ -228,7 +228,7 @@ class SyncTurfForm extends FormBase {
 
         $nlSearchList = $nlsTable = [];
         if(!empty($needle)) {
-          $nlSearchList = $this->nlsObj->searchNls($needle,$county);
+          $nlSearchList = $this->nlsObj->searchNls($needle,$committee);
           $nlsTable = $this->nlsListDisplayObj->createTableArray($nlSearchList,TRUE);
         }
 
@@ -257,9 +257,9 @@ class SyncTurfForm extends FormBase {
           $selectedPrecinct = (string)($pctList[$this->nlpSessionDataObj->getSavedPrecinctIndex()] ?? '');
         }
 
-        // Without an HD or precinct, no list is shown, so don't load every NL in the county.
+        // Without an HD or precinct, no list is shown, so don't load every NL in the committee.
         $nlList = ($hdSelected || $precinctSelected)
-          ? $this->nlsObj->getNls($county, $selectedHd, $selectedPrecinct)
+          ? $this->nlsObj->getNls($committee, $selectedHd, $selectedPrecinct)
           : [];
 
         $nlsTable = $this->nlsListDisplayObj->createTableArray($nlList,TRUE);
@@ -515,7 +515,7 @@ class SyncTurfForm extends FormBase {
     //  This turf can be synced.
     if($syncTurf) {
       $mcid = $form_state->get('mcid');
-      $county = $form_state->get('county');
+      $committee = $form_state->get('county');
 
       // PHP deletes uploaded temp files at the end of the request. Move the walksheet
       // to persistent storage now so the batch (a later request) can access it.
@@ -552,7 +552,7 @@ class SyncTurfForm extends FormBase {
       $showLists = $form_state->get('showLists');
 
       $args = [
-        'county' => $county,
+        'county' => $committee,
         'folderId' => $folderId,
         'folderName' => $folderOptions[$folderId],
         'turfId' => $turfId,
@@ -644,8 +644,8 @@ class SyncTurfForm extends FormBase {
    */
   private function buildTurfFilter(bool $showLists): array
   {
-    $county = $this->nlpSessionDataObj->getCommittee();
-    $folderOptions = $this->foldersObj->getFolderOptions(0,$county);
+    $committee = $this->nlpSessionDataObj->getCommittee();
+    $folderOptions = $this->foldersObj->getFolderOptions(0,$committee);
     if(empty($folderOptions)) {return [];}
 
     $firstFolderId = key($folderOptions);
@@ -662,7 +662,7 @@ class SyncTurfForm extends FormBase {
 
     if(!$showLists) {
       // Reveal the Map Regions.
-      $mapRegionOptions = $this->mapRegionsObj->mapRegionOptions($county, $currentFolderId);
+      $mapRegionOptions = $this->mapRegionsObj->mapRegionOptions($committee, $currentFolderId);
       $this->nlpSessionDataObj->set('mapRegionOptions', $mapRegionOptions);
       $mapRegionId = (int) $this->nlpSessionDataObj->get('mapRegionId');
 
@@ -691,9 +691,9 @@ class SyncTurfForm extends FormBase {
 
     } else {
       // Reveal only lists.
-      $this->mapRegionsObj->getMapRegionInfo($county, $currentFolderId);
+      $this->mapRegionsObj->getMapRegionInfo($committee, $currentFolderId);
       $excludedTurfIds = $this->mapRegionsObj->getTurfIds();
-      $savedLists = $this->savedListsObj->getTurfLists($county, $currentFolderId, $excludedTurfIds);
+      $savedLists = $this->savedListsObj->getTurfLists($committee, $currentFolderId, $excludedTurfIds);
       $savedListOptions = $this->savedListsObj->savedListOptions($savedLists);
 
       foreach ($savedListOptions as $turfId => $savedListOption) {

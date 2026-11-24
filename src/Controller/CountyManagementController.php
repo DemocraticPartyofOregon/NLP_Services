@@ -35,15 +35,15 @@ class CountyManagementController extends ControllerBase {
   }
 
   /**
-   * Displays the menu of functions to set up and manage the county.
+   * Displays the menu of functions to set up and manage the committee.
    *
-   * @return array - a render array containing the manage county template.
+   * @return array - a render array containing the manage committee template.
    * @noinspection PhpUnused
    */
   public function manage_county(): array
   {
-    $county = $this->sessionDataObj->getCommittee();
-    if(empty($county)) {
+    $committee = $this->sessionDataObj->getCommittee();
+    if(empty($committee)) {
       $this->messenger()->addWarning($this->t('The county is not specified. Please set the County field in your user login record.'));
     }
 
@@ -52,7 +52,7 @@ class CountyManagementController extends ControllerBase {
     $template = file_get_contents($template_path);
     $variables = [
       'module' => 'nlpservices',
-      'county' => $county,
+      'county' => $committee,
       'isAdmin' => $this->drupalUserObj->isNlpAdminUser(),
       'stateName' => $this->nlpConfigurationObj->getStateName(),
     ];
@@ -63,7 +63,7 @@ class CountyManagementController extends ControllerBase {
           '#template' => $template,
           '#context' => $variables,
           '#attached' => ['library' => ['nlpservices/menu-page']],
-          // The county is per-session, so the page can't be cached across users.
+          // The committee is per-session, so the page can't be cached across users.
           '#cache' => ['max-age' => 0],
         ],
       ];

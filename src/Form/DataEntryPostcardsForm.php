@@ -274,7 +274,7 @@ sent.  There is no need to report this an additional time.</p>',
     if ($this->reportsObj->voterSentPostcard($vanid)) {
       return FALSE;
     }
-    $county = $this->sessionDataObj->getCommittee();
+    $committee = $this->sessionDataObj->getCommittee();
 
     // Get the canvass response codes for the Postcard contact method.
     $canvassResponseCodes = $this->configurationObj->getCanvassResponseCodes();
@@ -291,7 +291,7 @@ sent.  There is no need to report this an additional time.</p>',
       'vanid'=>$vanid,
       'cycle'=>$cycle,
       'cd'=>$cd,
-      'county'=>$county,
+      'county'=>$committee,
       'mcid'=>$mcid,
       'nickname'=>$nlsInfo['nickname'],
       'lastName'=>$nlsInfo['lastName'],
@@ -317,13 +317,13 @@ sent.  There is no need to report this an additional time.</p>',
     $turfVoter = [];
     $turfVoter['vanid'] = $vanid;
     $turfVoter['mcid'] = $mcid;
-    $turfVoter['county'] = $county;
+    $turfVoter['county'] = $committee;
     $turfVoter['turfIndex'] = $turfIndex;
     $turfVoter['attemptedContact'] = $rIndex;
     $this->votersObj->updateTurfVoter($turfVoter);
 
     // This NL has reported results.
-    $this->nlsObj->resultsReported($mcid,$county);
+    $this->nlsObj->resultsReported($mcid,$committee);
     return TRUE;
   }
 

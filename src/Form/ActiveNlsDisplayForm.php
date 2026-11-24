@@ -83,13 +83,13 @@ class ActiveNlsDisplayForm extends FormBase
     if(empty($form_state->get('page'))) {
       $form_state->set('page','data_entry');
 
-      $county = $this->sessionDataObj->getCommittee();
-      $form_state->set('county',$county);
+      $committee = $this->sessionDataObj->getCommittee();
+      $form_state->set('county',$committee);
 
-      $allNlRecords = $this->nlsObj->getNls($county, 'All');
+      $allNlRecords = $this->nlsObj->getNls($committee, 'All');
       $nlCount = count($allNlRecords);
 
-      $hdOptions = $this->nlsObj->getHdList($county);
+      $hdOptions = $this->nlsObj->getHdList($committee);
       if($nlCount<$this->nlsObj::NLS_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
@@ -97,8 +97,8 @@ class ActiveNlsDisplayForm extends FormBase
       $this->sessionDataObj->setNewDistricts($hdOptions);
     }
 
-    $county = $form_state->get('county');
-    if(empty($county)) {
+    $committee = $form_state->get('county');
+    if(empty($committee)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
@@ -112,7 +112,7 @@ class ActiveNlsDisplayForm extends FormBase
       $currentHd = $this->sessionDataObj->getSavedHd();
 
       // Build the precinct list for the selected HD (0 means all precincts).
-      $rawPctList = $this->nlsObj->getPctList($county, $currentHd);
+      $rawPctList = $this->nlsObj->getPctList($committee, $currentHd);
       $pctOptions = array_merge(['All'], $rawPctList);
       $this->sessionDataObj->setNewDistricts($hdOptions, $pctOptions);
       $currentPctIndex = $this->sessionDataObj->getSavedPrecinctIndex();
@@ -140,10 +140,10 @@ class ActiveNlsDisplayForm extends FormBase
       $needle = $form_state->get('search-needle');
       if(!empty($needle)) {
         $form_state->set('search-needle', NULL);
-        $nlRecords = $this->nlsObj->searchNls($needle,$county);
+        $nlRecords = $this->nlsObj->searchNls($needle,$committee);
       } else {
         $currentPct = $this->sessionDataObj->getSavedPct();
-        $nlRecords = $this->nlsObj->getNls($county, $currentHd, $currentPct);
+        $nlRecords = $this->nlsObj->getNls($committee, $currentHd, $currentPct);
       }
       if(!empty($nlRecords)) {
         // Load the progress and award records for all the NLs up front; one
@@ -277,7 +277,7 @@ class ActiveNlsDisplayForm extends FormBase
     }
 
     if ($elementClicked == 'save_changes') {
-      $county = $form_state->get('county');
+      $committee = $form_state->get('county');
       $contacts = $form_state->getValue('contacts');
       $originalValues = $form_state->get('original_values') ?? [];
       if (!empty($contacts)) {
@@ -288,7 +288,7 @@ class ActiveNlsDisplayForm extends FormBase
           $changed = array_filter($columns, fn($v, $k) => !isset($originals[$k])
             || (is_string($v) ? str_replace("\r\n", "\n", $v) : $v) != $originals[$k], ARRAY_FILTER_USE_BOTH);
           if (!empty($changed)) {
-            $this->saveNlRow($mcid, $county, $changed);
+            $this->saveNlRow($mcid, $committee, $changed);
           }
         }
       }
@@ -303,18 +303,18 @@ class ActiveNlsDisplayForm extends FormBase
    * Called from submitForm when the user clicks "Save Changes".
    *
    * @param int $mcid
-   * @param string $county
+   * @param string $committee
    * @param array $columns  Keyed by "{column}-{mcid}", values are form element values.
    */
-  private function saveNlRow(int $mcid, string $county, array $columns): void
+  private function saveNlRow(int $mcid, string $committee, array $columns): void
   {
-    $status = $this->nlsObj->getNlsStatus($mcid, $county);
+    $status = $this->nlsObj->getNlsStatus($mcid, $committee);
     foreach ($columns as $columnKey => $value) {
       $column = explode('-', $columnKey)[0];
       switch ($column) {
         case 'td':
           if ($value) {
-            $this->turfsObj->setAllTurfsDelivered($mcid, $county);
+            $this->turfsObj->setAllTurfsDelivered($mcid, $committee);
           }
           $status['turfDelivered'] = $value ? 'Y' : '';
           break;
@@ -361,12 +361,12 @@ class ActiveNlsDisplayForm extends FormBase
     $this->nlsObj->setNlsStatus($status);
     $this->awardsObj->nlParticipation($mcid,$askStatus);
     // NLPDropoutAC is a MyCampaign activist code, and MyCampaign records
-    // belong to a specific county committee rather than the state committee.
-    $county = $this->sessionDataObj->getCommittee();
+    // belong to a specific committee rather than the State Committee.
+    $committee = $this->sessionDataObj->getCommittee();
     $request = [
       'vanid' => $mcid,
       'codeName' => 'NLPDropoutAC',
-      'committee' => $county,
+      'committee' => $committee,
       'source' => 'NL display',
     ];
     if ($askStatus == 'Dropout') {
@@ -384,7 +384,7 @@ class ActiveNlsDisplayForm extends FormBase
         'responseName' => $askStatus,
         'dateCanvassed' => date(DATE_ATOM, time()),
       ];
-      $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$county);
+      $this->apiSurveyQuestionObj->reportSurveyResponse($surveyResponse,$committee);
     }
   }
 

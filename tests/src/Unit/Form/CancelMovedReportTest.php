@@ -8,8 +8,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
   use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\Form\FormStateInterface;
   use Drupal\Core\Messenger\MessengerInterface;
-  use Drupal\Core\TempStore\PrivateTempStore;
-  use Drupal\Core\TempStore\PrivateTempStoreFactory;
   use Drupal\nlpservices\Form\CancelMovedReport;
   use Drupal\nlpservices\NlpReports;
   use Drupal\nlpservices\NlpSearchBar;
@@ -23,8 +21,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     private NlpVoters $votersMock;
     private NlpReports $reportsMock;
     private NlpSessionData $sessionMock;
-    private PrivateTempStoreFactory $tempStoreFactoryMock;
-    private PrivateTempStore $tempStoreMock;
     private NlpSearchBar $searchBarMock;
     private NlpVoterListDisplay $voterListDisplayMock;
     private MessengerInterface $messengerMock;
@@ -34,11 +30,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $this->votersMock           = $this->createMock(NlpVoters::class);
       $this->reportsMock          = $this->createMock(NlpReports::class);
       $this->sessionMock          = $this->createMock(NlpSessionData::class);
-      $this->tempStoreMock        = $this->createMock(PrivateTempStore::class);
-      $this->tempStoreFactoryMock = $this->createMock(PrivateTempStoreFactory::class);
-      $this->tempStoreFactoryMock->method('get')
-        ->with('nlpservices.session_data')
-        ->willReturn($this->tempStoreMock);
       $this->searchBarMock        = $this->createMock(NlpSearchBar::class);
       $this->voterListDisplayMock = $this->createMock(NlpVoterListDisplay::class);
       $this->messengerMock        = $this->createMock(MessengerInterface::class);
@@ -53,7 +44,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $container = new ContainerBuilder();
       $container->set('string_translation', $this->getStringTranslationStub());
       $container->set('messenger', $this->messengerMock);
-      $container->set('tempstore.private', $this->tempStoreFactoryMock);
       $container->set('config.factory', $configFactoryMock);
       Drupal::setContainer($container);
     }
@@ -72,7 +62,6 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         $this->votersMock,
         $this->reportsMock,
         $this->sessionMock,
-        $this->tempStoreFactoryMock,
         $this->searchBarMock,
         $this->voterListDisplayMock,
       );
@@ -103,7 +92,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoCountyAddsWarningAndReturnsEmptyArray(): void {
-      $this->tempStoreMock->method('get')->with('Committee')->willReturn('');
+      $this->sessionMock->method('getCommittee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addWarning');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -164,11 +153,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // buildForm — reenter=TRUE skips tempstore lookup
+    // buildForm — reenter=TRUE skips the session lookup
     // -------------------------------------------------------------------------
 
-    public function testBuildFormReenterSkipsTempstoreLookup(): void {
-      $this->tempStoreMock->expects($this->never())->method('get');
+    public function testBuildFormReenterSkipsSessionLookup(): void {
+      $this->sessionMock->expects($this->never())->method('getCommittee');
       $this->searchBarMock->method('searchBar')->willReturn([]);
 
       $formState = $this->createMock(FormStateInterface::class);

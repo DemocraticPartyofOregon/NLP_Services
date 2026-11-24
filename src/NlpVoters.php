@@ -819,13 +819,13 @@ class NlpVoters {
   }
 
   /**
-   * getParticipatingCounties
+   * getParticipatingCommittees
    *
-   * Get the list of counties that have turfs assigned to NLs.
+   * Get the list of committees that have turfs assigned to NLs.
    *
-   * @return array - an array of county names.
+   * @return array - an array of committee names.
    */
-  public function getParticipatingCounties(): array
+  public function getParticipatingCommittees(): array
   {
     try {
       $query = $this->connection->select(self::VOTER_TURF_TBL, 'g');
@@ -835,7 +835,7 @@ class NlpVoters {
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getParticipatingCounties', $e);
+      nlp_debug_msg('getParticipatingCommittees', $e);
       return [];
     }
 

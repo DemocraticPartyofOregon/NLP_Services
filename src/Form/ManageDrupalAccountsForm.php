@@ -75,10 +75,10 @@ class ManageDrupalAccountsForm extends FormBase
       $form_state->set('reenter', TRUE);
       $form_state->set('page', 'displayUsers');
       
-      $county = $this->sessionDataObj->getCommittee();
-      $form_state->set('county',$county);
+      $committee = $this->sessionDataObj->getCommittee();
+      $form_state->set('county',$committee);
       
-      $users = $this->drupalUserObj->getUsers($county);
+      $users = $this->drupalUserObj->getUsers($committee);
       $userCount = count($users);
       
       $hdOptions = $this->hdsWithUsers($users,0);
@@ -90,14 +90,14 @@ class ManageDrupalAccountsForm extends FormBase
     }
     
     $hdOptions  = $this->sessionDataObj->getHdOptions();
-    $county = $form_state->get('county');
-    if(empty($county)) {
+    $committee = $form_state->get('county');
+    if(empty($committee)) {
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
       return [];
     }
     
     $page = $form_state->get('page');
-    $users = $this->drupalUserObj->getUsers($county);
+    $users = $this->drupalUserObj->getUsers($committee);
     
     // Convert the Unknown hd to zero for display.
     foreach ($users as $vanid => $user) {
@@ -121,7 +121,7 @@ class ManageDrupalAccountsForm extends FormBase
         $needle = $form_state->get('search-needle');
         if(!empty($needle)) {
           $form_state->set('search-needle', NULL);
-          $users = $this->drupalUserObj->getUsers($county);  // All the uses in the county for the search.
+          $users = $this->drupalUserObj->getUsers($committee);  // All the uses in the county for the search.
           $users = $this->searchBarObj->searchInfoArray($needle,$users);  // just the ones with the needle.
         } else {
           $this->hdsWithUsers($users,$currentHd);
@@ -197,8 +197,8 @@ class ManageDrupalAccountsForm extends FormBase
         
         $user['password'] = $password;
         $currentValue = [];
-        $countyNames = $this->nlpConfigurationObj->getCommitteeNames();
-        $form['edit_user'] = $this->displayUser($user,$currentValue,$countyNames);
+        $committeeNames = $this->nlpConfigurationObj->getCommitteeNames();
+        $form['edit_user'] = $this->displayUser($user,$currentValue,$committeeNames);
         $currentValue['uid'] = $uid;
         
         $form_state->set('currentValue', $currentValue);
@@ -388,8 +388,8 @@ class ManageDrupalAccountsForm extends FormBase
               $editUpdate['magicWord'] = $value;
               break;
             case 'county':
-              $countyNames = $form_state->get('countyNames');
-              $editUpdate['county'] = $countyNames[$value];
+              $committeeNames = $form_state->get('countyNames');
+              $editUpdate['county'] = $committeeNames[$value];
               break;
             case 'roles':
               $editUpdate['roles'] = $changed['roles'];
@@ -451,10 +451,10 @@ class ManageDrupalAccountsForm extends FormBase
    *
    * @param $user
    * @param $currentValue
-   * @param $countyNames
+   * @param $committeeNames
    * @return array
    */
-  function displayUser($user,&$currentValue,$countyNames): array
+  function displayUser($user,&$currentValue,$committeeNames): array
   {
     $allowedRoles = $this->drupalUserObj->getNlpRoles();
     unset($allowedRoles['nlp_admin']);
@@ -515,15 +515,15 @@ class ManageDrupalAccountsForm extends FormBase
       '#description' => "Edit (or add) the MyCampaign ID number.",
     ];
 
-    $county = $user['county'];
-    $countyIndex = array_flip($countyNames)[$county];
-    $currentValue['county'] = $countyIndex;
+    $committee = $user['county'];
+    $committeeIndex = array_flip($committeeNames)[$committee];
+    $currentValue['county'] = $committeeIndex;
 
     $form_element['edit']['county'] = [
       '#type' => 'select',
       '#title' => t('County'),
-      '#options' => $countyNames,
-      '#default_value' => $countyIndex,
+      '#options' => $committeeNames,
+      '#default_value' => $committeeIndex,
       '#description' => 'Select a county.',
     ];
 

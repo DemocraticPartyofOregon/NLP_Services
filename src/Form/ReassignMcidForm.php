@@ -246,13 +246,13 @@ MyCampaign database.</p>'),
     // Convert NL record to the new ID.
     $newNlRecord = $this->nlsObj->getNlById($newId);
     if(!empty($newNlRecord)) {
-      $county = $newNlRecord['county'];
-      if(!empty($county)) {
+      $committee = $newNlRecord['county'];
+      if(!empty($committee)) {
         $this->nlsObj->deleteNl($previousId);
         $previousStatus = $this->nlsObj->getNlsStatus($previousId);
         if(!empty($previousStatus)) {
           $newStatus = $this->nlsObj->getNlsStatus($newId);
-          $newStatus['county'] = $county;
+          $newStatus['county'] = $committee;
           if($previousStatus['signedUp']) {$newStatus['signedUp'] = TRUE;}
           if($previousStatus['turfCut']) {$newStatus['turfCut'] = TRUE;}
           if($previousStatus['turfDelivered']) {$newStatus['turfDelivered'] = TRUE;}
@@ -270,10 +270,10 @@ MyCampaign database.</p>'),
         $this->nlsObj->deleteNl($previousId);
         $previousNlRecord['mcid'] = $newId;
         $this->nlsObj->createNl($previousNlRecord);
-        $county = $previousNlRecord['county'];
+        $committee = $previousNlRecord['county'];
         $previousStatus = $this->nlsObj->getNlsStatus($previousId);
         if(empty($previousStatus['county'])) {
-          $previousStatus['county'] = $county;
+          $previousStatus['county'] = $committee;
         }
         $previousStatus['mcid'] = $newId;
         $this->nlsObj->setNlsStatus($previousStatus);

@@ -25,15 +25,15 @@ class SetVoterAcForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $votersObj = Drupal::service('nlpservices.voters');
-    $counties = $votersObj->getParticipatingCounties();
-    array_unshift($counties, 'Select counties');
-    unset($counties[0]);
-    $form_state->set('counties', $counties);
+    $committees = $votersObj->getParticipatingCommittees();
+    array_unshift($committees, 'Select counties');
+    unset($committees[0]);
+    $form_state->set('counties', $committees);
 
     $form['counties'] = [
       '#type' => 'checkboxes',
       '#title' => t('Counties'),
-      '#options' => $counties,
+      '#options' => $committees,
     ];
 
     $form['stop_at_limit'] = [
@@ -62,23 +62,23 @@ class SetVoterAcForm extends FormBase
   public function submitForm(array &$form, FormStateInterface $form_state): void
   {
     $values = $form_state->getValues();
-    $counties = $form_state->get('counties');
-    $countyOptions = $values['counties'];
+    $committees = $form_state->get('counties');
+    $committeeOptions = $values['counties'];
 
-    $selectedCounties = [];
-    foreach ($countyOptions as $index => $countyOption) {
-      if (!empty($countyOption)) {
-        $selectedCounties[] = $counties[$index];
+    $selectedCommittees = [];
+    foreach ($committeeOptions as $index => $committeeOption) {
+      if (!empty($committeeOption)) {
+        $selectedCommittees[] = $committees[$index];
       }
     }
-    if (empty($selectedCounties)) {
+    if (empty($selectedCommittees)) {
       return;
     }
 
     $turfsObj = Drupal::service('nlpservices.turfs');
     $turfIndexes = [];
-    foreach ($selectedCounties as $county) {
-      $turfs = $turfsObj->getCommitteeTurfs($county);
+    foreach ($selectedCommittees as $committee) {
+      $turfs = $turfsObj->getCommitteeTurfs($committee);
       foreach ($turfs as $turfIndex => $turf) {
         $turfIndexes[] = $turfIndex;
       }

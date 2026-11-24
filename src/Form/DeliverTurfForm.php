@@ -114,27 +114,27 @@ class DeliverTurfForm extends FormBase
 
     if (empty($form_state->get('reenter'))) {
 
-      $county = $this->nlpSessionDataObj->getCommittee();
-      if(empty($county)) {
+      $committee = $this->nlpSessionDataObj->getCommittee();
+      if(empty($committee)) {
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
       }
-      $instructions = $this->instructionsObj->getInstructions($county);
+      $instructions = $this->instructionsObj->getInstructions($committee);
       if (empty($instructions['canvass']['fileName']) && empty($instructions['postcard']['fileName'])) {
         $messenger->addError(t('You need to upload the canvass or postcard instructions first.'));
         return [];
       }
-      $form_state->set('county', $county);
+      $form_state->set('county', $committee);
 
-      $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfsObj->getCommitteeTurfCount($county);
+      $hdOptions = $this->turfsObj->getTurfHD($committee); // HDs with turfs.
+      $turfCount = $this->turfsObj->getCommitteeTurfCount($committee);
       if($turfCount<$this->turfsObj::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }
       $this->nlpSessionDataObj->setNewDistricts($hdOptions);
     }
 
-    $county = $form_state->get('county');
+    $committee = $form_state->get('county');
 
     $currentHdIndex = $this->nlpSessionDataObj->getSavedHdIndex();
     $currentHd = $this->nlpSessionDataObj->getSavedHd();
@@ -147,15 +147,15 @@ class DeliverTurfForm extends FormBase
       return $form;
     }
 
-    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->nlpSessionDataObj, $county, $currentHd);
+    [$pctOptions, $currentPctIndex] = $this->buildPrecinctOptions($this->turfsObj, $this->nlpSessionDataObj, $committee, $currentHd);
 
     $needle = $form_state->get('search-needle');
     if (!empty($needle)) {
-      $turfArray = $this->turfsObj->getTurfs($county, 'All');
+      $turfArray = $this->turfsObj->getTurfs($committee, 'All');
       $form_state->set('search-needle', NULL);
       $turfArray = $this->searchBarObj->searchInfoArray($needle, $turfArray);
     } else {
-      $turfArray = $this->getHdTurfs($this->turfsObj, $this->nlpSessionDataObj, $county, $currentHd);
+      $turfArray = $this->getHdTurfs($this->turfsObj, $this->nlpSessionDataObj, $committee, $currentHd);
       $turfArray = $this->filterTurfsByPrecinct($turfArray, $this->nlpSessionDataObj);
     }
     $form_state->set('turfArray', $turfArray);
@@ -288,7 +288,7 @@ class DeliverTurfForm extends FormBase
 
         foreach ($selections as $turfIndex => $selection) {
 
-          $county = $form_state->get('county');
+          $committee = $form_state->get('county');
 
           if (!empty($uploadedFile)) {
             $pdfFileName = strtolower($uploadedFile->getClientOriginalName());
@@ -301,7 +301,7 @@ class DeliverTurfForm extends FormBase
             $mcid = $turf['mcid'];
             $pdfName = $pdfFileNameParts[0];
             $pdfUniqueFileName = "MCID".$mcid."_".$pdfName."_TI".$turfIndex.".".$pdfFileNameType;
-            $uri = $this->pathsObj->getPath('PDF',$county).$pdfUniqueFileName;
+            $uri = $this->pathsObj->getPath('PDF',$committee).$pdfUniqueFileName;
             $this->fileSystemObj->moveUploadedFile($pdfTempName, $uri);
             $this->turfsObj->updateTurf($turfIndex, 'turfPDF', $pdfUniqueFileName);
           }
@@ -340,12 +340,12 @@ class DeliverTurfForm extends FormBase
   public function notifyUserCredentials(array $turfChoice,string $note): bool
   {
     $messenger = Drupal::messenger();
-    $county = $this->nlpSessionDataObj->getCommittee();
+    $committee = $this->nlpSessionDataObj->getCommittee();
     $turfPrecinct = ltrim($turfChoice['turfPrecinct'],"0");
     $region = [
       'hd'=>$turfChoice['turfHd'],
       'pct'=>$turfPrecinct,
-      'county'=>$county,
+      'county'=>$committee,
     ];
 
     $nlCoordinator = $this->coordinatorsObj->getCoordinator($region);
@@ -358,7 +358,7 @@ class DeliverTurfForm extends FormBase
       return FALSE;
     }
 
-    $turfMsg = $this->turfMsgObj->getTurfMsg($county);
+    $turfMsg = $this->turfMsgObj->getTurfMsg($committee);
 
     $miniVanArray = [];
     if (!empty($turfChoice['minivanNumber'])) {
@@ -402,9 +402,9 @@ class DeliverTurfForm extends FormBase
   public function updateMinivanInfo(int $turfIndex): array
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
-    $county = $this->nlpSessionDataObj->getCommittee();
+    $committee = $this->nlpSessionDataObj->getCommittee();
     $turfArray[$turf['turfIndex']] = $turf;
-    $this->foldersObj->updateMinivanInfo($county, $turfArray);
+    $this->foldersObj->updateMinivanInfo($committee, $turfArray);
     $turf = $turfArray[$turfIndex];
     if(!empty($turf['minivanNumber'])) {
       $minivanNumber = $turf['minivanNumber'];

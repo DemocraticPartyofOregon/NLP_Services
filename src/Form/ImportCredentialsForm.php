@@ -171,8 +171,8 @@ accounts before restoring any passwords.</p>',
 
       if ($verify) {
         $mcid   = $credentials['mcid'];
-        $county = $credentials['county'];
-        $nlExists = $this->apiNlsObj->nlExists($county, $mcid);
+        $committee = $credentials['county'];
+        $nlExists = $this->apiNlsObj->nlExists($committee, $mcid);
         if (!$nlExists) {continue;}
       }
 

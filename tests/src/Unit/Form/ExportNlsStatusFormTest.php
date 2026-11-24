@@ -158,7 +158,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       $result = $this->buildForm()->buildForm([], $formState);
       $options = $result['countySelect']['#options'];
       $this->assertSame(['all', 'Denver', 'Boulder'], array_keys($options));
-      $this->assertSame('::countySelectedCallback', $result['countySelect']['#ajax']['callback']);
+      $this->assertSame('::committeeSelectedCallback', $result['countySelect']['#ajax']['callback']);
       $this->assertArrayNotHasKey('districtSelect', $result['hdSelect']);
     }
 
@@ -180,13 +180,13 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     // -------------------------------------------------------------------------
-    // countySelectedCallback — returns the HD wrapper
+    // committeeSelectedCallback — returns the HD wrapper
     // -------------------------------------------------------------------------
 
     public function testCountySelectedCallbackReturnsHdSelect(): void {
       $form = ['hdSelect' => ['#type' => 'container', 'districtSelect' => []]];
       $formState = $this->createMock(FormStateInterface::class);
-      $this->assertSame($form['hdSelect'], $this->buildForm()->countySelectedCallback($form, $formState));
+      $this->assertSame($form['hdSelect'], $this->buildForm()->committeeSelectedCallback($form, $formState));
     }
 
     // -------------------------------------------------------------------------
