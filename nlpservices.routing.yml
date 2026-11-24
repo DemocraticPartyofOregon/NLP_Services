@@ -300,14 +300,6 @@ nlpservices.cancel_moved_report:
   requirements:
     _permission: 'access content'
 
-nlpservices.county_change_form:
-  path: '/nlpservices-county-change'
-  defaults:
-    _form: Drupal\nlpservices\Form\CountyChangeForm
-    _title: 'Change the county being accessed by an admin.'
-  requirements:
-    _permission: 'nlp administer'
-
 nlpservices.data_entry_help_route:
   path: '/nlp-data-entry-help'
   defaults:
