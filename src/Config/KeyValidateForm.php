@@ -81,7 +81,7 @@ class KeyValidateForm extends FormBase
         $form['testResults'] = [
           '#type' => 'table',
           '#header' => [
-            ['data' => t('County'), 'field' => 'name', 'sort' => 'asc'],
+            ['data' => t('Committee'), 'field' => 'name', 'sort' => 'asc'],
             ['data' => t('MyCampaign')],
             ['data' => t('VoterFile')],
             ['data' => t('NLs')],

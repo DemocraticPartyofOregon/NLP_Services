@@ -240,6 +240,38 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $result);
     }
 
+    public function testGetFolderOptionsDoesNotMatchACommitteeWithALongerNumber(): void {
+      $this->addMessengerToContainer();
+      $svc = $this->buildPartialService();
+      $svc->method('getApiFolders')->willReturn([
+        20 => 'Region 1 Turfs',
+        21 => 'Region 10 Turfs',
+        22 => 'Region 12 Turfs',
+        23 => 'NLP Region 1',
+      ]);
+
+      $result = $svc->getFolderOptions(0, 'Region 1');
+
+      $this->assertSame([20 => 'Region 1 Turfs', 23 => 'NLP Region 1'], $result);
+    }
+
+    public function testGetFolderOptionsDoesNotMatchACommitteeWithALeadingDigit(): void {
+      $this->addMessengerToContainer();
+      $svc = $this->buildPartialService();
+      $svc->method('getApiFolders')->willReturn([30 => '1 North Turfs', 31 => '21 North Turfs']);
+
+      $this->assertSame([30 => '1 North Turfs'], $svc->getFolderOptions(0, '1 North'));
+    }
+
+    public function testGetFolderOptionsStillMatchesANameInsideAWordWhenItHasNoDigits(): void {
+      $this->addMessengerToContainer();
+      $svc = $this->buildPartialService();
+      // Only names that begin or end with a digit got the stricter match.
+      $svc->method('getApiFolders')->willReturn([40 => 'Lane2026 Turfs']);
+
+      $this->assertSame([40 => 'Lane2026 Turfs'], $svc->getFolderOptions(0, 'Lane'));
+    }
+
   }
 
 }

@@ -30,8 +30,8 @@ class ApiFolders {
    *
    * Get the folders from the API.
    *
-   * Returns an array of folders that are visible to the county committee API key.  If the
-   * county is not specified, the API key for the state committee is used.  The array ke is
+   * Returns an array of folders that are visible to the committee's API key.  If the
+   * committee is not specified, the API key for the state committee is used.  The array key is
    * the folderID and the value is the folder name.
    * If a folderId is provided, only that folder is returned.
    *
@@ -63,7 +63,7 @@ class ApiFolders {
       }
       if ($code == 404) {
         // Handle was not found error
-        $msg = "Folder not found, County=$committee, FolderId=$folderId";
+        $msg = "Folder not found, Committee=$committee, FolderId=$folderId";
         if (!str_contains($this->routeMatch->getRouteName(), 'system.cron')) {
           nlp_debug_msg('getApiFolders', $msg);
         }
@@ -100,14 +100,17 @@ class ApiFolders {
   /** * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
    * getFolderOptions
    *
-   * Get the folder options for a county.
+   * Get the folder options for a committee.
    * This function retrieves all folders from the API and filters them
-   * to include only those that contain the county name in the folder name.
+   * to include only those that contain the committee name in the folder name.
    * It returns an array of folder options where the key is the folder ID
    * and the value is the folder name.
    * This function is used because the API returns all folders regardless of the
    * committee credentials.   It seems odd that the API does not filter for the
    * committee credentials.
+   * A committee name that begins or ends with a digit must not touch another
+   * digit in the folder name, so 'Region 1' doesn't pick up the folders of
+   * 'Region 10'.
    *
    * @param int $database 0=VoterFile, 1=MyCampaign
    * @param string $committee
@@ -121,11 +124,13 @@ class ApiFolders {
       $messenger->addWarning(t('There are no shared folders'));
       return [];
     }
-    // Check for the county name in the folder name.
+    // Check for the committee name in the folder name.
+    $pattern = '/' . (ctype_digit(substr($committee, 0, 1)) ? '(?<!\d)' : '')
+      . preg_quote($committee, '/')
+      . (ctype_digit(substr($committee, -1)) ? '(?!\d)' : '') . '/i';
     $folderOptions = [];
     foreach ($allFolderInfo as $aFolderId => $aFolderName) {
-      $pos = stripos($aFolderName, $committee);
-      if ($pos !== false) {
+      if (preg_match($pattern, $aFolderName)) {
         $folderOptions[$aFolderId] = $aFolderName;
       }
     }

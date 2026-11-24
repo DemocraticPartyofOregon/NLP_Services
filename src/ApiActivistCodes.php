@@ -124,8 +124,8 @@ class ApiActivistCodes
    * @param int $database - 0=VoterFile, 1=MyCampaign
    * @param string $committee - The committee whose key should be used; empty
    *   string uses the State Committee key. MyCampaign records belong to a
-   *   specific county committee, so callers checking a MyCampaign activist
-   *   code must pass that county.
+   *   specific committee, so callers checking a MyCampaign activist
+   *   code must pass that committee.
    * @return array
    */
   public function getApiVoterActivistCodes(int $vanid, int $database = 0, string $committee = ''): array
@@ -175,8 +175,8 @@ class ApiActivistCodes
    *   - action - default is 'Apply'; another option is 'Remove'
    *   - committee - optional; the committee whose key should be used. Empty
    *     uses the State Committee key. MyCampaign codes belong to a specific
-   *     county committee, so callers setting a MyCampaign code must pass
-   *     that county here.
+   *     committee, so callers setting a MyCampaign code must pass
+   *     that committee here.
    *   - source - optional; what made the change, like 'data entry'. It is
    *     logged if the POST fails or VAN doesn't show the change.
    *

@@ -9,6 +9,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal;
   use Drupal\Core\Entity\EntityStorageInterface;
   use Drupal\Core\Entity\EntityTypeManagerInterface;
+  use Drupal\Core\Entity\Query\QueryInterface;
   use Drupal\Core\Logger\LoggerChannelFactoryInterface;
   use Drupal\Core\Session\AccountProxyInterface;
   use Drupal\nlpservices\DrupalUser;
@@ -421,6 +422,31 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(1700000000, $route['parameters']['timestamp']);
       $this->assertNotEmpty($route['parameters']['hash']);
       $this->assertSame('https://example.com/user/reset/39/1700000000/' . $route['parameters']['hash'], $url);
+    }
+
+    // -------------------------------------------------------------------------
+    // getCoordinators
+    // -------------------------------------------------------------------------
+
+    public function testGetCoordinatorsMatchesTheCommitteeExactly(): void {
+      $conditions = [];
+      $query = $this->createMock(QueryInterface::class);
+      $query->method('accessCheck')->willReturnSelf();
+      $query->method('condition')->willReturnCallback(
+        function ($field, $value = NULL, $operator = NULL) use (&$conditions, $query) {
+          $conditions[$field] = [$value, $operator];
+          return $query;
+        });
+      $query->method('execute')->willReturn([]);
+      $storageMock = $this->createMock(EntityStorageInterface::class);
+      $storageMock->method('getQuery')->willReturn($query);
+      $this->entityTypeManagerMock = $this->createMock(EntityTypeManagerInterface::class);
+      $this->entityTypeManagerMock->method('getStorage')->with('user')->willReturn($storageMock);
+
+      $this->assertSame([], $this->buildDrupalUser()->getCoordinators('Region 1'));
+
+      // A CONTAINS match would also return the coordinators of 'Region 10'.
+      $this->assertSame(['Region 1', NULL], $conditions['field_county']);
     }
 
   }

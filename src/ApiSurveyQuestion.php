@@ -108,7 +108,7 @@ class ApiSurveyQuestion
    * - phoneId - the phone ID
    *
    * @param array $surveyResponse
-   * @param string $committeeName - The name of the county or if empty the state committee is used.
+   * @param string $committeeName - The name of the committee or if empty the state committee is used.
    *
    * @return void
    */

@@ -62,7 +62,7 @@ class ApiDistrictFields {
         return [];
       }
       if ($code == 404) {
-        $msg = "District field not found, County=$committee, DistrictFieldId=$districtFieldId";
+        $msg = "District field not found, Committee=$committee, DistrictFieldId=$districtFieldId";
         nlp_debug_msg('getDistrictFields', $msg);
         Drupal::logger('nlpservices')->notice($msg);
         return [];

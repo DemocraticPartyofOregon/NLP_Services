@@ -62,10 +62,10 @@ class ApiKeyVerification
     //$apiKeys = $this->nlpConfigurationObj->getKeys();
     $results = [];
     foreach ($apiKeys as $committee=>$committeeKey) {
-      $county = ($committee=='State Committee')?'':$committee;
+      $keyId = ($committee=='State Committee')?'':$committee;
       //$committeeKey['API Key'] = $this->nlpEncryptObj->encrypt_decrypt('decrypt', $committeeKey['API Key']);
-      $result = $this->testApiKey($county,$committeeKey, $mcid);
-      $result = array_merge(['county' => $this->t('<b>@committee</b>', ['@committee' => $committee])], $result);
+      $result = $this->testApiKey($keyId,$committeeKey, $mcid);
+      $result = array_merge(['committee' => $this->t('<b>@committee</b>', ['@committee' => $committee])], $result);
       $results[] = $result;
     }
     return $results;

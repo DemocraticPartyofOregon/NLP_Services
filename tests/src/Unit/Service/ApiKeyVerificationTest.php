@@ -77,7 +77,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $results = $this->buildService()->apiKeyVerification();
 
       $this->assertCount(1, $results);
-      $this->assertStringContainsString('State Committee', $results[0]['county']);
+      $this->assertStringContainsString('State Committee', $results[0]['committee']);
     }
 
     public function testApiKeyVerificationIncludesOneResultPerCommittee(): void {

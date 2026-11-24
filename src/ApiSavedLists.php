@@ -101,7 +101,7 @@ class ApiSavedLists {
   /**
    * getSavedLists
    *
-   * Get the saved lists in either the VoterFile or MyCampaign. If the county
+   * Get the saved lists in either the VoterFile or MyCampaign. If the committee
    * is empty, the state committee is used.  The information returned is
    * either a list of information for all the saved lists in the folder or
    * the information for a specific saved list.

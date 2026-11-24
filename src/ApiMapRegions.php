@@ -49,7 +49,7 @@ class ApiMapRegions
   /**
    * mapRegionOptions
    *
-   * Get the map region options for a county and folder.
+   * Get the map region options for a committee and folder.
    * This function retrieves the map regions from the API and returns an array of
    * map region options where the key is the map region ID and the value is the
    * map region name.  The first element in the array is
@@ -132,7 +132,7 @@ class ApiMapRegions
   /**
    * getMapRegionInfo
    *
-   * Get the map region information for a county and folder.
+   * Get the map region information for a committee and folder.
    * If a mapRegionId is provided, it retrieves information for that specific map region.
    * If no mapRegionId is provided, it retrieves all map regions for the specified folder.
    *

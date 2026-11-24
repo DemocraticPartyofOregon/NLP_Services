@@ -904,15 +904,20 @@ class DrupalUser {
   /**
    * getCoordinators
    *
-   * Returns a list of NLP users with the coordinator role for a specific county.
+   * Returns a list of NLP users with the coordinator role for a specific
+   * committee.  The user's field_county holds the committee name.
    *
-   * @param string $county
+   * The match is exact: a CONTAINS match would also return the coordinators
+   * of every committee whose name contains this one, like 'Region 10' for
+   * 'Region 1'.
+   *
+   * @param string $committee
    * @return array
    * Used in:
    *   RemoveCoordinatorRoleFrom.php
    * @noinspection PhpUnused
    */
-  public function getCoordinators( string $county ): array
+  public function getCoordinators( string $committee ): array
   {
     $userList = [];
     $userStorage = $this->getUserStorage('getCoordinators');
@@ -921,7 +926,7 @@ class DrupalUser {
       ->accessCheck(FALSE)
       ->condition('status', 1)
       ->condition('roles', 'nlp_coordinator')
-      ->condition('field_county', $county, 'CONTAINS')
+      ->condition('field_county', $committee)
       ->execute();
 
     foreach ($ids as $uid) {

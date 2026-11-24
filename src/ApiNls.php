@@ -178,7 +178,7 @@ class ApiNls {
    * email - preferred email
    * precinct
    * hd
-   * county
+   * county - the geographic county of the NL's address
    * vfid - VoterFile ID if it exists. If missing, the volunteer's record is not linked to
    *         a record in the VoterFile.
    *
