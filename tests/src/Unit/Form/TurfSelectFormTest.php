@@ -83,7 +83,7 @@ class TurfSelectFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormNoMcidAddsError(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
     $this->messengerMock->expects($this->once())->method('addError');
 
@@ -92,7 +92,7 @@ class TurfSelectFormTest extends UnitTestCase {
   }
 
   public function testBuildFormNoMcidReturnsEmptyForm(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
 
     $formState = new FormState();
@@ -106,7 +106,7 @@ class TurfSelectFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormNoTurfAddsError(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn([]);
     $this->messengerMock->expects($this->once())->method('addError');
@@ -116,7 +116,7 @@ class TurfSelectFormTest extends UnitTestCase {
   }
 
   public function testBuildFormNoTurfReturnsEmptyForm(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn([]);
 
@@ -127,7 +127,7 @@ class TurfSelectFormTest extends UnitTestCase {
   }
 
   public function testBuildFormNoTurfCallsTurfExistsWithCorrectArgs(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->expects($this->once())
       ->method('turfExists')
@@ -143,7 +143,7 @@ class TurfSelectFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormOneTurfAddsStatusMessage(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn(['turfCnt' => 1]);
     $this->messengerMock->expects($this->once())->method('addStatus');
@@ -153,7 +153,7 @@ class TurfSelectFormTest extends UnitTestCase {
   }
 
   public function testBuildFormOneTurfReturnsFormWithNoSubmit(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn(['turfCnt' => 1]);
 
@@ -171,7 +171,7 @@ class TurfSelectFormTest extends UnitTestCase {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->with('turfIndex')->willReturn(10);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn($turfArray);
@@ -189,7 +189,7 @@ class TurfSelectFormTest extends UnitTestCase {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->with('turfIndex')->willReturn(10);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn($turfArray);
@@ -206,7 +206,7 @@ class TurfSelectFormTest extends UnitTestCase {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->with('turfIndex')->willReturn(20);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn($turfArray);
@@ -222,7 +222,7 @@ class TurfSelectFormTest extends UnitTestCase {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->with('turfIndex')->willReturn(NULL);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn($turfArray);
@@ -238,7 +238,7 @@ class TurfSelectFormTest extends UnitTestCase {
     $turfArray = ['turfCnt' => 2];
     $turfNames = [10 => 'Turf Alpha', 20 => 'Turf Beta'];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->with('turfIndex')->willReturn(10);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 42]);
     $this->turfObjMock->method('turfExists')->willReturn($turfArray);
@@ -251,7 +251,7 @@ class TurfSelectFormTest extends UnitTestCase {
   }
 
   public function testBuildFormStoresCountyInFormState(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 0]);
 
     $formState = new FormState();

@@ -93,7 +93,7 @@ class CoordinatorsFormTest extends UnitTestCase {
    * code path executes.
    */
   private function configureBuildFormMocks(string $county = 'TestCounty'): void {
-    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->nlsMock->method('getNls')->willReturn([]);
     $this->nlsMock->method('getHdList')->willReturn(['HD1', 'HD2']);
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
@@ -116,7 +116,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->nlsMock->method('getCountyNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
-    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
@@ -188,7 +188,7 @@ class CoordinatorsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyMissing(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
     $this->nlsMock->method('getNls')->willReturn([]);
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -245,7 +245,7 @@ class CoordinatorsFormTest extends UnitTestCase {
   public function testBuildFormEnrichesAssignedCoordinatorsWithRolesAndUid(): void {
     // Set up mocks directly (not via configureBuildFormMocks) so that the
     // coordinators stub below is the only one registered for that method.
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getNls')->willReturn([]);
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -286,7 +286,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
 

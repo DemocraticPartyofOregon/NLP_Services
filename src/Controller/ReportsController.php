@@ -88,7 +88,7 @@ class ReportsController extends ControllerBase
     } else {
       $factory = Drupal::service('tempstore.private');
       $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('County');
+      $county = $store->get('Committee');
       if(empty($county)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));

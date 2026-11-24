@@ -76,7 +76,7 @@ class LoginCredentialsReminderForm extends FormBase
       $form_state->set('page', 'displayUsers');
       $form_state->set('hd', 0);
 
-      $county = $this->nlpSessionDataObj->getCounty();
+      $county = $this->nlpSessionDataObj->getCommittee();
       $form_state->set('county',$county);
       if(empty($county)) {
         $messenger = Drupal::messenger();

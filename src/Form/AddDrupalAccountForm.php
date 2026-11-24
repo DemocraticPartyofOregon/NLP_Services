@@ -55,7 +55,7 @@ class AddDrupalAccountForm extends FormBase
       $form_state->set('reenter', TRUE);
       $form_state->set('page', 'addUser');
       $sessionObj = Drupal::getContainer()->get('nlpservices.session_data');
-      $county = $sessionObj->getCounty();
+      $county = $sessionObj->getCommittee();
       $form_state->set('county',$county);
       $adminRole = $this->drupalUser->isNlpAdminUser();
       $form_state->set('admin',$adminRole);

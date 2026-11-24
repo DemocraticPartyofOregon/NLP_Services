@@ -83,7 +83,7 @@ class ActiveNlsDisplayForm extends FormBase
     if(empty($form_state->get('page'))) {
       $form_state->set('page','data_entry');
 
-      $county = $this->sessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCommittee();
       $form_state->set('county',$county);
 
       $allNlRecords = $this->nlsObj->getNls($county, 'All');
@@ -362,7 +362,7 @@ class ActiveNlsDisplayForm extends FormBase
     $this->awardsObj->nlParticipation($mcid,$askStatus);
     // NLPDropoutAC is a MyCampaign activist code, and MyCampaign records
     // belong to a specific county committee rather than the state committee.
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     $request = [
       'vanid' => $mcid,
       'codeName' => 'NLPDropoutAC',

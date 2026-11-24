@@ -548,7 +548,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $container = new ContainerBuilder();
       $container->set('messenger', $this->createMock(MessengerInterface::class));
       Drupal::setContainer($container);
-      $this->sessionDataMock->method('getCounty')->willReturn('Test');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Test');
       $this->sessionDataMock->method('get')->willReturn(7);
       $this->instructionsMock->method('getInstructions')
         ->willReturn(['canvass' => ['fileName' => ''], 'postcard' => ['fileName' => '']]);

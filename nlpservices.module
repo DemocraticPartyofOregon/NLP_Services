@@ -565,7 +565,7 @@ function nlpservices_custom_validation(array $form, FormStateInterface $form_sta
 {
   $countyValue = $form_state->getValue('field_county');
   $county = $countyValue[0]['value'] ?? '';
-  $counties = Drupal::service('nlpservices.configuration')->getCountyNames();
+  $counties = Drupal::service('nlpservices.configuration')->getCommitteeNames();
   if(empty($county)) {return;}
   if($county == 'State' || !in_array($county, $counties)) {
     $form_state->setErrorByName('field_county', t('Invalid county name.'));

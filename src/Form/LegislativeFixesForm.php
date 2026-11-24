@@ -48,7 +48,7 @@ class LegislativeFixesForm extends FormBase
       $form_state->set('reenter', TRUE);
       $factory = Drupal::service('tempstore.private');
       $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('County');
+      $county = $store->get('Committee');
       $form_state->set('county', $county);
     }
     $county = $form_state->get('county');

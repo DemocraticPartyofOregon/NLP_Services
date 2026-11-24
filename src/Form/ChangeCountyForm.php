@@ -47,8 +47,8 @@ class ChangeCountyForm extends FormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $county = $this->sessionDataObj->getCounty();
-    $countyNames = $this->nlpConfigurationObj->getCountyNames();
+    $county = $this->sessionDataObj->getCommittee();
+    $countyNames = $this->nlpConfigurationObj->getCommitteeNames();
 
     $form['current_county'] = [
       '#markup' => '<h1>' . (empty($county)
@@ -86,7 +86,7 @@ class ChangeCountyForm extends FormBase {
   {
     $county = $form_state->getValue('county_select');
 
-    $this->sessionDataObj->set('County', $county);
+    $this->sessionDataObj->set('Committee', $county);
     $this->sessionDataObj->set('currentFolderId', 0);
     $this->sessionDataObj->set('currentHd', 0);
     $this->sessionDataObj->set('currentPct', '');

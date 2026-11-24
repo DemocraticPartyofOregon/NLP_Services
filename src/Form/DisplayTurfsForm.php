@@ -75,7 +75,7 @@ class DisplayTurfsForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
 
     if (empty($form_state->get('reenter'))) {
-      $county = $this->sessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCommittee();
       if(empty($county)) {
         $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];

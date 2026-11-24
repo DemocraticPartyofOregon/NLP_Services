@@ -91,7 +91,7 @@ class NlpCreateWalksheet
 
     $this->turfInfo = [
       'turfIndex' => $turfIndex,
-      'county' => $this->nlpSessionDataObj->getCounty(),
+      'county' => $this->nlpSessionDataObj->getCommittee(),
       'turfName' => $turf['turfName'],
       'voterCount' => $turf['voterCount'],
       'doorCount' => $turf['doorCount'],
@@ -312,7 +312,7 @@ class NlpCreateWalksheet
    */
   private function otherVotersInHousehold(array $address, array $householdVanids): array
   {
-    //$county = $this->nlpSessionDataObj->getCounty();
+    //$county = $this->nlpSessionDataObj->getCommittee();
     //$allInHousehold = $this->apiVoterObj->getVotersByAddress($address,$county);
     
     $name = $alsoAddress = $votingHistory1 = $votingHistory2 = '';

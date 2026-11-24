@@ -138,7 +138,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoCountyAddsWarningAndReturnsEmptyArray(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('');
+      $this->sessionDataMock->method('getCommittee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addWarning');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -153,8 +153,8 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterSkipsCountySetup(): void {
-      // getCounty() must never be called when reenter=TRUE.
-      $this->sessionDataMock->expects($this->never())->method('getCounty');
+      // getCommittee() must never be called when reenter=TRUE.
+      $this->sessionDataMock->expects($this->never())->method('getCommittee');
       $this->nlsMock->expects($this->never())->method('getHdList');
 
       // Satisfy the nl_search_by_district page (uses form_state county, not sessionData).
@@ -269,7 +269,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       // The session has moved on to the name search, but the user went back to the
       // NL select page and submitted from it.
       $this->usePostRequest(['sync_turf_page' => 'nl_select']);
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->sessionDataMock->method('get')->willReturnMap([
         ['syncTurfPage', 'nl_search_by_name'],
         ['turfId',       5],
@@ -291,7 +291,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormPostIgnoresUnknownPostedPage(): void {
       $this->usePostRequest(['sync_turf_page' => 'bogus']);
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->sessionDataMock->method('get')->willReturnMap([
         ['syncTurfPage', 'nl_select'],
         ['turfId',       5],
@@ -314,7 +314,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormPostWithoutTurfReturnsToTurfSelect(): void {
       // The NL pages need a turf; with none in the session, start over on the turf page.
       $this->usePostRequest(['sync_turf_page' => 'nl_select']);
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->sessionDataMock->method('get')->willReturnMap([
         ['syncTurfPage', 'nl_select'],
         ['turfId',       NULL],
@@ -359,7 +359,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNlSearchByNamePageContainsNlSelectElement(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->nlsMock->method('searchNls')->willReturn([]);
       $this->nlsListDisplayMock->method('createTableArray')->willReturn([]);
       $this->syncTurfBuilderMock->method('buildNlSearchByName')->willReturn(['#type' => 'fieldset']);
@@ -383,7 +383,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormTurfSelectShowMapsShowsRevealListsButton(): void {
       // Initial-entry path (reenter=null).
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->nlsMock->method('getHdList')->willReturn([]);
       $this->nlsMock->method('getPctList')->willReturn([]);
 
@@ -481,7 +481,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
      * mapRegionTurfOptions.
      */
     private function mapRegionIdPassedByTurfFilter(array $mapRegionOptions, mixed $savedMapRegionId): mixed {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getFolderOptions')->willReturn([10 => 'Folder A']);
       $this->sessionDataMock->method('get')->willReturnMap([
         ['folderId', 10],

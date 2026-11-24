@@ -75,7 +75,7 @@ class ManageDrupalAccountsForm extends FormBase
       $form_state->set('reenter', TRUE);
       $form_state->set('page', 'displayUsers');
       
-      $county = $this->sessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCommittee();
       $form_state->set('county',$county);
       
       $users = $this->drupalUserObj->getUsers($county);
@@ -197,7 +197,7 @@ class ManageDrupalAccountsForm extends FormBase
         
         $user['password'] = $password;
         $currentValue = [];
-        $countyNames = $this->nlpConfigurationObj->getCountyNames();
+        $countyNames = $this->nlpConfigurationObj->getCommitteeNames();
         $form['edit_user'] = $this->displayUser($user,$currentValue,$countyNames);
         $currentValue['uid'] = $uid;
         

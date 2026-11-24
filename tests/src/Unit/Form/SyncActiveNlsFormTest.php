@@ -96,7 +96,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormNoCountyAddsWarningAndReturnsEmpty(): void {
       $messengerMock = $this->setupContainerWithMessenger();
       $messengerMock->expects($this->once())->method('addWarning');
-      $this->sessionDataMock->method('getCounty')->willReturn('');
+      $this->sessionDataMock->method('getCommittee')->willReturn('');
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
       $this->assertSame([], $result);
     }
@@ -106,7 +106,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormFolderNotFoundReturnsErrorMarkup(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([
         10 => 'Boulder_NLs',
         11 => 'Jefferson_NLs',
@@ -117,7 +117,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormFolderSuffixMustMatchExactly(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       // 'Denver_NLs_Extra' does not match 'Denver_NLs' exactly.
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs_Extra']);
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -129,7 +129,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoListsReturnsNoListsMarkup(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn([]);
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -141,7 +141,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormWithListsBuildsRadiosAndSubmit(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -150,7 +150,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormOptionsIncludeListNameAndCount(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -163,7 +163,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       // A default that isn't a saved list ID is what Drupal submits when no
       // list is chosen, and it then rejects it as "The submitted value 0 ...
       // is not allowed." instead of saying the field is required.
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -178,7 +178,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormPassesCorrectFolderIdToSavedLists(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([
         3 => 'Boulder_NLs',
         7 => 'Denver_NLs',
@@ -193,7 +193,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormStopsAtFirstMatchingFolder(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       // Two folders with the correct name — should stop at the first one (id=5).
       $this->foldersMock->method('getApiFolders')->willReturn([
         5 => 'Denver_NLs',
@@ -207,7 +207,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormAttachesRequiredLibraries(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -220,7 +220,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormAttachesCoreSingleSubmitGuard(): void {
       // core/drupal.form ignores a second submit with the same values, so a
       // double click on Synchronize can't hide the redirect to the batch page.
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -229,7 +229,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testAttachedNlpLibrariesAreDefined(): void {
       // An undefined library is skipped silently, so its CSS never loads.
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn($this->baseList());
       $result = $this->buildForm()->buildForm([], $this->buildFormStateMock());
@@ -243,7 +243,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormStoresListCountsForSubmit(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->foldersMock->method('getApiFolders')->willReturn([5 => 'Denver_NLs']);
       $this->savedListsMock->method('getSavedLists')->willReturn([
         100 => ['savedListId' => 100, 'name' => 'A', 'description' => '', 'listCount' => 9],

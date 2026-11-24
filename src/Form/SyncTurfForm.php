@@ -96,7 +96,7 @@ class SyncTurfForm extends FormBase {
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     if (empty($form_state->get('reenter'))) {
-      $county = $this->nlpSessionDataObj->getCounty();
+      $county = $this->nlpSessionDataObj->getCommittee();
       if(empty($county)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
@@ -218,7 +218,7 @@ class SyncTurfForm extends FormBase {
 
       case 'nl_search_by_name':
         $needle = $form_state->get('needle') ?? '';
-        $county = $this->nlpSessionDataObj->getCounty();
+        $county = $this->nlpSessionDataObj->getCommittee();
         $form['nl_select'] = [
           '#type' => 'fieldset',
           '#attributes' => ['class' => ['no-border-fieldset']],
@@ -644,7 +644,7 @@ class SyncTurfForm extends FormBase {
    */
   private function buildTurfFilter(bool $showLists): array
   {
-    $county = $this->nlpSessionDataObj->getCounty();
+    $county = $this->nlpSessionDataObj->getCommittee();
     $folderOptions = $this->foldersObj->getFolderOptions(0,$county);
     if(empty($folderOptions)) {return [];}
 

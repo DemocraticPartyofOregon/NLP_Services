@@ -103,7 +103,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoCountyAddsWarningAndReturnsEmptyArray(): void {
-      $this->tempStoreMock->method('get')->with('County')->willReturn('');
+      $this->tempStoreMock->method('get')->with('Committee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addWarning');
 
       $formState = $this->createMock(FormStateInterface::class);

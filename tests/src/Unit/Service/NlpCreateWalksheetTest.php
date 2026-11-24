@@ -103,7 +103,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     private function setupStandardConfigMocks(array $surveyResponses = [['name' => 'Yes'], ['name' => 'No']]): void {
-      $this->sessionMock->method('getCounty')->willReturn('Denver');
+      $this->sessionMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurf')->willReturn($this->baseTurf());
       $this->configMock->method('getElectionName')->willReturn('General 2024');
       $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');
@@ -256,7 +256,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testCreateWalksheetArrayOnlyMatchingContactResponsesIncluded(): void {
-      $this->sessionMock->method('getCounty')->willReturn('Denver');
+      $this->sessionMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurf')->willReturn($this->baseTurf());
       $this->configMock->method('getElectionName')->willReturn('General 2024');
       $this->configMock->method('getBallotDropDate')->willReturn('2024-10-15');

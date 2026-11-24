@@ -49,7 +49,7 @@ class ApiKeyVerification
       $apiKeys['State Committee'] = $apiCredentials;
     }
 
-    $committees = $this->nlpConfigurationObj->getCountyNames();
+    $committees = $this->nlpConfigurationObj->getCommitteeNames();
     foreach ($committees as $committee) {
       // The statewide 'State' entry uses the State Committee key.
       if ($committee == 'State') { continue; }

@@ -64,7 +64,7 @@ class DeleteDrupalAccountsForm extends FormBase
     if (empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
 
-      $county = $this->sessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCommittee();
       $form_state->set('county',$county);
 
       $form_state->set('page', 'displayUsers');

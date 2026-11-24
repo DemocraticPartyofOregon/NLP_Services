@@ -35,11 +35,11 @@ class TurfDeliveryMessageFormTest extends UnitTestCase {
     parent::setUp();
 
     $this->nlpConfigurationMock = $this->createMock(NlpConfiguration::class);
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['TestCounty']);
+    $this->nlpConfigurationMock->method('getCommitteeNames')->willReturn(['TestCounty']);
     $this->nlpConfigurationMock->method('getStateName')->willReturn('Oregon');
 
     $this->sessionDataMock = $this->createMock(NlpSessionData::class);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
 
     $this->turfMsgMock    = $this->createMock(NlpTurfDeliveryMessage::class);
     $this->drupalUserMock = $this->createMock(DrupalUser::class);

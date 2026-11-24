@@ -82,7 +82,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   private function configureStandardBuildMocks(string $county = 'TestCounty'): void {
-    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->nlsMock->method('getHdList')->willReturn(['1', '2']);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '1', '2']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -138,7 +138,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   public function testBuildFormAddsWarningAndReturnsEmptyWhenCountyIsEmpty(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
     $this->messengerMock->expects($this->once())->method('addWarning');
 
     $result = $this->buildFormInstance()->buildForm([], new FormState());
@@ -147,7 +147,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
-    $this->sessionDataMock->expects($this->never())->method('getCounty');
+    $this->sessionDataMock->expects($this->never())->method('getCommittee');
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
@@ -186,7 +186,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   public function testBuildFormFiltersCoordinatorsByHdWhenNotAll(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn(['1', '2']);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All', '1', '2']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(1);
@@ -215,7 +215,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   public function testBuildFormExcludesAssignedCoordinatorsFromUnassignedList(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
@@ -269,7 +269,7 @@ class RemoveCoordinatorRoleFromTest extends UnitTestCase {
   }
 
   public function testBuildFormEnrichesAssignedCoordinatorsWithDrupalUserData(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn(['All']);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);

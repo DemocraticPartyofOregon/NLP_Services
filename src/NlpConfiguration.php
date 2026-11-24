@@ -242,26 +242,29 @@ class NlpConfiguration
   }
 
   /**
-   * getCountyNames
+   * getCommitteeNames
    *
-   * Get the names of the counties in the state. This text is configured in the election setup.
+   * Get the names of the VoteBuilder committees that have an API key, other
+   * than the State Committee.  In Oregon each committee is a county.  The
+   * list is saved when the API keys are configured, still under the
+   * nlpservices-county-names config key.
    *
    * @return array
-   *   Returns an array of county names.
+   *   Returns an array of committee names.
    */
-  public function getCountyNames(): array
+  public function getCommitteeNames(): array
   {
-    $counties = $this->nlpConfig->get('nlpservices-county-names');
-    if (empty($counties)) {
+    $committees = $this->nlpConfig->get('nlpservices-county-names');
+    if (empty($committees)) {
       return [];
     }
     // V7_2_1 stored a map of 'State' => state name and county => HD list.
     // nlpservices_update_10005() converts it; until then, use the keys.
-    if (!array_is_list($counties)) {
-      unset($counties['State']);
-      return array_map('strval', array_keys($counties));
+    if (!array_is_list($committees)) {
+      unset($committees['State']);
+      return array_map('strval', array_keys($committees));
     }
-    return $counties;
+    return $committees;
   }
 
   /**

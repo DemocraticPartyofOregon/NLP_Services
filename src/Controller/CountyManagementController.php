@@ -42,7 +42,7 @@ class CountyManagementController extends ControllerBase {
    */
   public function manage_county(): array
   {
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     if(empty($county)) {
       $this->messenger()->addWarning($this->t('The county is not specified. Please set the County field in your user login record.'));
     }

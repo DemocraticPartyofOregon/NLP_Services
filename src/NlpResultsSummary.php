@@ -136,7 +136,7 @@ class NlpResultsSummary
     if ($this->drupalUser->isNlpAdminUser()) {
       return $this->votersObj->getParticipatingCounties();
     }
-    $county = $this->sessionObj->getCounty();
+    $county = $this->sessionObj->getCommittee();
     return empty($county) ? [] : [$county];
   }
 

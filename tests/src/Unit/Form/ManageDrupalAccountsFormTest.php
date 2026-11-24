@@ -99,7 +99,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   }
 
   private function configureDisplayUsersMocks(string $county = 'TestCounty'): void {
-    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
@@ -166,7 +166,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormSkipsInitialisationWhenReenterAlreadySet(): void {
-    $this->sessionDataMock->expects($this->never())->method('getCounty');
+    $this->sessionDataMock->expects($this->never())->method('getCommittee');
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
@@ -185,7 +185,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormReturnsEmptyArrayAndAddsWarningWhenCountyEmpty(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
     $this->drupalUserMock->method('getUsers')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -229,7 +229,7 @@ class ManageDrupalAccountsFormTest extends UnitTestCase {
 
     $this->drupalUserMock->method('getUsers')->willReturn($users);
     $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);

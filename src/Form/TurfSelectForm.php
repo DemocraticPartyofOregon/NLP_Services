@@ -56,7 +56,7 @@ class TurfSelectForm extends FormBase
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
     $messenger = Drupal::messenger();
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     $form_state->set('county',$county);
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'];

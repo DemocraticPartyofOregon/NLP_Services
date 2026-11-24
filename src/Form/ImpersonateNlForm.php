@@ -56,7 +56,7 @@ class ImpersonateNlForm extends FormBase
    */
   public function buildForm(array $form, FormStateInterface $form_state): array
   {
-    $county = $this->nlpSessionDataObj->getCounty();
+    $county = $this->nlpSessionDataObj->getCommittee();
     if (empty($county)) {
       $this->messenger()->addWarning($this->t('The county is not specified. Use the "Manage County" tab
         to select a county.'));

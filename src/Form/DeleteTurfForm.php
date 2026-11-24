@@ -83,7 +83,7 @@ class DeleteTurfForm extends FormBase
     $form['#attached']['library'][] = 'nlpservices/hint-note';
 
     if (empty($form_state->get('reenter'))) {
-      $county = $this->nlpSessionDataObj->getCounty();
+      $county = $this->nlpSessionDataObj->getCommittee();
       if(empty($county)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));

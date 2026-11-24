@@ -72,7 +72,7 @@ class RemoveCoordinatorRoleFrom extends FormBase
     if(empty($form_state->get('reenter'))) {
       $form_state->set('reenter', TRUE);
       $form_state->set('scope','unknown');
-      $county = $this->sessionDataObj->getCounty();
+      $county = $this->sessionDataObj->getCommittee();
       if(empty($county)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));

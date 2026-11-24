@@ -78,7 +78,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormFirstEntryLoadsCountyFromTempstore(): void {
       $this->tempStoreMock->expects($this->once())
         ->method('get')
-        ->with('County')
+        ->with('Committee')
         ->willReturn('Denver');
 
       $this->legFixesMock->method('getLegFixes')->willReturn([]);

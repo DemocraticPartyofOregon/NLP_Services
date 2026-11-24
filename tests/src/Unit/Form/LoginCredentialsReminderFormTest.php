@@ -100,7 +100,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormFirstEntryNoCountyAddsWarningAndReturnsEmptyArray(): void {
-      $this->nlpSessionDataMock->method('getCounty')->willReturn('');
+      $this->nlpSessionDataMock->method('getCommittee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addWarning');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -118,7 +118,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormFirstEntryPrependsAllWhenUserCountBelowMax(): void {
       $users = [1 => $this->sampleUser(1)];
 
-      $this->nlpSessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->nlpSessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->nlpSessionDataMock->method('getSavedHdIndex')->willReturn(0);
       $this->drupalUserMock->method('getUsers')->willReturn($users);
       $this->searchBarMock->method('searchBar')->willReturn([]);

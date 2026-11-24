@@ -274,7 +274,7 @@ sent.  There is no need to report this an additional time.</p>',
     if ($this->reportsObj->voterSentPostcard($vanid)) {
       return FALSE;
     }
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
 
     // Get the canvass response codes for the Postcard contact method.
     $canvassResponseCodes = $this->configurationObj->getCanvassResponseCodes();

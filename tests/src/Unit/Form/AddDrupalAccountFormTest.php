@@ -81,7 +81,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormAddUserNoCountyAddsWarningAndOmitsNeedle(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('');
+      $this->sessionDataMock->method('getCommittee')->willReturn('');
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->messengerMock->expects($this->once())->method('addWarning');
 
@@ -101,7 +101,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormAddUserWithCountyIncludesNeedleAndSubmit(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -121,7 +121,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterSkipsSessionDataCountyCall(): void {
-      $this->sessionDataMock->expects($this->never())->method('getCounty');
+      $this->sessionDataMock->expects($this->never())->method('getCommittee');
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->willReturnMap([

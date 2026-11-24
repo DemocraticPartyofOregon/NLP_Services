@@ -409,7 +409,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
 
   public function testSubmitFormCallsReportPostcardMailedForEachCheckedVoter(): void {
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 99]);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->configurationMock->method('getCanvassResponseCodes')
       ->willReturn($this->baseCanvassResponseCodes());
@@ -472,7 +472,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testReportPostcardMailedCallsSetNlReportWithCorrectData(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->configurationMock->method('getCanvassResponseCodes')
       ->willReturn($this->baseCanvassResponseCodes());
@@ -503,7 +503,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   }
 
   public function testReportPostcardMailedCallsReportSurveyResponseWithCorrectData(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->configurationMock->method('getCanvassResponseCodes')
       ->willReturn($this->baseCanvassResponseCodes());
@@ -529,7 +529,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   }
 
   public function testReportPostcardMailedUpdatesNlReportIndexOnTurfVoter(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->configurationMock->method('getCanvassResponseCodes')
       ->willReturn($this->baseCanvassResponseCodes());
@@ -557,7 +557,7 @@ class DataEntryPostcardsFormTest extends UnitTestCase {
   }
 
   public function testReportPostcardMailedMarksNlAsHavingReportedResults(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturn(7);
     $this->configurationMock->method('getCanvassResponseCodes')
       ->willReturn($this->baseCanvassResponseCodes());

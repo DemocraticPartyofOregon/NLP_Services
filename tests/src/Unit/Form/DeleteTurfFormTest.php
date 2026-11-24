@@ -124,7 +124,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoCountyAddsWarningAndReturnsEmptyArray(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('');
+      $this->sessionDataMock->method('getCommittee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addWarning');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -139,7 +139,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoTurfsReturnsNoTurfMarkup(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01', 2 => '02']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(10); // < TURF_ALL_MAX → prepends 'All'
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
@@ -161,7 +161,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormNoTurfsStillShowsHdSelector(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn(['0', '01', '02']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(500); // >= TURF_ALL_MAX → no 'All'
       $this->sessionDataMock->method('getSavedHd')->willReturn(0);
@@ -187,7 +187,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormWithTurfsIncludesSubmitButton(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
@@ -215,7 +215,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormWithSortQueryCallsSortTurfTable(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
@@ -240,7 +240,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     }
 
     public function testBuildFormWithoutSortQueryDoesNotSort(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
@@ -267,7 +267,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormReenterSkipsCountySetup(): void {
-      $this->sessionDataMock->expects($this->never())->method('getCounty');
+      $this->sessionDataMock->expects($this->never())->method('getCommittee');
       $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       // No turfs → no-turf markup returned.
       $this->turfsMock->method('getTurfs')->willReturn([]);
@@ -288,7 +288,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     // -------------------------------------------------------------------------
 
     public function testBuildFormWithNeedleCallsSearchInfoArray(): void {
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
       $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);

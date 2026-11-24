@@ -102,7 +102,7 @@ class NlpDataEntryPrint
   {
     $messenger = Drupal::messenger();
 
-    $county = $this->sessionData->getCounty();
+    $county = $this->sessionData->getCommittee();
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'] ?? 0;
 

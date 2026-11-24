@@ -187,7 +187,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testGetCountyOptionsLimitsNonAdminToSessionCounty(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
       $this->votersMock->expects($this->never())->method('getParticipatingCounties');
 
       $this->assertSame(['Lane'], $this->buildService()->getCountyOptions());
@@ -260,7 +260,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testAllCountiesRequiresAdmin(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
 
       $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY);
 
@@ -282,7 +282,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testOneCountyAllHdsHasCountyThenEachHd(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
       $this->turfsMock->method('getTurfHdNames')->with('Lane')->willReturn([7 => 7, 8 => 8]);
       $this->crosstabsMock->method('getCountsByCounty')->willReturn([
         'ALL' => ['regVoters' => 50, 'regVoted' => 25],
@@ -304,7 +304,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testOneHdHasOnlyThatHd(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
       $this->turfsMock->method('getTurfHdNames')->willReturn([7 => 7, 8 => 8]);
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
       $this->turfsMock->expects($this->once())->method('countOfNlsWithTurfsInHd')->with('Lane', 7)->willReturn(2);
@@ -318,7 +318,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testOtherCountyIsRejectedForNonAdmin(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
 
       $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Benton');
 
@@ -327,7 +327,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testHdSectionUsesHdCountsWhenImported(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Lane');
+      $this->sessionMock->method('getCommittee')->willReturn('Lane');
       $this->turfsMock->method('getTurfHdNames')->willReturn([7 => 7]);
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
       $this->crosstabsMock->expects($this->once())->method('getCountsByHd')->with('Lane', 7)->willReturn([
@@ -345,7 +345,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testHdMissingFromAFileWithHdsShowsZeroes(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionMock->method('getCounty')->willReturn('Levy');
+      $this->sessionMock->method('getCommittee')->willReturn('Levy');
       $this->turfsMock->method('getTurfHdNames')->willReturn([10 => 10, 43 => 43]);
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
       $this->crosstabsMock->method('getCountsByHd')->willReturn([]);

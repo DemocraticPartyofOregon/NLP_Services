@@ -68,7 +68,7 @@ class ExportNlsStatusForm extends FormBase
       if ($this->drupalUserObj->isNlpAdminUser()) {
         // An admin can export all counties or just one.
         $countyOptions = ['all' => $this->t('All counties')];
-        foreach ($this->nlpConfigurationObj->getCountyNames() as $countyName) {
+        foreach ($this->nlpConfigurationObj->getCommitteeNames() as $countyName) {
           $countyOptions[$countyName] = $countyName;
         }
         $county = $form_state->getValue('countySelect') ?? 'all';
@@ -83,7 +83,7 @@ class ExportNlsStatusForm extends FormBase
           ],
         ];
       } else {
-        $county = $this->nlpSessionObj->getCounty();
+        $county = $this->nlpSessionObj->getCommittee();
         if (empty($county)) {
           $this->messenger()->addError($this->t('The county is missing'));
           return [];

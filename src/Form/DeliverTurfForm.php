@@ -114,7 +114,7 @@ class DeliverTurfForm extends FormBase
 
     if (empty($form_state->get('reenter'))) {
 
-      $county = $this->nlpSessionDataObj->getCounty();
+      $county = $this->nlpSessionDataObj->getCommittee();
       if(empty($county)) {
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return [];
@@ -340,7 +340,7 @@ class DeliverTurfForm extends FormBase
   public function notifyUserCredentials(array $turfChoice,string $note): bool
   {
     $messenger = Drupal::messenger();
-    $county = $this->nlpSessionDataObj->getCounty();
+    $county = $this->nlpSessionDataObj->getCommittee();
     $turfPrecinct = ltrim($turfChoice['turfPrecinct'],"0");
     $region = [
       'hd'=>$turfChoice['turfHd'],
@@ -402,7 +402,7 @@ class DeliverTurfForm extends FormBase
   public function updateMinivanInfo(int $turfIndex): array
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
-    $county = $this->nlpSessionDataObj->getCounty();
+    $county = $this->nlpSessionDataObj->getCommittee();
     $turfArray[$turf['turfIndex']] = $turf;
     $this->foldersObj->updateMinivanInfo($county, $turfArray);
     $turf = $turfArray[$turfIndex];

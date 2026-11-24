@@ -100,49 +100,49 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCounty()
+    // getCommittee()
     // -------------------------------------------------------------------------
 
-    public function testGetCountyLoadsFromUserWhenSessionEmpty(): void {
+    public function testGetCommitteeLoadsFromUserWhenSessionEmpty(): void {
       $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Multnomah']);
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $service = $this->buildService();
 
-      $county = $service->getCounty();
+      $committee = $service->getCommittee();
 
-      $this->assertSame('Multnomah', $county);
+      $this->assertSame('Multnomah', $committee);
     }
 
-    public function testGetCountyReturnsStoredCountyForAdmin(): void {
+    public function testGetCommitteeReturnsStoredCommitteeForAdmin(): void {
       $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Multnomah']);
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
       $service = $this->buildService();
-      $service->set('County', 'Clackamas');
+      $service->set('Committee', 'Clackamas');
 
-      $county = $service->getCounty();
+      $committee = $service->getCommittee();
 
-      $this->assertSame('Clackamas', $county);
+      $this->assertSame('Clackamas', $committee);
     }
 
-    public function testGetCountyOverridesStoredCountyForNonAdminWhenMismatch(): void {
+    public function testGetCommitteeOverridesStoredCommitteeForNonAdminWhenMismatch(): void {
       $this->drupalUserMock->method('getCurrentUser')->willReturn(['county' => 'Washington']);
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $service = $this->buildService();
-      $service->set('County', 'Clackamas');
+      $service->set('Committee', 'Clackamas');
 
-      $county = $service->getCounty();
+      $committee = $service->getCommittee();
 
-      $this->assertSame('Washington', $county);
+      $this->assertSame('Washington', $committee);
     }
 
-    public function testGetCountyReturnsEmptyStringWhenUserHasNoCounty(): void {
+    public function testGetCommitteeReturnsEmptyStringWhenUserHasNoCommittee(): void {
       $this->drupalUserMock->method('getCurrentUser')->willReturn([]);
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $service = $this->buildService();
 
-      $county = $service->getCounty();
+      $committee = $service->getCommittee();
 
-      $this->assertSame('', $county);
+      $this->assertSame('', $committee);
     }
 
     // -------------------------------------------------------------------------

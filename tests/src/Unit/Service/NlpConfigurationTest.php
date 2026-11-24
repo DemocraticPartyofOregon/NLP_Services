@@ -257,28 +257,28 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyNames
+    // getCommitteeNames
     // -------------------------------------------------------------------------
 
-    public function testGetCountyNamesReturnsEmptyWhenNotSet(): void {
+    public function testGetCommitteeNamesReturnsEmptyWhenNotSet(): void {
       $this->nlpConfigMock->method('get')->willReturn(null);
-      $this->assertSame([], $this->buildConfiguration()->getCountyNames());
+      $this->assertSame([], $this->buildConfiguration()->getCommitteeNames());
     }
 
-    public function testGetCountyNamesReturnsIndexedArray(): void {
+    public function testGetCommitteeNamesReturnsIndexedArray(): void {
       $counties = ['Multnomah', 'Washington'];
       $this->setupNlpConfigGet([
         ['nlpservices_canvass_response_codes', null],
         ['nlpservices-county-names', $counties],
       ]);
-      $this->assertSame($counties, $this->buildConfiguration()->getCountyNames());
+      $this->assertSame($counties, $this->buildConfiguration()->getCommitteeNames());
     }
 
     /**
      * A site carried over from V7_2_1 can still have the old map until
      * nlpservices_update_10005() runs.
      */
-    public function testGetCountyNamesReturnsKeysOfV721Map(): void {
+    public function testGetCommitteeNamesReturnsKeysOfV721Map(): void {
       $this->setupNlpConfigGet([
         ['nlpservices_canvass_response_codes', null],
         ['nlpservices-county-names', [
@@ -287,7 +287,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           'Washington' => ['HD 26'],
         ]],
       ]);
-      $this->assertSame(['Multnomah', 'Washington'], $this->buildConfiguration()->getCountyNames());
+      $this->assertSame(['Multnomah', 'Washington'], $this->buildConfiguration()->getCommitteeNames());
     }
 
     // -------------------------------------------------------------------------

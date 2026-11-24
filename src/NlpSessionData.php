@@ -41,26 +41,28 @@ class NlpSessionData
   }
 
   /**
-   * getCounty
-   * 
-   * Returns the county for the current user.  An admin can change the county they
-   * are working in, which permits them to support any county.
+   * getCommittee
+   *
+   * Returns the VoteBuilder committee the current user is working in.  It
+   * starts as the committee on the user's account (still stored in
+   * field_county).  An admin can change the committee they are working in,
+   * which permits them to support any committee.
    *
    * @return string
    */
-  public function getCounty(): string
+  public function getCommittee(): string
   {
-    $county = (string) $this->get('County');
+    $committee = (string) $this->get('Committee');
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = $this->drupalUser->isNlpAdminUser();
-    if(empty($county)) {
-      $county = empty($currentUser['county']) ? '' : $currentUser['county'];
-      $this->set('County', $county);
-    } elseif(!$admin && $county != $currentUser['county']) {
-      $county = $currentUser['county'];
-      $this->set('County', $county);
+    if(empty($committee)) {
+      $committee = empty($currentUser['county']) ? '' : $currentUser['county'];
+      $this->set('Committee', $committee);
+    } elseif(!$admin && $committee != $currentUser['county']) {
+      $committee = $currentUser['county'];
+      $this->set('Committee', $committee);
     }
-    return $county;
+    return $committee;
   }
 
   /**

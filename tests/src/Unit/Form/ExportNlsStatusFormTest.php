@@ -116,7 +116,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormNonAdminNoCountyAddsErrorAndReturnsEmpty(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionDataMock->method('getCounty')->willReturn('');
+      $this->sessionDataMock->method('getCommittee')->willReturn('');
       $this->messengerMock->expects($this->once())->method('addError');
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -132,7 +132,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormNonAdminWithCountyShowsDistrictSelectAndSave(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
-      $this->sessionDataMock->method('getCounty')->willReturn('Denver');
+      $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->nlsMock->method('getHdList')->with('Denver')->willReturn(['HD 01', 'HD 02']);
 
       $formState = $this->createMock(FormStateInterface::class);
@@ -150,7 +150,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormAdminShowsCountySelectWithAllOption(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-      $this->configurationMock->method('getCountyNames')->willReturn(['Denver', 'Boulder']);
+      $this->configurationMock->method('getCommitteeNames')->willReturn(['Denver', 'Boulder']);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('get')->with('reenter')->willReturn(NULL);
@@ -168,7 +168,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
 
     public function testBuildFormAdminWithCountySelectedShowsDistrictSelect(): void {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(TRUE);
-      $this->configurationMock->method('getCountyNames')->willReturn(['Denver']);
+      $this->configurationMock->method('getCommitteeNames')->willReturn(['Denver']);
       $this->nlsMock->method('getHdList')->with('Denver')->willReturn([1, 2]);
 
       $formState = $this->createMock(FormStateInterface::class);

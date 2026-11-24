@@ -72,8 +72,8 @@ class ChangeCountyFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormOptionsAreKeyedByCountyName(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('Hinds');
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['Hinds', 'Madison']);
+    $this->sessionDataMock->method('getCommittee')->willReturn('Hinds');
+    $this->nlpConfigurationMock->method('getCommitteeNames')->willReturn(['Hinds', 'Madison']);
 
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -83,8 +83,8 @@ class ChangeCountyFormTest extends UnitTestCase {
   }
 
   public function testBuildFormDefaultsToCurrentCounty(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('Madison');
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['Hinds', 'Madison']);
+    $this->sessionDataMock->method('getCommittee')->willReturn('Madison');
+    $this->nlpConfigurationMock->method('getCommitteeNames')->willReturn(['Hinds', 'Madison']);
 
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -93,8 +93,8 @@ class ChangeCountyFormTest extends UnitTestCase {
   }
 
   public function testBuildFormUnknownCountyHasNoDefault(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn(['Hinds', 'Madison']);
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
+    $this->nlpConfigurationMock->method('getCommitteeNames')->willReturn(['Hinds', 'Madison']);
 
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -103,8 +103,8 @@ class ChangeCountyFormTest extends UnitTestCase {
   }
 
   public function testBuildFormHandlesNoConfiguredCounties(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
-    $this->nlpConfigurationMock->method('getCountyNames')->willReturn([]);
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
+    $this->nlpConfigurationMock->method('getCommitteeNames')->willReturn([]);
 
     $form = $this->buildFormInstance()->buildForm([], new FormState());
 
@@ -127,7 +127,7 @@ class ChangeCountyFormTest extends UnitTestCase {
     $this->buildFormInstance()->submitForm($form, $formState);
 
     $this->assertSame(
-      ['County' => 'Madison', 'currentFolderId' => 0, 'currentHd' => 0, 'currentPct' => ''],
+      ['Committee' => 'Madison', 'currentFolderId' => 0, 'currentHd' => 0, 'currentPct' => ''],
       $stored
     );
   }

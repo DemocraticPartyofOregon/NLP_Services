@@ -86,7 +86,7 @@ class SyncActiveNlsForm extends FormBase
     // a second POST that hides the first one's redirect to the batch page.
     $form['#attached']['library'][] = 'core/drupal.form';
 
-    $county = $this->nlpSessionObj->getCounty();
+    $county = $this->nlpSessionObj->getCommittee();
     if (empty($county)) {
       $messenger = Drupal::messenger();
       $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));

@@ -389,7 +389,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->apiKeyMock->expects($this->atLeastOnce())
       ->method('createKey')
@@ -414,7 +414,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('old-value');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->apiKeyMock->expects($this->atLeastOnce())
       ->method('deleteKey')
@@ -443,7 +443,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn(['Benton']);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn(['Benton']);
     $this->apiKeyMock->method('createKey')->willReturn(TRUE);
     $this->apiKeyMock->method('createKeyWithValues')->willReturn(TRUE);
 
@@ -477,7 +477,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $configMock = $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $configMock->expects($this->atLeastOnce())
       ->method('set')
@@ -505,7 +505,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->folderSetupMock->expects($this->once())
       ->method('initializeFolders')
@@ -531,7 +531,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->nlpConfigMock->expects($this->once())
       ->method('setStateName')
@@ -554,7 +554,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->apiKeyMock->method('createKeyWithValues')
       ->with($this->logicalNot($this->identicalTo('NoKeyCounty')), $this->anything(), $this->anything());
@@ -579,7 +579,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
     $this->addConfigFactoryToContainer();
     $this->apiKeyMock->method('getKey')->willReturn('');
     $this->apiKeyMock->method('getKeyValues')->willReturn([]);
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
 
     $this->apiKeyMock->method('createKeyWithValues')->willReturn(TRUE);
 
@@ -600,7 +600,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
 
   public function testSubmitFormReportsCommitteeKeysThatFailToSave(): void {
     $this->addConfigFactoryToContainer();
-    $this->nlpConfigMock->method('getCountyNames')->willReturn([]);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn([]);
     $this->apiKeyMock->method('createKeyWithValues')
       ->willReturnCallback(fn(string $id) => $id !== 'Multnomah');
 
@@ -631,7 +631,7 @@ class ApiConfigurationFormTest extends UnitTestCase {
    */
   public function testSubmitFormStopsWhenSecretKeyFailsToSave(): void {
     $this->addConfigFactoryToContainer();
-    $this->nlpConfigMock->method('getCountyNames')->willReturn(['Benton']);
+    $this->nlpConfigMock->method('getCommitteeNames')->willReturn(['Benton']);
     $this->apiKeyMock->method('createKey')->willReturn(FALSE);
     $this->apiKeyMock->method('createKeyWithValues')->willReturn(TRUE);
 

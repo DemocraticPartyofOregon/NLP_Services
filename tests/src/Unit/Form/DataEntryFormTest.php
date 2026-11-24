@@ -146,7 +146,7 @@ class DataEntryFormTest extends UnitTestCase {
    * Use only in buildForm/initializeDataReporting tests — not in submitForm tests.
    */
   protected function configureValidSession(int $mcid = 101, int $turfIndex = 42): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn(['HD1' => 'HD-1']);
     $this->turfsMock->method('getTurf')->willReturn(['turfIndex' => $turfIndex]);
     $this->drupalUserMock->method('getCurrentUser')->willReturn([
@@ -185,7 +185,7 @@ class DataEntryFormTest extends UnitTestCase {
     $formState->set('voterArrays', []);
 
     $this->sessionDataMock->method('get')->willReturn(NULL);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getNlById')->willReturn([
       'firstName' => 'Jane', 'lastName' => 'Doe', 'nickname' => 'Jane',
     ]);
@@ -218,7 +218,7 @@ class DataEntryFormTest extends UnitTestCase {
     $formState->setTriggeringElement(['#name' => 'save_reports', '#value' => '']);
 
     $this->sessionDataMock->method('get')->willReturn(NULL);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlsMock->method('getNlById')->willReturn([
       'firstName' => 'Jane', 'lastName' => 'Doe', 'nickname' => 'Jane',
     ]);
@@ -244,7 +244,7 @@ class DataEntryFormTest extends UnitTestCase {
   // ---------------------------------------------------------------------------
 
   public function testInitializeDataReportingReturnsFalseWhenMcidMissing(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => NULL]);
     $this->messengerMock->expects($this->once())->method('addWarning');
@@ -255,7 +255,7 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testInitializeDataReportingReturnsFalseWhenNoTurfAssigned(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 101]);
     $this->sessionDataMock->method('get')->willReturn(NULL);
@@ -268,7 +268,7 @@ class DataEntryFormTest extends UnitTestCase {
   }
 
   public function testInitializeDataReportingReturnsFalseWhenNlNotFound(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => 101]);
     $this->sessionDataMock->method('get')->willReturn(NULL);
@@ -301,7 +301,7 @@ class DataEntryFormTest extends UnitTestCase {
   // ---------------------------------------------------------------------------
 
   public function testBuildFormReturnsEmptyFormWhenInitializeFails(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->turfsMock->method('getTurfHD')->willReturn([]);
     $this->drupalUserMock->method('getCurrentUser')->willReturn(['mcid' => NULL]);
 
@@ -918,7 +918,7 @@ class DataEntryFormTest extends UnitTestCase {
 
   public function testSubmitFormPostcardSelectProcessesOnlyCheckedVoters(): void {
     $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(5);
     $this->nlpConfigurationMock->method('getContactId')->willReturn(3);
     $this->votersMock->method('getVoterCd')->with(111111)->willReturn(4);
@@ -944,7 +944,7 @@ class DataEntryFormTest extends UnitTestCase {
 
   public function testSubmitFormPostcardSelectReportsDateChosenOnPostcardPage(): void {
     $this->nlsMock->method('getNlById')->willReturn(['nickname' => 'Jane', 'lastName' => 'Doe']);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('get')->willReturnMap([['canvassDate', '2026-10-12']]);
     $this->nlpConfigurationMock->method('getResponseId')->willReturn(5);
     $this->nlpConfigurationMock->method('getContactId')->willReturn(3);

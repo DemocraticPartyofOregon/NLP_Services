@@ -63,7 +63,7 @@ class TurfDeliveryMessageForm extends FormBase
         $form_state->set('page', 'county_select');
         $form_state->set('admin', TRUE);
       } else {
-        $county = $this->sessionData->getCounty();
+        $county = $this->sessionData->getCommittee();
         $form_state->set('page', 'edit_county');
         $form_state->set('admin', FALSE);
         $form_state->set('county_selected', $county);
@@ -217,7 +217,7 @@ class TurfDeliveryMessageForm extends FormBase
   {
     $stateName = $this->nlpConfiguration->getStateName() ?: 'State';
     $options = [self::STATE_OPTION => $stateName . ' (default for all counties)'];
-    foreach ($this->nlpConfiguration->getCountyNames() as $countyName) {
+    foreach ($this->nlpConfiguration->getCommitteeNames() as $countyName) {
       $options[$countyName] = $countyName;
     }
     return $options;

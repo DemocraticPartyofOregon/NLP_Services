@@ -63,7 +63,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testApiKeyVerificationReturnsEmptyWhenNoKeysFound(): void {
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn([]);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
 
       $this->assertSame([], $this->buildService()->apiKeyVerification());
     }
@@ -71,7 +71,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testApiKeyVerificationIncludesStateCommitteeResult(): void {
       $stateKey = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($stateKey);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->stubAllOk();
 
       $results = $this->buildService()->apiKeyVerification();
@@ -83,7 +83,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testApiKeyVerificationIncludesOneResultPerCommittee(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn(['Benton', 'Clackamas']);
+      $this->configurationMock->method('getCommitteeNames')->willReturn(['Benton', 'Clackamas']);
       $this->stubAllOk();
 
       $results = $this->buildService()->apiKeyVerification();
@@ -97,7 +97,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         ->willReturnCallback(function (string $id) use ($key): array {
           return $id === 'State Committee' ? $key : [];
         });
-      $this->configurationMock->method('getCountyNames')->willReturn(['Benton', 'Clackamas']);
+      $this->configurationMock->method('getCommitteeNames')->willReturn(['Benton', 'Clackamas']);
       $this->stubAllOk();
 
       $results = $this->buildService()->apiKeyVerification();
@@ -113,7 +113,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
           $requestedIds[] = $id;
           return $key;
         });
-      $this->configurationMock->method('getCountyNames')->willReturn(['State', 'Benton']);
+      $this->configurationMock->method('getCommitteeNames')->willReturn(['State', 'Benton']);
       $this->stubAllOk();
 
       $results = $this->buildService()->apiKeyVerification();
@@ -129,7 +129,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testMyCampaignIsOkWhenFolderNameContainsNls(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')
         ->willReturnCallback(fn(string $c, int $db) => $db === 1 ? [10 => 'State_NLs'] : []);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
@@ -142,7 +142,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testMyCampaignIsFailWhenFolderListIsEmpty(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
 
@@ -154,7 +154,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testMyCampaignIsFailWhenFolderListHasNoNlsEntry(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')
         ->willReturnCallback(fn(string $c, int $db) => $db === 1 ? [10 => 'Some Other Folder'] : []);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
@@ -168,7 +168,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       // An indexed [0] key signals an error response from the API, not a real folder list.
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')
         ->willReturnCallback(fn(string $c, int $db) => $db === 1 ? ['0' => 'folder is empty'] : []);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
@@ -185,7 +185,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testVoterFileIsOkWhenFoldersReturnedWithoutErrorPayload(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')
         ->willReturnCallback(fn(string $c, int $db) => $db === 0 ? [11 => 'TEST VoterFile'] : []);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
@@ -198,7 +198,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testVoterFileIsUnsureWhenApiReturnsErrorPayload(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')
         ->willReturnCallback(fn(string $c, int $db) => $db === 0 ? ['0' => 'folder is empty'] : []);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
@@ -211,7 +211,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testVoterFileIsFailWhenFolderListIsEmpty(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
 
@@ -227,7 +227,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testNlsIsOkWhenApiKeyVerifyReturnsOk(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('ok');
 
@@ -237,7 +237,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testNlsIsOkWhenApiKeyVerifyReturnsInvalidMcid(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('Invalid mcid');
 
@@ -247,7 +247,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testNlsIsFailWhenApiKeyVerifyReturnsFail(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiFoldersMock->method('getApiFolders')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
 
@@ -261,7 +261,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testStateCommitteePassesEmptyStringToGetApiFolders(): void {
       $key = ['API Key' => 'key', 'Url' => 'api.example.com', 'App Name' => 'app'];
       $this->apiKeyManagementMock->method('getKeyValues')->willReturn($key);
-      $this->configurationMock->method('getCountyNames')->willReturn([]);
+      $this->configurationMock->method('getCommitteeNames')->willReturn([]);
       $this->apiNlsMock->method('apiKeyVerify')->willReturn('fail');
 
       $capturedCommittees = [];

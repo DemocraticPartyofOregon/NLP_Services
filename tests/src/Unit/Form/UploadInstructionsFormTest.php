@@ -80,7 +80,7 @@ class UploadInstructionsFormTest extends UnitTestCase {
 
   private function stubCounty(string $county): void {
     $this->tempStoreMock->method('get')
-      ->with('County')
+      ->with('Committee')
       ->willReturn($county);
   }
 

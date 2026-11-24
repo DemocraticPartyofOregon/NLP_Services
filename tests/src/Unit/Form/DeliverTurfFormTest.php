@@ -145,7 +145,7 @@ class DeliverTurfFormTest extends UnitTestCase {
    * Configure the mocks common to a successful buildForm first render.
    */
   private function configureBuildFormMocks(string $county = 'TestCounty'): void {
-    $this->sessionDataMock->method('getCounty')->willReturn($county);
+    $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn(['HD1', 'HD2']);
@@ -172,7 +172,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testBuildFormReturnsEmptyAndWarnsWhenCountyMissing(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('');
+    $this->sessionDataMock->method('getCommittee')->willReturn('');
     $this->messengerMock->expects($this->once())->method('addWarning');
 
     $result = $this->buildFormInstance()->buildForm([], new FormState());
@@ -181,7 +181,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormReturnsEmptyAndErrorsWhenNoInstructions(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => ''], 'postcard' => ['fileName' => '']]);
     $this->messengerMock->expects($this->once())->method('addError');
@@ -242,7 +242,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormShowsHdSelectorAndNoTurfMarkupWhenHdHasNoTurfs(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn([3, 5]);
@@ -261,7 +261,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testBuildFormDoesNotQueryTurfsWhenSavedHdIsEmpty(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn([3]);
@@ -291,7 +291,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $allTurfs = [1 => ['turfIndex' => 1], 2 => ['turfIndex' => 2]];
     $filtered = [1 => ['turfIndex' => 1]];
 
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All']);
@@ -527,7 +527,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   // -------------------------------------------------------------------------
 
   public function testNotifyUserCredentialsReturnsFalseWhenNoCoordinator(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([]);
     $this->messengerMock->expects($this->once())->method('addError');
 
@@ -537,7 +537,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testNotifyUserCredentialsReturnsFalseWhenEmailFails(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->coordinatorsMock->method('getCoordinator')->willReturn([
       'firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com',
     ]);
@@ -551,7 +551,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testNotifyUserCredentialsReturnsTrueAndUpdatesStatusOnSuccess(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $coordinator = ['firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com'];
     $this->coordinatorsMock->method('getCoordinator')->willReturn($coordinator);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('Hello @nlpLogin @coordinatorContactInfo @plainNote');
@@ -571,7 +571,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   }
 
   public function testNotifyUserCredentialsPassesMinivanInfoWhenPresent(): void {
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $coordinator = ['firstName' => 'Alice', 'lastName' => 'Smith', 'phone' => '555-1111', 'email' => 'a@b.com'];
     $this->coordinatorsMock->method('getCoordinator')->willReturn($coordinator);
     $this->turfMsgMock->method('getTurfMsg')->willReturn('@nlpLogin @coordinatorContactInfo @plainNote @miniVanInfo');
@@ -598,7 +598,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   public function testUpdateMinivanInfoReturnsTurfFromGetTurf(): void {
     $turf = ['turfIndex' => 7, 'mcid' => 99, 'minivanNumber' => '', 'minivanCreateDate' => ''];
     $this->turfsMock->method('getTurf')->willReturn($turf);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->foldersMock->method('updateMinivanInfo');
 
     $result = $this->buildFormInstance()->updateMinivanInfo(7);
@@ -614,7 +614,7 @@ class DeliverTurfFormTest extends UnitTestCase {
       'minivanCreateDate' => '2026-05-01',
     ];
     $this->turfsMock->method('getTurf')->willReturn($turf);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->foldersMock->method('updateMinivanInfo');
     $this->turfsMock->expects($this->once())
       ->method('updateTurfFields')
@@ -626,7 +626,7 @@ class DeliverTurfFormTest extends UnitTestCase {
   public function testUpdateMinivanInfoSkipsUpdateTurfFieldsWhenNoMinivanNumber(): void {
     $turf = ['turfIndex' => 7, 'mcid' => 99, 'minivanNumber' => '', 'minivanCreateDate' => ''];
     $this->turfsMock->method('getTurf')->willReturn($turf);
-    $this->sessionDataMock->method('getCounty')->willReturn('TestCounty');
+    $this->sessionDataMock->method('getCommittee')->willReturn('TestCounty');
     $this->foldersMock->method('updateMinivanInfo');
     $this->turfsMock->expects($this->never())->method('updateTurfFields');
 

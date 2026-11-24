@@ -562,7 +562,7 @@ class DataEntryForm extends FormBase
       return;
     }
 
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     // Report with the date of the voter contact the NL chose, or today if none.
     if (empty($canvassDate)) {
       $canvassDate = date('Y-m-d');
@@ -1107,7 +1107,7 @@ not checked have already received a postcard for this election.</p></div>',
     if (!$this->claimSubmission($submissionKey)) {
       return;
     }
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     $contactMethodName = 'Postcard';
 
     $rid =$this->nlpConfigurationObj->getResponseId('Postcard','Mailed');
@@ -1156,7 +1156,7 @@ not checked have already received a postcard for this election.</p></div>',
   {
     $messenger = Drupal::messenger();
 
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     $form_state->set('county',$county);
 
     $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
@@ -1291,7 +1291,7 @@ not checked have already received a postcard for this election.</p></div>',
   function updateMinivanInfo(int $turfIndex): void
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
-    $county = $this->sessionDataObj->getCounty();
+    $county = $this->sessionDataObj->getCommittee();
     $turfArray[$turf['turfIndex']] = $turf;
     $this->mapRegionsObj->updateMinivanInfo($county, $turfArray);
 
