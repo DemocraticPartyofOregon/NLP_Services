@@ -903,7 +903,7 @@ class NlpResultsSummary
         $numberOfTurfs = $this->turfsObj->getCdTurfCount($value);
         break;
       case 'County':
-        $nlsParticipation = $this->nlsObj->getCountyNlsParticipation( $value );
+        $nlsParticipation = $this->nlsObj->getCommitteeNlsParticipation( $value );
         $participatingNls = $nlsParticipation['participatingNls'] ?? 0;
         $resultsReported = $nlsParticipation['resultsReported'] ?? 0;
         $numberOfTurfs = $this->turfsObj->getCommitteeTurfCount($value);

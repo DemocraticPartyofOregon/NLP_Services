@@ -27,7 +27,7 @@ class NlpCoordinators {
    * createCoordinator
    *
    * Create a coordinator in the database.
-   * The coordinator is identified by the county, hd, and precinct.
+   * The coordinator is identified by the committee, hd, and precinct.
    * The coordinator is assigned a unique index.
    *
    * @param array $req
@@ -48,16 +48,16 @@ class NlpCoordinators {
   /**
    * getCoordinators
    *
-   * Get all the assigned coordinators for a county.
+   * Get all the assigned coordinators for a committee.
    *
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  public function getCoordinators( string $county ): array
+  public function getCoordinators( string $committee ): array
   {
     $query = $this->connection->select(self::COORDINATOR_TBL, 'c');
     $query->fields('c');
-    $query->condition('county',$county);
+    $query->condition('county',$committee);
     try {
       $result = $query->execute();
     } catch (Exception $e) {
@@ -98,51 +98,51 @@ class NlpCoordinators {
   /**
    * getCoordinator
    *
-   * Get the coordinator for a county/hd/precinct.
-   * The coordinator is identified by the county, hd, and precinct.
+   * Get the coordinator for a committee/hd/precinct.
+   * The coordinator is identified by the committee, hd, and precinct.
    * The coordinator is assigned a unique index.
    *
-   * @param array $region - array with keys 'county', 'pct', 'hd'
-   * @return array - the coordinator for the NL based on the county/hd/precinct of the NL.
+   * @param array $location - array with keys 'county', 'pct', 'hd'
+   * @return array - the coordinator for the NL based on the committee/hd/precinct of the NL.
    */
-  public function getCoordinator( array $region ): array
+  public function getCoordinator( array $location ): array
   {
     return $this->getAssignedCoordinator([
-      'county'   => $region['county'],
-      'hd'       => $region['hd'],
-      'precinct' => $region['pct'],
+      'county'   => $location['county'],
+      'hd'       => $location['hd'],
+      'precinct' => $location['pct'],
     ]);
   }
 
   /**
    * getAssignedCoordinator
    *
-   * Get the coordinator for a county/hd/precinct.
-   * The coordinator is identified by the county, hd, and precinct.
+   * Get the coordinator for a committee/hd/precinct.
+   * The coordinator is identified by the committee, hd, and precinct.
    * The coordinator is assigned a unique index.
    *
    * @param array $nls - array with keys 'county', 'hd', 'precinct'
-   * @return array - the coordinator assigned to the NL's county/hd/precinct.
+   * @return array - the coordinator assigned to the NL's committee/hd/precinct.
    */
   public function getAssignedCoordinator( array $nls ): array
   {
     $hd = $nls['hd'];
     $precinct = $nls['precinct'];
-    $county = $nls['county'];
+    $committee = $nls['county'];
 
-    $coordinatorsInCounty = $this->getAllCoordinators($county);
-    if(empty($coordinatorsInCounty)) {return [];}
-    if(empty($coordinatorsInCounty[$county])) {
+    $coordinatorsInCommittee = $this->getAllCoordinators($committee);
+    if(empty($coordinatorsInCommittee)) {return [];}
+    if(empty($coordinatorsInCommittee[$committee])) {
       return [];
     }
-    $countyCoordinator = $coordinatorsInCounty[$county];
+    $committeeCoordinator = $coordinatorsInCommittee[$committee];
     $coordinator = [];
-    if(isset($countyCoordinator['pct'][$precinct])) {
-      $coordinator = $countyCoordinator['pct'][$precinct];
-    } elseif(isset($countyCoordinator['hd'][$hd])) {
-      $coordinator = $countyCoordinator['hd'][$hd];
-    } elseif(isset($countyCoordinator['county'])) {
-      $coordinator = $countyCoordinator['county'];
+    if(isset($committeeCoordinator['pct'][$precinct])) {
+      $coordinator = $committeeCoordinator['pct'][$precinct];
+    } elseif(isset($committeeCoordinator['hd'][$hd])) {
+      $coordinator = $committeeCoordinator['hd'][$hd];
+    } elseif(isset($committeeCoordinator['county'])) {
+      $coordinator = $committeeCoordinator['county'];
     }
     return $coordinator;
   }
@@ -156,20 +156,20 @@ class NlpCoordinators {
    *
    * @param string $scope
    * @param string $value
-   * @param array $countyCoordinators
+   * @param array $committeeCoordinators
    * @return bool - returns true if the region already has a coordinator assigned.
    */
-  public function duplicateScope(string $scope, string $value, array $countyCoordinators): bool
+  public function duplicateScope(string $scope, string $value, array $committeeCoordinators): bool
   {
     switch ($scope) {
       case 'county':
-        if(!empty($countyCoordinators['county'])) {return TRUE;}
+        if(!empty($committeeCoordinators['county'])) {return TRUE;}
         break;
       case 'hd':
-        if(!empty($countyCoordinators['hd'][$value])) {return TRUE;}
+        if(!empty($committeeCoordinators['hd'][$value])) {return TRUE;}
         break;
       case 'precinct':
-        if(!empty($countyCoordinators['pct'][$value])) {return TRUE;}
+        if(!empty($committeeCoordinators['pct'][$value])) {return TRUE;}
         break;
     }
     return FALSE;
@@ -179,17 +179,17 @@ class NlpCoordinators {
    * getAllCoordinators
    *
    * Get all the coordinators in the database.
-   * If the county is provided, only return coordinators for that county.
+   * If the committee is provided, only return coordinators for that committee.
    *
-   * @param string $county - county name.
+   * @param string $committee - committee name.
    * @return array - array of all the known coordinators.
    */
-  public function getAllCoordinators(string $county=''): array
+  public function getAllCoordinators(string $committee=''): array
   {
     $query = $this->connection->select(self::COORDINATOR_TBL, 'c');
     $query->fields('c');
-    if(!empty($county)) {
-      $query->condition('county',$county);
+    if(!empty($committee)) {
+      $query->condition('county',$committee);
     }
     try {
       $result = $query->execute();
@@ -203,26 +203,26 @@ class NlpCoordinators {
       $coordinator = $result->fetchAssoc();
       if(empty($coordinator)) {break;}
       $coordinators[$coordinator['cIndex']] = $coordinator;
-      $rowCounty = $coordinator['county'];
+      $rowCommittee = $coordinator['county'];
       $scope = $coordinator['scope'];
       switch ($scope) {
         case 'precinct':
           $precincts = explode(',',$coordinator['precinctList']);
           foreach ($precincts as $precinct) {
-            if(!isset($coordinators[$rowCounty]['pct'][$precinct])) {
-              $coordinators[$rowCounty]['pct'][$precinct] = $coordinator;
+            if(!isset($coordinators[$rowCommittee]['pct'][$precinct])) {
+              $coordinators[$rowCommittee]['pct'][$precinct] = $coordinator;
             }
           }
           break;
         case 'hd':
           $hd = $coordinator['hd'];
-          if(!isset($coordinators[$rowCounty]['hd'][$hd])) {
-            $coordinators[$rowCounty]['hd'][$hd] = $coordinator;
+          if(!isset($coordinators[$rowCommittee]['hd'][$hd])) {
+            $coordinators[$rowCommittee]['hd'][$hd] = $coordinator;
           }
           break;
         case 'county':
-          if(!isset($coordinators[$rowCounty]['county'])) {
-            $coordinators[$rowCounty]['county'] = $coordinator;
+          if(!isset($coordinators[$rowCommittee]['county'])) {
+            $coordinators[$rowCommittee]['county'] = $coordinator;
           }
           break;
       }
@@ -234,12 +234,12 @@ class NlpCoordinators {
   /**
    * getCoordinatorById
    *
-   * Get the coordinator for a county/hd/precinct.
-   * The coordinator is identified by the county, hd, and precinct.
+   * Get the coordinator for a committee/hd/precinct.
+   * The coordinator is identified by the committee, hd, and precinct.
    * The coordinator is assigned a unique index.
    *
    * @param int $mcid - the mcid of the NL.
-   * @return array - the coordinator for the NL based on the county/hd/precinct of the NL.
+   * @return array - the coordinator for the NL based on the committee/hd/precinct of the NL.
    */
   public function getCoordinatorById( int $mcid ): array
   {

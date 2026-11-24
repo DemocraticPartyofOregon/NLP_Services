@@ -29,7 +29,7 @@ class NlpFolderSetup
     $this->stringTranslation = $stringTranslation;
   }
 
-  public function initializeFolders(array $countyNames): void
+  public function initializeFolders(array $committeeNames): void
   {
     $this->pathsObj->createDir('TEMP', '');
     $this->pathsObj->createDir('NLP', '');
@@ -38,10 +38,10 @@ class NlpFolderSetup
     $this->prepareLogo();
 
     $subFolders = ['INST', 'PDF', 'TURF'];
-    foreach ($countyNames as $countyName) {
-      $this->pathsObj->createDir('COUNTY', $countyName);
+    foreach ($committeeNames as $committeeName) {
+      $this->pathsObj->createDir('COUNTY', $committeeName);
       foreach ($subFolders as $subFolder) {
-        $this->pathsObj->createDir($subFolder, $countyName);
+        $this->pathsObj->createDir($subFolder, $committeeName);
       }
     }
 

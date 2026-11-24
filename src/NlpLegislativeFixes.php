@@ -30,7 +30,7 @@ class NlpLegislativeFixes
    * Creates or updates a legislative fix entry in the database.
    *
    * @param array $fix An associative array containing the required fields:
-   *                    - 'county' (string): The county associated with the legislative fix.
+   *                    - 'county' (string): The committee associated with the legislative fix.
    *                    - 'mcid' (string): The unique identifier for the legislative fix.
    *                    - 'firstName' (string): The first name of the legislator.
    *                    - 'lastName' (string): The last name of the legislator.
@@ -60,17 +60,17 @@ class NlpLegislativeFixes
   /**
    * getLegFixes
    *
-   * Retrieves all legislative fixes for a given county, ordered by house district, precinct, last name, and first name.
+   * Retrieves all legislative fixes for a given committee, ordered by house district, precinct, last name, and first name.
    *
-   * @param string $county The county for which to retrieve legislative fixes.
+   * @param string $committee The committee for which to retrieve legislative fixes.
    * @return array An associative array of legislative fixes, keyed by 'mcid'.
    */
-  public function getLegFixes( string $county ): array
+  public function getLegFixes( string $committee ): array
   {
     try {
       $query = $this->connection->select(self::LEG_FIX_TBL, 'l');
       $query->fields('l');
-      $query->condition('county', $county);
+      $query->condition('county', $committee);
       $query->orderBy('hd');
       $query->orderBy('precinct');
       $query->orderBy('lastName');

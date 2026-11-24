@@ -78,7 +78,7 @@ class NlpCredentialsEmail
       Drupal::logger('nlpservices')->notice('sendCredentialsEmail: NL not found for mcid: '.$mcid);
       return FALSE;
     }
-    $county = $nl['county'];
+    $committee = $nl['county'];
     $nlCoordinator = $coordinator ?? $this->coordinatorsObj->getAssignedCoordinator($nl);
     if (empty($nlCoordinator)) {
       $nlCoordinator = [
@@ -131,7 +131,7 @@ class NlpCredentialsEmail
     $to ??= $nl['email'];
 
     $message = t($paragraphsAdded, [
-      '@county' => $county,
+      '@county' => $committee,
       '@electionDay' => date("F j, Y",$electionTimeStamp),
       '@ballotDropDay' => date("F j, Y",$ballotDropTimeStamp),
       '@firstName' => $nl['firstName'],
@@ -139,7 +139,7 @@ class NlpCredentialsEmail
       '@nickname' => (!empty($nl['nickname']))?$nl['nickname']:$nl['firstName'],
     ]);
 
-    $subject ??= "Neighborhood Leader Materials - $county County";
+    $subject ??= "Neighborhood Leader Materials - $committee County";
     $reply = $nlCoordinator['email'] ?? null;
 
     $message = (string)$message;

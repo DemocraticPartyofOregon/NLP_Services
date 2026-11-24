@@ -786,7 +786,7 @@ class NlpMinivan {
         } else {
           // The voter's turf is assigned to an NL who is no longer in the NLs table.  Skip the
           // report.  MiniVAN sends it again each night for at least a week, so it is saved
-          // with the NL's name and county once the NL is back on the list.
+          // with the NL's name and committee once the NL is back on the list.
           $this->notifyMissingNl($mcid);
           $counts['missingNlCount']++;
           continue;
@@ -852,14 +852,14 @@ class NlpMinivan {
           $turfVoter[$action['type']] = $rIndex;
         }
         $nl = $this->nlsObj->getNlById($mcid);
-        $nlCounty = $nl['county'] ?? '';
-        $turfVoter['county'] = $nlCounty;
+        $nlCommittee = $nl['county'] ?? '';
+        $turfVoter['county'] = $nlCommittee;
         $turfIndex = $this->voterObj->getTurfIndexByVanid($vanid);
 
         $turfVoter['turfIndex'] = $turfIndex;
         $this->voterObj->updateTurfVoter($turfVoter);
         // This NL has reported results.
-        $this->nlsObj->resultsReported($mcid, $nlCounty);
+        $this->nlsObj->resultsReported($mcid, $nlCommittee);
       }
 
     }

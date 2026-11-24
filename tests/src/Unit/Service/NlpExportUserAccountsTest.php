@@ -76,7 +76,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
       $this->fileFunctionsMock->method('createTempCsvFile')
         ->willReturn(['uri' => 'public://test.csv', 'fh' => $fh]);
-      $this->drupalUserMock->method('getCounties')->willReturn($counties);
+      $this->drupalUserMock->method('getCommittees')->willReturn($counties);
       $this->drupalUserMock->method('getUsers')
         ->willReturnCallback(fn($county) => $usersByCounty[$county] ?? []);
 

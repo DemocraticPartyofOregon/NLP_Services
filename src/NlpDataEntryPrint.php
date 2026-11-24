@@ -102,11 +102,11 @@ class NlpDataEntryPrint
   {
     $messenger = Drupal::messenger();
 
-    $county = $this->sessionData->getCommittee();
+    $committee = $this->sessionData->getCommittee();
     $currentUser = $this->drupalUserObj->getCurrentUser();
     $mcid = $currentUser['mcid'] ?? 0;
 
-    $instructions = $this->instructionsObj->getInstructions($county);
+    $instructions = $this->instructionsObj->getInstructions($committee);
     $page = '<p>The links below provide access to printable documents for voter contact instructions, canvassing
 a walk sheet, mailing postcards, and GOTV calling for voters whose ballot is not yet received by the county election
 division.  </p>';
@@ -122,7 +122,7 @@ information.  The instructions are usually for a walking canvass of your neighbo
 be for sending postcards, or both depending on your situation. (Note, if you are using the MiniVAN app, you can get the most
 recent information from VoteBuilder.)</p>';
 
-    $path = $this->pathsObj->getPath('INST',$county);
+    $path = $this->pathsObj->getPath('INST',$committee);
     $canvass = $instructions['canvass']['fileName'];
     if(!empty($canvass)) {
       $canvassUrl = $this->fileUrlGenerator->generateAbsoluteString($path . $instructions['canvass']['fileName']);
@@ -138,7 +138,7 @@ recent information from VoteBuilder.)</p>';
     $turfIndex = $this->sessionData->get('turfIndex');
 
     if(empty($turfIndex)) {
-      $turfArray = (!empty($mcid))?$this->turfsObj->turfExists($mcid,$county):[];
+      $turfArray = (!empty($mcid))?$this->turfsObj->turfExists($mcid,$committee):[];
       if (empty($turfArray)) {
         $messenger->addWarning(t("You do not have a turf assigned"));
         return '';
@@ -151,7 +151,7 @@ recent information from VoteBuilder.)</p>';
     $page .= "<h2>Printable walksheet (Original with a map)</h2>";
 
     if(!empty($turf['turfPDF'])) {
-      $pdfPath = $this->pathsObj->getPath('PDF',$county);
+      $pdfPath = $this->pathsObj->getPath('PDF',$committee);
       $pdfUri = $pdfPath . $turf['turfPDF'];
       $url = $this->fileUrlGenerator->generateAbsoluteString($pdfUri);
       $page .=  '<p>The link below takes you to a printable document with a map and a list of voters for you to

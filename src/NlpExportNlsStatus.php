@@ -95,7 +95,7 @@ class NlpExportNlsStatus
     // Loading each NL's user entity is too slow and memory hungry for an all-committee export.
     $lastAccess = $this->drupalUserObj->getLastAccessByMcid();
     foreach ($committees as $committeeName) {
-      $nlList = $this->nls->getCountyNls($committeeName,$hd);
+      $nlList = $this->nls->getCommitteeNls($committeeName,$hd);
       if (!$nlList) {
         nlp_debug_msg('$committeeName',$committeeName);
         continue;

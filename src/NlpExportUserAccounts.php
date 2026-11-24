@@ -49,10 +49,10 @@ class NlpExportUserAccounts
     }
     ['uri' => $userUri, 'fh' => $fh] = $result;
 
-    $counties = $this->drupalUser->getCounties();
+    $committees = $this->drupalUser->getCommittees();
     $first = TRUE;
-    foreach ($counties as $county) {
-      $users = $this->drupalUser->getUsers($county);
+    foreach ($committees as $committee) {
+      $users = $this->drupalUser->getUsers($committee);
       foreach ($users as $user) {
         if (!empty($user['mcid'])) {
           $mcid = $user['mcid'];

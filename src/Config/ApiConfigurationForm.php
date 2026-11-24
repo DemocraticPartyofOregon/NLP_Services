@@ -273,7 +273,7 @@ class ApiConfigurationForm extends FormBase {
       $this->apiKeyManagementObj->deleteKey($committee);
     }
 
-    $countyNames = [];
+    $committeeNames = [];
     foreach ($apiKeys as $committee => $committeeKey) {
       if (empty($committeeKey['API Key'])) { continue; }
       if (!preg_match('/^[a-zA-Z0-9_\- ]+$/', $committee)) { continue; }
@@ -289,13 +289,13 @@ class ApiConfigurationForm extends FormBase {
       if (!$this->apiKeyManagementObj->createKeyWithValues($committee, $committee, $committeeKey)) {
         $failed[] = $committee;
       }
-      $countyNames[] = $committee;
+      $committeeNames[] = $committee;
     }
-    sort($countyNames);
+    sort($committeeNames);
     $iConfig = Drupal::configFactory()->getEditable('nlpservices.configuration');
-    $iConfig->set('nlpservices-county-names', $countyNames)->save();
+    $iConfig->set('nlpservices-county-names', $committeeNames)->save();
 
-    $this->folderSetupObj->initializeFolders($countyNames);
+    $this->folderSetupObj->initializeFolders($committeeNames);
 
     if (!empty($failed)) {
       $this->messenger()->addError($this->t('These API keys could not be saved: @keys. See Recent log messages for the reason, then save the API configuration again.',

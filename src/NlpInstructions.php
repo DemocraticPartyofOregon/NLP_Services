@@ -31,7 +31,7 @@ class NlpInstructions {
    * Creates or updates an instruction entry in the database.
    *
    * @param array $req An associative array containing the required fields:
-   *                    - 'county' (string): The county associated with the instruction.
+   *                    - 'county' (string): The committee associated with the instruction.
    *                    - 'type' (string): The type of the instruction.
    *                    - 'fileName' (string): The name of the file to be recorded.
    *                    - 'originalFileName' (string|null): The original name of the file, if applicable.
@@ -60,12 +60,12 @@ class NlpInstructions {
   /**
    * getInstructions
    *
-   * Retrieves instructions for a given county from the database.
+   * Retrieves instructions for a given committee from the database.
    *
-   * @param string $county The county for which to retrieve instructions.
+   * @param string $committee The committee for which to retrieve instructions.
    * @return array An associative array containing the instructions for 'canvass' and 'postcard' types, or an empty array if an error occurs.
    */
-  public function getInstructions( string $county ): array
+  public function getInstructions( string $committee ): array
   {
     $rec = [];
     foreach ($this->instructionsList as $key) {
@@ -77,7 +77,7 @@ class NlpInstructions {
     ];
     $query = $this->connection->select(self::INSTRUCTIONS_TBL, 'i');
     $query->fields('i');
-    $query->condition('county',$county);
+    $query->condition('county',$committee);
     try {
       $result = $query->execute();
     } catch (Exception $e) {

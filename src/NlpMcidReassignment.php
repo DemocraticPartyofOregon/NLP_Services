@@ -92,16 +92,16 @@ class NlpMcidReassignment {
         $this->moveMcid($table, $oldMcid, $newMcid);
       }
 
-      // Status is keyed by county and MCID.
-      $counties = $this->connection->select('nlp_nls_status', 's')
+      // Status is keyed by committee and MCID.
+      $committees = $this->connection->select('nlp_nls_status', 's')
         ->fields('s', ['county'])
         ->condition('mcid', $oldMcid)
         ->execute()
         ->fetchCol();
-      if (!empty($counties)) {
+      if (!empty($committees)) {
         $this->connection->delete('nlp_nls_status')
           ->condition('mcid', $newMcid)
-          ->condition('county', $counties, 'IN')
+          ->condition('county', $committees, 'IN')
           ->execute();
         $this->moveMcid('nlp_nls_status', $oldMcid, $newMcid);
       }

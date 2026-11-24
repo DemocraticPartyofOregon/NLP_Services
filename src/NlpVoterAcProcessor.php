@@ -117,7 +117,7 @@ class NlpVoterAcProcessor {
     if (!empty($missingVanids)) {
       $turf            = $this->turfsObj->getTurf($turfIndex);
       $turfName        = $turf['turfName'] ?? (string) $turfIndex;
-      $county          = $turf['county'] ?? '';
+      $committee          = $turf['county'] ?? '';
       $coordinatorName = $this->getCoordinatorName($turf);
 
       // The history of each missing voter, to look for a pattern.
@@ -130,7 +130,7 @@ class NlpVoterAcProcessor {
       Drupal::logger('nlpservices')->notice(
         'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids.@history',
         [
-          '@county'      => $county,
+          '@county'      => $committee,
           '@turf'        => $turfName,
           '@coordinator' => $coordinatorName,
           '@vanids'      => implode(', ', $missingVanids),
@@ -143,7 +143,7 @@ class NlpVoterAcProcessor {
       $message    = t(
         'Missing NLPVoterAC: county=@county, turf=@turf, coordinator=@coordinator, vanids=@vanids',
         [
-          '@county'      => $county,
+          '@county'      => $committee,
           '@turf'        => $turfName,
           '@coordinator' => $coordinatorName,
           '@vanids'      => implode(', ', $missingVanids),
@@ -285,7 +285,7 @@ class NlpVoterAcProcessor {
     $turfIndex       = $turfIndexes[$currentTurf];
     $turf            = $this->turfsObj->getTurf($turfIndex);
     $turfName        = $turf['turfName'] ?? (string) $turfIndex;
-    $county          = $turf['county'] ?? '';
+    $committee          = $turf['county'] ?? '';
     $coordinatorName = $this->getCoordinatorName($turf);
 
     $voters = array_values($this->votersObj->getVotersInTurf($turfIndex));
@@ -302,7 +302,7 @@ class NlpVoterAcProcessor {
       $context['results']['missingAcRecords'][] = [
         'vanid'       => $vanid,
         'turfName'    => $turfName,
-        'county'      => $county,
+        'county'      => $committee,
         'coordinator' => $coordinatorName,
       ];
       $context['results']['votersMissingAc']++;

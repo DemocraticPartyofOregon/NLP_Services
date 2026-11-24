@@ -47,20 +47,20 @@ class NlpPaths {
    * the path to the file relative to the Drupal root directory.
    *
    * @param string $type
-   * @param string $county
+   * @param string $committee
    * @param bool $full
    * @return string
    */
-  public function getPath(string $type, string $county='', bool $full=FALSE): string
+  public function getPath(string $type, string $committee='', bool $full=FALSE): string
   {
     $baseUrl = $this->requestStack->getCurrentRequest()->getSchemeAndHttpHost();
     $dir = $baseUrl.'/sites/default/files/'.self::NLP_FILES."/";
     if(!$full) {
       $dir = 'public://'.self::NLP_FILES."/";
     }
-    if($county === 'ALL') {return $dir;}
-    if(!empty($county)) {
-      $dir .= $county.'/';
+    if($committee === 'ALL') {return $dir;}
+    if(!empty($committee)) {
+      $dir .= $committee.'/';
     }
     switch ($type) {
       case 'PDF':
@@ -96,10 +96,10 @@ class NlpPaths {
    * is created in the specified type and committee directory.
    *
    * @param string $type
-   * @param string $county
+   * @param string $committee
    * @return void
    */
-  public function createDir(string $type,string $county): void
+  public function createDir(string $type,string $committee): void
   {
     switch ($type) {
       case 'TEMP':
@@ -112,16 +112,16 @@ class NlpPaths {
         $dir = 'public://'.self::NLP_DOCUMENTS;
         break;
       case 'COUNTY':
-        $dir = 'public://'.self::NLP_FILES."/".$county;
+        $dir = 'public://'.self::NLP_FILES."/".$committee;
         break;
       case 'PDF':
-        $dir = 'public://'.self::NLP_FILES."/".$county."/".self::TURF_PDF_DIR;
+        $dir = 'public://'.self::NLP_FILES."/".$committee."/".self::TURF_PDF_DIR;
         break;
       case 'INST':
-        $dir = 'public://'.self::NLP_FILES."/".$county."/".self::INSTRUCTIONS_DIR;
+        $dir = 'public://'.self::NLP_FILES."/".$committee."/".self::INSTRUCTIONS_DIR;
         break;
       case 'TURF':
-        $dir = 'public://'.self::NLP_FILES."/".$county."/".self::TURF_MESSAGE_DIR;
+        $dir = 'public://'.self::NLP_FILES."/".$committee."/".self::TURF_MESSAGE_DIR;
         break;
       default:
         Drupal::logger('nlpservices')->notice('createDir: unknown type @type', ['@type' => $type]);

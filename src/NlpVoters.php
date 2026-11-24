@@ -839,15 +839,15 @@ class NlpVoters {
       return [];
     }
 
-    $countyNames = [];
+    $committeeNames = [];
     do {
       $record = $result->fetchAssoc();
       if(empty($record)) {break;}
       if(!empty($record['county'])) {
-        $countyNames[] = $record['county'];
+        $committeeNames[] = $record['county'];
       }
     } while (TRUE);
-    return $countyNames;
+    return $committeeNames;
   }
 
   /**
@@ -935,6 +935,10 @@ class NlpVoters {
    *
    * Search for voters in a given county by a needle.  The needle is used to search the lastName, firstName,
    * homePhone, cellPhone, and vanid fields.
+   *
+   * The search is on the geographic county of the voter's address, but the
+   * only caller (CancelMovedReport) passes the committee.  That's only right
+   * where each committee is one whole county, as in Oregon.
    *
    * @param string $county - the county to search in.
    * @param string $needle - the needle to search for.

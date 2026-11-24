@@ -149,7 +149,7 @@ coordinator and not to the NLP Site admin.</p>"),
     
     $this->sessionDataObj->getSavedHdIndex();
     $currentHd = $this->sessionDataObj->getSavedHd();
-    $committeeNls = $this->nlsObj->getCountyNls($committee,$currentHd);
+    $committeeNls = $this->nlsObj->getCommitteeNls($committee,$currentHd);
     
     $availableNLs = $committeeNls;
     $unassignedCoordinators = $committeeNls;
@@ -160,7 +160,7 @@ coordinator and not to the NLP Site admin.</p>"),
     // Search the list of available NLs for a match with the needle.
     $needle = $form_state->get('search-needle');
     if(!empty($needle)) {
-      $allCommitteeNls = $this->nlsObj->getCountyNls($committee);
+      $allCommitteeNls = $this->nlsObj->getCommitteeNls($committee);
       $availableNLs = $this->searchBarObj->searchInfoArray($needle,$allCommitteeNls);
     }
 

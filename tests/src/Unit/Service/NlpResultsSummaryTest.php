@@ -240,7 +240,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'ALL' => ['regVoters' => 50, 'regVoted' => 25],
       ]);
       $this->turfsMock->method('getVoterCounts')->willReturn(4);
-      $this->nlsMock->method('getCountyNlsParticipation')
+      $this->nlsMock->method('getCommitteeNlsParticipation')
         ->willReturn(['participatingNls' => 2, 'resultsReported' => 1]);
 
       $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_STATE);

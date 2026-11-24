@@ -86,21 +86,21 @@ class NlpNls {
   /**
    * startActiveNlsSync
    *
-   * Claims the rebuild of the list of active NLs for a county. Only one
-   * rebuild per county can run at a time.
+   * Claims the rebuild of the list of active NLs for a committee. Only one
+   * rebuild per committee can run at a time.
    *
-   * @param string $county
-   * @return bool - FALSE if a rebuild for the county is already running.
+   * @param string $committee
+   * @return bool - FALSE if a rebuild for the committee is already running.
    */
-  public function startActiveNlsSync(string $county): bool
+  public function startActiveNlsSync(string $committee): bool
   {
     // The lock makes the check and the mark one step, so two people
     // submitting at the same moment can't both start a rebuild.
-    $lockName = self::ACTIVE_NLS_SYNC_KEY . $county;
+    $lockName = self::ACTIVE_NLS_SYNC_KEY . $committee;
     if (!$this->lock->acquire($lockName)) { return FALSE; }
-    $started = !$this->activeNlsSyncInProgress($county);
+    $started = !$this->activeNlsSyncInProgress($committee);
     if ($started) {
-      $this->markActiveNlsSync($county);
+      $this->markActiveNlsSync($committee);
     }
     $this->lock->release($lockName);
     return $started;
@@ -109,42 +109,42 @@ class NlpNls {
   /**
    * markActiveNlsSync
    *
-   * Records that the list of active NLs for a county is being rebuilt. Call it
+   * Records that the list of active NLs for a committee is being rebuilt. Call it
    * again as the sync makes progress so the mark does not expire.
    *
-   * @param string $county
+   * @param string $committee
    * @return void
    */
-  public function markActiveNlsSync(string $county): void
+  public function markActiveNlsSync(string $committee): void
   {
-    $this->state->set(self::ACTIVE_NLS_SYNC_KEY . $county, time());
+    $this->state->set(self::ACTIVE_NLS_SYNC_KEY . $committee, time());
   }
 
   /**
    * endActiveNlsSync
    *
-   * Clears the mark that the list of active NLs for a county is being rebuilt.
+   * Clears the mark that the list of active NLs for a committee is being rebuilt.
    *
-   * @param string $county
+   * @param string $committee
    * @return void
    */
-  public function endActiveNlsSync(string $county): void
+  public function endActiveNlsSync(string $committee): void
   {
-    $this->state->delete(self::ACTIVE_NLS_SYNC_KEY . $county);
+    $this->state->delete(self::ACTIVE_NLS_SYNC_KEY . $committee);
   }
 
   /**
    * activeNlsSyncInProgress
    *
-   * Checks if the list of active NLs for a county is being rebuilt. A mark
+   * Checks if the list of active NLs for a committee is being rebuilt. A mark
    * left by a sync that stopped making progress is ignored.
    *
-   * @param string $county
+   * @param string $committee
    * @return bool
    */
-  public function activeNlsSyncInProgress(string $county): bool
+  public function activeNlsSyncInProgress(string $committee): bool
   {
-    $lastProgress = $this->state->get(self::ACTIVE_NLS_SYNC_KEY . $county);
+    $lastProgress = $this->state->get(self::ACTIVE_NLS_SYNC_KEY . $committee);
     if (empty($lastProgress)) { return FALSE; }
     return time() - $lastProgress < self::ACTIVE_NLS_SYNC_TIMEOUT_SECS;
   }
@@ -152,16 +152,16 @@ class NlpNls {
   /**
    * deleteNls
    *
-   * Delete all NL records for a given county.
+   * Delete all NL records for a given committee.
    *
-   * @param string $county
+   * @param string $committee
    * @return void
    */
-  public function deleteNls(string $county): void
+  public function deleteNls(string $committee): void
   {
     try {
       $this->connection->delete(self::NLS_TBL)
-        ->condition('county', $county)
+        ->condition('county', $committee)
         ->execute();
     }
     catch (Exception $e) {
@@ -216,20 +216,20 @@ class NlpNls {
   /**
    * getNlsStatus
    *
-   * Get the status record of a NL by mcid and county.
+   * Get the status record of a NL by mcid and committee.
    * If no status record exists, return an empty record with default values.
    *
    * @param int $mcid
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  public function getNlsStatus(int $mcid,string $county=''): array
+  public function getNlsStatus(int $mcid,string $committee=''): array
   {
     try {
       $query = $this->connection->select(self::NLS_STATUS_TBL, 's');
       $query->fields('s');
-      if(!empty($county)) {
-        $query->condition('county',$county);
+      if(!empty($committee)) {
+        $query->condition('county',$committee);
       }
       $query->condition('mcid',$mcid);
       $result = $query->execute();
@@ -240,7 +240,7 @@ class NlpNls {
     }
     $nlStatus = $result->fetchAssoc();
     if(empty($nlStatus)) {
-      $nlStatus = $this->newNlsStatus($mcid, $county);
+      $nlStatus = $this->newNlsStatus($mcid, $committee);
     }
     return $nlStatus;
   }
@@ -248,21 +248,21 @@ class NlpNls {
   /**
    * getNlsStatuses
    *
-   * Get the status records of a list of NLs in a county with one query,
+   * Get the status records of a list of NLs in a committee with one query,
    * keyed by mcid.  An NL with no status record gets a new one.
    *
    * @param array $mcids
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  public function getNlsStatuses(array $mcids, string $county): array
+  public function getNlsStatuses(array $mcids, string $committee): array
   {
     if(empty($mcids)) {return [];}
     $dbStatuses = [];
     try {
       $query = $this->connection->select(self::NLS_STATUS_TBL, 's');
       $query->fields('s');
-      $query->condition('county',$county);
+      $query->condition('county',$committee);
       $query->condition('mcid',$mcids,'IN');
       $result = $query->execute();
       while ($nlStatus = $result->fetchAssoc()) {
@@ -275,7 +275,7 @@ class NlpNls {
     }
     $nlStatuses = [];
     foreach ($mcids as $mcid) {
-      $nlStatuses[$mcid] = $dbStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
+      $nlStatuses[$mcid] = $dbStatuses[$mcid] ?? $this->newNlsStatus($mcid, $committee);
     }
     return $nlStatuses;
   }
@@ -286,10 +286,10 @@ class NlpNls {
    * Build the default status record for an NL who has none yet.
    *
    * @param int $mcid
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  private function newNlsStatus(int $mcid, string $county): array
+  private function newNlsStatus(int $mcid, string $committee): array
   {
     $nlStatus = [];
     if(empty($this->statusColumnNames)) {
@@ -299,7 +299,7 @@ class NlpNls {
       $nlStatus[$nlpKey] = NULL;
     }
     $nlStatus['mcid'] = $mcid;
-    $nlStatus['county'] = $county;
+    $nlStatus['county'] = $committee;
     $nlStatus['contact'] = self::CANVASS;
     $nlStatus['asked'] = self::DASH;
     return $nlStatus;
@@ -353,8 +353,8 @@ class NlpNls {
   /**
    * getNls
    *
-   * Get all NL records for a given county and HD.
-   * If HD is 'All', get all NLs for the county.
+   * Get all NL records for a given committee and HD.
+   * If HD is 'All', get all NLs for the committee.
    * If precinct is provided, filter by precinct as well.
    *
    * The resultant array is keyed by mcid, with each value being an
@@ -362,17 +362,17 @@ class NlpNls {
    *
    * The array is sorted by HD, precinct, last name, and nickname.
    *
-   * @param string $county
+   * @param string $committee
    * @param mixed $hd
    * @param string $precinct
    * @return array
    */
-  public function getNls(string $county, mixed $hd, string $precinct=''): array
+  public function getNls(string $committee, mixed $hd, string $precinct=''): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->fields('n');
-      $query->condition('n.county',$county);
+      $query->condition('n.county',$committee);
       if ($hd != 'All' && !empty($hd)) {
         $query->condition('n.hd',$hd);
       }
@@ -394,9 +394,9 @@ class NlpNls {
     while ($nlRecord = $result->fetchAssoc()) {
       $nlRecords[$nlRecord['mcid']] = $nlRecord;
     }
-    $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $county);
+    $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $committee);
     foreach ($nlRecords as $mcid => $nlRecord) {
-      $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
+      $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $committee);
     }
     return $nlRecords;
   }
@@ -404,20 +404,20 @@ class NlpNls {
   /**
    * getHdList
    *
-   * Get a list of distinct HD numbers for a given county.
+   * Get a list of distinct HD numbers for a given committee.
    * The list is ordered numerically.
    *
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  public function getHdList(string $county): array
+  public function getHdList(string $committee): array
   {
     // Get the list of distinct HD numbers for this group, order numerically.
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->addField('n', 'hd');
       $query->distinct();
-      $query->condition('n.county',$county);
+      $query->condition('n.county',$committee);
       $query->orderBy('hd');
       $result = $query->execute();
     }
@@ -436,18 +436,18 @@ class NlpNls {
   /**
    * getPrecinctsByMcid
    *
-   * Get the precinct of every NL in a county in one query, keyed by mcid.
+   * Get the precinct of every NL in a committee in one query, keyed by mcid.
    * Used to narrow lists of Drupal users (whose accounts have no precinct) by precinct.
    *
-   * @param string $county
+   * @param string $committee
    * @return array - mcid => precinct.
    */
-  public function getPrecinctsByMcid(string $county): array
+  public function getPrecinctsByMcid(string $committee): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->fields('n', ['mcid', 'precinct']);
-      $query->condition('n.county',$county);
+      $query->condition('n.county',$committee);
       $result = $query->execute();
     }
     catch (Exception $e) {
@@ -464,15 +464,15 @@ class NlpNls {
   /**
    * getPctList
    *
-   * Get a list of distinct precinct numbers for a given county and HD.
-   * If HD is 0, get all precincts for the county.
+   * Get a list of distinct precinct numbers for a given committee and HD.
+   * If HD is 0, get all precincts for the committee.
    * The list is ordered numerically by precinct number.
    *
-   * @param string $county
+   * @param string $committee
    * @param int $hd
    * @return array
    */
-  public function getPctList(string $county, int $hd=0): array
+  public function getPctList(string $committee, int $hd=0): array
   {
     // Get the list of precinct numbers with at least one prospective NL in
     // this HD and order numerically by precinct number.
@@ -480,7 +480,7 @@ class NlpNls {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->addField('n', 'precinct');
       $query->distinct();
-      $query->condition('n.county',$county);
+      $query->condition('n.county',$committee);
       if(!empty($hd)) {
         $query->condition('hd',$hd);
       }
@@ -525,31 +525,31 @@ class NlpNls {
   }
   
   /**
-   * getCountyNls
+   * getCommitteeNls
    *
-   * Get all NL records for a given county and HD.
-   * If HD is 'All', get all NLs for the county.
+   * Get all NL records for a given committee and HD.
+   * If HD is 'All', get all NLs for the committee.
    * Returns an associative array of NL information keyed by mcid.
    *
-   * @param string $county
+   * @param string $committee
    * @param int|string $hd
    * @return array
    */
-  public function getCountyNls(string $county, int|string $hd='All'): array
+  public function getCommitteeNls(string $committee, int|string $hd='All'): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->join(self::NLS_STATUS_TBL, 's', 'n.mcid = s.mcid');
       $query->fields('n');
       $query->fields('s');
-      $query->condition('n.'.'county',$county);
+      $query->condition('n.'.'county',$committee);
       if(!empty($hd) && $hd!='All' ) {
         $query->condition('n.'.'hd',$hd);
       }
       $result = $query->execute();
     }
     catch (Exception $e) {
-      nlp_debug_msg('getCountyNls', $e);
+      nlp_debug_msg('getCommitteeNls', $e);
       return [];
     }
     $nlRecords = [];
@@ -562,14 +562,14 @@ class NlpNls {
   /**
    * resultsReported
    *
-   * Check if results have been reported for a given mcid and county.
+   * Check if results have been reported for a given mcid and committee.
    * If not, update the status to indicate results have been reported.
    *
    * @param int $mcid
-   * @param string $county
+   * @param string $committee
    * @return bool
    */
-  public function resultsReported(int $mcid,string $county): bool
+  public function resultsReported(int $mcid,string $committee): bool
   {
     try {
       $query = $this->connection->select(self::NLS_STATUS_TBL, 's');
@@ -589,7 +589,7 @@ class NlpNls {
       $this->connection->update(self::NLS_STATUS_TBL)
         ->fields(['resultsReported' => 'Y',])
         ->condition('mcid',$mcid)
-        ->condition('county',$county)
+        ->condition('county',$committee)
         ->execute();
     }
     catch (Exception $e) {
@@ -625,21 +625,21 @@ class NlpNls {
    * searchNls
    *
    * Search for NLs by a needle fragment across lastName, firstName, nickname, email, and mcid.
-   * Filter by county (with status attached) or by an explicit mcids list.
+   * Filter by committee (with status attached) or by an explicit mcids list.
    * Returns an associative array of NL records keyed by mcid.
    *
    * @param string $needle
-   * @param string $county - filter by county and attach status to each record.
+   * @param string $committee - filter by committee and attach status to each record.
    * @param array $mcids - filter by this set of mcids instead.
    * @return array
    */
-  public function searchNls(string $needle, string $county = '', array $mcids = []): array
+  public function searchNls(string $needle, string $committee = '', array $mcids = []): array
   {
     try {
       $query = $this->connection->select(self::NLS_TBL, 'n');
       $query->fields('n');
-      if(!empty($county)) {
-        $query->condition('county', $county);
+      if(!empty($committee)) {
+        $query->condition('county', $committee);
       } elseif (!empty($mcids)) {
         $query->condition('mcid', $mcids, 'IN');
       }
@@ -662,10 +662,10 @@ class NlpNls {
     while ($nlRecord = $result->fetchAssoc()) {
       $nlRecords[$nlRecord['mcid']] = $nlRecord;
     }
-    if(!empty($county)) {
-      $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $county);
+    if(!empty($committee)) {
+      $nlStatuses = $this->getNlsStatuses(array_keys($nlRecords), $committee);
       foreach ($nlRecords as $mcid => $nlRecord) {
-        $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $county);
+        $nlRecords[$mcid]['status'] = $nlStatuses[$mcid] ?? $this->newNlsStatus($mcid, $committee);
       }
     }
     return $nlRecords;
@@ -806,24 +806,24 @@ class NlpNls {
   }
   
   /**
-   * getCountyNlsParticipation
+   * getCommitteeNlsParticipation
    *
-   * Get the number of NLs signed up and results reported for a county.
+   * Get the number of NLs signed up and results reported for a committee.
    * Returns an array with keys 'participatingNls' and 'resultsReported'.
    *
-   * @param string $county
+   * @param string $committee
    * @return array
    */
-  public function getCountyNlsParticipation(string $county): array
+  public function getCommitteeNlsParticipation(string $committee): array
   {
     try {
       $query = $this->connection->select(self::NLS_STATUS_TBL, 's');
       $query->addExpression('SUM(CASE WHEN s.signedUp = \'Y\' THEN 1 ELSE 0 END)', 'participatingNls');
       $query->addExpression('SUM(CASE WHEN s.resultsReported = \'Y\' THEN 1 ELSE 0 END)', 'resultsReported');
-      $query->condition('s.county', $county);
+      $query->condition('s.county', $committee);
       $result = $query->execute();
     } catch (Exception $e) {
-      nlp_debug_msg('getCountyNlsParticipation', $e);
+      nlp_debug_msg('getCommitteeNlsParticipation', $e);
       return [];
     }
     return $result->fetchAssoc();

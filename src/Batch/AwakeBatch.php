@@ -30,7 +30,10 @@ class AwakeBatch {
     fseek($fh, $context['sandbox']['offset']);
 
     $colIndex       = $arg['colIndex'];
-    $activeCounties = $arg['activeCounties'];
+    // The committees with turfs.  They're matched against the voter file's
+    // residence county below, which is only right where each committee is
+    // one whole county, as in Oregon.
+    $activeCommittees = $arg['activeCounties'];
     $startTimestamp = $arg['startTimestamp'];
     $endTimestamp   = $arg['endTimestamp'];
 
@@ -51,7 +54,7 @@ class AwakeBatch {
       if (($record['STATUS'] ?? '') !== 'Active') {
         continue;
       }
-      if (!in_array($record['RES_COUNTY'] ?? '', $activeCounties)) {
+      if (!in_array($record['RES_COUNTY'] ?? '', $activeCommittees)) {
         continue;
       }
       $votedTimestamp = strtotime($record['DATE_VOTED'] ?? '');

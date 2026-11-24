@@ -52,18 +52,18 @@ class DatabaseFunctions
    *
    * Exports the contents of a table to a CSV file. The export will be:
    *  - The entire table or,
-   *  - The table entries for a given county, or
-   *  - The entire table sorted by county.
+   *  - The table entries for a given committee, or
+   *  - The entire table sorted by committee.
    *
    * @param string $tableName - name of the database table
    * @param array $columnNames - array of column names for the CSV header
    * @param string $tempFileName - file name to contain the CSV data
-   * @param string $county
+   * @param string $committee
    * @param bool $sort
    * @return bool
    */
   public function exportTable(string $tableName, array $columnNames,
-              string $tempFileName, string $county, bool $sort): bool
+              string $tempFileName, string $committee, bool $sort): bool
   {
     $fh = fopen($tempFileName,"w");
     fputcsv($fh, $columnNames, escape: '');
@@ -71,8 +71,8 @@ class DatabaseFunctions
     try {
       $query = $this->connection->select($tableName, 'n');
       $query->fields('n');
-      if(!empty($county)) {
-        $query->condition('county', $county);
+      if(!empty($committee)) {
+        $query->condition('county', $committee);
       } elseif($sort) {
         $query->orderBy('county');
       }

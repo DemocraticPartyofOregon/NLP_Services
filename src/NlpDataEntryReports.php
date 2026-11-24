@@ -71,7 +71,7 @@ class NlpDataEntryReports
    * @param array $report - The report data for the voter.
    *              'vanid' => The Voter Access Number (VANID) of the voter.
    *              'mcid' => The MyCampaign ID for the NL.
-   *              'county' => The county of the voter.
+   *              'county' => The committee of the NL who reported it.
    * 
    * @param array $action - The action array containing the contact method and hostile status.
    *              'contactMethod' => The contact method ID.
@@ -115,7 +115,7 @@ class NlpDataEntryReports
    * @param array $report - The report data for the voter.
    *              'vanid' => The Voter Access Number (VANID) of the voter.
    *              'mcid' => The MyCampaign ID for the NL.
-   *              'county' => The county of the voter.
+   *              'county' => The committee of the NL who reported it.
    *              'contactDate' => The date of the voter contact.
    *
    * @param array $action - The action array containing the contact method and hostile status.
@@ -176,7 +176,7 @@ class NlpDataEntryReports
    * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *             'mcid' => The MyCampaign ID for the NL.
-   *             'county' => The county of the voter.
+   *             'county' => The committee of the NL who reported it.
    *             'contactDate' => The date of the voter contact.
    *
    * @param array $action - The action array containing the contact method and attempt result.
@@ -536,7 +536,7 @@ class NlpDataEntryReports
    * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *            'mcid' => The MyCampaign ID for the NL.
-   *            'county' => The county of the voter.
+   *            'county' => The committee of the NL who reported it.
    *            'contactDate' => The date of the voter contact.
    * @param array $action - The action array containing the contact method and turf index.
    *            'contactMethod' => The contact method ID.
@@ -604,7 +604,7 @@ class NlpDataEntryReports
    * @param array $report - The report data for the voter.
    *             'vanid' => The Voter Access Number (VANID) of the voter.
    *            'mcid' => The MyCampaign ID for the NL.
-   *           'county' => The county of the voter.
+   *           'county' => The committee of the NL who reported it.
    * @param array $action - The action array containing the contact method and survey response
    *            'contactMethod' => The contact method ID.
    *           'surveyResponse' => The survey response ID for the pledge to vote.
@@ -621,7 +621,7 @@ class NlpDataEntryReports
     
     $cid = $action['contactMethod'];
     $rid = $action['surveyResponse'];
-    $county = $report['county'];
+    $committee = $report['county'];
     $mcid = $report['mcid'];
     $contactMethod = $this->nlpConfigurationObj->getContactMethod($cid);
 
@@ -667,14 +667,14 @@ class NlpDataEntryReports
     $turfVoter = [
       'vanid' => $vanid,
       'mcid' => $mcid,
-      'county' => $county,
+      'county' => $committee,
       'turfIndex' => $turfIndex,
       'pledgedToVote' => $rIndex,
     ];
     $this->votersObj->updateTurfVoter($turfVoter);
     
     // This NL has reported results.
-    $this->nlsObj->resultsReported($mcid, $county);
+    $this->nlsObj->resultsReported($mcid, $committee);
     $this->awardsObj->nlParticipation($mcid, 'Completed');
     return self::SAVED;
   }

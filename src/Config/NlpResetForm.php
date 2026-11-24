@@ -117,22 +117,22 @@ class NlpResetForm extends FormBase {
       }
     }
 
-    // Empty the county directories of files used in the election.
+    // Empty the committee directories of files used in the election.
     $nlpFilesDir = 'public://nlp_files';
-    $counties = $this->getDirContent($nlpFilesDir);
-    foreach ($counties['directories'] as $countyDir) {
-      $countyDir = $nlpFilesDir . '/' . $countyDir;
-      $countyDirContent = $this->getDirContent($countyDir);
-      foreach ($countyDirContent['files'] as $countyFile) {
-        $fileName = $countyDir . '/' . $countyFile;
+    $committees = $this->getDirContent($nlpFilesDir);
+    foreach ($committees['directories'] as $committeeDir) {
+      $committeeDir = $nlpFilesDir . '/' . $committeeDir;
+      $committeeDirContent = $this->getDirContent($committeeDir);
+      foreach ($committeeDirContent['files'] as $committeeFile) {
+        $fileName = $committeeDir . '/' . $committeeFile;
         unlink($fileName);
       }
 
-      foreach ($countyDirContent['directories'] as $countyContentDir) {
-        $countyContentDir = $countyDir . '/' . $countyContentDir;
-        $countyContentDirContent = $this->getDirContent($countyContentDir);
-        foreach ($countyContentDirContent['files'] as $countyFile) {
-          $fileName = $countyContentDir . '/' . $countyFile;
+      foreach ($committeeDirContent['directories'] as $committeeContentDir) {
+        $committeeContentDir = $committeeDir . '/' . $committeeContentDir;
+        $committeeContentDirContent = $this->getDirContent($committeeContentDir);
+        foreach ($committeeContentDirContent['files'] as $committeeFile) {
+          $fileName = $committeeContentDir . '/' . $committeeFile;
           unlink($fileName);
         }
       }

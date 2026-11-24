@@ -107,7 +107,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $nl   = $this->baseNl($nlOverrides);
       $mcid = $nl['mcid'];
 
-      $this->nlsMock->method('getCountyNls')
+      $this->nlsMock->method('getCommitteeNls')
         ->willReturn([$mcid => $nl]);
       $this->nlsMock->method('getNlsStatus')
         ->willReturn($this->baseStatus($statusOverrides));
@@ -136,7 +136,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateNlsStatusFileReturnsTrueOnSuccess(): void {
-      $this->nlsMock->method('getCountyNls')->willReturn([]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([]);
       $path = $this->makeTempFile();
       $this->assertTrue($this->buildService()->createNlsStatusFile($path, 'Multnomah'));
     }
@@ -146,7 +146,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testCreateNlsStatusFileWritesHeaderAsFirstRow(): void {
-      $this->nlsMock->method('getCountyNls')->willReturn([]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([]);
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
       $csv = $this->readCsv($path);
@@ -154,7 +154,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateNlsStatusFileHeaderContainsExpectedColumns(): void {
-      $this->nlsMock->method('getCountyNls')->willReturn([]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([]);
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
       $headerLine = file($path, FILE_SKIP_EMPTY_LINES)[0];
@@ -175,13 +175,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testCreateNlsStatusFileDoesNotCallGetParticipatingCountiesForSpecificCounty(): void {
       $this->votersMock->expects($this->never())->method('getParticipatingCommittees');
-      $this->nlsMock->method('getCountyNls')->willReturn([]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([]);
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
     }
 
     public function testCreateNlsStatusFileSkipsCountyWhenGetCountyNlsReturnsFalsy(): void {
-      $this->nlsMock->method('getCountyNls')->willReturn([]);  // empty array is falsy
+      $this->nlsMock->method('getCommitteeNls')->willReturn([]);  // empty array is falsy
       $path = $this->makeTempFile();
       $this->buildService()->createNlsStatusFile($path, 'Multnomah');
       $csv = $this->readCsv($path);
@@ -195,7 +195,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testCreateNlsStatusFileWritesOneDataRowPerNl(): void {
       $nl1 = $this->baseNl(['mcid' => 1]);
       $nl2 = $this->baseNl(['mcid' => 2]);
-      $this->nlsMock->method('getCountyNls')->willReturn([1 => $nl1, 2 => $nl2]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([1 => $nl1, 2 => $nl2]);
       $this->nlsMock->method('getNlsStatus')->willReturn($this->baseStatus());
       $this->votersMock->method('getVoterCountByNl')->willReturn(5);
       $this->reportsMock->method('getCommitteeReportCounts')->willReturn([]);
@@ -211,7 +211,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     public function testCreateNlsStatusFileLooksUpAccessTimesOnceWithoutLoadingUsers(): void {
       $nl1 = $this->baseNl(['mcid' => 1]);
       $nl2 = $this->baseNl(['mcid' => 2]);
-      $this->nlsMock->method('getCountyNls')->willReturn([1 => $nl1, 2 => $nl2]);
+      $this->nlsMock->method('getCommitteeNls')->willReturn([1 => $nl1, 2 => $nl2]);
       $this->nlsMock->method('getNlsStatus')->willReturn($this->baseStatus());
       $this->turfsMock->method('getTurfsById')->willReturn([]);
       $this->drupalUserMock->expects($this->once())->method('getLastAccessByMcid')

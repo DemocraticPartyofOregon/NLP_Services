@@ -99,7 +99,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
-    $this->nlsMock->method('getCountyNls')->willReturn([]);
+    $this->nlsMock->method('getCommitteeNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
@@ -114,7 +114,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->coordinatorsMock->method('getCoordinators')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
-    $this->nlsMock->method('getCountyNls')->willReturn([]);
+    $this->nlsMock->method('getCommitteeNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
     $this->sessionDataMock->method('getCommittee')->willReturn($county);
     $this->searchBarMock->method('searchBar')->willReturn([]);
@@ -250,7 +250,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->nlsMock->method('getHdList')->willReturn([]);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
-    $this->nlsMock->method('getCountyNls')->willReturn([]);
+    $this->nlsMock->method('getCommitteeNls')->willReturn([]);
     $this->sessionDataMock->method('getHdOptions')->willReturn([]);
     $this->searchBarMock->method('searchBar')->willReturn([]);
     $this->listDisplayMock->method('buildCoordinatorTableArray')->willReturn([]);
@@ -277,7 +277,7 @@ class CoordinatorsFormTest extends UnitTestCase {
   }
 
   public function testBuildFormFiltersAvailableNlsByNeedleWhenNeedleIsSet(): void {
-    // Set up mocks directly (not via a helper) so that getCountyNls is only
+    // Set up mocks directly (not via a helper) so that getCommitteeNls is only
     // configured once, allowing willReturnOnConsecutiveCalls to work correctly.
     $allNls   = [1 => ['mcid' => 1, 'firstName' => 'Smith']];
     $filtered = [1 => ['mcid' => 1, 'firstName' => 'Smith']];
@@ -291,7 +291,7 @@ class CoordinatorsFormTest extends UnitTestCase {
     $this->listDisplayMock->method('buildCoordinatorsTable')->willReturn([]);
 
     // First call returns the HD-filtered display list; second returns all NLs for search.
-    $this->nlsMock->method('getCountyNls')->willReturnOnConsecutiveCalls([], $allNls);
+    $this->nlsMock->method('getCommitteeNls')->willReturnOnConsecutiveCalls([], $allNls);
     $this->searchBarMock->expects($this->once())
       ->method('searchInfoArray')
       ->with('Smith', $allNls)

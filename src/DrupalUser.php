@@ -387,7 +387,7 @@ class DrupalUser {
    * - `firstName`
    * - `lastName`
    * - `phone`
-   * - `county`
+   * - `county` (the committee)
    * - `hd`
    * - `mcid` - the MyCampaign id for the user.
    * - `magicWord` - the password for the user.
@@ -404,7 +404,7 @@ class DrupalUser {
    * - `firstName`
    * - `lastName`
    * - `phone`
-   * - `county`
+   * - `county` (the committee)
    * - `hd`
    * - `mcid`
    * - `roles`
@@ -619,7 +619,7 @@ class DrupalUser {
    * - `firstName`
    * - `lastName`
    * - `phone`
-   * - `county`
+   * - `county` (the committee)
    * - `mcid`
    * - `magicWord`
    * - `roles`
@@ -660,40 +660,40 @@ class DrupalUser {
   }
 
   /**
-   * getCounties
+   * getCommittees
    *
-   * Returns a list of counties that have NLP users.
+   * Returns a list of committees that have NLP users.
    *
-   * @return array - of county names
+   * @return array - of committee names
    * Used in:
    *   NlpExportUserAccounts.php
    * @noinspection PhpUnused
    */
-  public function getCounties(): array
+  public function getCommittees(): array
   {
-    $userStorage = $this->getUserStorage('getCounties');
+    $userStorage = $this->getUserStorage('getCommittees');
     if(empty($userStorage)) {return [];}
     $query = $userStorage->getQuery()
       ->accessCheck(FALSE)
     ;
     $result = $query->execute();
-    $countyNames = [];
+    $committeeNames = [];
     foreach ($result as $uid) {
       $user = User::load($uid);
-      $county = $user->get('field_county')->value;
-      if(!empty($county)) {
-        $countyNames[$county] = $county;
+      $committee = $user->get('field_county')->value;
+      if(!empty($committee)) {
+        $committeeNames[$committee] = $committee;
       }
     }
-    ksort($countyNames);
-    return $countyNames;
+    ksort($committeeNames);
+    return $committeeNames;
   }
 
   /**
-   * Returns a list of NLP user arrays for all users or those in a specific county.  Or, for
-   * all counties if the searchCounty is empty.
+   * Returns a list of NLP user arrays for all users or those in a specific committee.  Or, for
+   * all committees if the searchCommittee is empty.
    *
-   * @param string $searchCounty
+   * @param string $searchCommittee
    * @return array
    * Used in:
    *   NlpResetForm.php
@@ -703,22 +703,22 @@ class DrupalUser {
    *   NlpExportUserAccounts.php
    * @noinspection PhpUnused
    */
-  public function getUsers( string $searchCounty=''): array
+  public function getUsers( string $searchCommittee=''): array
   {
     $userStorage = $this->getUserStorage('getUsers');
     if(empty($userStorage)) {return [];}
     $query = $userStorage->getQuery()
       ->accessCheck(FALSE);
-    if (!empty($searchCounty)) {
-      $query->condition('field_county', $searchCounty);
+    if (!empty($searchCommittee)) {
+      $query->condition('field_county', $searchCommittee);
     }
     $result = $query->execute();
     $users = [];
     foreach ($result as $uid) {
       $user = User::load($uid);
       if(empty($user)) { continue; }
-      $county = $user->get('field_county')->value;
-      if(empty($searchCounty) && empty($county)) { continue; }
+      $committee = $user->get('field_county')->value;
+      if(empty($searchCommittee) && empty($committee)) { continue; }
       $userArray = $this->extractUserInfo($user);
       if($userArray['uid'] > 1) {
         $users[$userArray['uid']] = $userArray;
@@ -951,9 +951,9 @@ class DrupalUser {
    */
   public function purgeNlUsers(): void
   {
-    $counties = $this->getCounties();
-    foreach ($counties as $county) {
-      $users = $this->getUsers($county);
+    $committees = $this->getCommittees();
+    foreach ($committees as $committee) {
+      $users = $this->getUsers($committee);
       foreach ($users as $user) {
         $roles = $user['roles'];
         $roles = array_flip($roles);

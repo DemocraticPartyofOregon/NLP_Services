@@ -546,10 +546,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyNls()
+    // getCommitteeNls()
     // -------------------------------------------------------------------------
 
-    public function testGetCountyNlsReturnsRecordsKeyedByMcid(): void {
+    public function testGetCommitteeNlsReturnsRecordsKeyedByMcid(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls(
         ['mcid' => 42, 'county' => 'Denver'],
@@ -558,16 +558,16 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       );
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
 
-      $result = $this->buildService()->getCountyNls('Denver');
+      $result = $this->buildService()->getCommitteeNls('Denver');
 
       $this->assertArrayHasKey(42, $result);
       $this->assertArrayHasKey(99, $result);
     }
 
-    public function testGetCountyNlsReturnsEmptyArrayOnException(): void {
+    public function testGetCommitteeNlsReturnsEmptyArrayOnException(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
 
-      $this->assertSame([], $this->buildService()->getCountyNls('Denver'));
+      $this->assertSame([], $this->buildService()->getCommitteeNls('Denver'));
     }
 
     // -------------------------------------------------------------------------
@@ -802,15 +802,15 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyNlsParticipation()
+    // getCommitteeNlsParticipation()
     // -------------------------------------------------------------------------
 
-    public function testGetCountyNlsParticipationReturnsCountsArray(): void {
+    public function testGetCommitteeNlsParticipationReturnsCountsArray(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturn(['participatingNls' => 5, 'resultsReported' => 3]);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
 
-      $result = $this->buildService()->getCountyNlsParticipation('Denver');
+      $result = $this->buildService()->getCommitteeNlsParticipation('Denver');
 
       $this->assertSame(5, $result['participatingNls']);
       $this->assertSame(3, $result['resultsReported']);
@@ -850,10 +850,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertStringStartsWith('11Sep26 Will mail', NlpNls::decodeNote($encoded));
     }
 
-    public function testGetCountyNlsParticipationReturnsEmptyArrayOnException(): void {
+    public function testGetCommitteeNlsParticipationReturnsEmptyArrayOnException(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
 
-      $this->assertSame([], $this->buildService()->getCountyNlsParticipation('Denver'));
+      $this->assertSame([], $this->buildService()->getCommitteeNlsParticipation('Denver'));
     }
 
   }
