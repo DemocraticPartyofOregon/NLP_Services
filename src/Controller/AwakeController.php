@@ -23,7 +23,7 @@ class AwakeController extends ControllerBase {
   protected NlpAwards $awardObj;
   
   
-  public function __construct($salutation, $exportJobs, $awardObj) {
+  public function __construct(AwakeSalutation $salutation, ApiExportJobs $exportJobs, NlpAwards $awardObj) {
     $this->salutation = $salutation;
     $this->exportJobs = $exportJobs;
     $this->awardObj = $awardObj;

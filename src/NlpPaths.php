@@ -19,7 +19,7 @@ class NlpPaths {
   protected FileSystemInterface $fileSystem;
 
   public function __construct(
-    $fileSystem,
+    FileSystemInterface $fileSystem,
     private readonly RequestStack $requestStack,
     private readonly ModuleExtensionList $moduleExtensionList,
   ) {

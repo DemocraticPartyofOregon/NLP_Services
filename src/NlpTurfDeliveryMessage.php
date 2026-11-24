@@ -14,7 +14,7 @@ class NlpTurfDeliveryMessage
   protected FileSystemInterface $fileSystem;
   protected NlpPaths $paths;
 
-  public function __construct($fileSystem, $paths, private readonly ModuleExtensionList $moduleExtensionList) {
+  public function __construct(FileSystemInterface $fileSystem, NlpPaths $paths, private readonly ModuleExtensionList $moduleExtensionList) {
     $this->fileSystem = $fileSystem;
     $this->paths = $paths;
   }

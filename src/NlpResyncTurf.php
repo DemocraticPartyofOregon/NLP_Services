@@ -26,11 +26,11 @@ class NlpResyncTurf
   protected ApiActivistCodes $activistCodesObj;
   protected NlpSessionData $sessionDataObj;
 
-  public function __construct($votersObj,$turfsObj, $exportJobsObj, $savedListsObj,
-                              $syncTurfAddVoterObj, $apiVoterObj, $nlpConfigurationObj,
-                              $apiFoldersObj, $activistCodesObj, $coordinatorsObj,
-                              $databaseFunctionsObj, $nlsObj, $sendEmailObj,
-                              $sessionDataObj, $turfAssignmentsObj,
+  public function __construct(NlpVoters $votersObj,NlpTurfs $turfsObj, ApiExportJobs $exportJobsObj, ApiSavedLists $savedListsObj,
+                              NlpSyncTurfAddVoter $syncTurfAddVoterObj, ApiVoter $apiVoterObj, NlpConfiguration $nlpConfigurationObj,
+                              ApiFolders $apiFoldersObj, ApiActivistCodes $activistCodesObj, NlpCoordinators $coordinatorsObj,
+                              DatabaseFunctions $databaseFunctionsObj, NlpNls $nlsObj, NlpSendEmail $sendEmailObj,
+                              NlpSessionData $sessionDataObj, NlpTurfAssignments $turfAssignmentsObj,
                               private readonly RouteMatchInterface $routeMatch ) {
     $this->votersObj = $votersObj;
     $this->turfsObj = $turfsObj;

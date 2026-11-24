@@ -15,8 +15,8 @@ class NlpExportTurfStatus
   protected NlpTurfs $turfsObj;
   protected NlpMatchbacks $matchbacksObj;
 
-  public function __construct($fileSystem, $votersObj, $reportsObj, $nlsObj,
-                              $turfsObj, $matchbacksObj) {
+  public function __construct(FileSystemInterface $fileSystem, NlpVoters $votersObj, NlpReports $reportsObj, NlpNls $nlsObj,
+                              NlpTurfs $turfsObj, NlpMatchbacks $matchbacksObj) {
     $this->fileSystem = $fileSystem;
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;

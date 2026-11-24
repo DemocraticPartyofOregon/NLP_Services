@@ -12,7 +12,7 @@ class NlpVoterCrosstabSummary
   protected Connection $connection;
   protected NlpTurfs $turfs;
 
-  public function __construct($connection, $turfs) {
+  public function __construct(Connection $connection, NlpTurfs $turfs) {
     $this->connection = $connection;
     $this->turfs = $turfs;
   }

@@ -17,7 +17,7 @@ class ApiSurveyQuestion
   protected ClientInterface $client;
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiKeyManagement $apiKeyManagementObj;
-  public function __construct($client, $nlpConfigurationObj, $apiKeyManagementObj) {
+  public function __construct(ClientInterface $client, NlpConfiguration $nlpConfigurationObj, ApiKeyManagement $apiKeyManagementObj) {
     $this->client = $client;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;

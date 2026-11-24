@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -33,9 +34,9 @@ class DeleteTurfForm extends FormBase
   protected NlpTurfStatus $turfStatusObj;
 
 
-  public function __construct(   $turfs, $awardsObj, $searchBarObj, $turfDisplayObj,
-                                 $nlpSessionDataObj, $nlpConfigurationObj, $foldersObj,
-                                 $turfStatusObj, $requestStack) {
+  public function __construct(   NlpTurfs $turfs, NlpAwards $awardsObj, NlpSearchBar $searchBarObj, NlpTurfDisplay $turfDisplayObj,
+                                 NlpSessionData $nlpSessionDataObj, NlpConfiguration $nlpConfigurationObj, ApiFolders $foldersObj,
+                                 NlpTurfStatus $turfStatusObj, RequestStack $requestStack) {
     $this->turfs = $turfs;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;

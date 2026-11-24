@@ -11,8 +11,8 @@ class NlpSyncTurfAddVoter
   protected NlpReports $reportsObj;
   protected ApiActivistCodes $activistCodesObj;
   protected NlpConfiguration $configurationObj;
-  public function __construct($votersObj, $reportsObj, $activistCodesObj,
-                              $configurationObj) {
+  public function __construct(NlpVoters $votersObj, NlpReports $reportsObj, ApiActivistCodes $activistCodesObj,
+                              NlpConfiguration $configurationObj) {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;
     $this->activistCodesObj = $activistCodesObj;

@@ -12,7 +12,7 @@ class ApiDistrictFields {
 
   protected ClientInterface $client;
   protected ApiKeyManagement $apiKeyManagementObj;
-  public function __construct($client, $apiKeyManagementObj)
+  public function __construct(ClientInterface $client, ApiKeyManagement $apiKeyManagementObj)
   {
     $this->client = $client;
     $this->apiKeyManagementObj = $apiKeyManagementObj;

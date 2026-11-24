@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
@@ -47,11 +48,11 @@ class DeliverTurfForm extends FormBase
   protected  NlpNls $nlsObj;
   protected ApiMapRegions $foldersObj;
   protected NlpSyncTurfBuilder $syncTurfBuilderObj;
-  public function __construct( $turfsObj, $pathsObj, $fileSystemObj,
-                              $instructionsObj, $coordinatorsObj, $credentialsEmailObj, $turfMsgObj,
-                              $turfDisplayObj, $searchBarObj,
-                              $nlpSessionDataObj, $nlsObj, $foldersObj,
-                              $requestStack, $syncTurfBuilderObj)
+  public function __construct( NlpTurfs $turfsObj, NlpPaths $pathsObj, FileSystemInterface $fileSystemObj,
+                              NlpInstructions $instructionsObj, NlpCoordinators $coordinatorsObj, NlpCredentialsEmail $credentialsEmailObj, NlpTurfDeliveryMessage $turfMsgObj,
+                              NlpTurfDisplay $turfDisplayObj, NlpSearchBar $searchBarObj,
+                              NlpSessionData $nlpSessionDataObj, NlpNls $nlsObj, ApiMapRegions $foldersObj,
+                              RequestStack $requestStack, NlpSyncTurfBuilder $syncTurfBuilderObj)
   {
     $this->turfsObj = $turfsObj;
     $this->pathsObj = $pathsObj;

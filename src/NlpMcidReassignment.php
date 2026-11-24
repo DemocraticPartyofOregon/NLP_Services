@@ -37,7 +37,7 @@ class NlpMcidReassignment {
   protected DrupalUser $drupalUserObj;
   protected MagicWord $magicWordObj;
 
-  public function __construct($connection, $drupalUserObj, $magicWordObj) {
+  public function __construct(Connection $connection, DrupalUser $drupalUserObj, MagicWord $magicWordObj) {
     $this->connection = $connection;
     $this->drupalUserObj = $drupalUserObj;
     $this->magicWordObj = $magicWordObj;

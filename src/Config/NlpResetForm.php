@@ -33,8 +33,8 @@ class NlpResetForm extends FormBase {
   protected NlpCoordinators $coordinatorObj;
   protected DrupalUser $drupalUserObj;
 
-  public function __construct($votersObj, $nlsObj, $turfsObj, $matchbackObj, $exportJobsObj, $crosstabCountsObj,
-                              $instructionsObj, $connection, $coordinatorObj, $drupalUserObj) {
+  public function __construct(NlpVoters $votersObj, NlpNls $nlsObj, NlpTurfs $turfsObj, NlpMatchbacks $matchbackObj, ApiExportJobs $exportJobsObj, NlpCrosstabCounts $crosstabCountsObj,
+                              NlpInstructions $instructionsObj, Connection $connection, NlpCoordinators $coordinatorObj, DrupalUser $drupalUserObj) {
     $this->votersObj = $votersObj;
     $this->nlsObj = $nlsObj;
     $this->turfsObj = $turfsObj;

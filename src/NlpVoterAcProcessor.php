@@ -37,14 +37,14 @@ class NlpVoterAcProcessor {
   protected NlpVoters $votersObj;
 
   public function __construct(
-    $activistCodesObj,
-    $coordinatorsObj,
-    $nlpConfigurationObj,
-    $fileFunctionsObj,
-    $nlsObj,
-    $sendEmailObj,
-    $turfsObj,
-    $votersObj,
+    ApiActivistCodes $activistCodesObj,
+    NlpCoordinators $coordinatorsObj,
+    NlpConfiguration $nlpConfigurationObj,
+    NlpFileFunctions $fileFunctionsObj,
+    NlpNls $nlsObj,
+    NlpSendEmail $sendEmailObj,
+    NlpTurfs $turfsObj,
+    NlpVoters $votersObj,
   ) {
     $this->activistCodesObj    = $activistCodesObj;
     $this->coordinatorsObj     = $coordinatorsObj;

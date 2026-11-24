@@ -14,11 +14,11 @@ class NlpExportUserAccounts
   protected ApiNls $apiNlsObj;
 
   public function __construct(
-    $fileFunctionsObj,
-    $drupalUser,
-    $magicWord,
-    $nls,
-    $apiNlsObj,
+    NlpFileFunctions $fileFunctionsObj,
+    DrupalUser $drupalUser,
+    MagicWord $magicWord,
+    NlpNls $nls,
+    ApiNls $apiNlsObj,
     private readonly FileUrlGeneratorInterface $fileUrlGenerator,
   )
   {

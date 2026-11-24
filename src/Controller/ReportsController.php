@@ -21,7 +21,7 @@ class ReportsController extends ControllerBase
   protected DrupalUser $drupalUser;
   protected NlpSessionData $sessionData;
 
-  public function __construct($exportTurfStatusObj, $drupalUser, $sessionData) {
+  public function __construct(NlpExportTurfStatus $exportTurfStatusObj, DrupalUser $drupalUser, NlpSessionData $sessionData) {
     $this->exportTurfStatusObj = $exportTurfStatusObj;
     $this->drupalUser = $drupalUser;
     $this->sessionData = $sessionData;

@@ -19,7 +19,7 @@ class TargetVoterReportController extends ControllerBase
   protected NlpTargetVoterCrosstabCounts $targetVoterCrosstabCountsObj;
   protected NlpTurfs $turfsObj;
 
-  public function __construct( $voterCrosstabSummaryObj, $targetVoterCrosstabCountsObj, $turfsObj ) {
+  public function __construct( NlpVoterCrosstabSummary $voterCrosstabSummaryObj, NlpTargetVoterCrosstabCounts $targetVoterCrosstabCountsObj, NlpTurfs $turfsObj ) {
     $this->voterCrosstabSummaryObj = $voterCrosstabSummaryObj;
     $this->targetVoterCrosstabCountsObj = $targetVoterCrosstabCountsObj;
     $this->turfsObj = $turfsObj;

@@ -17,7 +17,7 @@ class NlpConfiguration
 
   private array $canvassResponseCodes;
 
-  public function __construct( $apiKeyManagementObj, $nlpEncrypt, $config ) {
+  public function __construct( ApiKeyManagement $apiKeyManagementObj, NlpEncryption $nlpEncrypt, ConfigFactoryInterface $config ) {
     $this->nlpEncrypt = $nlpEncrypt;
     $this->config = $config;
     $this->apiKeyManagementObj = $apiKeyManagementObj;

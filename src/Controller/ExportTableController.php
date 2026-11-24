@@ -19,7 +19,7 @@ class ExportTableController extends ControllerBase
   protected DatabaseFunctions $databaseFunctionsObj;
   protected DrupalUser $drupalUser;
   
-  public function __construct( $databaseFunctionsObj , $drupalUser ) {
+  public function __construct( DatabaseFunctions $databaseFunctionsObj , DrupalUser $drupalUser ) {
     $this->databaseFunctionsObj = $databaseFunctionsObj;
     $this->drupalUser = $drupalUser;
   }

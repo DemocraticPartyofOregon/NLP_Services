@@ -22,7 +22,7 @@ class UploadInstructionsForm extends FormBase
   protected FileSystemInterface $fileSystem;
   protected NlpSessionData $sessionData;
 
-  public function __construct($instructions,$paths,$fileSystem,$sessionData)
+  public function __construct(NlpInstructions $instructions,NlpPaths $paths,FileSystemInterface $fileSystem,NlpSessionData $sessionData)
   {
     $this->instructions = $instructions;
     $this->paths = $paths;

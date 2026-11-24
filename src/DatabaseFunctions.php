@@ -13,7 +13,7 @@ class DatabaseFunctions
   protected Connection $connection;
 
   public function __construct(
-    $connection,
+    Connection $connection,
     private readonly ModuleHandlerInterface $moduleHandler,
   ) {
     $this->connection = $connection;

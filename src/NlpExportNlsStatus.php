@@ -20,8 +20,8 @@ class NlpExportNlsStatus
   protected NlpTurfs $turfsObj;
   protected DrupalUser $drupalUserObj;
 
-  public function __construct( $fileSystem,$connection,$voters,$reports,
-                               $nls, $turfsObj, $drupalUserObj ) {
+  public function __construct( FileSystemInterface $fileSystem,Connection $connection,NlpVoters $voters,NlpReports $reports,
+                               NlpNls $nls, NlpTurfs $turfsObj, DrupalUser $drupalUserObj ) {
     $this->fileSystem = $fileSystem;
     $this->connection = $connection;
     $this->voters = $voters;

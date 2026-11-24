@@ -35,9 +35,9 @@ class ReassignMcidForm extends FormBase
   protected MagicWord $magicWordObj;
 
 
-  public function __construct( $drupalUserObj, $apiNlsObj, $nlpEncryptObj, $awardsObj,
-                               $coordinatorObj, $legFixesObj, $reportsObj, $turfsObj,
-                               $nlsObj, $magicWordObj, $turfAssignmentsObj, $votersObj)
+  public function __construct( DrupalUser $drupalUserObj, ApiNls $apiNlsObj, NlpEncryption $nlpEncryptObj, NlpAwards $awardsObj,
+                               NlpCoordinators $coordinatorObj, NlpLegislativeFixes $legFixesObj, NlpReports $reportsObj, NlpTurfs $turfsObj,
+                               NlpNls $nlsObj, MagicWord $magicWordObj, NlpTurfAssignments $turfAssignmentsObj, NlpVoters $votersObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->apiNlsObj = $apiNlsObj;

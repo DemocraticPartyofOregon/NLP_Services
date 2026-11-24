@@ -17,8 +17,8 @@ class NlpCredentialsEmail
   protected RequestStack $requestStack;
   protected MagicWord $magicWordObj;
 
-  public function __construct( $drupalUserObj, $coordinatorsObj, $mcidRecoveryObj,
-                               $nlpConfigurationObj, $sendMailObj, $nlsObj, $requestStack, $magicWordObj )
+  public function __construct( DrupalUser $drupalUserObj, NlpCoordinators $coordinatorsObj, NlpMcidRecovery $mcidRecoveryObj,
+                               NlpConfiguration $nlpConfigurationObj, NlpSendEmail $sendMailObj, NlpNls $nlsObj, RequestStack $requestStack, MagicWord $magicWordObj )
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->coordinatorsObj = $coordinatorsObj;

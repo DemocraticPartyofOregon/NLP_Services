@@ -21,16 +21,16 @@ class NlpSyncActiveNlsProcessor {
   protected NlpMcidReassignment $mcidReassignmentObj;
 
   public function __construct(
-    $apiNlsObj,
-    $legislativeFixesObj,
-    $nlpConfigurationObj,
-    $magicWordObj,
-    $drupalUserObj,
-    $nlsObj,
-    $awardsObj,
-    $messenger,
-    $activistCodesObj,
-    $mcidReassignmentObj
+    ApiNls $apiNlsObj,
+    NlpLegislativeFixes $legislativeFixesObj,
+    NlpConfiguration $nlpConfigurationObj,
+    MagicWord $magicWordObj,
+    DrupalUser $drupalUserObj,
+    NlpNls $nlsObj,
+    NlpAwards $awardsObj,
+    MessengerInterface $messenger,
+    ApiActivistCodes $activistCodesObj,
+    NlpMcidReassignment $mcidReassignmentObj
   ) {
     $this->apiNlsObj           = $apiNlsObj;
     $this->legislativeFixesObj = $legislativeFixesObj;

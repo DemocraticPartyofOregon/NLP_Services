@@ -28,8 +28,8 @@ class RemoveCoordinatorRoleFrom extends FormBase
   protected NlpSessionData $sessionDataObj;
   protected NlpSearchBar $searchBarObj;
 
-  public function __construct( $coordinatorsObj,$nlsObj,$drupalUserObj,$magicWordObj,
-                               $coordinatorsListDisplayObj, $sessionDataObj, $searchBarObj )
+  public function __construct( NlpCoordinators $coordinatorsObj,NlpNls $nlsObj,DrupalUser $drupalUserObj,MagicWord $magicWordObj,
+                               NlpCoordinatorsListDisplay $coordinatorsListDisplayObj, NlpSessionData $sessionDataObj, NlpSearchBar $searchBarObj )
   {
     $this->coordinatorsObj = $coordinatorsObj;
     $this->nlsObj = $nlsObj;

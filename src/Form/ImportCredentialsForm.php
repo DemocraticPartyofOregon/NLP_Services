@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal;
 use Drupal\Core\Database\Connection;
 use Drupal\Core\File\FileSystemInterface;
@@ -21,7 +22,7 @@ class ImportCredentialsForm extends FormBase
   protected MagicWord $magicWordObj;
   protected ApiNls $apiNlsObj;
   
-  public function __construct($fileSystem, $connection, $drupalUserObj, $magicWordObj, $apiNlsObj, $requestStack)
+  public function __construct(FileSystemInterface $fileSystem, Connection $connection, DrupalUser $drupalUserObj, MagicWord $magicWordObj, ApiNls $apiNlsObj, RequestStack $requestStack)
   {
     $this->fileSystem = $fileSystem;
     $this->connection = $connection;

@@ -41,9 +41,9 @@ class NlpResultsSummary
   protected NlpSessionData $sessionObj;
   protected HtmlText $htmlTextObj;
 
-  public function __construct($votersObj,$matchbacksObj,$nlsObj,$drupalUser,
-                              $crosstabsObj,$reportsObj,$turfsObj, $configurationObj,
-                              $sessionObj, $htmlTextObj,
+  public function __construct(NlpVoters $votersObj,NlpMatchbacks $matchbacksObj,NlpNls $nlsObj,DrupalUser $drupalUser,
+                              NlpCrosstabCounts $crosstabsObj,NlpReports $reportsObj,NlpTurfs $turfsObj, NlpConfiguration $configurationObj,
+                              NlpSessionData $sessionObj, HtmlText $htmlTextObj,
                               private readonly FileUrlGeneratorInterface $fileUrlGenerator,
                               private readonly FileRepositoryInterface $fileRepository,
                               private readonly PdfGenerator $pdfGenerator ) {

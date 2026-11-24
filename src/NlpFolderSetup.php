@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices;
 
+use Drupal\Core\StringTranslation\TranslationInterface;
 use Drupal\Component\Serialization\Yaml;
 use Drupal\Core\Extension\ModuleExtensionList;
 use Drupal\Core\File\Exception\FileException;
@@ -20,7 +21,7 @@ class NlpFolderSetup
   protected MessengerInterface $messenger;
   protected ModuleExtensionList $moduleExtensionList;
 
-  public function __construct($nlpConfigurationObj, $pathsObj, $fileSystem, $messenger, $moduleExtensionList, $stringTranslation) {
+  public function __construct(NlpConfiguration $nlpConfigurationObj, NlpPaths $pathsObj, FileSystemInterface $fileSystem, MessengerInterface $messenger, ModuleExtensionList $moduleExtensionList, TranslationInterface $stringTranslation) {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->pathsObj = $pathsObj;
     $this->fileSystem = $fileSystem;

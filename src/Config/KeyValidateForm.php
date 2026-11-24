@@ -18,7 +18,7 @@ class KeyValidateForm extends FormBase
 
   protected ApiKeyVerification $verifyApiKeysObj;
 
-  public function __construct($verifyApiKeysObj, ConfigFactoryInterface $configFactory)
+  public function __construct(ApiKeyVerification $verifyApiKeysObj, ConfigFactoryInterface $configFactory)
   {
     $this->verifyApiKeysObj = $verifyApiKeysObj;
     $this->configFactory = $configFactory;

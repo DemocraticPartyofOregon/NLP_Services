@@ -22,7 +22,7 @@ class ApiConfigurationForm extends FormBase {
   protected ApiKeyManagement $apiKeyManagementObj;
   protected NlpFolderSetup $folderSetupObj;
 
-  public function __construct( $nlpConfigurationObj, $apiKeyManagementObj, $folderSetupObj ) {
+  public function __construct( NlpConfiguration $nlpConfigurationObj, ApiKeyManagement $apiKeyManagementObj, NlpFolderSetup $folderSetupObj ) {
     $this->nlpConfigurationObj = $nlpConfigurationObj;
     $this->apiKeyManagementObj = $apiKeyManagementObj;
     $this->folderSetupObj = $folderSetupObj;

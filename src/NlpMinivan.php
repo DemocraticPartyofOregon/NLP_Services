@@ -64,9 +64,9 @@ class NlpMinivan {
   protected StateInterface $state;
 
 
-  public function __construct( $config, $nlpReportsObj, $voterObj, $nlsObj, $imapObj,
-                               $apiSurveyQuestionObj, $drupalUserObj, $nlpConfigurationObj,
-                               $apiNlsObj, $coordinatorsObj, $sendEmailObj, $state ) {
+  public function __construct( ConfigFactoryInterface $config, NlpReports $nlpReportsObj, NlpVoters $voterObj, NlpNls $nlsObj, NlpImap $imapObj,
+                               ApiSurveyQuestion $apiSurveyQuestionObj, DrupalUser $drupalUserObj, NlpConfiguration $nlpConfigurationObj,
+                               ApiNls $apiNlsObj, NlpCoordinators $coordinatorsObj, NlpSendEmail $sendEmailObj, StateInterface $state ) {
     $this->config = $config;
     $this->nlpReportsObj = $nlpReportsObj;
     $this->voterObj = $voterObj;

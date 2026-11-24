@@ -26,7 +26,7 @@ class ExportNlsStatusForm extends FormBase
   protected NlpFileFunctions $fileFunctionsObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct($nlpSessionObj, $nlsObj, $nlpExportNlsStatusObj, $drupalUserObj, $fileFunctionsObj, $nlpConfigurationObj)
+  public function __construct(NlpSessionData $nlpSessionObj, NlpNls $nlsObj, NlpExportNlsStatus $nlpExportNlsStatusObj, DrupalUser $drupalUserObj, NlpFileFunctions $fileFunctionsObj, NlpConfiguration $nlpConfigurationObj)
   {
     $this->nlpSessionObj = $nlpSessionObj;
     $this->nlsObj = $nlsObj;

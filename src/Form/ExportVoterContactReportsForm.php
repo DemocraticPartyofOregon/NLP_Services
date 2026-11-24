@@ -23,7 +23,7 @@ class ExportVoterContactReportsForm extends FormBase
   protected NlpReports $reports;
   protected DatabaseFunctions $dbFunctionsObj;
 
-  public function __construct( $reports, $dbFunctionsObj) {
+  public function __construct( NlpReports $reports, DatabaseFunctions $dbFunctionsObj) {
     $this->reports = $reports;
     $this->dbFunctionsObj = $dbFunctionsObj;
   }

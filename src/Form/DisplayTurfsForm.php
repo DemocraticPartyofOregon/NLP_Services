@@ -2,6 +2,7 @@
 
 namespace Drupal\nlpservices\Form;
 
+use Symfony\Component\HttpFoundation\RequestStack;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\nlpservices\NlpSearchBar;
@@ -28,8 +29,8 @@ class DisplayTurfsForm extends FormBase
   protected ApiFolders $foldersObj;
   protected ApiMapRegions $apiMapRegionObj;
 
-  public function __construct( $turfsObj, $awardsObj, $searchBarObj, $turfDisplayObj,
-                               $sessionDataObj, $foldersObj, $apiMapRegionObj, $requestStack ) {
+  public function __construct( NlpTurfs $turfsObj, NlpAwards $awardsObj, NlpSearchBar $searchBarObj, NlpTurfDisplay $turfDisplayObj,
+                               NlpSessionData $sessionDataObj, ApiFolders $foldersObj, ApiMapRegions $apiMapRegionObj, RequestStack $requestStack ) {
     $this->turfsObj = $turfsObj;
     $this->awardsObj = $awardsObj;
     $this->searchBarObj = $searchBarObj;

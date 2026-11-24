@@ -13,7 +13,7 @@ class ApiKeyVerification
   protected NlpConfiguration $nlpConfigurationObj;
   protected ApiNls $apiNlsObj;
   protected ApiFolders $apiFoldersObj;
-  public function __construct($apiKeyManagementObj, $nlpConfigurationObj, $apiNlsObj, $apiFoldersObj )
+  public function __construct(ApiKeyManagement $apiKeyManagementObj, NlpConfiguration $nlpConfigurationObj, ApiNls $apiNlsObj, ApiFolders $apiFoldersObj )
   {
     $this->apiKeyManagementObj = $apiKeyManagementObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;

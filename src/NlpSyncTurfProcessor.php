@@ -55,21 +55,21 @@ class NlpSyncTurfProcessor {
   protected Connection $connection;
 
   public function __construct(
-    $exportJobsObj,
-    $savedListsObj,
-    $apiVoterObj,
-    $nlsObj,
-    $activistCodesObj,
-    $votersObj,
-    $turfsObj,
-    $configurationObj,
-    $awardsObj,
-    $reportsObj,
-    $pathsObj,
-    $turfAssignmentsObj,
-    $messenger,
-    $turfStatusObj,
-    $connection
+    ApiExportJobs $exportJobsObj,
+    ApiSavedLists $savedListsObj,
+    ApiVoter $apiVoterObj,
+    NlpNls $nlsObj,
+    ApiActivistCodes $activistCodesObj,
+    NlpVoters $votersObj,
+    NlpTurfs $turfsObj,
+    NlpConfiguration $configurationObj,
+    NlpAwards $awardsObj,
+    NlpReports $reportsObj,
+    NlpPaths $pathsObj,
+    NlpTurfAssignments $turfAssignmentsObj,
+    MessengerInterface $messenger,
+    NlpTurfStatus $turfStatusObj,
+    Connection $connection
   ) {
     $this->exportJobsObj      = $exportJobsObj;
     $this->savedListsObj      = $savedListsObj;

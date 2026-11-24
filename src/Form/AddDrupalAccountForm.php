@@ -19,7 +19,7 @@ class AddDrupalAccountForm extends FormBase
   protected NlpNls $nls;
   protected MagicWord $magicWord;
 
-  public function __construct( $drupalUser, $nls, $magicWord)
+  public function __construct( DrupalUser $drupalUser, NlpNls $nls, MagicWord $magicWord)
   {
     $this->drupalUser = $drupalUser;
     $this->nls = $nls;

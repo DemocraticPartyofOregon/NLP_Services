@@ -23,8 +23,8 @@ class DeleteDrupalAccountsForm extends FormBase
   protected PrivateTempStoreFactory $privateTempstoreObj;
   protected NlpSessionData $sessionDataObj;
 
-  public function __construct($drupalUser, $userDisplayObj, $searchBarObj, $privateTempstoreObj,
-                              $sessionDataObj)
+  public function __construct(DrupalUser $drupalUser, NlpUserDisplay $userDisplayObj, NlpSearchBar $searchBarObj, PrivateTempStoreFactory $privateTempstoreObj,
+                              NlpSessionData $sessionDataObj)
   {
     $this->drupalUser = $drupalUser;
     $this->userDisplayObj = $userDisplayObj;

@@ -25,7 +25,7 @@ class TurfDeliveryMessageForm extends FormBase
   protected NlpTurfDeliveryMessage $turfMsg;
   protected DrupalUser $drupalUser;
 
-  public function __construct($nlpConfiguration, $sessionData, $turfMsg, $drupalUser) {
+  public function __construct(NlpConfiguration $nlpConfiguration, NlpSessionData $sessionData, NlpTurfDeliveryMessage $turfMsg, DrupalUser $drupalUser) {
     $this->nlpConfiguration = $nlpConfiguration;
     $this->sessionData = $sessionData;
     $this->turfMsg = $turfMsg;

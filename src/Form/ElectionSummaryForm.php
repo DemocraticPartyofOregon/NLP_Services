@@ -25,7 +25,7 @@ class ElectionSummaryForm extends FormBase
   protected NlpResultsSummary $resultsSummaryObj;
   protected DrupalUser $drupalUserObj;
 
-  public function __construct($resultsSummaryObj, $drupalUserObj)
+  public function __construct(NlpResultsSummary $resultsSummaryObj, DrupalUser $drupalUserObj)
   {
     $this->resultsSummaryObj = $resultsSummaryObj;
     $this->drupalUserObj = $drupalUserObj;

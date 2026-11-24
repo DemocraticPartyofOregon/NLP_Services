@@ -16,7 +16,7 @@ class CommitteeManagementController extends ControllerBase {
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct($drupalUserObj, $sessionDataObj, $nlpConfigurationObj) {
+  public function __construct(DrupalUser $drupalUserObj, NlpSessionData $sessionDataObj, NlpConfiguration $nlpConfigurationObj) {
     $this->drupalUserObj = $drupalUserObj;
     $this->sessionDataObj = $sessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;

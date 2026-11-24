@@ -18,7 +18,7 @@ class ChangeCommitteeForm extends FormBase {
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
-  public function __construct($sessionDataObj, $nlpConfigurationObj) {
+  public function __construct(NlpSessionData $sessionDataObj, NlpConfiguration $nlpConfigurationObj) {
     $this->sessionDataObj = $sessionDataObj;
     $this->nlpConfigurationObj = $nlpConfigurationObj;
   }

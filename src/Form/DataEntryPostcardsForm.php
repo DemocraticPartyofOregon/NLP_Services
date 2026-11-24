@@ -26,9 +26,9 @@ class DataEntryPostcardsForm extends FormBase
   protected NlpDataEntryVoters $dataEntryVotersObj;
   protected NlpConfiguration $configurationObj;
   protected ApiSurveyQuestion $apiSurveyQuestionObj;
-  public function __construct($drupalUserObj, $reportsObj, $votersObj, $nlsObj,
-                              $sessionDataObj, $dataEntryVotersObj, $configurationObj,
-                              $apiSurveyQuestionObj)
+  public function __construct(DrupalUser $drupalUserObj, NlpReports $reportsObj, NlpVoters $votersObj, NlpNls $nlsObj,
+                              NlpSessionData $sessionDataObj, NlpDataEntryVoters $dataEntryVotersObj, NlpConfiguration $configurationObj,
+                              ApiSurveyQuestion $apiSurveyQuestionObj)
   {
     $this->drupalUserObj = $drupalUserObj;
     $this->reportsObj = $reportsObj;

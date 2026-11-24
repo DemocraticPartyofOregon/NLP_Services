@@ -27,8 +27,8 @@ class CancelMovedReport extends FormBase
   protected NlpSearchBar $searchBarObj;
   protected NlpVoterListDisplay $voterListDisplayObj;
   
-  public function __construct($votersObj, $reportsObj, $sessionObj,
-                              $searchBarObj, $voterListDisplayObj )
+  public function __construct(NlpVoters $votersObj, NlpReports $reportsObj, NlpSessionData $sessionObj,
+                              NlpSearchBar $searchBarObj, NlpVoterListDisplay $voterListDisplayObj )
   {
     $this->votersObj = $votersObj;
     $this->reportsObj = $reportsObj;

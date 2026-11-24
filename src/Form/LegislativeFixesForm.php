@@ -18,7 +18,7 @@ class LegislativeFixesForm extends FormBase
   protected NlpLegislativeFixes $legFixes;
   protected NlpSessionData $sessionData;
 
-  public function __construct($legFixes, $sessionData)
+  public function __construct(NlpLegislativeFixes $legFixes, NlpSessionData $sessionData)
   {
     $this->legFixes = $legFixes;
     $this->sessionData = $sessionData;

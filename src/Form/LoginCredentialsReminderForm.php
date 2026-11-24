@@ -27,8 +27,8 @@ class LoginCredentialsReminderForm extends FormBase
   protected NlpConfiguration $nlpConfigurationObj;
   protected NlpSessionData $nlpSessionDataObj;
 
-  public function __construct($drupalUser, $nlsObj, $credentialsEmailObj, $searchBarObj,
-                              $userDisplayObj, $nlpConfigurationObj, $nlpSessionDataObj )
+  public function __construct(DrupalUser $drupalUser, NlpNls $nlsObj, NlpCredentialsEmail $credentialsEmailObj, NlpSearchBar $searchBarObj,
+                              NlpUserDisplay $userDisplayObj, NlpConfiguration $nlpConfigurationObj, NlpSessionData $nlpSessionDataObj )
   {
     $this->drupalUser = $drupalUser;
     $this->nlsObj = $nlsObj;
