@@ -150,7 +150,7 @@ class DrupalUser {
    * @return bool - indicates the user has admin permissions.
    * Used in:
    *   nlpservices.module
-   *   CountyManagementController.php
+   *   CommitteeManagementController.php
    *   AddDrupalAccountForm.php
    *   DeleteDrupalAccountsForm.php
    *   DocumentsForm.php

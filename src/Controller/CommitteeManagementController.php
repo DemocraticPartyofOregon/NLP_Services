@@ -10,7 +10,7 @@ use Drupal\nlpservices\NlpSessionData;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /** @noinspection PhpUnused */
-class CountyManagementController extends ControllerBase {
+class CommitteeManagementController extends ControllerBase {
 
   protected DrupalUser $drupalUserObj;
   protected NlpSessionData $sessionDataObj;
@@ -25,7 +25,7 @@ class CountyManagementController extends ControllerBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): CountyManagementController
+  public static function create(ContainerInterface $container): CommitteeManagementController
   {
     return new static(
       $container->get('nlpservices.drupal_user'),

@@ -8,7 +8,7 @@ use Drupal;
 use Drupal\Core\DependencyInjection\ContainerBuilder;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\nlpservices\Form\ChangeCountyForm;
+use Drupal\nlpservices\Form\ChangeCommitteeForm;
 use Drupal\nlpservices\NlpConfiguration;
 use Drupal\nlpservices\NlpSessionData;
 use Drupal\Tests\UnitTestCase;
@@ -16,12 +16,12 @@ use PHPUnit\Framework\Attributes\CoversClass;
 use PHPUnit\Framework\Attributes\CoversMethod;
 use PHPUnit\Framework\Attributes\Group;
 
-#[CoversClass(\Drupal\nlpservices\Form\ChangeCountyForm::class)]
-#[CoversMethod(\Drupal\nlpservices\Form\ChangeCountyForm::class, 'getFormId')]
-#[CoversMethod(\Drupal\nlpservices\Form\ChangeCountyForm::class, 'buildForm')]
-#[CoversMethod(\Drupal\nlpservices\Form\ChangeCountyForm::class, 'submitForm')]
+#[CoversClass(\Drupal\nlpservices\Form\ChangeCommitteeForm::class)]
+#[CoversMethod(\Drupal\nlpservices\Form\ChangeCommitteeForm::class, 'getFormId')]
+#[CoversMethod(\Drupal\nlpservices\Form\ChangeCommitteeForm::class, 'buildForm')]
+#[CoversMethod(\Drupal\nlpservices\Form\ChangeCommitteeForm::class, 'submitForm')]
 #[Group('nlpservices')]
-class ChangeCountyFormTest extends UnitTestCase {
+class ChangeCommitteeFormTest extends UnitTestCase {
 
   private NlpSessionData $sessionDataMock;
   private NlpConfiguration $nlpConfigurationMock;
@@ -49,8 +49,8 @@ class ChangeCountyFormTest extends UnitTestCase {
   // Helpers
   // -------------------------------------------------------------------------
 
-  private function buildFormInstance(): ChangeCountyForm {
-    $form = new ChangeCountyForm(
+  private function buildFormInstance(): ChangeCommitteeForm {
+    $form = new ChangeCommitteeForm(
       $this->sessionDataMock,
       $this->nlpConfigurationMock,
     );

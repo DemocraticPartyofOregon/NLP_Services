@@ -14,7 +14,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *
  * @noinspection PhpUnused
  */
-class ChangeCountyForm extends FormBase {
+class ChangeCommitteeForm extends FormBase {
   protected NlpSessionData $sessionDataObj;
   protected NlpConfiguration $nlpConfigurationObj;
 
@@ -26,7 +26,7 @@ class ChangeCountyForm extends FormBase {
   /**
    * {@inheritdoc}
    */
-  public static function create(ContainerInterface $container): ChangeCountyForm|static
+  public static function create(ContainerInterface $container): ChangeCommitteeForm|static
   {
     return new static(
       $container->get('nlpservices.session_data'),
