@@ -2,7 +2,10 @@
 
 namespace Drupal\Tests\nlpservices\Unit\Service {
 
+  use Drupal;
+  use Drupal\Core\DependencyInjection\ContainerBuilder;
   use Drupal\Core\File\FileUrlGeneratorInterface;
+  use Drupal\Core\Messenger\MessengerInterface;
   use Drupal\nlpservices\DrupalUser;
   use Drupal\nlpservices\NlpCoordinators;
   use Drupal\nlpservices\NlpCreateWalksheet;
@@ -11,27 +14,30 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
   use Drupal\nlpservices\NlpNls;
   use Drupal\nlpservices\NlpPaths;
   use Drupal\nlpservices\NlpSessionData;
+  use Drupal\nlpservices\NlpTurfMap;
   use Drupal\nlpservices\NlpTurfs;
   use Drupal\nlpservices\NlpVoters;
   use Drupal\nlpservices\PdfGenerator;
   use Drupal\Tests\nlpservices\Traits\PdfPaginationTrait;
   use Drupal\Tests\UnitTestCase;
+  use PHPUnit\Framework\MockObject\MockObject;
 
   class NlpDataEntryPrintTest extends UnitTestCase {
 
     use PdfPaginationTrait;
 
-    private NlpNls $nlsMock;
-    private NlpSessionData $sessionDataMock;
-    private NlpCoordinators $coordinatorsMock;
-    private NlpVoters $votersMock;
-    private NlpTurfs $turfsMock;
-    private NlpPaths $pathsMock;
-    private NlpInstructions $instructionsMock;
-    private DrupalUser $drupalUserMock;
-    private NlpCreateWalksheet $createWalksheetMock;
-    private FileUrlGeneratorInterface $fileUrlGeneratorMock;
-    private PdfGenerator $pdfGeneratorMock;
+    private NlpNls&MockObject $nlsMock;
+    private NlpSessionData&MockObject $sessionDataMock;
+    private NlpCoordinators&MockObject $coordinatorsMock;
+    private NlpVoters&MockObject $votersMock;
+    private NlpTurfs&MockObject $turfsMock;
+    private NlpPaths&MockObject $pathsMock;
+    private NlpInstructions&MockObject $instructionsMock;
+    private DrupalUser&MockObject $drupalUserMock;
+    private NlpCreateWalksheet&MockObject $createWalksheetMock;
+    private FileUrlGeneratorInterface&MockObject $fileUrlGeneratorMock;
+    private PdfGenerator&MockObject $pdfGeneratorMock;
+    private NlpTurfMap&MockObject $turfMapMock;
 
     protected function setUp(): void {
       parent::setUp();
@@ -46,6 +52,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->createWalksheetMock = $this->createMock(NlpCreateWalksheet::class);
       $this->fileUrlGeneratorMock = $this->createMock(FileUrlGeneratorInterface::class);
       $this->pdfGeneratorMock    = $this->createMock(PdfGenerator::class);
+      $this->turfMapMock         = $this->createMock(NlpTurfMap::class);
     }
 
     // -------------------------------------------------------------------------
@@ -65,6 +72,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->createWalksheetMock,
         $this->fileUrlGeneratorMock,
         $this->pdfGeneratorMock,
+        $this->turfMapMock,
       );
     }
 
@@ -530,6 +538,42 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $result = $this->buildService()->buildWalksheetPage(7);
       $this->assertStringContainsString('could not be created', $result['#markup']);
       $this->assertStringNotContainsString('<a href=', $result['#markup']);
+    }
+
+    // -------------------------------------------------------------------------
+    // dataEntryPrint: the new walksheet's map wording
+    // -------------------------------------------------------------------------
+
+    private function dataEntryPrintPage(bool $hasMapboxToken): string {
+      $container = new ContainerBuilder();
+      $container->set('messenger', $this->createMock(MessengerInterface::class));
+      Drupal::setContainer($container);
+      $this->sessionDataMock->method('getCounty')->willReturn('Test');
+      $this->sessionDataMock->method('get')->willReturn(7);
+      $this->instructionsMock->method('getInstructions')
+        ->willReturn(['canvass' => ['fileName' => ''], 'postcard' => ['fileName' => '']]);
+      $this->turfsMock->method('getTurf')->willReturn(['turfPDF' => '']);
+      $this->turfMapMock->method('hasMapboxToken')->willReturn($hasMapboxToken);
+      try {
+        return $this->buildService()->dataEntryPrint();
+      } finally {
+        Drupal::setContainer(new ContainerBuilder());
+      }
+    }
+
+    public function testDataEntryPrintWithMapboxTokenSaysNewWalksheetHasMap(): void {
+      $page = $this->dataEntryPrintPage(TRUE);
+      $this->assertStringContainsString('(Latest list of voters with a map)', $page);
+      $this->assertStringContainsString('includes a map of the doors', $page);
+      $this->assertStringNotContainsString('without a map', $page);
+      $this->assertStringNotContainsString('will not have a map', $page);
+    }
+
+    public function testDataEntryPrintWithoutMapboxTokenSaysNewWalksheetHasNoMap(): void {
+      $page = $this->dataEntryPrintPage(FALSE);
+      $this->assertStringContainsString('(Latest list of voters but without a map)', $page);
+      $this->assertStringContainsString('will not have a map', $page);
+      $this->assertStringNotContainsString('includes a map of the doors', $page);
     }
 
   }

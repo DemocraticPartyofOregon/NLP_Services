@@ -21,11 +21,20 @@ class NlpDataEntryPrint
   protected DrupalUser $drupalUserObj;
   protected NlpCreateWalksheet $createWalksheetObj;
 
-  public function __construct($nlsObj, $sessionData, $coordinators, $votersObj,
-                              $turfsObj, $pathsObj, $instructionsObj, $drupalUserObj,
-                              $createWalksheetObj,
-                              private readonly FileUrlGeneratorInterface $fileUrlGenerator,
-                              private readonly PdfGenerator $pdfGenerator ) {
+  public function __construct(
+    NlpNls $nlsObj, 
+    NlpSessionData $sessionData,
+    NlpCoordinators $coordinators, 
+    NlpVoters $votersObj,
+    NlpTurfs $turfsObj, 
+    NlpPaths $pathsObj,
+    NlpInstructions $instructionsObj, 
+    DrupalUser $drupalUserObj,
+    NlpCreateWalksheet $createWalksheetObj,
+    private readonly FileUrlGeneratorInterface $fileUrlGenerator,
+    private readonly PdfGenerator $pdfGenerator,
+    private readonly NlpTurfMap $turfMapObj 
+  ) {
     $this->nlsObj = $nlsObj;
     $this->sessionData = $sessionData;
     $this->coordinators = $coordinators;
@@ -51,6 +60,7 @@ class NlpDataEntryPrint
       $container->get('nlpservices.create_walksheet'),
       $container->get('file_url_generator'),
       $container->get('nlpservices.pdf_generator'),
+      $container->get('nlpservices.turf_map'),
     );
   }
 
@@ -156,14 +166,24 @@ you intend to send postcards or are using the MiniVAN.  If you need a printable 
 your county coordinator.</p>';
     }
 
-    $page .= "<h2>Printable walksheet (Latest list of voters but without a map)</h2>";
+    // The new walksheet has a map when a Mapbox token is stored (without a
+    // Geocodio key, the doors are geocoded by Census alone).
+    $hasMap = $this->turfMapObj->hasMapboxToken();
+    $page .= $hasMap
+      ? "<h2>Printable walksheet (Latest list of voters with a map)</h2>"
+      : "<h2>Printable walksheet (Latest list of voters but without a map)</h2>";
 
     $page .=  '<p>Approximately every thirty days, the state
 party updates the database of registered voters.   If your turf was created before the latest update of voters, it may have experienced some change.   Some
 voters may have left and others moved into your turf.  The link below will create a new walksheet for your turf
 in PDF format.   It will match the current list of voters displayed in your data entry page but may differ from
-the turf you were originally given.  This walksheet will not have a map but may still be of some help to you if
-still attempting to contact voters.  If you are unable to print your walksheet, contact your coordinator for
+the turf you were originally given.  ';
+    $page .= $hasMap
+      ? 'This walksheet includes a map of the doors in your turf.  Any door that could not be placed on the map
+is listed below it.  '
+      : 'This walksheet will not have a map but may still be of some help to you if
+still attempting to contact voters.  ';
+    $page .= 'If you are unable to print your walksheet, contact your coordinator for
 assistance.</p>';
 
     $page .= '<p><b>Create a new walksheet: </b> <a href="nlp-printable-walksheet-page/' . $turfIndex . '" target="_blank">Click here</a></p> ';

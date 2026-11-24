@@ -280,7 +280,7 @@ services:
                  '@nlpservices.coordinators', '@nlpservices.voters',
                  '@nlpservices.turfs', '@nlpservices.paths', '@nlpservices.instructions',
                  '@nlpservices.drupal_user', '@nlpservices.create_walksheet',
-                 '@file_url_generator', '@nlpservices.pdf_generator' ]
+                 '@file_url_generator', '@nlpservices.pdf_generator', '@nlpservices.turf_map' ]
 
   nlpservices.data_entry_reports:
     class: Drupal\nlpservices\NlpDataEntryReports
