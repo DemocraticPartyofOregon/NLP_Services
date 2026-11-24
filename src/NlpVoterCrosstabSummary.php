@@ -25,7 +25,7 @@ class NlpVoterCrosstabSummary
     );
   }
 
-  public function getCountiesWithTurfs(): array
+  public function getCommitteesWithTurfs(): array
   {
     return $this->turfs->getCommitteesWithTurfs();
   }
@@ -83,18 +83,19 @@ class NlpVoterCrosstabSummary
   }
 
   /**
-   * buildCountySummaryDisplay
+   * buildCommitteeSummaryDisplay
    *
    * Builds a Drupal render array showing totalPeople and accepted (voted)
-   * for each participating county and a state total row, for the given table.
+   * for one committee, from the target voter and all voter crosstab counts
+   * of the county with the committee's name, and the committee's turf stats.
    *
-   * @param string $county
+   * @param string $committee
    * @param array $targetVoters   - ['totalPeople' => int, 'accepted' => int]
    * @param array $allVoters      - ['totalPeople' => int, 'accepted' => int]
    * @param array $turfStats      - keys: total, totalVoted, contacted, contactedVoted, surveyed, surveyedVoted
    * @return array - Drupal render array.
    */
-  public function buildCountySummaryDisplay(string $county, array $targetVoters, array $allVoters, array $turfStats = []): array
+  public function buildCommitteeSummaryDisplay(string $committee, array $targetVoters, array $allVoters, array $turfStats = []): array
   {
     $rows = [];
 
@@ -149,7 +150,7 @@ class NlpVoterCrosstabSummary
 
     return [
       '#type'    => 'table',
-      '#caption' => $county,
+      '#caption' => $committee,
       '#header'  => [
         'type'        => '',
         'totalPeople' => t('Total Voters'),

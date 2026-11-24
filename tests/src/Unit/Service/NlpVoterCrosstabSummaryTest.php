@@ -48,18 +48,18 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountiesWithTurfs
+    // getCommitteesWithTurfs
     // -------------------------------------------------------------------------
 
-    public function testGetCountiesWithTurfsDelegatesToTurfs(): void {
+    public function testGetCommitteesWithTurfsDelegatesToTurfs(): void {
       $this->turfsMock->method('getCommitteesWithTurfs')->willReturn(['Denver', 'Boulder']);
-      $result = $this->buildSummary()->getCountiesWithTurfs();
+      $result = $this->buildSummary()->getCommitteesWithTurfs();
       $this->assertSame(['Denver', 'Boulder'], $result);
     }
 
-    public function testGetCountiesWithTurfsReturnsEmptyWhenNone(): void {
+    public function testGetCommitteesWithTurfsReturnsEmptyWhenNone(): void {
       $this->turfsMock->method('getCommitteesWithTurfs')->willReturn([]);
-      $this->assertSame([], $this->buildSummary()->getCountiesWithTurfs());
+      $this->assertSame([], $this->buildSummary()->getCommitteesWithTurfs());
     }
 
     // -------------------------------------------------------------------------
@@ -136,27 +136,27 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // buildCountySummaryDisplay
+    // buildCommitteeSummaryDisplay
     // -------------------------------------------------------------------------
 
-    public function testBuildCountySummaryDisplayReturnsTableRenderArray(): void {
+    public function testBuildCommitteeSummaryDisplayReturnsTableRenderArray(): void {
       $allVoters    = ['totalPeople' => 1000, 'accepted' => 600];
       $targetVoters = ['totalPeople' => 400,  'accepted' => 200];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertSame('table', $result['#type']);
       $this->assertSame('Denver', $result['#caption']);
     }
 
-    public function testBuildCountySummaryDisplayWithoutTurfStatsTwoRows(): void {
+    public function testBuildCommitteeSummaryDisplayWithoutTurfStatsTwoRows(): void {
       $allVoters    = ['totalPeople' => 1000, 'accepted' => 600];
       $targetVoters = ['totalPeople' => 400,  'accepted' => 200];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertCount(2, $result['#rows']);
     }
 
-    public function testBuildCountySummaryDisplayWithTurfStatsFiveRows(): void {
+    public function testBuildCommitteeSummaryDisplayWithTurfStatsFiveRows(): void {
       $allVoters    = ['totalPeople' => 1000, 'accepted' => 600];
       $targetVoters = ['totalPeople' => 400,  'accepted' => 200];
       $turfStats    = [
@@ -167,39 +167,39 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'surveyed'       => 100,
         'surveyedVoted'  => 50,
       ];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters, $turfStats);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters, $turfStats);
 
       $this->assertCount(5, $result['#rows']);
     }
 
-    public function testBuildCountySummaryDisplayCalculatesPercentage(): void {
+    public function testBuildCommitteeSummaryDisplayCalculatesPercentage(): void {
       $allVoters    = ['totalPeople' => 1000, 'accepted' => 500];
       $targetVoters = ['totalPeople' => 200,  'accepted' => 50];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertSame('50%', $result['#rows'][0]['pct']);
       $this->assertSame('25%', $result['#rows'][1]['pct']);
     }
 
-    public function testBuildCountySummaryDisplayZeroTotalPeopleShowsZeroPct(): void {
+    public function testBuildCommitteeSummaryDisplayZeroTotalPeopleShowsZeroPct(): void {
       $allVoters    = ['totalPeople' => 0, 'accepted' => 0];
       $targetVoters = ['totalPeople' => 0, 'accepted' => 0];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertSame('0%', $result['#rows'][0]['pct']);
       $this->assertSame('0%', $result['#rows'][1]['pct']);
     }
 
-    public function testBuildCountySummaryDisplayFormatsNumbersWithCommas(): void {
+    public function testBuildCommitteeSummaryDisplayFormatsNumbersWithCommas(): void {
       $allVoters    = ['totalPeople' => 10000, 'accepted' => 5000];
       $targetVoters = ['totalPeople' => 2000,  'accepted' => 1000];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertSame('10,000', $result['#rows'][0]['totalPeople']);
       $this->assertSame('5,000',  $result['#rows'][0]['accepted']);
     }
 
-    public function testBuildCountySummaryDisplayTurfStatsZeroContactedShowsZeroPct(): void {
+    public function testBuildCommitteeSummaryDisplayTurfStatsZeroContactedShowsZeroPct(): void {
       $allVoters    = ['totalPeople' => 100, 'accepted' => 50];
       $targetVoters = ['totalPeople' => 50,  'accepted' => 25];
       $turfStats    = [
@@ -210,17 +210,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'surveyed'       => 0,
         'surveyedVoted'  => 0,
       ];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters, $turfStats);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters, $turfStats);
 
       $this->assertSame('0%', $result['#rows'][2]['pct']);
       $this->assertSame('0%', $result['#rows'][3]['pct']);
       $this->assertSame('0%', $result['#rows'][4]['pct']);
     }
 
-    public function testBuildCountySummaryDisplayHeaderHasFourKeys(): void {
+    public function testBuildCommitteeSummaryDisplayHeaderHasFourKeys(): void {
       $allVoters    = ['totalPeople' => 100, 'accepted' => 50];
       $targetVoters = ['totalPeople' => 50,  'accepted' => 25];
-      $result = $this->buildSummary()->buildCountySummaryDisplay('Denver', $targetVoters, $allVoters);
+      $result = $this->buildSummary()->buildCommitteeSummaryDisplay('Denver', $targetVoters, $allVoters);
 
       $this->assertArrayHasKey('type',        $result['#header']);
       $this->assertArrayHasKey('totalPeople', $result['#header']);

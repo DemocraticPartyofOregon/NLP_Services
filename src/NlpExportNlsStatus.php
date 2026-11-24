@@ -47,15 +47,15 @@ class NlpExportNlsStatus
   /**
    * createNlsStatusFile
    *
-   * Creates a CSV file containing the status of NLS users for a specified county and HD. The file is stored in a
+   * Creates a CSV file containing the status of NLS users for a specified committee and HD. The file is stored in a
    * temporary directory and is intended for use in analyzing NLS participation and engagement.
    *
    * @param string $tempFileName The name of the temporary file to be created.
-   * @param string $county The county for which to generate the NLS status report. Use 'all' to include all counties.
+   * @param string $committee The committee for which to generate the NLS status report. Use 'all' to include all committees.
    * @param int $hd (optional) The HD for which to generate the NLS status report. Default is 0, which includes all HDs.
    * @return bool TRUE if the file was created successfully, FALSE otherwise.
    */
-  public function createNlsStatusFile(string $tempFileName, string $county, int $hd=0): bool
+  public function createNlsStatusFile(string $tempFileName, string $committee, int $hd=0): bool
   {
     $hdr = [
       'mcid',
@@ -86,21 +86,21 @@ class NlpExportNlsStatus
     }
     fwrite($fh, $hdrCsv);
 
-    if ($county === 'all') {
-      $counties = $this->voters->getParticipatingCommittees();
+    if ($committee === 'all') {
+      $committees = $this->voters->getParticipatingCommittees();
     } else {
-      $counties = [$county];
+      $committees = [$committee];
     }
-    //nlp_debug_msg_safe('$counties',$counties);
-    // Loading each NL's user entity is too slow and memory hungry for an all-county export.
+    //nlp_debug_msg_safe('$committees',$committees);
+    // Loading each NL's user entity is too slow and memory hungry for an all-committee export.
     $lastAccess = $this->drupalUserObj->getLastAccessByMcid();
-    foreach ($counties as $countyName) {
-      $nlList = $this->nls->getCountyNls($countyName,$hd);
+    foreach ($committees as $committeeName) {
+      $nlList = $this->nls->getCountyNls($committeeName,$hd);
       if (!$nlList) {
-        nlp_debug_msg('$countyName',$countyName);
+        nlp_debug_msg('$committeeName',$committeeName);
         continue;
       }
-      $counts = $this->reports->getCommitteeReportCounts($countyName);
+      $counts = $this->reports->getCommitteeReportCounts($committeeName);
       foreach ($nlList as $mcid => $nl) {
         $voterCount = $this->voters->getVoterCountByNl($mcid);
         if (!empty($counts[$mcid]['attempts'])) {
@@ -132,7 +132,7 @@ class NlpExportNlsStatus
           }
           $turfNames .= $turf['turfName'];
           // Use the door count saved from VoteBuilder at sync.  Recounting from the
-          // voter addresses costs several queries per voter, too slow for an all-county export.
+          // voter addresses costs several queries per voter, too slow for an all-committee export.
           $doors += (int) $turf['doorCount'];
         }
 

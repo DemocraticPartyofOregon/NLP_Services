@@ -7,6 +7,7 @@ use Drupal\Core\Controller\ControllerBase;
 use Drupal\Core\File\FileExists;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\NlpExportTurfStatus;
+use Drupal\nlpservices\NlpSessionData;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
@@ -18,10 +19,12 @@ class ReportsController extends ControllerBase
 {
   protected NlpExportTurfStatus $exportTurfStatusObj;
   protected DrupalUser $drupalUser;
+  protected NlpSessionData $sessionData;
 
-  public function __construct($exportTurfStatusObj, $drupalUser) {
+  public function __construct($exportTurfStatusObj, $drupalUser, $sessionData) {
     $this->exportTurfStatusObj = $exportTurfStatusObj;
     $this->drupalUser = $drupalUser;
+    $this->sessionData = $sessionData;
   }
 
   /**
@@ -32,6 +35,7 @@ class ReportsController extends ControllerBase
     return new static(
       $container->get('nlpservices.export_turf_status'),
       $container->get('nlpservices.drupal_user'),
+      $container->get('nlpservices.session_data'),
     );
   }
 
@@ -80,21 +84,19 @@ class ReportsController extends ControllerBase
     $statusType = Drupal::service('request_stack')->getCurrentRequest()->query->get('statusType');
     $currentUser = $this->drupalUser->getCurrentUser();
     $admin = (in_array('administrator',$currentUser['roles']) OR in_array('nlp_admin',$currentUser['roles']));
-    // For an NLP admin, the report will be for all the counties.  Otherwise, only the user's
-    // county will be included in the report.
+    // For an NLP admin, the report will be for all the committees.  Otherwise, only the user's
+    // committee will be included in the report.
     if($admin) {
-      $county = 'all';
-      $countyMessage = 'all Nlp Counties';
+      $committee = 'all';
+      $committeeMessage = 'all Nlp Counties';
     } else {
-      $factory = Drupal::service('tempstore.private');
-      $store = $factory->get('nlpservices.session_data');
-      $county = $store->get('Committee');
-      if(empty($county)) {
+      $committee = $this->sessionData->getCommittee();
+      if(empty($committee)) {
         $messenger = Drupal::messenger();
         $messenger->addWarning(t('The county is not specified. Use the "Manage County" tab to select a county.'));
         return ['#markup' => "County is missing.",];
       }
-      $countyMessage = $county.' County';
+      $committeeMessage = $committee.' County';
     }
 
     // Create a managed file for temporary use.  Drupal will delete it after 6 hours.
@@ -114,13 +116,13 @@ class ReportsController extends ControllerBase
     $results = FALSE;
     $statusMessage = 'Turf status';
     if ($statusType === 'nlp_turf_status') {
-      $results = $this->exportTurfStatusObj->createTurfStatusFile($tempFileName, $county);
+      $results = $this->exportTurfStatusObj->createTurfStatusFile($tempFileName, $committee);
     }
     // Display a link to the file for the user to download.
     $page = '';
     if($results) {
       $url = Drupal::service('file_url_generator')->generateAbsoluteString($tempFileName);
-      $page .= "<h2>Export of $statusMessage for $countyMessage.</h2>";
+      $page .= "<h2>Export of $statusMessage for $committeeMessage.</h2>";
       $page .= '<a href="'.$url.'">Right-click to download.  </a>';
     } else {
       $page .= "</h2><p>There are no records in the table.</p>";

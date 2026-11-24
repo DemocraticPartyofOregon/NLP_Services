@@ -875,11 +875,11 @@ class NlpReports {
    * getCommitteeReportCounts
    *
    * Get the count of attempted contacts and count of voters that responded to the
-   * pledge to vote survey question for each NL in the county in the current election.
+   * pledge to vote survey question for each NL in the committee in the current election.
    * The count is for NLs that have made at least one report of a voter contact attempt.
    *
    * @param string $committee
-   * @return array - array of counts for each NL in the county, indexed by mcid. The keys are
+   * @return array - array of counts for each NL in the committee, indexed by mcid. The keys are
    * 'attempts' and 'contacts'.
    *
    */

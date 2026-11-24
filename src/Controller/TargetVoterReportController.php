@@ -49,24 +49,27 @@ class TargetVoterReportController extends ControllerBase
   {
     $targetVoterSummary = $this->voterCrosstabSummaryObj->getCountySummary( NlpTargetVoterCrosstabCounts::TARGET_VOTER_CROSSTAB_TBL );
     $allVoterSummary = $this->voterCrosstabSummaryObj->getCountySummary( NlpTargetVoterCrosstabCounts::ALL_VOTER_CROSSTAB_TBL );
-    $countiesWithTurfs = $this->voterCrosstabSummaryObj->getCountiesWithTurfs();
+    $committeesWithTurfs = $this->voterCrosstabSummaryObj->getCommitteesWithTurfs();
 
     $tables = [];
-    foreach ($countiesWithTurfs as $county) {
+    foreach ($committeesWithTurfs as $committee) {
       $output = [];
-      if(!empty($targetVoterSummary['counties'][$county])) {
+      // The crosstab summaries are keyed by geographic county.  Looking
+      // them up by committee name is only right where each committee is one
+      // whole county, as in Oregon.
+      if(!empty($targetVoterSummary['counties'][$committee])) {
         $output['table-start'] = [
           '#markup' => '<div class="summary-report">',
         ];
-        $countyTargetCounts = $targetVoterSummary['counties'][$county];
-        $countyAllCounts = $allVoterSummary['counties'][$county];
-        $turfVoterStats = $this->turfsObj->getCommitteeTurfVoterStats($county);
-        $table = $this->voterCrosstabSummaryObj->buildCountySummaryDisplay($county, $countyTargetCounts, $countyAllCounts, $turfVoterStats);
+        $committeeTargetCounts = $targetVoterSummary['counties'][$committee];
+        $committeeAllCounts = $allVoterSummary['counties'][$committee];
+        $turfVoterStats = $this->turfsObj->getCommitteeTurfVoterStats($committee);
+        $table = $this->voterCrosstabSummaryObj->buildCommitteeSummaryDisplay($committee, $committeeTargetCounts, $committeeAllCounts, $turfVoterStats);
         $output['table'] = $table;
         $output['table-end'] = [
           '#markup' => '</div>',
         ];
-        $tables[$county] = $output;
+        $tables[$committee] = $output;
       }
     }
 

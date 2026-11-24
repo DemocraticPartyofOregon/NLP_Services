@@ -10,7 +10,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Exception;
 
 /**
- * Builds the election results summary for the state, a CD, a county or an HD.
+ * Builds the election results summary for the state, a CD, a committee or an HD.
  *
  * Used in:
  *   ElectionSummaryForm.php
@@ -21,9 +21,9 @@ class NlpResultsSummary
 {
   public const string LEVEL_STATE = 'state';
   public const string LEVEL_CD = 'cd';
-  public const string LEVEL_COUNTY = 'county';
+  public const string LEVEL_COMMITTEE = 'county';
   public const string ALL = 'all';
-  public const string COUNTY_SUMMARY = 'summary';
+  public const string COMMITTEE_SUMMARY = 'summary';
   public const string HD_NOTE = 'VoteBuilder counts by HD are not available; the crosstab file had no HD column.';
   public const string HD_MISSING_NOTE = 'No VoteBuilder counts for this HD in the crosstab file.';
 
@@ -124,33 +124,33 @@ class NlpResultsSummary
   }
 
   /**
-   * getCountyOptions
+   * getCommitteeOptions
    *
-   * An NLP admin can choose any county with voters assigned to turfs.  Anyone
-   * else gets only the county they are managing.
+   * An NLP admin can choose any committee with voters assigned to turfs.  Anyone
+   * else gets only the committee they are managing.
    *
-   * @return array - indexed array of county names.
+   * @return array - indexed array of committee names.
    */
-  public function getCountyOptions(): array
+  public function getCommitteeOptions(): array
   {
     if ($this->drupalUser->isNlpAdminUser()) {
       return $this->votersObj->getParticipatingCommittees();
     }
-    $county = $this->sessionObj->getCommittee();
-    return empty($county) ? [] : [$county];
+    $committee = $this->sessionObj->getCommittee();
+    return empty($committee) ? [] : [$committee];
   }
 
   /**
    * getHdOptions
    *
-   * The house districts in a county that have turfs.
+   * The house districts in a committee that have turfs.
    *
-   * @param string $county
+   * @param string $committee
    * @return array - indexed array of HD numbers.
    */
-  public function getHdOptions(string $county): array
+  public function getHdOptions(string $committee): array
   {
-    return array_values($this->turfsObj->getTurfHdNames($county));
+    return array_values($this->turfsObj->getTurfHdNames($committee));
   }
 
   /**
@@ -158,16 +158,16 @@ class NlpResultsSummary
    *
    * Creates the election results summary for the request, writes every section
    * of it to a PDF and a CSV file, and builds the display.  The display shows
-   * only the top-level summary: the state for all CDs or all counties, the
-   * county for all of its HDs, otherwise the one district requested.
+   * only the top-level summary: the state for all CDs or all committees, the
+   * committee for all of its HDs, otherwise the one district requested.
    *
-   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COUNTY.
-   * @param string $district - ALL, a CD number, or a county name.
-   * @param string $hd - for one county: COUNTY_SUMMARY, ALL, or an HD number.
+   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COMMITTEE.
+   * @param string $district - ALL, a CD number, or a committee name.
+   * @param string $hd - for one committee: COMMITTEE_SUMMARY, ALL, or an HD number.
    * @return array - 'display' => render array, or 'error' => message.
    */
   public function createElectionSummary(string $level, string $district = self::ALL,
-                                        string $hd = self::COUNTY_SUMMARY): array
+                                        string $hd = self::COMMITTEE_SUMMARY): array
   {
     $summary = $this->buildSummarySections($level, $district, $hd);
     if (!empty($summary['error'])) {
@@ -199,40 +199,40 @@ class NlpResultsSummary
    *
    * Gathers the counts for each district in the request.
    *
-   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COUNTY.
-   * @param string $district - ALL, a CD number, or a county name.
-   * @param string $hd - for one county: COUNTY_SUMMARY, ALL, or an HD number.
+   * @param string $level - LEVEL_STATE, LEVEL_CD, or LEVEL_COMMITTEE.
+   * @param string $district - ALL, a CD number, or a committee name.
+   * @param string $hd - for one committee: COMMITTEE_SUMMARY, ALL, or an HD number.
    * @return array - 'title' => description of the request, 'sections' => list of
    *   sections (type, value, title, participation, rows), and 'displayIndex' =>
    *   the section to display; or 'error' => message.
    */
   public function buildSummarySections(string $level, string $district = self::ALL,
-                                       string $hd = self::COUNTY_SUMMARY): array
+                                       string $hd = self::COMMITTEE_SUMMARY): array
   {
     return match ($level) {
       self::LEVEL_STATE => $this->buildStateSections(),
       self::LEVEL_CD => $this->buildCdSections($district),
-      self::LEVEL_COUNTY => $this->buildCountySections($district, $hd),
+      self::LEVEL_COMMITTEE => $this->buildCommitteeSections($district, $hd),
       default => ['error' => 'Unknown request.'],
     };
   }
 
   /**
-   * The state summary is the sum of the participating counties.
+   * The state summary is the sum of the participating committees.
    */
   private function buildStateSections(): array
   {
     if (!$this->drupalUser->isNlpAdminUser()) {
       return ['error' => 'Only an NLP admin can display the state summary.'];
     }
-    $counties = $this->votersObj->getParticipatingCommittees();
-    if (empty($counties)) {
+    $committees = $this->votersObj->getParticipatingCommittees();
+    if (empty($committees)) {
       return ['error' => 'No county has voters assigned to turfs.'];
     }
     $nlpCounts = $this->initNlpCounts();
     $nlpParticipation = $this->initParticipation();
-    foreach ($counties as $county) {
-      $this->buildDistrictSection('County', $county, $nlpCounts, $nlpParticipation);
+    foreach ($committees as $committee) {
+      $this->buildDistrictSection('County', $committee, $nlpCounts, $nlpParticipation);
     }
     $sections = [$this->buildStateSection('State summary of the participating counties',
       $nlpCounts, $nlpParticipation)];
@@ -270,13 +270,13 @@ class NlpResultsSummary
   }
 
   /**
-   * Every county followed by the state summary, one county, the county
+   * Every committee followed by the state summary, one committee, the committee
    * followed by each of its HDs, or one HD.
    */
-  private function buildCountySections(string $district, string $hd): array
+  private function buildCommitteeSections(string $district, string $hd): array
   {
-    $counties = $this->getCountyOptions();
-    if (empty($counties)) {
+    $committees = $this->getCommitteeOptions();
+    if (empty($committees)) {
       return ['error' => 'No county has voters assigned to turfs.'];
     }
     $nlpCounts = $this->initNlpCounts();
@@ -287,8 +287,8 @@ class NlpResultsSummary
       if (!$this->drupalUser->isNlpAdminUser()) {
         return ['error' => 'Only an NLP admin can display all the counties.'];
       }
-      foreach ($counties as $county) {
-        $sections[] = $this->buildDistrictSection('County', $county, $nlpCounts, $nlpParticipation);
+      foreach ($committees as $committee) {
+        $sections[] = $this->buildDistrictSection('County', $committee, $nlpCounts, $nlpParticipation);
       }
       $sections[] = $this->buildStateSection('State summary of the participating counties',
         $nlpCounts, $nlpParticipation);
@@ -296,13 +296,13 @@ class NlpResultsSummary
         'displayIndex' => count($sections) - 1];
     }
 
-    if (!in_array($district, $counties, TRUE)) {
+    if (!in_array($district, $committees, TRUE)) {
       return ['error' => 'There are no voters assigned to turfs in ' . $district . ' County.'];
     }
-    if ($hd === self::COUNTY_SUMMARY || $hd === self::ALL) {
+    if ($hd === self::COMMITTEE_SUMMARY || $hd === self::ALL) {
       $sections[] = $this->buildDistrictSection('County', $district, $nlpCounts, $nlpParticipation);
     }
-    if ($hd === self::COUNTY_SUMMARY) {
+    if ($hd === self::COMMITTEE_SUMMARY) {
       return ['title' => $district . ' County', 'sections' => $sections, 'displayIndex' => 0];
     }
 
@@ -313,7 +313,7 @@ class NlpResultsSummary
       }
       $hdOptions = [(int) $hd];
     }
-    // The county section already has the totals, so the HD sums are discarded.
+    // The committee section already has the totals, so the HD sums are discarded.
     $hdCounts = $this->initNlpCounts();
     $hdParticipation = $this->initParticipation();
     foreach ($hdOptions as $hdNumber) {
@@ -327,11 +327,11 @@ class NlpResultsSummary
   }
 
   /**
-   * Builds the section for one CD, County, or HD, and adds its counts to the
+   * Builds the section for one CD, committee, or HD, and adds its counts to the
    * totals.
    *
    * @param string $type - 'CD', 'County', or 'HD'.
-   * @param mixed $value - the CD number, county name, or ['county', 'hd'].
+   * @param mixed $value - the CD number, committee name, or ['county', 'hd'].
    * @param array $nlpCounts - accumulator for the vote counts.
    * @param array $nlpParticipation - accumulator for the participation counts.
    * @return array - the section.
@@ -339,7 +339,7 @@ class NlpResultsSummary
   private function buildDistrictSection(string $type, mixed $value, array &$nlpCounts,
                                         array &$nlpParticipation): array
   {
-    $participation = $this->gatherCountyParticipationData($type, $value, $nlpParticipation);
+    $participation = $this->gatherParticipationData($type, $value, $nlpParticipation);
     $rows = $this->buildResultsTableArray($type, $value, $nlpCounts);
     return [
       'type' => $type,
@@ -364,7 +364,7 @@ class NlpResultsSummary
       'type' => 'NLP',
       'value' => $title,
       'title' => $title,
-      'participation' => $this->gatherCountyParticipationData('NLP', '', $nlpParticipation),
+      'participation' => $this->gatherParticipationData('NLP', '', $nlpParticipation),
       'rows' => $this->buildSummaryTableArray($nlpCounts),
     ];
   }
@@ -373,7 +373,7 @@ class NlpResultsSummary
    * The title of a section.
    *
    * @param string $type - 'CD', 'County', 'HD', or 'NLP'.
-   * @param mixed $value - the CD number, county name, ['county', 'hd'], or for
+   * @param mixed $value - the CD number, committee name, ['county', 'hd'], or for
    *   NLP an optional title.
    * @return string
    */
@@ -425,7 +425,7 @@ class NlpResultsSummary
     $parts = ['nlp-summary', $level];
     if ($level !== self::LEVEL_STATE) {
       $parts[] = $district;
-      if ($level === self::LEVEL_COUNTY && $district !== self::ALL && $hd !== self::COUNTY_SUMMARY) {
+      if ($level === self::LEVEL_COMMITTEE && $district !== self::ALL && $hd !== self::COMMITTEE_SUMMARY) {
         $parts[] = 'hd-' . $hd;
       }
     }
@@ -624,15 +624,15 @@ class NlpResultsSummary
   }
 
   /**
-   * Build the form elements for the display of the results for a county, CD, HD, or NLP total.
+   * Build the form elements for the display of the results for a committee, CD, HD, or NLP total.
    *
    * @param string $type - the type of display: 'County', 'CD', 'HD', or 'NLP'.
-   * @param mixed $value - the County, CD, ['county', 'hd'], or for NLP an optional title.
+   * @param mixed $value - the committee, CD, ['county', 'hd'], or for NLP an optional title.
    * @param array $rows - the rows of data to display.
-   * @param array $countyParticipation - optional participation summary lines.
+   * @param array $participationLines - optional participation summary lines.
    * @return array - renderable array for Drupal.
    */
-  public function buildDistrictDisplay( string $type,  mixed $value, array $rows, array $countyParticipation=[] ): array
+  public function buildDistrictDisplay( string $type,  mixed $value, array $rows, array $participationLines=[] ): array
   {
     $title = Html::escape($this->sectionTitle($type, $value));
     $output['cdName'] = [
@@ -641,10 +641,10 @@ class NlpResultsSummary
 
     $hdNote = $this->hdNote($type, $rows);
     if ($hdNote !== '') {
-      $countyParticipation[] = '<i>' . $hdNote . '</i>';
+      $participationLines[] = '<i>' . $hdNote . '</i>';
     }
-    if(!empty($countyParticipation)) {
-      $participation = '<p>'.implode('<br>', $countyParticipation).'</p>';
+    if(!empty($participationLines)) {
+      $participation = '<p>'.implode('<br>', $participationLines).'</p>';
       $output['participation'] = [
         '#markup' => $participation,
       ];
@@ -673,16 +673,20 @@ class NlpResultsSummary
   }
 
   /**
-   * Build the result table array for a county, CD, or HD.
+   * Build the result table array for a committee, CD, or HD.
    *
    * @param string $type - 'County', 'CD', or 'HD'.
-   * @param mixed $value - the County, CD, or ['county', 'hd'].
+   * @param mixed $value - the committee, CD, or ['county', 'hd'].
    * @param array $nlpCounts - accumulator for totals across districts.
    * @return array - the rows of data for the result table.
    */
   public function buildResultsTableArray(string $type, mixed $value, array &$nlpCounts): array
   {
     // HD counts exist only if the crosstab file had an HD column.
+    // The crosstab counts are stored by geographic county, but $value is a
+    // committee name.  That's only right where each committee is one whole
+    // county, as in Oregon.  A committee covering several counties or parts
+    // of counties (North Dakota) needs the counts of its coverage instead.
     $counts = match ($type) {
       'County' => $this->crosstabsObj->getCountsByCounty($value),
       'CD' => $this->crosstabsObj->getCountsByCd($value),
@@ -750,10 +754,10 @@ class NlpResultsSummary
   }
 
   /**
-   * Build the data for a summary table array for either a county or a cd.
+   * Build the data for a summary table array for either a committee or a cd.
    *
    * @param array $nlpCounts - the counts to be displayed for the progress of NLP,
-   * either for CD or County.  The display includes information from VoteBuilder and from
+   * either for a CD or a committee.  The display includes information from VoteBuilder and from
    * summing the NLP activities.
    * @return array - the rows of data for the summary table.
    */
@@ -790,7 +794,7 @@ class NlpResultsSummary
   /**
    * Build the summary of the ballot counts for all voters, Democrats, Republicans, and Non-Affiliated.
    *
-   * @param array $nlpCounts - the counts from VoteBuilder, either for CD or County.
+   * @param array $nlpCounts - the counts from VoteBuilder, either for a CD or a county.
    * @return array - an array of rows with the ballot counts.
    */
   private function buildBallotCountSummary(array $nlpCounts): array
@@ -821,12 +825,12 @@ class NlpResultsSummary
 
   /**
    * Build 4 rows for a display of voting activity.  The rows are for all
-   * participating districts, either County or CD. The 4 rows
+   * participating districts, either committees or CDs. The 4 rows
    * are for all voters, Democrats, Republicans, and Non-Affiliated. The
    * counts come from a report created by VoteBuilder and are assembled
-   * by County or CD by NLP Services
+   * by county or CD by NLP Services
    *
-   * @param array $counts - the counts from VoteBuilder, either for CD or County.
+   * @param array $counts - the counts from VoteBuilder, either for a CD or a county.
    * @param array $nlpCounts - the array to accumulate the NLP counts, eventually
    * being the totals for NLP.
    * @return array - an array of rows with the ballot counts.
@@ -882,14 +886,14 @@ class NlpResultsSummary
   }
 
   /**
-   * Gather the participation data for a County, CD, HD, or the total NLP program.
+   * Gather the participation data for a committee, CD, HD, or the total NLP program.
    *
    * @param string $type - the type of participation: 'CD', 'County', 'HD', or 'NLP'.
-   * @param mixed $value - the County, CD, or ['county', 'hd'].
+   * @param mixed $value - the committee, CD, or ['county', 'hd'].
    * @param array $nlpParticipation - the array to accumulate the participation data.
    * @return array - an array with the participation data for display.
    */
-  private function gatherCountyParticipationData(string $type, mixed $value, array &$nlpParticipation): array
+  private function gatherParticipationData(string $type, mixed $value, array &$nlpParticipation): array
   {
     // Get the counts for NLs, NLs reporting results and turfs.
     switch ($type) {

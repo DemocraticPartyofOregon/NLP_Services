@@ -190,7 +190,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->sessionMock->method('getCommittee')->willReturn('Lane');
       $this->votersMock->expects($this->never())->method('getParticipatingCommittees');
 
-      $this->assertSame(['Lane'], $this->buildService()->getCountyOptions());
+      $this->assertSame(['Lane'], $this->buildService()->getCommitteeOptions());
     }
 
     public function testAllCdsAddsStateSummaryAndDisplaysIt(): void {
@@ -262,7 +262,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->sessionMock->method('getCommittee')->willReturn('Lane');
 
-      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY);
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE);
 
       $this->assertArrayHasKey('error', $result);
     }
@@ -273,7 +273,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->crosstabsMock->method('getCountsByCounty')->willReturn([]);
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
 
-      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY);
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE);
 
       $this->assertCount(3, $result['sections']);
       $this->assertSame(2, $result['displayIndex']);
@@ -290,7 +290,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->crosstabsMock->expects($this->never())->method('getCountsByCd');
       $this->turfsMock->method('getVoterCounts')->willReturn(0);
 
-      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane',
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE, 'Lane',
         NlpResultsSummary::ALL);
 
       $this->assertCount(3, $result['sections']);
@@ -310,7 +310,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->turfsMock->expects($this->once())->method('countOfNlsWithTurfsInHd')->with('Lane', 7)->willReturn(2);
       $this->crosstabsMock->expects($this->never())->method('getCountsByCounty');
 
-      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane', '7');
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE, 'Lane', '7');
 
       $this->assertCount(1, $result['sections']);
       $this->assertSame('HD', $result['sections'][0]['type']);
@@ -320,7 +320,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->drupalUserMock->method('isNlpAdminUser')->willReturn(FALSE);
       $this->sessionMock->method('getCommittee')->willReturn('Lane');
 
-      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Benton');
+      $result = $this->buildService()->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE, 'Benton');
 
       $this->assertArrayHasKey('error', $result);
     }
@@ -335,7 +335,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       ]);
 
       $service = $this->buildService();
-      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Lane', '7');
+      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE, 'Lane', '7');
       $section = $result['sections'][0];
       $display = $service->buildDistrictDisplay('HD', $section['value'], $section['rows'], $section['participation']);
 
@@ -353,7 +353,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->crosstabsMock->expects($this->once())->method('hasHdCounts')->willReturn(TRUE);
 
       $service = $this->buildService();
-      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COUNTY, 'Levy', NlpResultsSummary::ALL);
+      $result = $service->buildSummarySections(NlpResultsSummary::LEVEL_COMMITTEE, 'Levy', NlpResultsSummary::ALL);
       $section = $result['sections'][1];
       $display = $service->buildDistrictDisplay('HD', $section['value'], $section['rows'], $section['participation']);
 
