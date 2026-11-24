@@ -38,17 +38,17 @@ class NlpExportTurfStatus
   }
 
   /**
-   * Creates a CSV file with the status of turfs in a county.
+   * Creates a CSV file with the status of turfs in a committee.
    *
    * @param string $tempFileName
    *   The name of the temporary file to create.
-   * @param string $county
-   *   The county for which to create the turf status file.
+   * @param string $committee
+   *   The committee for which to create the turf status file.
    *
    * @return bool
    *   TRUE if the file was created successfully, FALSE otherwise.
    */
-  public function createTurfStatusFile(string $tempFileName, string $county): bool
+  public function createTurfStatusFile(string $tempFileName, string $committee): bool
   {
     $header = [
       'Turf Name',
@@ -79,12 +79,12 @@ class NlpExportTurfStatus
     }
     fputcsv($fh, $header, escape: '');
 
-    $turfRecords = $this->turfsObj->getCountyTurfs($county);
+    $turfRecords = $this->turfsObj->getCommitteeTurfs($committee);
     if (empty($turfRecords)) {
       fclose($fh);
       return FALSE;
     }
-    // Large counties can exhaust the default time limit.
+    // Large committees can exhaust the default time limit.
     set_time_limit(60);
 
     foreach ($turfRecords as $turfRecord) {
@@ -114,7 +114,7 @@ class NlpExportTurfStatus
       $nl = $this->nlsObj->getNlById($mcid);
       $firstName = $nl['firstName'] ?? '';
       $lastName  = $nl['lastName']  ?? '';
-      $nlStatus  = $this->nlsObj->getNlsStatus($mcid,$county);
+      $nlStatus  = $this->nlsObj->getNlsStatus($mcid,$committee);
       $contact   = $nlStatus['contact'] ?? '';
       $stampCount = ($contact === 'mail') ? $turfRecord['doorCount'] : 0;
 

@@ -101,7 +101,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       array $nlOverrides     = [],
       array $statusOverrides = [],
     ): void {
-      $this->turfsMock->method('getCountyTurfs')
+      $this->turfsMock->method('getCommitteeTurfs')
         ->willReturn([$this->baseTurfRecord($turfOverrides)]);
       $this->votersMock->method('getVotersInTurf')->willReturn($voterIds);
       $this->matchbacksMock->method('matchbackExists')
@@ -131,7 +131,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateTurfStatusFileReturnsFalseWhenCountyHasNoTurfs(): void {
-      $this->turfsMock->method('getCountyTurfs')->willReturn([]);
+      $this->turfsMock->method('getCommitteeTurfs')->willReturn([]);
       $path = $this->makeTempFile();
       $this->assertFalse($this->buildService()->createTurfStatusFile($path, 'Multnomah'));
     }
@@ -169,7 +169,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testCreateTurfStatusFileSkipsTurfWithNoVoters(): void {
-      $this->turfsMock->method('getCountyTurfs')->willReturn([$this->baseTurfRecord()]);
+      $this->turfsMock->method('getCommitteeTurfs')->willReturn([$this->baseTurfRecord()]);
       $this->votersMock->method('getVotersInTurf')->willReturn([]);
 
       $path = $this->makeTempFile();
@@ -179,7 +179,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateTurfStatusFileWritesOneDataRowPerTurfWithVoters(): void {
-      $this->turfsMock->method('getCountyTurfs')
+      $this->turfsMock->method('getCommitteeTurfs')
         ->willReturn([$this->baseTurfRecord(['turfIndex' => 1]), $this->baseTurfRecord(['turfIndex' => 2])]);
       $this->votersMock->method('getVotersInTurf')->willReturn([101]);
       $this->matchbacksMock->method('matchbackExists')->willReturn(false);
@@ -269,7 +269,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     public function testCreateTurfStatusFileFallsBackToEmptyStringForMissingNlName(): void {
-      $this->turfsMock->method('getCountyTurfs')->willReturn([$this->baseTurfRecord()]);
+      $this->turfsMock->method('getCommitteeTurfs')->willReturn([$this->baseTurfRecord()]);
       $this->votersMock->method('getVotersInTurf')->willReturn([101]);
       $this->matchbacksMock->method('matchbackExists')->willReturn(false);
       $this->reportsMock->method('contactAttempt')->willReturn(['survey' => false, 'attempt' => false]);

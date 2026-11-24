@@ -78,7 +78,7 @@ class SetVoterAcForm extends FormBase
     $turfsObj = Drupal::service('nlpservices.turfs');
     $turfIndexes = [];
     foreach ($selectedCounties as $county) {
-      $turfs = $turfsObj->getCountyTurfs($county);
+      $turfs = $turfsObj->getCommitteeTurfs($county);
       foreach ($turfs as $turfIndex => $turf) {
         $turfIndexes[] = $turfIndex;
       }

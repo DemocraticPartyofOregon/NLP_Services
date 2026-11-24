@@ -52,13 +52,13 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testGetCountiesWithTurfsDelegatesToTurfs(): void {
-      $this->turfsMock->method('getCountyNames')->willReturn(['Denver', 'Boulder']);
+      $this->turfsMock->method('getCommitteesWithTurfs')->willReturn(['Denver', 'Boulder']);
       $result = $this->buildSummary()->getCountiesWithTurfs();
       $this->assertSame(['Denver', 'Boulder'], $result);
     }
 
     public function testGetCountiesWithTurfsReturnsEmptyWhenNone(): void {
-      $this->turfsMock->method('getCountyNames')->willReturn([]);
+      $this->turfsMock->method('getCommitteesWithTurfs')->willReturn([]);
       $this->assertSame([], $this->buildSummary()->getCountiesWithTurfs());
     }
 

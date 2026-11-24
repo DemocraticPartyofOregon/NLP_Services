@@ -82,7 +82,7 @@ class DisplayTurfsForm extends FormBase
       }
       $form_state->set('county',$county);
       $hdOptions = $this->turfsObj->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfsObj->getCountyTurfCount($county);
+      $turfCount = $this->turfsObj->getCommitteeTurfCount($county);
       if($turfCount<$this->turfsObj::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }

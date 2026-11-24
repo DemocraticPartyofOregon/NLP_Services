@@ -91,7 +91,7 @@ class DeleteTurfForm extends FormBase
       }
       $form_state->set('county',$county);
       $hdOptions = $this->turfs->getTurfHD($county); // HDs with turfs.
-      $turfCount = $this->turfs->getCountyTurfCount($county);
+      $turfCount = $this->turfs->getCommitteeTurfCount($county);
       if($turfCount<$this->turfs::TURF_ALL_MAX ) {
         array_unshift($hdOptions , 'All');
       }

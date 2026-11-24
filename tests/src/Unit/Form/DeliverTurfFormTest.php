@@ -149,7 +149,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn(['HD1', 'HD2']);
-    $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
+    $this->turfsMock->method('getCommitteeTurfCount')->willReturn(1);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([0 => 'All', 1 => 'HD1']);
@@ -246,7 +246,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn([3, 5]);
-    $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
+    $this->turfsMock->method('getCommitteeTurfCount')->willReturn(500);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(3);
     $this->sessionDataMock->method('getHdOptions')->willReturn([3, 5]);
@@ -265,7 +265,7 @@ class DeliverTurfFormTest extends UnitTestCase {
     $this->instructionsMock->method('getInstructions')
       ->willReturn(['canvass' => ['fileName' => 'walk.pdf'], 'postcard' => ['fileName' => '']]);
     $this->turfsMock->method('getTurfHD')->willReturn([3]);
-    $this->turfsMock->method('getCountyTurfCount')->willReturn(500);
+    $this->turfsMock->method('getCommitteeTurfCount')->willReturn(500);
     $this->sessionDataMock->method('getSavedHdIndex')->willReturn(0);
     $this->sessionDataMock->method('getSavedHd')->willReturn(0);
     $this->sessionDataMock->method('getHdOptions')->willReturn([3]);

@@ -113,7 +113,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormNoCurrentHdReturnsNoTurfMarkup(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(5);
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(5);
       $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
 
@@ -135,7 +135,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormNoTurfsStillShowsHdSelector(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn(['0', '01', '02']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(500); // >= TURF_ALL_MAX → no 'All'
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(500); // >= TURF_ALL_MAX → no 'All'
       $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
       $this->sessionDataMock->method('getHdOptions')->willReturn(['0', '01', '02']);
@@ -161,7 +161,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormWithTurfsRendersHdChangeFieldset(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(5);
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(5);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([5 => $this->baseTurfRecord()]);
       $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([1 => []]);
@@ -209,7 +209,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormWithNeedleCallsSearchInfoArray(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(5);
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(5);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([5 => $this->baseTurfRecord()]);
       $this->searchBarMock->expects($this->once())
@@ -235,7 +235,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormWithSortQueryCallsSortTurfTable(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(5);
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(5);
       $this->sessionDataMock->method('getSavedHd')->willReturn(1);
       $this->turfsMock->method('getTurfs')->willReturn([5 => $this->baseTurfRecord()]);
       $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([1 => []]);
@@ -264,7 +264,7 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
     public function testBuildFormPrependsAllWhenBelowMax(): void {
       $this->sessionDataMock->method('getCommittee')->willReturn('Denver');
       $this->turfsMock->method('getTurfHD')->willReturn([1 => '01']);
-      $this->turfsMock->method('getCountyTurfCount')->willReturn(1);
+      $this->turfsMock->method('getCommitteeTurfCount')->willReturn(1);
       $this->sessionDataMock->method('getSavedHd')->willReturn(0);
       $this->turfDisplayMock->method('buildTurfTableArray')->willReturn([]);
 

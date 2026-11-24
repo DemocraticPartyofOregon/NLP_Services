@@ -49,8 +49,8 @@ class SyncTurfBatch {
       $messages[] = t('@turfName has been successfully checked in.', ['@turfName' => $turfName]);
 
       $mcid      = (int) $results['mcid'];
-      $county    = $results['county'];
-      $turfs     = $turfsObj->turfExists($mcid, $county);
+      $committee    = $results['county'];
+      $turfs     = $turfsObj->turfExists($mcid, $committee);
       $turfCount = $turfs['turfCnt'] ?? 0;
       $nickname  = $results['nickname'];
       $messages[] = t('@nickname has @count turf(s) assigned.', ['@nickname' => $nickname, '@count' => $turfCount]);

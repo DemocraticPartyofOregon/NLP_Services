@@ -142,38 +142,38 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyTurfs
+    // getCommitteeTurfs
     // -------------------------------------------------------------------------
 
-    public function testGetCountyTurfsSpecificCountyReturnsKeyedArray(): void {
+    public function testGetCommitteeTurfsSpecificCountyReturnsKeyedArray(): void {
       $turf = $this->baseTurf();
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($turf, false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildTurfs()->getCountyTurfs('Denver');
+      $result = $this->buildTurfs()->getCommitteeTurfs('Denver');
       $this->assertArrayHasKey(7, $result);
       $this->assertSame('Denver', $result[7]['county']);
     }
 
-    public function testGetCountyTurfsAllReturnsKeyedArray(): void {
+    public function testGetCommitteeTurfsAllReturnsKeyedArray(): void {
       $turf = $this->baseTurf();
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($turf, false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildTurfs()->getCountyTurfs('all');
+      $result = $this->buildTurfs()->getCommitteeTurfs('all');
       $this->assertArrayHasKey(7, $result);
     }
 
-    public function testGetCountyTurfsEmptyResultReturnsEmptyArray(): void {
+    public function testGetCommitteeTurfsEmptyResultReturnsEmptyArray(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturn(false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $this->assertSame([], $this->buildTurfs()->getCountyTurfs('Denver'));
+      $this->assertSame([], $this->buildTurfs()->getCommitteeTurfs('Denver'));
     }
 
-    public function testGetCountyTurfsExceptionReturnsEmptyArray(): void {
+    public function testGetCommitteeTurfsExceptionReturnsEmptyArray(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildTurfs()->getCountyTurfs('Denver'));
+      $this->assertSame([], $this->buildTurfs()->getCommitteeTurfs('Denver'));
     }
 
     // -------------------------------------------------------------------------
@@ -300,21 +300,21 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyNames
+    // getCommitteesWithTurfs
     // -------------------------------------------------------------------------
 
-    public function testGetCountyNamesReturnsIndexedArray(): void {
+    public function testGetCommitteesWithTurfsReturnsIndexedArray(): void {
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')
         ->willReturnOnConsecutiveCalls(['county' => 'Denver'], ['county' => 'Boulder'], false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
-      $result = $this->buildTurfs()->getCountyNames();
+      $result = $this->buildTurfs()->getCommitteesWithTurfs();
       $this->assertSame(['Denver', 'Boulder'], $result);
     }
 
-    public function testGetCountyNamesExceptionReturnsEmptyArray(): void {
+    public function testGetCommitteesWithTurfsExceptionReturnsEmptyArray(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildTurfs()->getCountyNames());
+      $this->assertSame([], $this->buildTurfs()->getCommitteesWithTurfs());
     }
 
     // -------------------------------------------------------------------------
@@ -552,34 +552,34 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyTurfIndexes
+    // getCommitteeTurfIndexes
     // -------------------------------------------------------------------------
 
-    public function testGetCountyTurfIndexesReturnsStaleTurfWhenSyncBeforeUpdate(): void {
+    public function testGetCommitteeTurfIndexesReturnsStaleTurfWhenSyncBeforeUpdate(): void {
       $turf = ['turfIndex' => 7, 'mapRegionId' => 100, 'folderId' => 50, 'syncDate' => '2024-01-01'];
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($turf, false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->configurationMock->method('getVoterBuilderUpdateDate')->willReturn('2024-06-01');
       $this->mapRegionsMock->method('getMapRegionInfo')->willReturn(['dateRefreshed' => '2024-01-01']);
-      $result = $this->buildTurfs()->getCountyTurfIndexes('Denver');
+      $result = $this->buildTurfs()->getCommitteeTurfIndexes('Denver');
       $this->assertContains(7, $result);
     }
 
-    public function testGetCountyTurfIndexesReturnsEmptyWhenAllUpToDate(): void {
+    public function testGetCommitteeTurfIndexesReturnsEmptyWhenAllUpToDate(): void {
       $turf = ['turfIndex' => 7, 'mapRegionId' => 100, 'folderId' => 50, 'syncDate' => '2025-12-01'];
       $stmtMock = $this->createMock(StatementInterface::class);
       $stmtMock->method('fetchAssoc')->willReturnOnConsecutiveCalls($turf, false);
       $this->connectionMock->method('select')->willReturn($this->buildSelectMock($stmtMock));
       $this->configurationMock->method('getVoterBuilderUpdateDate')->willReturn('2024-06-01');
       $this->mapRegionsMock->method('getMapRegionInfo')->willReturn(['dateRefreshed' => '2024-01-01']);
-      $result = $this->buildTurfs()->getCountyTurfIndexes('Denver');
+      $result = $this->buildTurfs()->getCommitteeTurfIndexes('Denver');
       $this->assertSame([], $result);
     }
 
-    public function testGetCountyTurfIndexesExceptionReturnsEmptyArray(): void {
+    public function testGetCommitteeTurfIndexesExceptionReturnsEmptyArray(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame([], $this->buildTurfs()->getCountyTurfIndexes('Denver'));
+      $this->assertSame([], $this->buildTurfs()->getCommitteeTurfIndexes('Denver'));
     }
 
     // -------------------------------------------------------------------------
@@ -601,22 +601,22 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyTurfCount
+    // getCommitteeTurfCount
     // -------------------------------------------------------------------------
 
-    public function testGetCountyTurfCountReturnsCount(): void {
+    public function testGetCommitteeTurfCountReturnsCount(): void {
       $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(5));
-      $this->assertSame(5, $this->buildTurfs()->getCountyTurfCount('Denver'));
+      $this->assertSame(5, $this->buildTurfs()->getCommitteeTurfCount('Denver'));
     }
 
-    public function testGetCountyTurfCountWithHdReturnsCount(): void {
+    public function testGetCommitteeTurfCountWithHdReturnsCount(): void {
       $this->connectionMock->method('select')->willReturn($this->buildCountSelectMock(3));
-      $this->assertSame(3, $this->buildTurfs()->getCountyTurfCount('Denver', 6));
+      $this->assertSame(3, $this->buildTurfs()->getCommitteeTurfCount('Denver', 6));
     }
 
-    public function testGetCountyTurfCountExceptionReturnsZero(): void {
+    public function testGetCommitteeTurfCountExceptionReturnsZero(): void {
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $this->assertSame(0, $this->buildTurfs()->getCountyTurfCount('Denver'));
+      $this->assertSame(0, $this->buildTurfs()->getCommitteeTurfCount('Denver'));
     }
 
     // -------------------------------------------------------------------------
@@ -1010,10 +1010,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     }
 
     // -------------------------------------------------------------------------
-    // getCountyTurfVoterStats
+    // getCommitteeTurfVoterStats
     // -------------------------------------------------------------------------
 
-    public function testGetCountyTurfVoterStatsReturnsAllSixStats(): void {
+    public function testGetCommitteeTurfVoterStatsReturnsAllSixStats(): void {
       $this->configurationMock->method('getCycle')->willReturn('2024');
       $this->connectionMock->method('select')->willReturnOnConsecutiveCalls(
         $this->buildCountSelectMock(100),  // total
@@ -1023,7 +1023,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         $this->buildCountSelectMock(40),   // surveyed
         $this->buildCountSelectMock(15),   // surveyedVoted
       );
-      $stats = $this->buildTurfs()->getCountyTurfVoterStats('Denver');
+      $stats = $this->buildTurfs()->getCommitteeTurfVoterStats('Denver');
       $this->assertSame(100, $stats['total']);
       $this->assertSame(30,  $stats['totalVoted']);
       $this->assertSame(60,  $stats['contacted']);
@@ -1032,10 +1032,10 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame(15,  $stats['surveyedVoted']);
     }
 
-    public function testGetCountyTurfVoterStatsExceptionReturnsZeroStats(): void {
+    public function testGetCommitteeTurfVoterStatsExceptionReturnsZeroStats(): void {
       $this->configurationMock->method('getCycle')->willReturn('2024');
       $this->connectionMock->method('select')->willThrowException(new \Exception('DB error'));
-      $stats = $this->buildTurfs()->getCountyTurfVoterStats('Denver');
+      $stats = $this->buildTurfs()->getCommitteeTurfVoterStats('Denver');
       $this->assertSame(0, $stats['total']);
       $this->assertSame(0, $stats['surveyed']);
     }

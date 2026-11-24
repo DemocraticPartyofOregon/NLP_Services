@@ -60,7 +60,7 @@ class TargetVoterReportController extends ControllerBase
         ];
         $countyTargetCounts = $targetVoterSummary['counties'][$county];
         $countyAllCounts = $allVoterSummary['counties'][$county];
-        $turfVoterStats = $this->turfsObj->getCountyTurfVoterStats($county);
+        $turfVoterStats = $this->turfsObj->getCommitteeTurfVoterStats($county);
         $table = $this->voterCrosstabSummaryObj->buildCountySummaryDisplay($county, $countyTargetCounts, $countyAllCounts, $turfVoterStats);
         $output['table'] = $table;
         $output['table-end'] = [

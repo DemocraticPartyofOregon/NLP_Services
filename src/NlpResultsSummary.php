@@ -902,12 +902,12 @@ class NlpResultsSummary
         $nlsParticipation = $this->nlsObj->getCountyNlsParticipation( $value );
         $participatingNls = $nlsParticipation['participatingNls'] ?? 0;
         $resultsReported = $nlsParticipation['resultsReported'] ?? 0;
-        $numberOfTurfs = $this->turfsObj->getCountyTurfCount($value);
+        $numberOfTurfs = $this->turfsObj->getCommitteeTurfCount($value);
         break;
       case 'HD':
         $participatingNls = $this->turfsObj->countOfNlsWithTurfsInHd($value['county'], (int) $value['hd']);
         $resultsReported = $this->turfsObj->countOfNlsInHdThatReportedResults($value['county'], (int) $value['hd']);
-        $numberOfTurfs = $this->turfsObj->getCountyTurfCount($value['county'], (int) $value['hd']);
+        $numberOfTurfs = $this->turfsObj->getCommitteeTurfCount($value['county'], (int) $value['hd']);
         break;
       default:  // All NLP districts, the sums are already complete.
         $participatingNls = $nlpParticipation['participatingNls'];

@@ -79,14 +79,14 @@ class NlpResyncTurf
    * If the changes are minor, the changes are made.   When the NL next looks at the turf,
    * they are notified that the turf has been changed.
    *
-   * @param $county
+   * @param $committee
    * @param $turfIndex
    * @param $fixAC
    * @return void
    */
-  public function resyncTurf($county, $turfIndex, $fixAC): void
+  public function resyncTurf($committee, $turfIndex, $fixAC): void
   {
-    $resyncCheckResult = $this->turfResyncCheck($county,$turfIndex);
+    $resyncCheckResult = $this->turfResyncCheck($committee,$turfIndex);
     if($resyncCheckResult['result'] == 'transient_error') {
       Drupal::logger('nlpservices')->warning('resyncTurf skipped due to transient error for turfIndex @idx: @msg', ['@idx' => $turfIndex, '@msg' => $resyncCheckResult['message']]);
       return;
@@ -99,7 +99,7 @@ class NlpResyncTurf
       }
       $this->resyncTurfDeleteNotify($turfIndex);
       $turfName = (empty($turf['turfName'])) ? '[Missing name]' : $turf['turfName'];
-      $msg = "Turf $turfName has been deleted. turfIndex: $turfIndex, county: $county";
+      $msg = "Turf $turfName has been deleted. turfIndex: $turfIndex, committee: $committee";
       Drupal::logger('nlpservices')->notice($msg);
       return;
     }
@@ -139,7 +139,7 @@ class NlpResyncTurf
         if(!empty($addedVanids)) {
           $newVoters = $this->apiVoterObj->getVoters($addedVanids);
           foreach ($newVoters as $newVoter) {
-            $this->syncTurfAddVoterObj->syncAddVoter($county, $newVoter, $turfIndex, $mcid);
+            $this->syncTurfAddVoterObj->syncAddVoter($committee, $newVoter, $turfIndex, $mcid);
           }
         }
 
@@ -202,14 +202,14 @@ class NlpResyncTurf
       $lastName = $nl['lastName'];
       $missingAc = $this->votersObj->getVotersInList($missingNlpVoterAc);
 
-      $title = "Voters with missing NLP Voters AC: $turfName for $firstName $lastName [$mcid] $county";
+      $title = "Voters with missing NLP Voters AC: $turfName for $firstName $lastName [$mcid] $committee";
       $missingACDisplay = $this->displayVotersChanged($missingAc);
       $missingACDisplay = array_merge([$title], $missingACDisplay);
       $voterDisplay = implode("<br>", $missingACDisplay);
       Drupal::logger('nlpservices')->notice($voterDisplay);
 
       if($fixAC) {
-        $this->fixMissingAC($turfIndex, $missingNlpVoterAc, $county);
+        $this->fixMissingAC($turfIndex, $missingNlpVoterAc, $committee);
       }
     }
 
@@ -221,11 +221,11 @@ class NlpResyncTurf
    * Return the list of voters added or deleted, a list of voters with the NLP Voter AC missing,
    * and the new turf ID if it changed.   All of these indicate something has to be updated.
    *
-   * @param $county
+   * @param $committee
    * @param $turfIndex
    * @return array
    */
-  public function turfResyncCheck($county,$turfIndex): array
+  public function turfResyncCheck($committee,$turfIndex): array
   {
     $listId = $previousTurfId = $this->turfsObj->getListId($turfIndex);
     if(empty($listId)) {
@@ -242,13 +242,13 @@ class NlpResyncTurf
     $vanidsInNlpTurf = array_keys($votersInTurf);
     $newTurfId = 0;
     // Get the list of vanids in the turf in VoteBuilder
-    $savedList = $this->savedListsObj->getSavedLists($county,0,0,$listId);
+    $savedList = $this->savedListsObj->getSavedLists($committee,0,0,$listId);
 
     if(empty($savedList)) {
       // The original list ID has changed, see if we can find the turf by name.
       $turf = $this->turfsObj->getTurf($turfIndex);
       // Search all the turfs in the folder for the turf name.
-      $savedLists = $this->savedListsObj->getSavedLists($county, 0, $turf['folderId']);
+      $savedLists = $this->savedListsObj->getSavedLists($committee, 0, $turf['folderId']);
       $needle = $turf['turfName'];
       foreach ($savedLists as $savedList) {
         if (strcmp($savedList['name'], $needle) === 0) {
@@ -262,13 +262,13 @@ class NlpResyncTurf
       $listId = $newTurfId;
     }
 
-    $exportJob = $this->exportJobsObj->getExportJobs($county,0,$listId,'NLPVoterAC');
+    $exportJob = $this->exportJobsObj->getExportJobs($committee,0,$listId,'NLPVoterAC');
     if(($exportJob['result'] ?? '') == 'error') {
       return ['result' => 'error', 'message' => $exportJob['msg']];
     }
     if(empty($exportJob['downloadUrl'])) {
       // This should not happen and needs to be investigated.
-      $msg = 'No export job found for listId: '.$listId.' in county: '.$county;
+      $msg = 'No export job found for listId: '.$listId.' in committee: '.$committee;
       if (!str_contains($this->routeMatch->getRouteName(), 'system.cron')) {
         nlp_debug_msg('turfResyncCheckError',$msg);
       }
@@ -295,7 +295,7 @@ class NlpResyncTurf
     } while (TRUE);
     if(!feof($fh)) {
       fclose($fh);
-      Drupal::logger('nlpservices')->warning('turfResyncCheck: download interrupted for listId @id in @county', ['@id' => $listId, '@county' => $county]);
+      Drupal::logger('nlpservices')->warning('turfResyncCheck: download interrupted for listId @id in @committee', ['@id' => $listId, '@committee' => $committee]);
       return ['result' => 'transient_error', 'message' => 'Download was interrupted'];
     }
     fclose($fh);
@@ -399,9 +399,9 @@ class NlpResyncTurf
         return;
     }
 
-    $county = $turfData['county'];
+    $committee = $turfData['county'];
     foreach ($turfData['turfIndexes'] as $turfIndex) {
-      $this->resyncTurf($county, $turfIndex, TRUE);
+      $this->resyncTurf($committee, $turfIndex, TRUE);
     }
   }
 
@@ -484,14 +484,14 @@ If the turf is still valid and the NL is still active, then please sync the turf
    *
    * @param $turfIndex
    * @param $vanids
-   * @param $county
+   * @param $committee
    * @return void
    */
-  public function fixMissingAC($turfIndex,$vanids,$county): void
+  public function fixMissingAC($turfIndex,$vanids,$committee): void
   {
     $turf = $this->turfsObj->getTurf($turfIndex);
     $turfName = $turf['turfName'];
-    $msg = ">> missing AC in $county : $turfName ";
+    $msg = ">> missing AC in $committee : $turfName ";
     $idList = implode(',',$vanids);
     Drupal::logger('nlpservices')->notice($msg. ' VanIDs: '.$idList);
     $request = [
@@ -510,17 +510,17 @@ If the turf is still valid and the NL is still active, then please sync the turf
    * Create a queue of turfs to check for resyncing.  The turfs are selected either because the
    * turf was synced before the last update of the VoterFile or the map region was refreshed.
    *
-   * @param $county
+   * @param $committee
    * @return array
    * @noinspection PhpUnused
    */
-  public function turfsToResyncCheck($county) : array
+  public function turfsToResyncCheck($committee) : array
   {
-    $turfIndexes = $this->turfsObj->getCountyTurfIndexes($county);
+    $turfIndexes = $this->turfsObj->getCommitteeTurfIndexes($committee);
     $turfIndexChunks = array_chunk($turfIndexes, $this::TURF_SYNC_BATCH_SIZE);
     $queueChunks = [];
     foreach ($turfIndexChunks as $chunk) {
-      $queueChunk = ['county' => $county, 'turfIndexes' => $chunk];
+      $queueChunk = ['county' => $committee, 'turfIndexes' => $chunk];
       $queueChunks[] = $queueChunk;
     }
     return $queueChunks;

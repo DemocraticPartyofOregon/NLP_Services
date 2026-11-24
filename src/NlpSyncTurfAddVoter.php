@@ -30,13 +30,13 @@ class NlpSyncTurfAddVoter
   }
   
   /**
-   * @param string $county
+   * @param string $committee
    * @param array $voter
    * @param int $turfIndex
    * @param int $mcid
    * @return void
    */
-  public function syncAddVoter(string $county, array $voter, int $turfIndex, int $mcid ): void
+  public function syncAddVoter(string $committee, array $voter, int $turfIndex, int $mcid ): void
   {
     if(empty($voter['vanid'])) {return;}
     $vanid = $voter['vanid'];
@@ -84,7 +84,7 @@ class NlpSyncTurfAddVoter
     $this->votersObj->setVoterStatus($vanid, $voterStatus);
     $turfVoter = [
       'mcid' => $mcid,
-      'county' => $county,
+      'county' => $committee,
       'turfIndex' => $turfIndex,
       'vanid' => $vanid,
     ];

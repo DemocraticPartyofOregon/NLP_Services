@@ -68,7 +68,7 @@ class NlpSyncActiveNlsProcessor {
    * @param array $arg
    *   An associative array containing arguments needed for processing:
    *   - uri: The file path to the CSV file to process.
-   *   - county: The name of the county being processed.
+   *   - committee: The name of the committee being processed.
    * @param array &$context
    *   A reference to the context array for batch operations. This includes:
    *   - finished: A flag indicating the processing status (completed or not).
@@ -82,10 +82,10 @@ class NlpSyncActiveNlsProcessor {
    */
   public function processBatch(array $arg, array &$context): void {
     $uri    = $arg['uri'];
-    $county = $arg['county'];
-    $context['results']['county'] = $county;
-    $this->nlsObj->markActiveNlsSync($county);
-    $legislativeFixes = $this->legislativeFixesObj->getLegFixes($county);
+    $committee = $arg['county'];
+    $context['results']['county'] = $committee;
+    $this->nlsObj->markActiveNlsSync($committee);
+    $legislativeFixes = $this->legislativeFixesObj->getLegFixes($committee);
 
     $fh = @fopen($uri, 'r');
     if (!$fh) {
@@ -100,7 +100,7 @@ class NlpSyncActiveNlsProcessor {
     if (empty($context['sandbox']['seek'])) {
       // First step: replace the old list of active NLs now that the rebuild
       // is actually running and the export file is readable.
-      $this->nlsObj->deleteNls($county);
+      $this->nlsObj->deleteNls($committee);
       $context['sandbox']['recordCount'] = 0;
       $hdr      = fgetcsv($fh, escape: '');
       $fieldPos = array_flip($hdr);
@@ -159,7 +159,7 @@ class NlpSyncActiveNlsProcessor {
 
     //nlp_debug_msg('$batchData',$batchData);
     // Phase 2: Fetch all NL records concurrently.
-    $nlRecords = $this->apiNlsObj->getNls($county, array_keys($batchData));
+    $nlRecords = $this->apiNlsObj->getNls($committee, array_keys($batchData));
 
     //nlp_debug_msg('$nlRecords',$nlRecords);
     // Phase 3: Process each NL record.
@@ -173,7 +173,7 @@ class NlpSyncActiveNlsProcessor {
         $this->messenger->addError(t('NL rejected. MyCampaign returned MCID:@returnedMcid @firstName @lastName when asked for MCID:@mcid. The record was probably merged; update the list to use the current MCID.', ['@mcid' => $mcid, '@returnedMcid' => $nlRecord['mcid'], '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']]));
         continue;
       }
-      $this->processNlRecord($nlRecord, $flags, $county, $legislativeFixes);
+      $this->processNlRecord($nlRecord, $flags, $committee, $legislativeFixes);
     }
 
     $context['sandbox']['seek']        = $seek;
@@ -196,14 +196,14 @@ class NlpSyncActiveNlsProcessor {
    *                                   such as MCID, name, email, and address.
    * @param array $flags Flags providing additional processing context, such
    *                                   as 'notRegistered' and 'dropout' status.
-   * @param string $county The county information to associate with the NL record.
+   * @param string $committee The committee information to associate with the NL record.
    * @param array $legislativeFixes An array containing legislative fixes for validation
    *                                   of districts based on MCID.
    *
    * @return void                      This method does not return a value. Errors and validation
    *                                   results are handled within the method.
    */
-  private function processNlRecord(array $nlRecord, array $flags, string $county, array $legislativeFixes): void {
+  private function processNlRecord(array $nlRecord, array $flags, string $committee, array $legislativeFixes): void {
     $mcid          = $nlRecord['mcid'];
     $notRegistered = $flags['notRegistered'];
     $dropout       = $flags['dropout'];
@@ -213,7 +213,7 @@ class NlpSyncActiveNlsProcessor {
       return;
     }
 
-    if (!$this->checkVoterId($nlRecord, $notRegistered, $county)) { return; }
+    if (!$this->checkVoterId($nlRecord, $notRegistered, $committee)) { return; }
 
     if (empty($nlRecord['email'])) {
       $this->messenger->addError(t("NL rejected. This volunteer does not have an email address and can't be an active NL.<br>.. MCID:@mcid @firstName @lastName", ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']]));
@@ -226,7 +226,9 @@ class NlpSyncActiveNlsProcessor {
     $zip = !empty($nlRecord['zip']) ? ', ' . $nlRecord['zip'] : '';
     $nlRecord['address'] = $nlRecord['address'] . ', ' . $nlRecord['city'] . $zip;
     unset($nlRecord['city'], $nlRecord['zip']);
-    $nlRecord['county'] = $county;
+    // nlp_nls.county holds the committee.  This replaces the geographic
+    // county of the NL's address that ApiNls read from VAN.
+    $nlRecord['county'] = $committee;
 
     if (empty($nlRecord['nickname'])) {
       $nlRecord['nickname'] = $nlRecord['firstName'];
@@ -331,13 +333,13 @@ class NlpSyncActiveNlsProcessor {
    *   and 'lastName'.
    * @param bool $notRegistered
    *   The NL has the Not Registered activist code; cleared when it is removed.
-   * @param string $county
-   *   The county whose committee owns the MyCampaign record.
+   * @param string $committee
+   *   The committee that owns the MyCampaign record.
    *
    * @return bool
    *   TRUE if the NL should continue to be processed, FALSE if rejected.
    */
-  public function checkVoterId(array $nlRecord, bool &$notRegistered, string $county): bool {
+  public function checkVoterId(array $nlRecord, bool &$notRegistered, string $committee): bool {
     $mcid = $nlRecord['mcid'];
     $vfid = (int) ($nlRecord['vfid'] ?? 0);
     $who  = ['@mcid' => $mcid, '@firstName' => $nlRecord['firstName'], '@lastName' => $nlRecord['lastName']];
@@ -355,7 +357,7 @@ class NlpSyncActiveNlsProcessor {
     $savedMcid = (int) ($existingCredentials['mcid'] ?? 0);
     if (!empty($savedMcid) && $savedMcid != $mcid) {
       $who += ['@vfid' => $vfid, '@savedMcid' => $savedMcid];
-      $status = $this->apiNlsObj->getMcidStatus($county, $savedMcid);
+      $status = $this->apiNlsObj->getMcidStatus($committee, $savedMcid);
       if ($status == ApiNls::MCID_EXISTS) {
         $this->messenger->addError(t('NL rejected. This MyCampaign record is a duplicate: vfid @vfid belongs to the NL with MCID:@savedMcid, which still exists in MyCampaign.<br>.. MCID:@mcid @firstName @lastName', $who));
         return FALSE;
@@ -378,7 +380,7 @@ class NlpSyncActiveNlsProcessor {
         'codeName'  => 'NLPNotRegisteredAC',
         'vanid'     => $mcid,
         'action'    => 'Remove',
-        'committee' => $county,
+        'committee' => $committee,
       ]);
       if ($removed) {
         $this->messenger->addWarning(t('The NLP Not Registered activist code was removed because the volunteer has a vfid.<br>.. MCID:@mcid @firstName @lastName', $who));
@@ -649,7 +651,7 @@ class NlpSyncActiveNlsProcessor {
    * @param array $drupalUser
    *   The Drupal user account data, containing:
    *   - 'userName': Username for the account.
-   *   - 'county': User's county.
+   *   - 'county': User's committee.
    *   - 'hd': User's house district.
    *   - 'roles': Roles assigned to the user.
    *   - 'created': Timestamp of account creation.
@@ -723,7 +725,7 @@ class NlpSyncActiveNlsProcessor {
    *   - 'firstName': First name of the user. If 'nickname' exists, it will be used instead.
    *   - 'lastName': Last name of the user.
    *   - 'phone': Phone number of the user.
-   *   - 'county': County associated with the user.
+   *   - 'county': Committee associated with the user.
    *   - 'hd': House district of the user.
    *
    * @return array

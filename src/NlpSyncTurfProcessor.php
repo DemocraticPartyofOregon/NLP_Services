@@ -115,7 +115,7 @@ class NlpSyncTurfProcessor {
    *
    * @param array $arg
    *   An associative array containing necessary parameters for the process. Expected keys include:
-   *   - 'county': The county identifier.
+   *   - 'county': The committee identifier.
    *   - 'folderId': The folder ID associated with the turf.
    *   - 'folderName': The name of the folder.
    *   - 'turfId': The turf ID to be processed.
@@ -170,21 +170,21 @@ class NlpSyncTurfProcessor {
    * @return bool - FALSE if the sync was aborted.
    */
   private function startSync(array $arg, array &$context): bool {
-    $county   = $arg['county'];
-    if ($this->nlsObj->activeNlsSyncInProgress($county)
+    $committee   = $arg['county'];
+    if ($this->nlsObj->activeNlsSyncInProgress($committee)
       || empty($this->nlsObj->getNlById($arg['mcid']))) {
-      $this->abortSync($arg, $context, $this->nlUnavailableMessage($arg['mcid'], $county));
+      $this->abortSync($arg, $context, $this->nlUnavailableMessage($arg['mcid'], $committee));
       return FALSE;
     }
     $database = 0;
-    $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $arg['turfId']);
+    $exportJob = $this->exportJobsObj->getExportJobs($committee, $database, $arg['turfId']);
     if (empty($exportJob['downloadUrl'])) {
-      $result = $this->savedListsObj->recoverTurfId($county, $arg['folderId'], $arg['turfName']);
+      $result = $this->savedListsObj->recoverTurfId($committee, $arg['folderId'], $arg['turfName']);
       if ($result['result'] == 'error') {
         $this->abortSync($arg, $context, $result['message']);
         return FALSE;
       }
-      $exportJob = $this->exportJobsObj->getExportJobs($county, $database, $result['turfId']);
+      $exportJob = $this->exportJobsObj->getExportJobs($committee, $database, $result['turfId']);
       if (empty($exportJob['downloadUrl'])) {
         $this->abortSync($arg, $context, t('The turf is not accessible by ID.'));
         return FALSE;
@@ -334,7 +334,7 @@ class NlpSyncTurfProcessor {
    * @throws NlpSyncTurfException
    */
   private function writeTurf(array $arg, array $sandbox, array &$movedVoters): int {
-    $county    = $arg['county'];
+    $committee    = $arg['county'];
     $folderId  = $arg['folderId'];
     $turfId    = $arg['turfId'];
     $turfName  = $arg['turfName'];
@@ -368,7 +368,7 @@ class NlpSyncTurfProcessor {
     // can disappear while the voters are fetched.
     $nl = $this->nlsObj->getNlById($mcid);
     if (empty($nl)) {
-      throw new NlpSyncTurfException((string) $this->nlUnavailableMessage($mcid, $county));
+      throw new NlpSyncTurfException((string) $this->nlUnavailableMessage($mcid, $committee));
     }
     $newNlName = trim(($nl['firstName'] ?? '') . ' ' . ($nl['lastName'] ?? ''));
 
@@ -439,7 +439,7 @@ class NlpSyncTurfProcessor {
 
       $turfVoter = [
         'mcid'      => $mcid,
-        'county'    => $county,
+        'county'    => $committee,
         'turfIndex' => $turfIndex,
         'vanid'     => $vanid,
       ];
@@ -670,16 +670,16 @@ class NlpSyncTurfProcessor {
    * NL is no longer in it.
    *
    * @param int $mcid The MCID of the NL.
-   * @param string $county The county of the turf.
+   * @param string $committee The committee of the turf.
    * @return TranslatableMarkup
    */
-  private function nlUnavailableMessage(int $mcid, string $county): TranslatableMarkup {
-    if ($this->nlsObj->activeNlsSyncInProgress($county)) {
+  private function nlUnavailableMessage(int $mcid, string $committee): TranslatableMarkup {
+    if ($this->nlsObj->activeNlsSyncInProgress($committee)) {
       return t('The list of active NLs for @county is being rebuilt. Wait a few minutes for the rebuild to finish, then sync the turf again.',
-        ['@county' => $county]);
+        ['@county' => $committee]);
     }
     return t('The NL (MCID @mcid) is no longer in the active NL list for @county.',
-      ['@mcid' => $mcid, '@county' => $county]);
+      ['@mcid' => $mcid, '@county' => $committee]);
   }
 
   /**
@@ -689,7 +689,7 @@ class NlpSyncTurfProcessor {
    * the sync transaction.
    *
    * @param array $arg An associative array containing turf-related details, including:
-   *                   - 'county': The county associated with the turf.
+   *                   - 'county': The committee associated with the turf.
    *                   - 'folderId': The ID of the folder to which the turf belongs.
    *                   - 'folderName': The name of the folder.
    *                   - 'showLists': Indicates whether to show the list of voters.
@@ -704,13 +704,13 @@ class NlpSyncTurfProcessor {
    * @return void
    */
   private function finalizeTurf(array $arg, array $nl): void {
-    $county        = $arg['county'];
+    $committee        = $arg['county'];
     $folderId      = $arg['folderId'];
     $folderName    = $arg['folderName'];
     $turfName      = $arg['turfName'];
     $mcid          = $arg['mcid'];
 
-    $nlsStatus             = $this->nlsObj->getNlsStatus($mcid, $county);
+    $nlsStatus             = $this->nlsObj->getNlsStatus($mcid, $committee);
     $nlsStatus['mcid']     = $mcid;
     $nlsStatus['signedUp'] = 'Y';
     $nlsStatus['turfCut']  = 'Y';
@@ -731,7 +731,7 @@ class NlpSyncTurfProcessor {
       'folderName'    => $folderName,
       'firstName'     => $nl['firstName'],
       'lastName'      => $nl['lastName'],
-      'county'        => $county,
+      'county'        => $committee,
       'dateAssigned'  => $isoDate[0],
     ];
 

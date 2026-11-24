@@ -45,18 +45,18 @@ class NlpTurfDeliveryMessage
   /**
    * getTurfMsg
    *
-   * Return the custom email template if it has been created, or for a county, get the custom state
+   * Return the custom email template if it has been created, or for a committee, get the custom state
    * template.  If there is no state template, return the default email template.
    *
-   * @param string $county - County name or an empty string if state template is desired.
+   * @param string $committee - Committee name or an empty string if state template is desired.
    * @return string
    */
-  public function getTurfMsg(string $county = ''): string
+  public function getTurfMsg(string $committee = ''): string
   {
-    $filePath = $this->paths->getPath('TURF', $county);
+    $filePath = $this->paths->getPath('TURF', $committee);
     $fileName = $filePath . self::TURF_MSG_TEMPLATE;
     if(!file_exists($fileName)) {
-      if(!empty($county)) {
+      if(!empty($committee)) {
         $filePath = $this->paths->getPath('TURF');
         $fileName = $filePath . self::TURF_MSG_TEMPLATE;
       }
@@ -89,13 +89,13 @@ class NlpTurfDeliveryMessage
    *
    * Save the custom email template.
    *
-   * @param string $county
+   * @param string $committee
    * @param string $turfMsgTemplate
    * @return void
    */
-  public function putTurfMsg(string $county, string $turfMsgTemplate): void
+  public function putTurfMsg(string $committee, string $turfMsgTemplate): void
   {
-    $path = $this->paths->getPath('TURF', $county);
+    $path = $this->paths->getPath('TURF', $committee);
     $this->unlinkFile($path);
     $fh = fopen($path . self::TURF_MSG_TEMPLATE, 'w');
     if(!$fh) {

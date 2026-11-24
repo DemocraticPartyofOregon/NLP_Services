@@ -61,7 +61,7 @@ class NlpSyncTurfBuilder
     if($this->nlpSessionDataObj->get('hdSelected')) {
       $selectedHdIndex = $this->nlpSessionDataObj->getSavedHdIndex()+1; // +1 because the first element is 'Select HD'.
     }
-    // If an HD is not yet selected, the list of precincts will be all in the county.  If the HD is selected,
+    // If an HD is not yet selected, the list of precincts will be all in the committee.  If the HD is selected,
     //   the precinct list will be only in that HD.
     $pctList = $this->nlpSessionDataObj->getPrecinctList();
     array_unshift($pctList, 'Select Precinct');

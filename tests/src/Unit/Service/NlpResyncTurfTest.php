@@ -210,14 +210,14 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
     // -------------------------------------------------------------------------
 
     public function testTurfsToResyncCheckReturnsEmptyForNoTurfs(): void {
-      $this->turfsMock->method('getCountyTurfIndexes')->willReturn([]);
+      $this->turfsMock->method('getCommitteeTurfIndexes')->willReturn([]);
       $result = $this->buildService()->turfsToResyncCheck('King');
       $this->assertSame([], $result);
     }
 
     public function testTurfsToResyncCheckProducesSingleChunkUnderBatchSize(): void {
       $indexes = range(1, 5);
-      $this->turfsMock->method('getCountyTurfIndexes')->willReturn($indexes);
+      $this->turfsMock->method('getCommitteeTurfIndexes')->willReturn($indexes);
       $result = $this->buildService()->turfsToResyncCheck('King');
       $this->assertCount(1, $result);
       $this->assertSame('King', $result[0]['county']);
@@ -226,7 +226,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testTurfsToResyncCheckChunksAtBatchSize(): void {
       $indexes = range(1, 11); // 10 + 1 → 2 chunks
-      $this->turfsMock->method('getCountyTurfIndexes')->willReturn($indexes);
+      $this->turfsMock->method('getCommitteeTurfIndexes')->willReturn($indexes);
       $result = $this->buildService()->turfsToResyncCheck('King');
       $this->assertCount(2, $result);
       $this->assertCount(10, $result[0]['turfIndexes']);
@@ -235,7 +235,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
 
     public function testTurfsToResyncCheckIncludesCountyInEveryChunk(): void {
       $indexes = range(1, 25);
-      $this->turfsMock->method('getCountyTurfIndexes')->willReturn($indexes);
+      $this->turfsMock->method('getCommitteeTurfIndexes')->willReturn($indexes);
       $result = $this->buildService()->turfsToResyncCheck('Pierce');
       foreach ($result as $chunk) {
         $this->assertSame('Pierce', $chunk['county']);

@@ -27,7 +27,7 @@ class NlpVoterCrosstabSummary
 
   public function getCountiesWithTurfs(): array
   {
-    return $this->turfs->getCountyNames();
+    return $this->turfs->getCommitteesWithTurfs();
   }
 
   /**
