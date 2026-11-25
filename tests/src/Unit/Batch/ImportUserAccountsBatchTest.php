@@ -14,6 +14,7 @@ use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\nlpservices\Batch\ImportUserAccountsBatch;
 use Drupal\nlpservices\DrupalUser;
 use Drupal\nlpservices\MagicWord;
+use Drupal\nlpservices\NlpConfiguration;
 use Drupal\Tests\UnitTestCase;
 use Drupal\user\RoleInterface;
 use PHPUnit\Framework\Attributes\Group;
@@ -38,6 +39,9 @@ class ImportUserAccountsBatchTest extends UnitTestCase {
     $container->set('messenger',              $this->messengerMock);
     $container->set('nlpservices.drupal_user', $this->drupalUserMock);
     $container->set('nlpservices.magic_word',  $this->magicWordMock);
+    $configurationMock = $this->createMock(NlpConfiguration::class);
+    $configurationMock->method('getCommitteeNames')->willReturn(['Boulder', 'Denver']);
+    $container->set('nlpservices.configuration', $configurationMock);
     Drupal::setContainer($container);
 
     $this->stubUserRoles([]);
@@ -228,6 +232,43 @@ class ImportUserAccountsBatchTest extends UnitTestCase {
       ->willReturn(['uid' => 1, 'roles' => ['administrator']]);
     $this->drupalUserMock->expects($this->never())->method('updateUser');
     $this->drupalUserMock->expects($this->never())->method('addUser');
+
+    $context = $this->baseContext();
+    ImportUserAccountsBatch::process(['uri' => $path], $context);
+  }
+
+  // -------------------------------------------------------------------------
+  // ImportUserAccountsBatch::process — the committee must have an API key
+  // -------------------------------------------------------------------------
+
+  public function testBatchSkipsANewUserWhoseCommitteeHasNoKey(): void {
+    $path = $this->writeCsv($this->headerColumns(), [$this->baseRow(['county' => 'Hood River'])]);
+    $this->drupalUserMock->method('getUserByName')->willReturn([]);
+    $this->drupalUserMock->expects($this->never())->method('addUser');
+    $this->messengerMock->expects($this->once())->method('addError');
+
+    $context = $this->baseContext();
+    ImportUserAccountsBatch::process(['uri' => $path], $context);
+
+    $this->assertSame(1, $context['results']['recordCount']);
+  }
+
+  public function testBatchSkipsAnExistingUserWhoseCommitteeHasNoKey(): void {
+    $path = $this->writeCsv($this->headerColumns(), [$this->baseRow(['county' => 'Region 10'])]);
+    $this->drupalUserMock->method('getUserByName')->willReturn(['uid' => 55, 'roles' => ['nlp_leader']]);
+    $this->drupalUserMock->expects($this->never())->method('updateUser');
+    $this->messengerMock->expects($this->once())->method('addError');
+
+    $context = $this->baseContext();
+    ImportUserAccountsBatch::process(['uri' => $path], $context);
+  }
+
+  public function testBatchImportsAUserWithNoCommittee(): void {
+    // An admin account has no committee.
+    $path = $this->writeCsv($this->headerColumns(), [$this->baseRow(['county' => ''])]);
+    $this->drupalUserMock->method('getUserByName')->willReturn([]);
+    $this->drupalUserMock->expects($this->once())->method('addUser')->willReturn(['status' => 'complete']);
+    $this->messengerMock->expects($this->never())->method('addError');
 
     $context = $this->baseContext();
     ImportUserAccountsBatch::process(['uri' => $path], $context);

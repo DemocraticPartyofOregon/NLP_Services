@@ -58,6 +58,11 @@ class ExportTableController extends ControllerBase
     if(!$admin) {
       $committee = $currentUser['county'];
       $committee = (empty($committee)) ? '' : (string) $committee;
+      // An empty committee exports every committee's rows, which only an
+      // admin may see.
+      if ($committee === '') {
+        return ['#markup' => 'Your account has no committee, so there is nothing to export.'];
+      }
     }
     
     $tempDir = 'public://temp';

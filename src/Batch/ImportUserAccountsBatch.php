@@ -55,6 +55,9 @@ class ImportUserAccountsBatch {
 
     $magicWordObj = Drupal::service('nlpservices.magic_word');
     $drupalUserObj = Drupal::service('nlpservices.drupal_user');
+    // The county column is the user's committee.  It's used as the API key
+    // name for MyCampaign, so it must be one of the configured committees.
+    $committeeNames = Drupal::service('nlpservices.configuration')->getCommitteeNames();
 
     $loopCount = 0;
     do {
@@ -72,6 +75,15 @@ class ImportUserAccountsBatch {
         if(!empty($nlpRoles[$userRoleId])) {
           $roles[$userRoleId] = $nlpRoles[$userRoleId];
         }
+      }
+
+      // Like the user edit form, allow no committee (an admin has none) but
+      // not a name without an API key.
+      $committee = $user[$fieldPos['county']] ?? '';
+      if ($committee !== '' && !in_array($committee, $committeeNames, TRUE)) {
+        $messenger->addError(t('Skipped @userName: @committee is not the name of a committee with an API key.',
+          ['@userName' => $user[$fieldPos['userName']] ?? '', '@committee' => $committee]));
+        continue;
       }
 
       $existingUser = $drupalUserObj->getUserByName($user[$fieldPos['userName']] ?? '');
