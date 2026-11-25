@@ -12,9 +12,9 @@ class NlpExportCredentials
   protected DatabaseFunctions $dbFunctionsObj;
 
   public function __construct(
-    $fileFunctionsObj,
-    $magicWordObj,
-    $dbFunctionsObj,
+    NlpFileFunctions $fileFunctionsObj,
+    MagicWord $magicWordObj,
+    DatabaseFunctions $dbFunctionsObj,
     private readonly FileUrlGeneratorInterface $fileUrlGenerator,
   )
   {
@@ -46,7 +46,10 @@ class NlpExportCredentials
     if ($key !== false) {
       $columns[$key] = 'magicWord';
     }
-    fputcsv($fh, $columns, escape: '');
+    // The table's county column holds the committee; the file names the
+    // column for what it holds.  The import also reads 'county'.
+    $header = array_map(fn($column) => $column === 'county' ? 'committee' : $column, $columns);
+    fputcsv($fh, $header, escape: '');
 
     $mcids = $this->magicWordObj->getKeys();
     foreach ($mcids as $mcid) {

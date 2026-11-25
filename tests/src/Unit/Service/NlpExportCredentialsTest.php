@@ -118,6 +118,17 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertNotContains('magicWordEncrypted', $header);
     }
 
+    public function testCreateNlCredentialsFileNamesTheCountyColumnCommittee(): void {
+      $columns = ['mcid', 'userName', 'county'];
+      $path = $this->setupSuccessCase($columns, [5001],
+        [5001 => ['mcid' => 5001, 'userName' => 'jdoe', 'county' => 'Denver', 'roles' => []]]);
+      $this->buildService()->createNlCredentialsFile();
+      $csv = $this->readCsv($path);
+      $this->assertSame(['mcid', 'userName', 'committee'], $csv[0]);
+      // The value still comes from the table's county column.
+      $this->assertSame('Denver', $csv[1][2]);
+    }
+
     public function testCreateNlCredentialsFileSkipsEmptyCredentials(): void {
       $columns = ['mcid', 'magicWord', 'roles'];
       $path = $this->setupSuccessCase($columns, [1], [1 => []]);

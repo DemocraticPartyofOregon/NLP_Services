@@ -244,9 +244,11 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
       return $ordered;
     }
 
-    private function submitFormWithRows(array $rows, string $operation = 'import', bool $verify = FALSE): void {
-      $path = $this->writeCsv($this->headerColumns(), $rows);
-      $fieldPos = array_flip($this->headerColumns());
+    private function submitFormWithRows(array $rows, string $operation = 'import', bool $verify = FALSE,
+                                        ?array $headers = NULL): void {
+      $headers ??= $this->headerColumns();
+      $path = $this->writeCsv($headers, $rows);
+      $fieldPos = array_flip($headers);
 
       $formState = $this->createMock(FormStateInterface::class);
       $formState->method('getValue')->willReturnMap([
@@ -342,6 +344,36 @@ namespace Drupal\Tests\nlpservices\Unit\Form {
         ->with($this->callback(fn(array $c): bool => $c['roles'] === NULL));
 
       $this->submitFormWithRows([$this->baseRow(['roles' => 'not-json'])]);
+    }
+
+    public function testSubmitFormImportSavesTheCommitteeColumnAsCounty(): void {
+      // The credentials table's column is county; a 'committee' key would
+      // be saved as a column the table doesn't have.
+      $headers = array_map(fn($col) => $col === 'county' ? 'committee' : $col, $this->headerColumns());
+      $this->magicWordMock->expects($this->once())
+        ->method('updateCredentials')
+        ->with($this->callback(fn(array $c): bool => $c['county'] === 'Denver'
+          && !array_key_exists('committee', $c)));
+
+      $this->submitFormWithRows([$this->baseRow()], 'import', FALSE, $headers);
+    }
+
+    public function testSubmitFormImportKeepsTheCountyColumnOfAnOlderExport(): void {
+      $this->magicWordMock->expects($this->once())
+        ->method('updateCredentials')
+        ->with($this->callback(fn(array $c): bool => $c['county'] === 'Denver'));
+
+      $this->submitFormWithRows([$this->baseRow()]);
+    }
+
+    public function testSubmitFormVerifyUsesTheCommitteeColumn(): void {
+      $headers = array_map(fn($col) => $col === 'county' ? 'committee' : $col, $this->headerColumns());
+      $this->apiNlsMock->expects($this->once())
+        ->method('nlExists')
+        ->with('Denver', 5001)
+        ->willReturn(TRUE);
+
+      $this->submitFormWithRows([$this->baseRow()], 'import', TRUE, $headers);
     }
 
     public function testSubmitFormImportAddsSuccessStatusMessage(): void {

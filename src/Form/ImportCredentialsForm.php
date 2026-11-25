@@ -169,10 +169,17 @@ accounts before restoring any passwords.</p>',
       $credentials = array_map(function ($pos) use ($rawRecord) {
         return $rawRecord[$pos] ?? '';
       }, $fieldPos);
+      // The committee is in the 'committee' column, or in 'county' in a file
+      // exported by V7_2_1 or an earlier V7_3.  The credentials table still
+      // calls it county, and every key here is saved as a table column.
+      if (array_key_exists('committee', $credentials)) {
+        $credentials['county'] = $credentials['committee'];
+        unset($credentials['committee']);
+      }
 
       if ($verify) {
         $mcid   = $credentials['mcid'];
-        $committee = $credentials['county'];
+        $committee = $credentials['county'] ?? '';
         $nlExists = $this->apiNlsObj->nlExists($committee, $mcid);
         if (!$nlExists) {continue;}
       }
