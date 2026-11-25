@@ -30,6 +30,7 @@ Note anything that goes wrong on the copy here, so the real upgrade doesn't hit 
 - [ ] Pick a quiet time.  Turn off the cron job in cPanel for the duration (comment it out), so nothing runs halfway through the upgrade.
 - [ ] Back up the database: `drush sql:dump --extra-dump=--no-tablespaces --gzip --result-file=$HOME/backup-$(date +%F).sql` (it writes `backup-<date>.sql.gz`; see step 0 for `--no-tablespaces`).  Check it's complete: `zcat ~/backup-$(date +%F).sql.gz | tail -n 1` says `-- Dump completed`.
 - [ ] Back up the files: `tar czf ~/backup-$(date +%F)-files.tgz ~/myStateName`.  Or make a full cPanel backup (Files → Backup).
+- [ ] Export the user accounts while the site is still on V7_2_1: open `/nlpservices-export-user-accounts` and download the file.  V7_3 keeps each user's committee in a new field, `field_committee`, instead of `field_county`, and step 6 moves the committees by importing this file.  It holds every NL's password, so keep it on your own computer, not on the server or in email, and delete it after step 6.
 - [ ] PHP is 8.3 or newer for **both** the website (cPanel → Select PHP Version) and the command line (`php -v`).  Drupal 11 requires it.
 - [ ] The imap extension is on for both: `php -m | grep imap`, and Select PHP Version → Extensions for the website.  Without it on the command line, composer refuses to install V7_3; without it on the website, the email cron tasks fail.
 - [ ] Composer is version 2.7 or newer: `composer --version`.
@@ -102,6 +103,7 @@ V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be do
 - [ ] `drush cr` so Drupal registers `private://`.  `drush status` should show `Files, Private : /home/myAccount/private-files`.
 - [ ] Move the key files: `mv web/sites/default/files/keys/*.key ~/private-files/keys/`.  Update 10002 repoints each key only if its file is already there, so do this **before** `drush updb`.
 - [ ] Check they're there: `ls -l ~/private-files/keys` lists one `.key` file per committee.
+- [ ] If you're adding `field_committee` by hand, do it now: Configuration → People → Account settings → Manage fields → Create a new field, "Plain text", label `Committee`, machine name `field_committee` (exactly), maximum length 255, one value, not required.  Put it on the user edit form where County is.  Otherwise update 10009 adds it.
 - [ ] `drush updb -y`.  These updates should run, with these messages:
 
   | Update | What it does | Message |
@@ -114,12 +116,16 @@ V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be do
   | 10006 | Adds `hd` to the ballot counts | Added nlp_ballot_count.hd. Changed the nlp_ballot_count primary key to (cd, county, hd, party). |
   | 10007 | Adds `nlNameNotFound` to the reports | Added nlp_results.nlNameNotFound. |
   | 10008 | Turns off the account activation email | Turned off the account activation email. |
+  | 10009 | Adds the user field `field_committee` | Created the field_committee storage. Added field_committee to user accounts. Placed it like field_county on N user forms and displays.  (If you added it by hand: field_committee was already there.) |
 
   Write down the messages.  For 10005, N should be the number of counties the site had configured (all 36 for Oregon).
 - [ ] `drush cr`
 - [ ] Reports → Status report: no NLP Services errors (private file path, HTML email).
 - [ ] NLP configuration → Step 2, "Verify the API keys work".  Every committee's key verifies.
 - [ ] Only once Step 2 passes: `rm -r web/sites/default/files/keys` (this also removes the `.htaccess` block from step 1, which is no longer needed).  `curl -sI https://<site>/sites/default/files/keys/secret_key.key | head -n 1` should now say `404 Not Found`.
+- [ ] Move the committees into `field_committee`: open `/nlpservices-import-user-accounts` and import the file from step 1.  It reads the committee from the file's `county` column.  Do this only after Step 2 passes: the import skips, with an error, any account whose committee isn't one of the configured committees, so it needs the keys in place.  Write down any "Skipped" messages and fix those accounts by hand.
+- [ ] Open a few NL and coordinator accounts (People → Edit): Committee shows the same name County does.
+- [ ] Delete the old field: Configuration → People → Account settings → Manage fields → County → Delete.  Then delete the exported file from your computer.
 
 ## 7. Set up what's new in V7_3
 
@@ -129,7 +135,7 @@ V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be do
 
 ## 8. Test
 
-- [ ] An NLP admin, a coordinator and an NL can each log in, and see their own pages.
+- [ ] An NLP admin, a coordinator and an NL can each log in, and see their own pages.  The coordinator and the NL see their own committee's turfs.
 - [ ] A coordinator's turf list, and assigning a turf to an NL.
 - [ ] A walk sheet PDF: instructions, map page, voter pages.
 - [ ] NL data entry: record a contact; the historical contacts show the NL's name.
@@ -145,3 +151,11 @@ V7_2_1 kept the API key files in `web/sites/default/files/keys`, which can be do
 - [ ] `drush cr`, and turn the cron job back on.
 
 Keep the backups and `~/nlpservices-V7_2_1` until the site has run cleanly for a couple of weeks.
+
+## Sites already on V7_3
+
+nlpdebug, the sandbox and specialnlp were on V7_3 before `field_committee` replaced `field_county`, so their accounts' committees are still in `field_county`.  Move them in one sitting, because from the update until the import, the accounts have no committee and coordinators and NLs can't use their pages.
+
+- [ ] **Before** `composer update drupal/nlpservices`, export the user accounts (`/nlpservices-export-user-accounts`).  That export still calls the committee column `county`, which the import reads.
+- [ ] `composer update drupal/nlpservices`, `drush updb -y` (runs 10009), `drush cr`.
+- [ ] Import the file (`/nlpservices-import-user-accounts`), check a few accounts, then delete the County field and the exported file, as at the end of step 6.
