@@ -109,7 +109,7 @@ class DrupalUser {
     $userInfo['firstName'] = $user->get('field_first_name')->value;
     $userInfo['lastName'] = $user->get('field_last_name')->value;
     $userInfo['phone'] = $user->get('field_phone')->value;
-    $userInfo['county'] = $user->get('field_county')->value;
+    $userInfo['county'] = $user->get('field_committee')->value;
     $userInfo['hd'] = $user->get('field_hd')->value;
     $userInfo['created'] = $user->get('created')->value;
     $userInfo['login'] = $user->get('login')->value;
@@ -482,7 +482,7 @@ class DrupalUser {
 
     $newUser->set("field_first_name", $user['firstName']);
     $newUser->set("field_last_name", $user['lastName']);
-    $newUser->set("field_county", $user['county']);
+    $newUser->set("field_committee", $user['county']);
     $newUser->set("field_hd", $user['hd']);
     $newUser->set("field_phone", $user['phone']);
 
@@ -562,7 +562,7 @@ class DrupalUser {
           $user->setEmail($nlpValue);
           break;
         case 'county':
-          $user->set("field_county", $nlpValue);
+          $user->set("field_committee", $nlpValue);
           break;
         case 'hd':
           $user->set("field_hd", $nlpValue);
@@ -680,7 +680,7 @@ class DrupalUser {
     $committeeNames = [];
     foreach ($result as $uid) {
       $user = User::load($uid);
-      $committee = $user->get('field_county')->value;
+      $committee = $user->get('field_committee')->value;
       if(!empty($committee)) {
         $committeeNames[$committee] = $committee;
       }
@@ -710,14 +710,14 @@ class DrupalUser {
     $query = $userStorage->getQuery()
       ->accessCheck(FALSE);
     if (!empty($searchCommittee)) {
-      $query->condition('field_county', $searchCommittee);
+      $query->condition('field_committee', $searchCommittee);
     }
     $result = $query->execute();
     $users = [];
     foreach ($result as $uid) {
       $user = User::load($uid);
       if(empty($user)) { continue; }
-      $committee = $user->get('field_county')->value;
+      $committee = $user->get('field_committee')->value;
       if(empty($searchCommittee) && empty($committee)) { continue; }
       $userArray = $this->extractUserInfo($user);
       if($userArray['uid'] > 1) {
@@ -905,7 +905,7 @@ class DrupalUser {
    * getCoordinators
    *
    * Returns a list of NLP users with the coordinator role for a specific
-   * committee.  The user's field_county holds the committee name.
+   * committee, from the user's field_committee.
    *
    * The match is exact: a CONTAINS match would also return the coordinators
    * of every committee whose name contains this one, like 'Region 10' for
@@ -926,7 +926,7 @@ class DrupalUser {
       ->accessCheck(FALSE)
       ->condition('status', 1)
       ->condition('roles', 'nlp_coordinator')
-      ->condition('field_county', $committee)
+      ->condition('field_committee', $committee)
       ->execute();
 
     foreach ($ids as $uid) {

@@ -72,7 +72,11 @@ class NlpExportUserAccounts
         }
         $user['roles'] = $roleStr;
         if ($first) {
-          fputcsv($fh, array_keys($user), escape: '');
+          // The user record still calls the committee 'county'; the file
+          // names the column for what it holds.  The import also reads
+          // 'county', from files exported by V7_2_1.
+          $header = array_map(fn($key) => $key === 'county' ? 'committee' : $key, array_keys($user));
+          fputcsv($fh, $header, escape: '');
           $first = FALSE;
         }
         fputcsv($fh, $user, escape: '');

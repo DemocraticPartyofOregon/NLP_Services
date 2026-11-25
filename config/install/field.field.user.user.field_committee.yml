@@ -2,17 +2,17 @@ langcode: en
 status: true
 dependencies:
   config:
-    - field.storage.user.field_county
+    - field.storage.user.field_committee
   enforced:
     module:
       - nlpservices
   module:
     - user
-id: user.user.field_county
-field_name: field_county
+id: user.user.field_committee
+field_name: field_committee
 entity_type: user
 bundle: user
-label: County
+label: Committee
 description: ''
 required: false
 translatable: false

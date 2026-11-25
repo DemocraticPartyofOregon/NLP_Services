@@ -26,14 +26,14 @@ const NLP_LEADER_ROLE_LABEL = 'NLP Leader';
  * nlpservices_user_login
  * Implements hook_user_login().
  *
- * Gets the user's committee (stored in field_county) and saves it in the
+ * Gets the user's committee (field_committee) and saves it in the
  * temp storage, where NlpSessionData::getCommittee() reads it.  This also
  * resets an admin to their own committee at each login.
  *
  */
 function nlpservices_user_login(UserInterface $account): void
 {
-  $committeeValue = $account->get('field_county')->getValue();
+  $committeeValue = $account->get('field_committee')->getValue();
   if(empty($committeeValue)) {return;}
   $committee = $committeeValue[0]['value'];
   if(empty($committee)) {return;}
@@ -565,12 +565,12 @@ function nlpservices_form_user_form_alter(array &$form, FormStateInterface $form
  */
 function nlpservices_custom_validation(array $form, FormStateInterface $form_state): void
 {
-  $committeeValue = $form_state->getValue('field_county');
+  $committeeValue = $form_state->getValue('field_committee');
   $committee = $committeeValue[0]['value'] ?? '';
   $committees = Drupal::service('nlpservices.configuration')->getCommitteeNames();
   if(empty($committee)) {return;}
   if($committee == 'State' || !in_array($committee, $committees)) {
-    $form_state->setErrorByName('field_county', t('Invalid county name.'));
+    $form_state->setErrorByName('field_committee', t('Invalid county name.'));
   }
 }
 

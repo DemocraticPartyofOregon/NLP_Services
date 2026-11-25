@@ -132,6 +132,19 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertContains('password', $csv[0]);
     }
 
+    public function testGetUserAccountsFileNamesTheCommitteeColumnCommittee(): void {
+      $user = $this->baseUser(['county' => 'Multnomah']);
+      $this->nlsMock->method('getNlById')->willReturn([]);
+      $this->magicWordMock->method('getMagicWord')->willReturn('pw');
+      $path = $this->setupSuccessCase(['Multnomah'], ['Multnomah' => [$user]]);
+      $this->buildService()->getUserAccountsFile();
+      $csv = $this->readCsv($path);
+      $column = array_search('committee', $csv[0], TRUE);
+      $this->assertNotFalse($column);
+      $this->assertNotContains('county', $csv[0]);
+      $this->assertSame('Multnomah', $csv[1][$column]);
+    }
+
     public function testGetUserAccountsFileWritesOneDataRowPerUser(): void {
       $users = [$this->baseUser(['uid' => 1]), $this->baseUser(['uid' => 2])];
       $this->nlsMock->method('getNlById')->willReturn([]);

@@ -51,12 +51,16 @@ class ImportUserAccountsBatch {
     }
 
     $importFields = ['userName','email','created','access','login',
-      'firstName','lastName','phone','county','hd','mcid'];
+      'firstName','lastName','phone','hd','mcid'];
+
+    // The user's committee is in the 'committee' column, or in 'county' in
+    // a file exported before field_county became field_committee (V7_2_1).
+    $committeePos = $fieldPos['committee'] ?? $fieldPos['county'] ?? NULL;
 
     $magicWordObj = Drupal::service('nlpservices.magic_word');
     $drupalUserObj = Drupal::service('nlpservices.drupal_user');
-    // The county column is the user's committee.  It's used as the API key
-    // name for MyCampaign, so it must be one of the configured committees.
+    // The committee is used as the API key name for MyCampaign, so it must
+    // be one of the configured committees.
     $committeeNames = Drupal::service('nlpservices.configuration')->getCommitteeNames();
 
     $loopCount = 0;
@@ -79,7 +83,7 @@ class ImportUserAccountsBatch {
 
       // Like the user edit form, allow no committee (an admin has none) but
       // not a name without an API key.
-      $committee = $user[$fieldPos['county']] ?? '';
+      $committee = ($committeePos === NULL) ? '' : ($user[$committeePos] ?? '');
       if ($committee !== '' && !in_array($committee, $committeeNames, TRUE)) {
         $messenger->addError(t('Skipped @userName: @committee is not the name of a committee with an API key.',
           ['@userName' => $user[$fieldPos['userName']] ?? '', '@committee' => $committee]));
@@ -96,7 +100,7 @@ class ImportUserAccountsBatch {
 
         $editUpdate = [
           'uid'       => $existingUser['uid'],
-          'county'    => $user[$fieldPos['county']]    ?? '',
+          'county'    => $committee,
           'hd'        => $user[$fieldPos['hd']]        ?? '',
           'firstName' => $user[$fieldPos['firstName']] ?? '',
           'lastName'  => $user[$fieldPos['lastName']]  ?? '',
@@ -128,7 +132,7 @@ class ImportUserAccountsBatch {
         }
         $account['magicWord'] = $password;
         $account['roles']  = $roles;
-        $account['county'] = $user[$fieldPos['county']] ?? '';
+        $account['county'] = $committee;
         $newUser = $drupalUserObj->addUser($account);
         if($newUser['status'] == 'complete') {
           if(!empty($newUser['mcid'])) {

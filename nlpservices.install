@@ -6,6 +6,8 @@ use Drupal\Core\Entity\EntityStorageException;
 use Drupal\Core\Extension\Requirement\RequirementSeverity;
 use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Site\Settings;
+use Drupal\Core\Serialization\Yaml;
+use Drupal\field\Entity\FieldConfig;
 use Drupal\field\Entity\FieldStorageConfig;
 
 /**
@@ -287,6 +289,65 @@ function nlpservices_update_10008(): string
 }
 
 /**
+ * Adds the user field field_committee, which replaces field_county.
+ *
+ * Both hold the VoteBuilder committee the user belongs to.  The field may
+ * have been added by hand before the upgrade, in which case it's left as it
+ * is.  This update doesn't copy any values: the committees are moved by
+ * exporting the user accounts before the upgrade and importing them after
+ * (the import reads the old 'county' column), and field_county is deleted
+ * by hand once the import is checked.  See NlpUpgradeChecklist.md.
+ */
+function nlpservices_update_10009(): string
+{
+  return _nlpservices_add_committee_field();
+}
+
+/**
+ * Creates field_committee from config/install if it's missing, and puts it
+ * on the user forms and displays that show field_county.
+ *
+ * @return string - what was done.
+ */
+function _nlpservices_add_committee_field(): string
+{
+  $configDir = Drupal::service('extension.list.module')->getPath('nlpservices') . '/config/install';
+  $messages = [];
+  if (FieldStorageConfig::loadByName('user', 'field_committee')) {
+    $messages[] = 'field_committee was already there.';
+  }
+  else {
+    $values = Yaml::decode(file_get_contents("$configDir/field.storage.user.field_committee.yml"));
+    FieldStorageConfig::create($values)->save();
+    $messages[] = 'Created the field_committee storage.';
+  }
+  if (!FieldConfig::loadByName('user', 'user', 'field_committee')) {
+    $values = Yaml::decode(file_get_contents("$configDir/field.field.user.user.field_committee.yml"));
+    FieldConfig::create($values)->save();
+    $messages[] = 'Added field_committee to user accounts.';
+  }
+
+  // Show the new field wherever the old one is shown.
+  $placed = 0;
+  foreach (['entity_form_display', 'entity_view_display'] as $displayType) {
+    $displays = Drupal::entityTypeManager()->getStorage($displayType)
+      ->loadByProperties(['targetEntityType' => 'user', 'bundle' => 'user']);
+    /** @var \Drupal\Core\Entity\Display\EntityDisplayInterface $display */
+    foreach ($displays as $display) {
+      $countyComponent = $display->getComponent('field_county');
+      if ($countyComponent && !$display->getComponent('field_committee')) {
+        $display->setComponent('field_committee', $countyComponent)->save();
+        $placed++;
+      }
+    }
+  }
+  if ($placed) {
+    $messages[] = "Placed it like field_county on $placed user forms and displays.";
+  }
+  return implode(' ', $messages);
+}
+
+/**
  * Implements hook_uninstall().
  *
  * @param bool $is_syncing
@@ -294,6 +355,8 @@ function nlpservices_update_10008(): string
 function nlpservices_uninstall(bool $is_syncing): void
 {
   $fields = [
+    'committee',
+    // Replaced by field_committee in V7_3, but a site may still have it.
     'county',
     'first_name',
     'last_name',

@@ -44,9 +44,9 @@ class NlpSessionData
    * getCommittee
    *
    * Returns the VoteBuilder committee the current user is working in.  It
-   * starts as the committee on the user's account (still stored in
-   * field_county).  An admin can change the committee they are working in,
-   * which permits them to support any committee.
+   * starts as the committee on the user's account (field_committee).  An
+   * admin can change the committee they are working in, which permits them
+   * to support any committee.
    *
    * @return string
    */

@@ -96,7 +96,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
         'field_first_name' => 'Alice',
         'field_last_name'  => 'Smith',
         'field_phone'      => '555-1234',
-        'field_county'     => 'Denver',
+        'field_committee'     => 'Denver',
         'field_hd'         => '06',
         'created'          => 900,
         'login'            => 800,
@@ -446,7 +446,7 @@ namespace Drupal\Tests\nlpservices\Unit\Service {
       $this->assertSame([], $this->buildDrupalUser()->getCoordinators('Region 1'));
 
       // A CONTAINS match would also return the coordinators of 'Region 10'.
-      $this->assertSame(['Region 1', NULL], $conditions['field_county']);
+      $this->assertSame(['Region 1', NULL], $conditions['field_committee']);
     }
 
   }

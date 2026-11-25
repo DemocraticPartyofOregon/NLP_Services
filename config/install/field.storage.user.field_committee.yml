@@ -6,8 +6,8 @@ dependencies:
       - nlpservices
   module:
     - user
-id: user.field_county
-field_name: field_county
+id: user.field_committee
+field_name: field_committee
 entity_type: user
 type: string
 settings:

@@ -263,6 +263,39 @@ class ImportUserAccountsBatchTest extends UnitTestCase {
     ImportUserAccountsBatch::process(['uri' => $path], $context);
   }
 
+  public function testBatchReadsTheCommitteeColumnOfAV73Export(): void {
+    $headers = array_map(fn($col) => $col === 'county' ? 'committee' : $col, $this->headerColumns());
+    $path = $this->writeCsv($headers, [$this->baseRow(['county' => 'Boulder'])]);
+    $this->drupalUserMock->method('getUserByName')->willReturn([]);
+    $captured = NULL;
+    $this->drupalUserMock->expects($this->once())->method('addUser')
+      ->willReturnCallback(function (array $account) use (&$captured): array {
+        $captured = $account;
+        return ['status' => 'complete'];
+      });
+
+    $context = $this->baseContext();
+    ImportUserAccountsBatch::process(['uri' => $path], $context);
+
+    $this->assertSame('Boulder', $captured['county']);
+  }
+
+  public function testBatchReadsTheCountyColumnOfAV721Export(): void {
+    $path = $this->writeCsv($this->headerColumns(), [$this->baseRow(['county' => 'Boulder'])]);
+    $this->drupalUserMock->method('getUserByName')->willReturn(['uid' => 55, 'roles' => ['nlp_leader']]);
+    $captured = NULL;
+    $this->drupalUserMock->expects($this->once())->method('updateUser')
+      ->willReturnCallback(function (array $editUpdate) use (&$captured): array {
+        $captured = $editUpdate;
+        return [];
+      });
+
+    $context = $this->baseContext();
+    ImportUserAccountsBatch::process(['uri' => $path], $context);
+
+    $this->assertSame('Boulder', $captured['county']);
+  }
+
   public function testBatchImportsAUserWithNoCommittee(): void {
     // An admin account has no committee.
     $path = $this->writeCsv($this->headerColumns(), [$this->baseRow(['county' => ''])]);
